@@ -8,6 +8,7 @@ import { SITE_URL, langAlternates, serverLang } from "@/lib/serverLang";
 import "./globals.css";
 
 const GA_ID = "G-9P8L9T8BS6";
+const ADSENSE_CLIENT = "ca-pub-9826307769121956";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { lang, fromParam } = await serverLang();
@@ -44,6 +45,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={lang}>
       <head>
+        {/* Google AdSense — 사이트 소유 확인 겸 자동 광고용. 크롤러가 바로 읽도록 <head>에 일반 script 태그로 둔다 */}
+        <meta name="google-adsense-account" content={ADSENSE_CLIENT} />
+        <script async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`} crossOrigin="anonymous" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
