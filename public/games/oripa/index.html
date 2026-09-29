@@ -442,6 +442,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
   .dex-slot .rank-tag{position:absolute; top:4px; left:5px; font-size:9px; opacity:.8;}
   .dex-slot .icon{font-size:18px;}
+  .dex-slot .dex-count{position:absolute; right:4px; bottom:4px; z-index:2; background:rgba(0,0,0,.7); color:#ffd966; font-size:10px; font-weight:700; padding:1px 5px; border-radius:4px;}
+  .dex-slot.locked.grade-S{box-shadow:inset 0 0 0 2px #f5b40066;}
+  .dex-slot.locked.grade-A{box-shadow:inset 0 0 0 2px #9b5de566;}
+  .dex-slot.locked.grade-B{box-shadow:inset 0 0 0 2px #00b8a966;}
   .close-x{
     background:transparent; border:1px solid rgba(255,255,255,.3); color:var(--paper);
     border-radius:6px; padding:6px 12px; cursor:pointer; font-size:13px;
@@ -504,7 +508,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <div class="foot-note" id="dynamicFootnote">
     등급별 가치: S 200,000 · A 80,000 · B 40,000 · C 7,000 · D 800원 (전체 100장 풀, 카드당 1장 · 비복원)<br>
-    되팔기는 카드 가치의 80% (EASY 기준) · 자금이 20,000원 미만이 되면 파산(미개봉 봉투 폐기 + 컬렉션 몰수)
+    되팔기는 카드 가치의 80% (EASY 기준) · 자금이 20,000원 미만이 되면 파산(미개봉 봉투 폐기 · 컬렉션은 유지)
   </div>
 </div>
 
@@ -533,7 +537,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div class="bankrupt-box">
     <div class="bankrupt-stamp" id="bankruptStamp">파산</div>
     <p id="bankruptBody">봉투를 더 살 수 없을 만큼 자금이 바닥났습니다.<br>
-    미개봉 봉투가 전부 폐기되고, 그동안 모은 <strong>컬렉션도 초기화</strong>됩니다.<br>
+    미개봉 봉투가 전부 폐기됩니다. 그동안 모은 <strong>컬렉션은 그대로 유지</strong>돼요.<br>
     난이도도 <strong>EASY로 초기화</strong>되며, 자금 500,000원으로 새 오리파가 시작됩니다.</p>
     <button class="btn btn-danger" id="btnBankruptOk" style="width:100%;">확인하고 다시 시작</button>
   </div>
@@ -634,7 +638,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       rulesClose: "확인",
       panelTitleSuffix: " 봉투 매대",
       panelSub: "봉투 1개 {price} · 클릭해서 개봉",
-      footnote: "[{series} · {diff}] 등급별 가치: S {S} · A {A} · B {B} · C {C} · D {D}원 (전체 100장 풀, 카드당 1장 · 비복원 · 하우스엣지 {edge}%)<br>되팔기는 카드 가치의 {sellPct}% ({diff} 기준) · 자금이 {threshold} 미만이 되면 파산(미개봉 봉투 폐기 + 컬렉션 몰수 + EASY로 초기화) · 1등 카드를 획득하면 다음 난이도로 이동",
+      footnote: "[{series} · {diff}] 등급별 가치: S {S} · A {A} · B {B} · C {C} · D {D}원 (전체 100장 풀, 카드당 1장 · 비복원 · 하우스엣지 {edge}%)<br>되팔기는 카드 가치의 {sellPct}% ({diff} 기준) · 자금이 {threshold} 미만이 되면 파산(미개봉 봉투 폐기 + EASY로 초기화 · 컬렉션은 유지) · 1등 카드를 획득하면 다음 난이도로 이동",
       diffBadge: "{label} <span class=\"edge-tag\">· 하우스엣지 {pct}%</span>",
       revealTitleNormal: "카드 확인!",
       revealTitleJackpot: "1등 당첨!!",
@@ -643,7 +647,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       revealSellInfo: "되팔기 시 {amount} 지급 (가치의 {pct}%)",
       cardAlt: "{rank} 카드",
       bankruptStamp: "파산",
-      bankruptBody: "봉투를 더 살 수 없을 만큼 자금이 바닥났습니다.<br>미개봉 봉투가 전부 폐기되고, 그동안 모은 <strong>컬렉션도 초기화</strong>됩니다.<br>난이도도 <strong>EASY로 초기화</strong>되며, 자금 {amount}으로 새 오리파가 시작됩니다.",
+      bankruptBody: "봉투를 더 살 수 없을 만큼 자금이 바닥났습니다.<br>미개봉 봉투가 전부 폐기됩니다. 그동안 모은 <strong>컬렉션은 그대로 유지</strong>돼요.<br>난이도도 <strong>EASY로 초기화</strong>되며, 자금 {amount}으로 새 오리파가 시작됩니다.",
       bankruptBtn: "확인하고 다시 시작",
       settleTitle: "오리파 종료",
       settleSub: "봉투 100개를 모두 개봉했습니다",
@@ -663,6 +667,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       btnAdvanceOk: "다음 난이도 시작",
       dexCloseBtn: "닫기",
       dexTitle: "{icon} {series} 컬렉션",
+      dexProgress: "{got} / {total}종 · 누적 {pulls}장",
       gradeLabel: { S:"S등급", A:"A등급", B:"B등급", C:"C등급", D:"D등급" },
     },
     en: {
@@ -687,7 +692,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       rulesClose: "OK",
       panelTitleSuffix: " Envelope Stand",
       panelSub: "1 envelope = {price} · Click to open",
-      footnote: "[{series} · {diff}] Grade values: S {S} · A {A} · B {B} · C {C} · D {D} (100-card pool, one of each · no repeats · house edge {edge}%)<br>Sell back for {sellPct}% of value (at {diff}) · Falling below {threshold} triggers bankruptcy (unopened envelopes discarded + collection wiped + reset to EASY) · Pulling the #1 card advances you to the next difficulty",
+      footnote: "[{series} · {diff}] Grade values: S {S} · A {A} · B {B} · C {C} · D {D} (100-card pool, one of each · no repeats · house edge {edge}%)<br>Sell back for {sellPct}% of value (at {diff}) · Falling below {threshold} triggers bankruptcy (unopened envelopes discarded + reset to EASY · collection is kept) · Pulling the #1 card advances you to the next difficulty",
       diffBadge: "{label} <span class=\"edge-tag\">· House Edge {pct}%</span>",
       revealTitleNormal: "Card Revealed!",
       revealTitleJackpot: "Jackpot!!",
@@ -696,7 +701,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       revealSellInfo: "Sell for {amount} ({pct}% of value)",
       cardAlt: "Card #{rank}",
       bankruptStamp: "BANKRUPT",
-      bankruptBody: "You've run out of funds to buy another envelope.<br>All unopened envelopes are discarded, and your <strong>collection is wiped</strong> too.<br>Difficulty resets to <strong>EASY</strong>, and a new oripa starts with {amount}.",
+      bankruptBody: "You've run out of funds to buy another envelope.<br>All unopened envelopes are discarded, but your <strong>collection is kept</strong>.<br>Difficulty resets to <strong>EASY</strong>, and a new oripa starts with {amount}.",
       bankruptBtn: "OK, Start Over",
       settleTitle: "Oripa Complete",
       settleSub: "You've opened all 100 envelopes",
@@ -716,6 +721,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       btnAdvanceOk: "Start Next Difficulty",
       dexCloseBtn: "Close",
       dexTitle: "{icon} {series} Collection",
+      dexProgress: "{got} / {total} · {pulls} pulled",
       gradeLabel: { S:"Grade S", A:"Grade A", B:"Grade B", C:"Grade C", D:"Grade D" },
     },
   };
@@ -849,10 +855,44 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     return name === "pokemon" ? t("pokemonShort") : t("onepieceShort");
   }
 
-  function freshDex(){
-    const d = {};
-    for(let r=1;r<=TOTAL_CARDS;r++){ d[r] = { obtained:false, firstObtainedAt:null }; }
-    return d;
+  // ===== 컬렉션 도감 (파산해도 유지 · 오리파를 넘어 계속 누적 · 브라우저에 저장) =====
+  // 카드 풀이 있는 시리즈는 "카드" 단위, 없는 시리즈는 "순위" 단위로 수집한다.
+  const DEX_KEY = "mgh:oripa:dex:";
+  function dexEntries(seriesName){
+    const pool = SERIES[seriesName] && SERIES[seriesName].pool;
+    const list = [];
+    if(pool){
+      for(const g of ["S","A","B","C","D"]){
+        for(const c of (pool[g] || [])) list.push({ key:c.f, grade:g, card:c });
+      }
+    } else {
+      for(let r=1;r<=TOTAL_CARDS;r++) list.push({ key:"r"+r, grade:gradeOf(r), rank:r });
+    }
+    return list;
+  }
+  function loadDex(seriesName){
+    try{
+      const raw = localStorage.getItem(DEX_KEY + seriesName);
+      const d = raw ? JSON.parse(raw) : null;
+      if(d && typeof d === "object") return d;
+    }catch(e){}
+    return {};
+  }
+  function saveDex(){
+    try{ localStorage.setItem(DEX_KEY + activeSeries, JSON.stringify(state.collectionDex)); }catch(e){}
+  }
+  function dexKeyFor(rank){
+    const info = getCardInfo(rank);
+    return info ? info.f : "r" + rank;
+  }
+  function dexCounts(){
+    const entries = dexEntries(activeSeries);
+    let got = 0, pulls = 0;
+    for(const e of entries){
+      const c = state.collectionDex[e.key];
+      if(c && c.count > 0){ got++; pulls += c.count; }
+    }
+    return { got, total: entries.length, pulls };
   }
 
   // 등급별 필요 장수: S1 · A9 · B20 · C20 · D50 (gradeOf 기준)
@@ -886,7 +926,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       remaining: TOTAL_CARDS,
       envelopeAssignment: shuffledRanks(), // grid index -> rank
       opened: new Array(TOTAL_CARDS).fill(false), // grid index -> bool
-      collectionDex: freshDex(),      // rank -> {obtained, firstObtainedAt}
+      collectionDex: loadDex(seriesName), // card key -> {count, first}
       roundSpent: 0,
       roundEarned: 0,
       pendingIndex: null,
@@ -927,9 +967,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     renderDifficultyUI();
   }
 
-  function resetDex(){
-    state.collectionDex = freshDex();
-  }
 
   function startNewOripa(opts){
     opts = opts || {};
@@ -1044,8 +1081,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   function renderStats(){
     el.statCash.textContent = won(state.cash);
     el.statRemain.textContent = state.remaining + " / " + TOTAL_CARDS;
-    const dexCount = Object.values(state.collectionDex).filter(c=>c.obtained).length;
-    el.statDex.textContent = dexCount + " / 100";
+    const dc = dexCounts();
+    el.statDex.textContent = dc.got + " / " + dc.total;
   }
 
   function renderGrid(){
@@ -1070,34 +1107,31 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   function renderDex(){
     el.dexTitle.textContent = t("dexTitle", { icon: SERIES_ICON[activeSeries], series: seriesShortLabel(activeSeries) });
     el.dexGrid.innerHTML = "";
-    let count = 0;
-    const dex = state.collectionDex;
     const artMap = SERIES[activeSeries].artMap();
-    for(let r=1; r<=TOTAL_CARDS; r++){
-      const grade = gradeOf(r);
-      const entry = dex[r];
+    for(const e of dexEntries(activeSeries)){
+      const got = state.collectionDex[e.key];
       const slot = document.createElement("div");
-      if(entry && entry.obtained){
-        count++;
+      if(got && got.count > 0){
         slot.className = "dex-slot";
-        const art = entry.card ? CARD_BASE + entry.card.f : artMap[r];
+        const art = e.card ? CARD_BASE + e.card.f : artMap[e.rank];
+        const label = e.card ? cardName(e.card).replace(/"/g,"&quot;") : rankLabel(e.rank);
+        const tag = e.card ? e.grade : rankLabel(e.rank);
+        const cnt = got.count > 1 ? '<span class="dex-count">×'+got.count+'</span>' : '';
         if(art){
           slot.classList.add("has-art");
-          slot.innerHTML =
-            '<img src="'+art+'" alt="'+(entry.card ? cardName(entry.card).replace(/"/g,"&quot;") : rankLabel(r))+'" title="'+(entry.card ? cardName(entry.card).replace(/"/g,"&quot;") : "")+'" loading="lazy">' +
-            '<span class="rank-tag">'+rankLabel(r)+'</span>';
+          slot.title = label;
+          slot.innerHTML = '<img src="'+art+'" alt="'+label+'" loading="lazy"><span class="rank-tag">'+tag+'</span>' + cnt;
         } else {
-          slot.style.background = gradeGradient(grade);
-          slot.innerHTML =
-            '<span class="rank-tag">'+rankLabel(r)+'</span>' +
-            '<div class="icon">'+ICONS[grade]+'</div>';
+          slot.style.background = gradeGradient(e.grade);
+          slot.innerHTML = '<span class="rank-tag">'+tag+'</span><div class="icon">'+ICONS[e.grade]+'</div>' + cnt;
         }
       } else {
-        slot.className = "dex-slot locked";
+        slot.className = "dex-slot locked grade-" + e.grade;
       }
       el.dexGrid.appendChild(slot);
     }
-    el.dexProgressText.textContent = count + " / 100";
+    const dc = dexCounts();
+    el.dexProgressText.textContent = t("dexProgress", { got: dc.got, total: dc.total, pulls: dc.pulls });
   }
 
   function gradeGradient(g){
@@ -1182,9 +1216,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
 
     // 카드를 확인하는 순간 자동으로 컬렉션 도감에 등록 (되팔기 여부와 무관)
-    if(!state.collectionDex[def.rank].obtained){
-      state.collectionDex[def.rank] = { obtained:true, firstObtainedAt: new Date().toISOString(), card: getCardInfo(def.rank) };
-    }
+    const dk = dexKeyFor(def.rank);
+    const prev = state.collectionDex[dk];
+    state.collectionDex[dk] = { count: (prev && prev.count || 0) + 1, first: (prev && prev.first) || new Date().toISOString() };
+    saveDex();
     renderStats();
 
     el.btnSell.onclick = ()=> resolveCard(def, "sell");
@@ -1231,8 +1266,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   }
   el.btnBankruptOk.addEventListener("click", ()=>{
     state.difficulty = "easy";
-    resetDex();
-    startNewOripa();
+    startNewOripa(); // 도감은 파산해도 유지된다
     el.bankruptOverlay.classList.add("hidden");
   });
 
