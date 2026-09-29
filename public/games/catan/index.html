@@ -1,0 +1,2524 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="canonical" href="/play/catan">
+<script src="/mgh/bridge.js"></script><script src="/mgh/i18n/catan.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>카탄 섬 개척기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* ── 토큰: 라이트가 기본, 다크는 토큰만 재정의 ───────────────── */
+:root{
+  --sea-1:#123443; --sea-2:#17414f; --sea-line:#0d2733;
+  --brass:#a8792c; --brass-soft:#c9993f;
+  --bg:#dfe4e3; --panel:#f4f6f5; --panel-2:#e8ecea; --sunk:#d5dbd9;
+  --ink:#111b1d; --ink-2:#3d4d4f; --ink-3:#6d7d7e;
+  --line:#c3ccca; --line-2:#aab5b3;
+  --good:#2f7d55; --warn:#a8792c; --bad:#a8402f;
+  --shadow:0 1px 2px rgba(12,28,32,.10), 0 6px 20px rgba(12,28,32,.09);
+  --radius:9px;
+  --lumber:#2b5738; --wool:#89a944; --grain:#d6a634; --brick:#b05f31; --ore:#69767f; --desert:#cbb68e;
+  --p0:#c8433d; --p1:#2f79c4; --p2:#e08a2b; --p3:#e6e0d0;
+  --font-ui:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --font-dis:"Fraunces",Georgia,"Times New Roman",serif;
+  --font-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1416; --panel:#161f22; --panel-2:#1d282b; --sunk:#101a1c;
+    --ink:#e7eceb; --ink-2:#a7b5b4; --ink-3:#74827f;
+    --line:#28353a; --line-2:#3a4a4f;
+    --good:#54b183; --warn:#c9993f; --bad:#d4705e;
+    --brass:#c9993f; --brass-soft:#e0b45c;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 26px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1416; --panel:#161f22; --panel-2:#1d282b; --sunk:#101a1c;
+  --ink:#e7eceb; --ink-2:#a7b5b4; --ink-3:#74827f;
+  --line:#28353a; --line-2:#3a4a4f;
+  --good:#54b183; --warn:#c9993f; --bad:#d4705e;
+  --brass:#c9993f; --brass-soft:#e0b45c;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 26px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--font-ui); font-size:14px; line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit; color:inherit}
+h1,h2,h3{margin:0; text-wrap:balance}
+
+/* ── 레이아웃 ─────────────────────────────────────────────── */
+#app{
+  display:grid; grid-template-columns:minmax(0,1fr) 372px;
+  gap:14px; padding:14px; min-height:100vh; align-content:start;
+}
+#stage{display:flex; flex-direction:column; gap:12px; min-width:0}
+#rail{display:flex; flex-direction:column; gap:12px; min-width:0}
+
+.card{
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:var(--radius); box-shadow:var(--shadow);
+}
+.card-h{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:9px 12px; border-bottom:1px solid var(--line);
+}
+.eyebrow{
+  font-size:10.5px; font-weight:700; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--ink-3);
+}
+
+/* ── 헤더 ─────────────────────────────────────────────────── */
+#top{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; padding:0 2px}
+#top h1{
+  font-family:var(--font-dis); font-weight:700; font-size:26px; letter-spacing:-.01em;
+  font-variation-settings:"SOFT" 8,"WONK" 1;
+}
+#top .sub{color:var(--ink-3); font-size:12.5px}
+#top .spacer{flex:1}
+.iconbtn{
+  background:var(--panel); border:1px solid var(--line); border-radius:7px;
+  padding:5px 10px; font-size:12px; font-weight:600; cursor:pointer;
+}
+.iconbtn:hover{border-color:var(--line-2); background:var(--panel-2)}
+
+/* ── 보드 ─────────────────────────────────────────────────── */
+#boardwrap{
+  position:relative; border-radius:var(--radius); overflow:hidden;
+  display:grid; place-items:center;
+  border:1px solid var(--sea-line); box-shadow:var(--shadow);
+  background:radial-gradient(120% 118% at 50% -8%, #1d5468 0%, var(--sea-2) 34%, var(--sea-1) 68%, #071c26 100%);
+}
+#board{display:block; width:100%; height:auto; max-height:calc(100vh - 168px); touch-action:manipulation}
+.hexlabel{
+  font-family:var(--font-ui); font-size:10.5px; font-weight:700; letter-spacing:.02em;
+  fill:#f2ede1; text-anchor:middle; pointer-events:none;
+}
+.toknum{font-family:var(--font-num); font-weight:600; text-anchor:middle; fill:#241d12}
+.toknum.hot{fill:#a02b23}
+.tokpip{fill:#4a4234}
+.tokpip.hot{fill:#a02b23}
+.port-l{font-family:var(--font-num); font-size:10.5px; font-weight:600; text-anchor:middle; fill:#f4ecdb}
+.spot{cursor:pointer}
+.spot circle{transition:r .12s ease, opacity .12s ease}
+.spot:hover .halo{opacity:.55}
+@keyframes breathe{0%,100%{opacity:.85; r:8.5}50%{opacity:1; r:11}}
+.spot .core{animation:breathe 1.9s ease-in-out infinite}
+.eplace{cursor:pointer}
+.eplace:hover line{stroke-opacity:.95}
+@keyframes ebreathe{0%,100%{stroke-opacity:.6}50%{stroke-opacity:1}}
+.eplace line.core{animation:ebreathe 1.9s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){
+  .spot .core,.eplace line.core{animation:none}
+}
+#diceover{display:flex; gap:7px; pointer-events:none; flex:none}
+.die{
+  width:32px; height:32px; border-radius:7px; background:#f6f2e6;
+  border:1px solid #c4bca4; box-shadow:0 2px 5px rgba(20,28,30,.28), inset 0 -2px 0 rgba(0,0,0,.12);
+  display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr);
+  padding:5px; gap:1px;
+}
+.die i{width:5px; height:5px; border-radius:50%; background:#22292c; align-self:center; justify-self:center}
+@keyframes tumble{0%{transform:translateY(0) rotate(0)}35%{transform:translateY(-14px) rotate(-18deg)}70%{transform:translateY(3px) rotate(9deg)}100%{transform:translateY(0) rotate(0)}}
+.die.roll{animation:tumble .5s ease}
+
+/* ── 상태바 ───────────────────────────────────────────────── */
+#phasebar{
+  display:flex; align-items:center; gap:12px; padding:10px 13px;
+}
+#phasebar .msg{flex:1; min-width:0; font-size:13.5px}
+#phasebar .msg b{font-weight:700}
+.turnchip{
+  display:inline-flex; align-items:center; gap:7px; padding:4px 10px 4px 6px;
+  border-radius:999px; background:var(--panel-2); border:1px solid var(--line);
+  font-size:12px; font-weight:600; white-space:nowrap;
+}
+.swatch{width:11px; height:11px; border-radius:3px; border:1px solid rgba(0,0,0,.28); flex:none}
+
+/* ── 점수판 ───────────────────────────────────────────────── */
+.plist{display:flex; flex-direction:column}
+.prow{
+  display:grid; grid-template-columns:auto 1fr auto; gap:9px; align-items:center;
+  padding:8px 12px; border-bottom:1px solid var(--line);
+}
+.prow:last-child{border-bottom:0}
+.prow.active{background:var(--panel-2)}
+.prow.active .pname{color:var(--ink)}
+.pname{font-weight:600; font-size:13px; display:flex; align-items:center; gap:6px}
+.pmeta{
+  font-family:var(--font-num); font-size:10.5px; color:var(--ink-3);
+  display:flex; gap:8px; flex-wrap:wrap; margin-top:1px;
+}
+.pmeta .on{color:var(--brass); font-weight:600}
+.pvp{
+  font-family:var(--font-num); font-variant-numeric:tabular-nums;
+  font-size:19px; font-weight:600; text-align:right; line-height:1;
+}
+.pvp small{display:block; font-size:9px; letter-spacing:.1em; color:var(--ink-3); font-family:var(--font-ui); font-weight:700}
+
+/* ── 자원 패 ──────────────────────────────────────────────── */
+.hand{display:grid; grid-template-columns:repeat(5,1fr); gap:7px; padding:11px 12px}
+.rc{
+  border-radius:7px; border:1px solid var(--line); background:var(--panel-2);
+  padding:7px 4px 6px; text-align:center; position:relative; overflow:hidden;
+}
+.rc .bar{position:absolute; inset:0 0 auto 0; height:4px}
+.rc .n{
+  font-family:var(--font-num); font-variant-numeric:tabular-nums;
+  font-size:19px; font-weight:600; line-height:1.15; display:block;
+}
+.rc .l{font-size:9.5px; font-weight:700; letter-spacing:.06em; color:var(--ink-3)}
+.rc.gain{animation:pop .6s ease}
+@keyframes pop{0%{transform:scale(1)}30%{transform:scale(1.13); background:var(--brass-soft)}100%{transform:scale(1)}}
+
+/* ── 액션 ─────────────────────────────────────────────────── */
+.acts{display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:11px 12px}
+.acts .wide{grid-column:1 / -1}
+.btn{
+  display:flex; flex-direction:column; align-items:flex-start; gap:2px;
+  background:var(--panel-2); border:1px solid var(--line); border-radius:8px;
+  padding:8px 10px; cursor:pointer; text-align:left; transition:border-color .12s, background .12s;
+}
+.btn:hover:not(:disabled){border-color:var(--brass); background:var(--panel)}
+.btn:disabled{opacity:.42; cursor:not-allowed}
+.btn .t{font-weight:600; font-size:12.5px}
+.btn .c{font-family:var(--font-num); font-size:10px; line-height:1.35; color:var(--ink-3); letter-spacing:.01em}
+.btn.primary{background:var(--brass); border-color:var(--brass); color:#fff}
+.btn.primary .c{color:rgba(255,255,255,.8)}
+.btn.primary:hover:not(:disabled){background:var(--brass-soft); border-color:var(--brass-soft)}
+.btn.center{align-items:center; text-align:center}
+:focus-visible{outline:2px solid var(--brass); outline-offset:2px}
+
+/* ── 발전카드 ─────────────────────────────────────────────── */
+.devs{display:flex; flex-wrap:wrap; gap:6px; padding:0 12px 11px}
+.dev{
+  border:1px solid var(--line); border-radius:6px; background:var(--panel-2);
+  padding:5px 9px; font-size:11.5px; font-weight:600; cursor:pointer;
+}
+.dev:hover:not(:disabled){border-color:var(--brass)}
+.dev:disabled{opacity:.45; cursor:default}
+.dev .k{font-family:var(--font-num); color:var(--ink-3); margin-left:4px}
+.empty{padding:0 12px 11px; color:var(--ink-3); font-size:12px}
+
+/* ── 로그 ─────────────────────────────────────────────────── */
+#log{
+  padding:8px 12px 10px; max-height:210px; overflow-y:auto; background:var(--sunk);
+  border-radius:0 0 var(--radius) var(--radius);
+  font-family:var(--font-num); font-size:11.5px; line-height:1.55;
+}
+#log div{padding:1.5px 0; border-bottom:1px solid transparent}
+#log .sys{color:var(--ink-3)}
+#log b{font-weight:600}
+
+/* ── 모달 ─────────────────────────────────────────────────── */
+.veil{
+  position:fixed; inset:0; background:rgba(8,18,22,.62); backdrop-filter:blur(3px);
+  display:grid; place-items:center; padding:18px; z-index:40;
+}
+.veil[hidden]{display:none}
+.modal{
+  width:min(520px,100%); background:var(--panel); border:1px solid var(--line);
+  border-radius:12px; box-shadow:0 18px 60px rgba(0,0,0,.4); max-height:90vh; overflow-y:auto;
+}
+.modal .mh{padding:15px 18px 0}
+.modal h2{font-family:var(--font-dis); font-size:20px; font-weight:700}
+.modal .mb{padding:13px 18px 16px; display:flex; flex-direction:column; gap:13px}
+.modal p{margin:0; color:var(--ink-2); font-size:13px}
+.mf{display:flex; gap:8px; justify-content:flex-end; padding:0 18px 16px; flex-wrap:wrap}
+.mf .btn{flex-direction:row; align-items:center; padding:8px 16px}
+
+.trade-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+.trade-col .eyebrow{margin-bottom:7px; display:block}
+.stepper{
+  display:flex; align-items:center; justify-content:space-between; gap:6px;
+  padding:5px 7px; border:1px solid var(--line); border-radius:7px;
+  background:var(--panel-2); margin-bottom:6px;
+}
+.stepper .nm{font-size:12px; font-weight:600; display:flex; align-items:center; gap:6px; min-width:0}
+.stepper .ct{display:flex; align-items:center; gap:5px}
+.stepper button{
+  width:22px; height:22px; border-radius:5px; border:1px solid var(--line);
+  background:var(--panel); cursor:pointer; font-size:13px; line-height:1; font-weight:700;
+}
+.stepper button:disabled{opacity:.35; cursor:default}
+.stepper .v{font-family:var(--font-num); font-variant-numeric:tabular-nums; width:16px; text-align:center; font-weight:600}
+.chips{display:flex; flex-wrap:wrap; gap:6px}
+.chip{
+  border:1px solid var(--line); border-radius:999px; padding:5px 11px; font-size:12px;
+  font-weight:600; background:var(--panel-2); cursor:pointer;
+}
+.chip:hover:not(:disabled){border-color:var(--brass)}
+.chip:disabled{opacity:.4; cursor:default}
+.chip.sel{background:var(--brass); border-color:var(--brass); color:#fff}
+.note{font-size:11.5px; color:var(--ink-3); font-family:var(--font-num)}
+.resp{display:flex; flex-direction:column; gap:6px}
+.resp .r{
+  display:flex; align-items:center; gap:8px; font-size:12.5px;
+  padding:7px 10px; border:1px solid var(--line); border-radius:7px; background:var(--panel-2);
+}
+.resp .r.yes{border-color:var(--good)} .resp .r.no{opacity:.65}
+.resp .verdict{margin-left:auto; font-weight:700; font-size:11.5px}
+.resp .yes .verdict{color:var(--good)} .resp .no .verdict{color:var(--ink-3)}
+
+.setup-grid{display:flex; gap:8px; flex-wrap:wrap}
+.win{text-align:center; padding:6px 0 2px}
+.win .big{font-family:var(--font-dis); font-size:34px; font-weight:700; line-height:1.1}
+.scoreline{
+  display:flex; justify-content:space-between; gap:10px; font-size:12.5px;
+  padding:5px 0; border-bottom:1px solid var(--line); font-family:var(--font-num);
+}
+.scoreline:last-child{border-bottom:0}
+
+@media (max-width:1080px){
+  #app{grid-template-columns:minmax(0,1fr); padding:10px; gap:10px}
+  #rail{order:2}
+  #board{max-height:none}
+  #log{max-height:150px}
+  #phasebar{flex-wrap:wrap}
+  #phasebar .msg{order:3; flex-basis:100%}
+}
+</style>
+
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <header id="top">
+      <h1>카탄 섬 개척기</h1>
+      <span class="sub">10점 선취 &middot; 정식 규칙</span>
+      <span class="spacer"></span>
+      <button class="iconbtn" id="btnTheme" type="button">테마</button>
+      <button class="iconbtn" id="btnRules" type="button">규칙</button>
+      <button class="iconbtn" id="btnNew" type="button">새 게임</button>
+    </header>
+
+    <div id="boardwrap">
+      <svg id="board" viewBox="44 54 572 496" role="img" aria-label="카탄 게임판"></svg>
+    </div>
+
+    <div class="card" id="phasebar">
+      <span class="turnchip" id="turnchip"><span class="swatch"></span><span id="turnname">—</span></span>
+      <div id="diceover"></div>
+      <div class="msg" id="phasemsg">게임을 시작합니다.</div>
+      <button class="btn primary center" id="btnMain" type="button" style="min-width:118px"><span class="t">주사위 굴리기</span></button>
+    </div>
+  </div>
+
+  <aside id="rail">
+    <section class="card">
+      <div class="card-h"><span class="eyebrow">점수판</span><span class="eyebrow" id="deckcount">발전카드 25</span></div>
+      <div class="plist" id="plist"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-h"><span class="eyebrow">내 자원</span><span class="eyebrow" id="handcount">0장</span></div>
+      <div class="hand" id="hand"></div>
+      <div class="card-h" style="border-top:1px solid var(--line)"><span class="eyebrow">내 발전카드</span></div>
+      <div class="devs" id="devs"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-h"><span class="eyebrow">행동</span><span class="eyebrow" id="stockline"></span></div>
+      <div class="acts" id="acts">
+        <button class="btn" id="aRoad" type="button"><span class="t">도로</span><span class="c">나무1 흙1</span></button>
+        <button class="btn" id="aSettle" type="button"><span class="t">정착지</span><span class="c">나무1 흙1 양털1 밀1</span></button>
+        <button class="btn" id="aCity" type="button"><span class="t">도시</span><span class="c">밀2 광석3</span></button>
+        <button class="btn" id="aDev" type="button"><span class="t">발전카드</span><span class="c">양털1 밀1 광석1</span></button>
+        <button class="btn wide" id="aTrade" type="button"><span class="t">교역</span><span class="c">은행 · 항구 · 다른 개척자에게 제안</span></button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-h"><span class="eyebrow">기록</span></div>
+      <div id="log"></div>
+    </section>
+  </aside>
+</div>
+
+<div class="veil" id="veil" hidden>
+  <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   카탄 섬 개척기 — 규칙 엔진
+   ═══════════════════════════════════════════════════════════════ */
+'use strict';
+
+const RES = ['lumber', 'brick', 'wool', 'grain', 'ore'];
+const RKO = { lumber: '나무', brick: '흙', wool: '양털', grain: '밀', ore: '광석' };
+const RVAR = { lumber: 'var(--lumber)', brick: 'var(--brick)', wool: 'var(--wool)', grain: 'var(--grain)', ore: 'var(--ore)' };
+const RHEX = { lumber: '#3f8050', brick: '#c8794a', wool: '#a6c761', grain: '#eac152', ore: '#93a0aa' };
+const TERRAIN = {
+  forest:    { res: 'lumber', ko: '숲',   fill: 'var(--lumber)' },
+  hills:     { res: 'brick',  ko: '언덕', fill: 'var(--brick)' },
+  pasture:   { res: 'wool',   ko: '초원', fill: 'var(--wool)' },
+  fields:    { res: 'grain',  ko: '밭',   fill: 'var(--grain)' },
+  mountains: { res: 'ore',    ko: '산',   fill: 'var(--ore)' },
+  desert:    { res: null,     ko: '사막', fill: 'var(--desert)' }
+};
+const COST = {
+  road:     { lumber: 1, brick: 1 },
+  settle:   { lumber: 1, brick: 1, wool: 1, grain: 1 },
+  city:     { grain: 2, ore: 3 },
+  dev:      { wool: 1, grain: 1, ore: 1 }
+};
+const DEV_KO = {
+  knight: '기사', road_building: '도로 건설', year_of_plenty: '풍년', monopoly: '독점', vp: '승리점수'
+};
+const DEV_DESC = {
+  knight: '도적을 옮기고 자원 1장을 훔칩니다. 3장 이상이면 최대 기사력(2점).',
+  road_building: '도로 2개를 무료로 놓습니다.',
+  year_of_plenty: '은행에서 원하는 자원 2장을 가져옵니다.',
+  monopoly: '자원 1종을 지정해 모든 상대에게서 전부 빼앗습니다.',
+  vp: '숨겨진 승리점수 1점. 자동으로 계산됩니다.'
+};
+const PCOLORS = ['var(--p0)', 'var(--p1)', 'var(--p2)', 'var(--p3)'];
+const PHEX = ['#c0433f', '#3a7cc0', '#c1701a', '#8d8371'];  // 로그·텍스트용 (밝은 배경에서도 읽히는 값)
+const AI_NAMES = ['라헬', '도르', '벤야민'];
+
+const pips = n => (n ? 6 - Math.abs(7 - n) : 0);
+const shuffle = (a, rnd) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function mulberry32(s) { const f = function () { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; f.state = () => s; return f; }
+
+let S = null;   // 게임 상태
+
+/* ── 게임판 생성 ─────────────────────────────────────────── */
+function buildBoard(rnd) {
+  const R = 52, ROWS = [3, 4, 5, 4, 3], W = Math.sqrt(3) * R, VS = 1.5 * R;
+  const CX = 330, CY = 302;
+  const B = { R, hexes: [], vertices: [], edges: [], ports: [] };
+
+  const getV = (x, y) => {
+    for (const v of B.vertices) if (Math.abs(v.x - x) < 1.2 && Math.abs(v.y - y) < 1.2) return v;
+    const v = { id: B.vertices.length, x, y, hexes: [], edges: [], adj: [], b: null, port: null };
+    B.vertices.push(v); return v;
+  };
+  const getE = (a, b) => {
+    const lo = Math.min(a.id, b.id), hi = Math.max(a.id, b.id);
+    for (const e of B.edges) if (e.v[0] === lo && e.v[1] === hi) return e;
+    const e = { id: B.edges.length, v: [lo, hi], hexes: [], road: null };
+    B.edges.push(e);
+    a.edges.push(e.id); b.edges.push(e.id);
+    a.adj.push(b.id); b.adj.push(a.id);
+    return e;
+  };
+
+  ROWS.forEach((n, r) => {
+    for (let i = 0; i < n; i++) {
+      const cx = CX + (i - (n - 1) / 2) * W, cy = CY + (r - 2) * VS;
+      const h = { id: B.hexes.length, cx, cy, corners: [], edges: [], terrain: null, res: null, number: null, adj: [] };
+      const cs = [];
+      for (let k = 0; k < 6; k++) {
+        const a = (60 * k - 30) * Math.PI / 180;
+        cs.push(getV(cx + R * Math.cos(a), cy + R * Math.sin(a)));
+      }
+      cs.forEach(v => { h.corners.push(v.id); v.hexes.push(h.id); });
+      for (let k = 0; k < 6; k++) {
+        const e = getE(cs[k], cs[(k + 1) % 6]);
+        h.edges.push(e.id); e.hexes.push(h.id);
+      }
+      B.hexes.push(h);
+    }
+  });
+  // 육각 타일 인접 관계
+  for (const e of B.edges) if (e.hexes.length === 2) {
+    B.hexes[e.hexes[0]].adj.push(e.hexes[1]);
+    B.hexes[e.hexes[1]].adj.push(e.hexes[0]);
+  }
+
+  // 지형 분배
+  const terr = shuffle([
+    ...Array(4).fill('forest'), ...Array(4).fill('pasture'), ...Array(4).fill('fields'),
+    ...Array(3).fill('hills'), ...Array(3).fill('mountains'), 'desert'
+  ], rnd);
+  B.hexes.forEach((h, i) => { h.terrain = terr[i]; h.res = TERRAIN[terr[i]].res; });
+
+  // 숫자 토큰 — 6과 8이 서로 붙지 않을 때까지 재배치
+  const land = B.hexes.filter(h => h.terrain !== 'desert');
+  const NUMS = [2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12];
+  for (let tryN = 0; tryN < 400; tryN++) {
+    const ns = shuffle(NUMS.slice(), rnd);
+    land.forEach((h, i) => { h.number = ns[i]; });
+    const bad = land.some(h => (h.number === 6 || h.number === 8) &&
+      h.adj.some(a => B.hexes[a].number === 6 || B.hexes[a].number === 8));
+    if (!bad) break;
+  }
+  B.hexes.forEach(h => { if (h.terrain === 'desert') h.number = null; });
+
+  // 항구 — 외곽 30개 변을 한 바퀴 정렬한 뒤 2·2·3 간격으로 9곳
+  const perim = B.edges.filter(e => e.hexes.length === 1);
+  const ring = [perim[0]]; const used = new Set([perim[0].id]);
+  let end = perim[0].v[1];
+  B.ringV = [perim[0].v[0], end];          // 섬 외곽선 (입체 슬래브용)
+  while (ring.length < perim.length) {
+    const nx = perim.find(e => !used.has(e.id) && (e.v[0] === end || e.v[1] === end));
+    if (!nx) break;
+    used.add(nx.id); ring.push(nx);
+    end = nx.v[0] === end ? nx.v[1] : nx.v[0];
+    B.ringV.push(end);
+  }
+  B.ringV.pop();                            // 시작점 중복 제거
+  const ptypes = shuffle(['lumber', 'brick', 'wool', 'grain', 'ore', 'any', 'any', 'any', 'any'], rnd);
+  const gaps = [2, 2, 3, 2, 2, 3, 2, 2, 3];
+  let idx = Math.floor(rnd() * ring.length);
+  ptypes.forEach((t, i) => {
+    const e = ring[idx % ring.length];
+    const port = { id: i, type: t, ratio: t === 'any' ? 3 : 2, edge: e.id, v: e.v.slice() };
+    B.ports.push(port);
+    e.v.forEach(vid => { B.vertices[vid].port = port; });
+    idx += gaps[i] + 1;
+  });
+
+  return B;
+}
+
+/* ── 새 게임 ─────────────────────────────────────────────── */
+function newGame(nPlayers, seats) {
+  const seed = (Math.random() * 2 ** 32) >>> 0;
+  const rnd = mulberry32(seed);
+  const B = buildBoard(rnd);
+  const players = [];
+  for (let i = 0; i < nPlayers; i++) {
+    players.push({
+      i, name: seats ? (seats[i].ai ? `${AI_NAMES[i % 3]} AI` : seats[i].name) : (i === 0 ? '나' : AI_NAMES[i - 1]),
+      ai: seats ? !!seats[i].ai : i > 0, color: PCOLORS[i], hex: PHEX[i],
+      res: { lumber: 0, brick: 0, wool: 0, grain: 0, ore: 0 },
+      devs: [], newDevs: [], knights: 0, vpCards: 0,
+      roadsLeft: 15, settLeft: 5, cityLeft: 4,
+      ports: new Set(), roadLen: 0, playedDev: false
+    });
+  }
+  const deck = shuffle([
+    ...Array(14).fill('knight'), ...Array(5).fill('vp'),
+    ...Array(2).fill('road_building'), ...Array(2).fill('year_of_plenty'), ...Array(2).fill('monopoly')
+  ], rnd);
+
+  const order = [];
+  for (let i = 0; i < nPlayers; i++) order.push(i);
+  for (let i = nPlayers - 1; i >= 0; i--) order.push(i);
+
+  S = {
+    seed, rnd, B, players, deck,
+    bank: { lumber: 19, brick: 19, wool: 19, grain: 19, ore: 19 },
+    robber: B.hexes.findIndex(h => h.terrain === 'desert'),
+    cur: 0, phase: 'setupS', dice: [0, 0], turn: 0,
+    setupOrder: order, setupIdx: 0, lastSettle: null, freeRoads: 0,
+    longestOwner: null, longestLen: 4, armyOwner: null, armySize: 2,
+    discardQueue: [], stealFrom: [], winner: null, log: [], busy: false,
+    pick: null, prompt: null, offer: null, promptSeq: 0
+  };
+  return S;
+}
+
+/* ── 계산 ────────────────────────────────────────────────── */
+function handCount(p) { return RES.reduce((s, r) => s + p.res[r], 0); }
+function canAfford(p, cost) { return Object.keys(cost).every(r => p.res[r] >= cost[r]); }
+function pay(p, cost) { for (const r in cost) { p.res[r] -= cost[r]; S.bank[r] += cost[r]; } }
+function refund(p, cost) { for (const r in cost) { p.res[r] += cost[r]; S.bank[r] -= cost[r]; } }
+function give(p, r, n) { const k = Math.min(n, S.bank[r]); p.res[r] += k; S.bank[r] -= k; return k; }
+
+function vpOf(p, hidden) {
+  let v = 0;
+  for (const vx of S.B.vertices) if (vx.b && vx.b.p === p.i) v += vx.b.type === 'city' ? 2 : 1;
+  if (S.longestOwner === p.i) v += 2;
+  if (S.armyOwner === p.i) v += 2;
+  if (hidden !== false) v += p.vpCards;
+  return v;
+}
+function publicVP(p) { return vpOf(p, false); }
+
+function tradeRate(p, r) {
+  let rate = 4;
+  for (const port of p.ports) {
+    if (port.type === 'any') rate = Math.min(rate, 3);
+    else if (port.type === r) rate = Math.min(rate, 2);
+  }
+  return rate;
+}
+
+/* ── 합법 수 ─────────────────────────────────────────────── */
+function vertexFree(v) {
+  if (v.b) return false;
+  return !v.adj.some(id => S.B.vertices[id].b);
+}
+function legalSettlements(pi, setup) {
+  const out = [];
+  for (const v of S.B.vertices) {
+    if (!vertexFree(v)) continue;
+    if (!setup) {
+      const linked = v.edges.some(eid => S.B.edges[eid].road === pi);
+      if (!linked) continue;
+    }
+    out.push(v.id);
+  }
+  return out;
+}
+function legalRoads(pi) {
+  const out = [];
+  for (const e of S.B.edges) {
+    if (e.road !== null) continue;
+    const ok = e.v.some(vid => {
+      const v = S.B.vertices[vid];
+      if (v.b) return v.b.p === pi;
+      return v.edges.some(eid => S.B.edges[eid].road === pi);
+    });
+    if (ok) out.push(e.id);
+  }
+  return out;
+}
+function legalSetupRoads(vid) {
+  return S.B.vertices[vid].edges.filter(eid => S.B.edges[eid].road === null);
+}
+function legalCities(pi) {
+  return S.B.vertices.filter(v => v.b && v.b.p === pi && v.b.type === 'settlement').map(v => v.id);
+}
+
+/* ── 최장 교역로 ─────────────────────────────────────────── */
+function longestRoadFor(pi) {
+  const mine = S.B.edges.filter(e => e.road === pi);
+  if (!mine.length) return 0;
+  const own = new Set(mine.map(e => e.id));
+  let best = 0;
+  const walk = (vid, used) => {
+    if (used.size > best) best = used.size;
+    const v = S.B.vertices[vid];
+    if (v.b && v.b.p !== pi) return;              // 상대 건물이 길을 끊는다
+    for (const eid of v.edges) {
+      if (!own.has(eid) || used.has(eid)) continue;
+      const e = S.B.edges[eid];
+      used.add(eid);
+      walk(e.v[0] === vid ? e.v[1] : e.v[0], used);
+      used.delete(eid);
+    }
+  };
+  for (const e of mine) for (const vid of e.v) {
+    walk(e.v[0] === vid ? e.v[1] : e.v[0], new Set([e.id]));
+  }
+  return best;
+}
+function updateLongest() {
+  const before = S.longestOwner;
+  S.players.forEach(p => { p.roadLen = longestRoadFor(p.i); });
+  if (S.longestOwner !== null && S.players[S.longestOwner].roadLen < 5) {
+    S.longestOwner = null; S.longestLen = 4;
+  }
+  if (S.longestOwner !== null) S.longestLen = S.players[S.longestOwner].roadLen;
+  let bestLen = Math.max(4, S.longestLen), cand = null, tie = false;
+  S.players.forEach(p => {
+    if (p.i === S.longestOwner) return;
+    if (p.roadLen > bestLen) { bestLen = p.roadLen; cand = p.i; tie = false; }
+    else if (p.roadLen === bestLen && cand !== null) tie = true;
+  });
+  if (cand !== null && !tie) { S.longestOwner = cand; S.longestLen = bestLen; }
+  if (S.longestOwner !== before && S.longestOwner !== null)
+    logMsg(`<b style="color:${S.players[S.longestOwner].hex}">${S.players[S.longestOwner].name}</b>가 최장 교역로(${S.longestLen})를 차지했습니다. +2점`);
+}
+function updateArmy() {
+  const before = S.armyOwner;
+  for (const p of S.players) {
+    if (p.knights >= 3 && p.knights > S.armySize) { S.armySize = p.knights; S.armyOwner = p.i; }
+  }
+  if (S.armyOwner !== before)
+    logMsg(`<b style="color:${S.players[S.armyOwner].hex}">${S.players[S.armyOwner].name}</b>가 최대 기사력(기사 ${S.armySize})을 차지했습니다. +2점`);
+}
+
+/* ── 건설 ────────────────────────────────────────────────── */
+function placeSettlement(pi, vid, free) {
+  const p = S.players[pi], v = S.B.vertices[vid];
+  if (!free) pay(p, COST.settle);
+  v.b = { p: pi, type: 'settlement' };
+  p.settLeft--;
+  if (v.port) p.ports.add(v.port);
+  updateLongest();
+  logMsg(`<b style="color:${p.hex}">${p.name}</b> 정착지 건설`);
+}
+function placeRoad(pi, eid, free) {
+  const p = S.players[pi];
+  if (!free) pay(p, COST.road);
+  S.B.edges[eid].road = pi;
+  p.roadsLeft--;
+  updateLongest();
+}
+function upgradeCity(pi, vid) {
+  const p = S.players[pi];
+  pay(p, COST.city);
+  S.B.vertices[vid].b.type = 'city';
+  p.cityLeft--; p.settLeft++;
+  logMsg(`<b style="color:${p.hex}">${p.name}</b> 도시 건설`);
+}
+function buyDev(pi) {
+  const p = S.players[pi];
+  if (!S.deck.length) return null;
+  pay(p, COST.dev);
+  const c = S.deck.pop();
+  if (c === 'vp') p.vpCards++; else p.newDevs.push(c);
+  logMsg(`<b style="color:${p.hex}">${p.name}</b> 발전카드 구입`);
+  return c;
+}
+
+/* ── 생산 ────────────────────────────────────────────────── */
+function produce(roll) {
+  const gains = S.players.map(() => ({}));
+  const hitHexes = [];
+  for (const h of S.B.hexes) {
+    if (h.number !== roll || h.id === S.robber || !h.res) continue;
+    hitHexes.push(h.id);
+    for (const vid of h.corners) {
+      const v = S.B.vertices[vid];
+      if (!v.b) continue;
+      gains[v.b.p][h.res] = (gains[v.b.p][h.res] || 0) + (v.b.type === 'city' ? 2 : 1);
+    }
+  }
+  // 은행 부족 처리: 한 명만 요구하면 남은 만큼, 여러 명이면 아무도 못 받음
+  for (const r of RES) {
+    const total = gains.reduce((s, g) => s + (g[r] || 0), 0);
+    if (total > S.bank[r]) {
+      const claim = gains.filter(g => g[r] > 0);
+      if (claim.length === 1) claim[0][r] = S.bank[r];
+      else gains.forEach(g => { if (g[r]) g[r] = 0; });
+    }
+  }
+  const lines = [];
+  gains.forEach((g, i) => {
+    const parts = [];
+    for (const r of RES) if (g[r]) { give(S.players[i], r, g[r]); parts.push(`${RKO[r]}${g[r]}`); }
+    if (parts.length) lines.push(`<b style="color:${S.players[i].hex}">${S.players[i].name}</b> +${parts.join(' ')}`);
+  });
+  return { gains, lines, hitHexes };
+}
+
+function robberVictims(hexId, pi) {
+  const set = new Set();
+  for (const vid of S.B.hexes[hexId].corners) {
+    const v = S.B.vertices[vid];
+    if (v.b && v.b.p !== pi && handCount(S.players[v.b.p]) > 0) set.add(v.b.p);
+  }
+  return [...set];
+}
+function stealFrom(pi, target) {
+  const t = S.players[target], p = S.players[pi];
+  const pool = [];
+  for (const r of RES) for (let i = 0; i < t.res[r]; i++) pool.push(r);
+  if (!pool.length) return null;
+  const r = pool[Math.floor(S.rnd() * pool.length)];
+  t.res[r]--; p.res[r]++;
+  return r;
+}
+
+function checkWin() {
+  for (const p of S.players) {
+    if (vpOf(p) >= 10) { S.winner = p.i; S.phase = 'over'; return true; }
+  }
+  return false;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AI 개척자
+   ═══════════════════════════════════════════════════════════════ */
+
+const RESW = { brick: 1.15, lumber: 1.15, grain: 1.05, ore: 1.0, wool: .92 };
+
+function aiGoal(p) {
+  if (p.cityLeft > 0 && legalCities(p.i).length) return { name: 'city', cost: COST.city };
+  if (p.settLeft > 0 && legalSettlements(p.i, false).length) return { name: 'settle', cost: COST.settle };
+  if (p.roadsLeft > 0 && legalRoads(p.i).length) return { name: 'road+', cost: COST.settle };
+  return { name: 'dev', cost: COST.dev };
+}
+function aiNeed(p) {
+  const g = aiGoal(p), need = { lumber: 0, brick: 0, wool: 0, grain: 0, ore: 0 };
+  for (const r in g.cost) need[r] = Math.max(0, g.cost[r] - p.res[r]);
+  return need;
+}
+function aiValue(p, r) {
+  const need = aiNeed(p);
+  if (need[r] > 0) return 3;
+  if (p.res[r] <= 1) return 1.1;
+  return 0.45;
+}
+
+function vertexScore(pi, vid) {
+  const v = S.B.vertices[vid];
+  let score = 0; const kinds = {};
+  for (const hid of v.hexes) {
+    const h = S.B.hexes[hid];
+    if (!h.res) continue;
+    score += pips(h.number) * RESW[h.res];
+    kinds[h.res] = (kinds[h.res] || 0) + pips(h.number);
+  }
+  score += Object.keys(kinds).length * 1.7;
+  // 이미 가진 자원과 겹치지 않으면 가산
+  const have = {};
+  for (const vx of S.B.vertices) if (vx.b && vx.b.p === pi)
+    for (const hid of vx.hexes) { const h = S.B.hexes[hid]; if (h.res) have[h.res] = true; }
+  for (const r in kinds) if (!have[r]) score += 2.2;
+  if (v.port) score += v.port.type === 'any' ? 1.3 : (kinds[v.port.type] ? 2.4 : 0.7);
+  return score;
+}
+
+function aiSetupSettlement(pi) {
+  const spots = legalSettlements(pi, true);
+  let best = spots[0], bs = -1;
+  for (const vid of spots) {
+    const s = vertexScore(pi, vid) + S.rnd() * 0.8;
+    if (s > bs) { bs = s; best = vid; }
+  }
+  return best;
+}
+function aiSetupRoad(pi, vid) {
+  const opts = legalSetupRoads(vid);
+  let best = opts[0], bs = -1;
+  for (const eid of opts) {
+    const e = S.B.edges[eid];
+    const far = e.v[0] === vid ? e.v[1] : e.v[0];
+    // 도로 끝에서 뻗어나갈 좋은 자리가 있는지
+    let s = 0;
+    for (const nid of S.B.vertices[far].adj) {
+      const nv = S.B.vertices[nid];
+      if (nv.b) continue;
+      s = Math.max(s, vertexScore(pi, nid));
+    }
+    s += vertexScore(pi, far) * 0.35 + S.rnd() * 0.6;
+    if (s > bs) { bs = s; best = eid; }
+  }
+  return best;
+}
+
+function aiRobberTarget(pi) {
+  let best = null, bs = -1;
+  const leader = S.players.reduce((a, b) => (publicVP(b) > publicVP(a) ? b : a), S.players[0]);
+  for (const h of S.B.hexes) {
+    if (h.id === S.robber || !h.res) continue;
+    let own = false, s = 0;
+    for (const vid of h.corners) {
+      const v = S.B.vertices[vid];
+      if (!v.b) continue;
+      if (v.b.p === pi) { own = true; continue; }
+      const mult = v.b.type === 'city' ? 2 : 1;
+      let w = pips(h.number) * mult;
+      if (v.b.p === leader.i) w *= 1.7;
+      w *= 1 + publicVP(S.players[v.b.p]) * 0.08;
+      if (handCount(S.players[v.b.p]) > 0) w += 1.2;
+      s += w;
+    }
+    if (own) s -= 60;
+    s += S.rnd() * 0.4;
+    if (s > bs) { bs = s; best = h.id; }
+  }
+  return best === null ? (S.robber + 1) % S.B.hexes.length : best;
+}
+function aiPickVictim(list) {
+  return list.reduce((a, b) => {
+    const va = handCount(S.players[a]) + publicVP(S.players[a]) * 1.5;
+    const vb = handCount(S.players[b]) + publicVP(S.players[b]) * 1.5;
+    return vb > va ? b : a;
+  }, list[0]);
+}
+function aiDiscard(p, n) {
+  const need = aiNeed(p);
+  for (let k = 0; k < n; k++) {
+    let worst = null, ws = -1;
+    for (const r of RES) {
+      if (!p.res[r]) continue;
+      const s = p.res[r] - need[r] * 3 + S.rnd() * 0.2;
+      if (s > ws) { ws = s; worst = r; }
+    }
+    if (worst) { p.res[worst]--; S.bank[worst]++; }
+  }
+}
+
+/* 사람이 제안한 교역을 AI가 평가 — offer.give = 사람이 주는 것, offer.get = AI가 내주는 것 */
+function aiJudgeTrade(p, giveToAI, takeFromAI, from) {
+  for (const r of RES) if ((takeFromAI[r] || 0) > p.res[r]) return { ok: false, why: '그 자원이 없습니다' };
+  let gain = 0, loss = 0;
+  for (const r of RES) {
+    gain += (giveToAI[r] || 0) * aiValue(p, r);
+    loss += (takeFromAI[r] || 0) * aiValue(p, r);
+  }
+  // 승점이 높은 상대는 잘 도와주지 않는다
+  const human = from || S.players[0];
+  const rival = publicVP(human) >= 7 ? 1.9 : publicVP(human) >= 5 ? 1.35 : 1.12;
+  if (gain > loss * rival + 0.4) return { ok: true, why: '좋은 거래군요' };
+  if (gain <= loss) return { ok: false, why: '손해입니다' };
+  return { ok: false, why: '조금 부족하네요' };
+}
+
+/* AI가 은행/항구 교역으로 목표에 다가갈 수 있으면 실행 */
+function aiBankTrade(p) {
+  const need = aiNeed(p);
+  const wanted = RES.filter(r => need[r] > 0);
+  if (!wanted.length) return false;
+  for (const want of wanted) {
+    for (const r of RES) {
+      if (r === want || need[r] > 0) continue;
+      const rate = tradeRate(p, r);
+      if (p.res[r] >= rate && S.bank[want] > 0) {
+        p.res[r] -= rate; S.bank[r] += rate; p.res[want]++; S.bank[want]--;
+        logMsg(`<b style="color:${p.hex}">${p.name}</b> ${rate}:1 교역 — ${RKO[r]}${rate} → ${RKO[want]}1`);
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/* 도로를 놓을 최적 위치 (새 정착지 자리를 여는 방향) */
+function aiBestRoad(pi) {
+  const opts = legalRoads(pi);
+  if (!opts.length) return null;
+  let best = null, bs = -1;
+  for (const eid of opts) {
+    const e = S.B.edges[eid];
+    let s = 0;
+    for (const vid of e.v) {
+      const v = S.B.vertices[vid];
+      if (vertexFree(v)) s = Math.max(s, vertexScore(pi, vid) * 1.0);
+      for (const nid of v.adj) {
+        const nv = S.B.vertices[nid];
+        if (vertexFree(nv)) s = Math.max(s, vertexScore(pi, nid) * 0.62);
+      }
+    }
+    s += S.rnd() * 0.5;
+    if (s > bs) { bs = s; best = eid; }
+  }
+  return best;
+}
+function aiBestSettlement(pi) {
+  const spots = legalSettlements(pi, false);
+  if (!spots.length) return null;
+  return spots.reduce((a, b) => (vertexScore(pi, b) > vertexScore(pi, a) ? b : a), spots[0]);
+}
+function aiBestCity(pi) {
+  const spots = legalCities(pi);
+  if (!spots.length) return null;
+  const val = vid => S.B.vertices[vid].hexes.reduce((s, hid) => s + pips(S.B.hexes[hid].number), 0);
+  return spots.reduce((a, b) => (val(b) > val(a) ? b : a), spots[0]);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   게임판 아트 — 입체 타일·지형 일러스트·3D 말
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 지형별 실제 색 (SVG 안에서 명암 계산에 쓰므로 hex 값으로 둔다) */
+const TER_ART = {
+  forest:    { top: '#3f8050', bot: '#215136', ko: '나무' },
+  pasture:   { top: '#a6c761', bot: '#749a42', ko: '양털' },
+  fields:    { top: '#eac152', bot: '#c08f27', ko: '밀' },
+  hills:     { top: '#c8794a', bot: '#8d4824', ko: '흙' },
+  mountains: { top: '#93a0aa', bot: '#5c6873', ko: '광석' },
+  desert:    { top: '#e5d3a4', bot: '#bda674', ko: '사막' }
+};
+
+/* 말 색 — 면마다 명암을 주려면 실제 값이 필요하다 */
+const PIECE = [
+  { top: '#e0675f', base: '#c8433d', side: '#93292a', dark: '#6a1c1e' },
+  { top: '#5d9ee0', base: '#2f79c4', side: '#1d5089', dark: '#123657' },
+  { top: '#f4ab5c', base: '#e08a2b', side: '#a75e12', dark: '#6f3c0a' },
+  { top: '#fbf8ef', base: '#e6e0d0', side: '#b0a894', dark: '#736c5c' }
+];
+
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  if (amt > 0) { r += (255 - r) * amt; g += (255 - g) * amt; b += (255 - b) * amt; }
+  else { r *= 1 + amt; g *= 1 + amt; b *= 1 + amt; }
+  return '#' + [r, g, b].map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('');
+}
+function tileRnd(id) {
+  let s = (id * 9301 + 49297) % 233280;
+  return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+}
+const f1 = n => n.toFixed(1);
+
+/* ── 지형 일러스트 ───────────────────────────────────────── */
+function gTree(x, y, s) {
+  return `<g transform="translate(${f1(x)},${f1(y)}) scale(${s.toFixed(2)})">
+    <ellipse cx="1.5" cy="15.5" rx="10" ry="3.2" fill="#0f2a1a" opacity=".34"/>
+    <rect x="-2.2" y="4" width="4.4" height="12" rx="1.6" fill="#553a24"/>
+    <path d="M0,-2 L11,8 L-11,8 Z" fill="#296035"/>
+    <path d="M0,-2 L0,8 L-11,8 Z" fill="#347a42"/>
+    <path d="M0,-11 L9.2,0 L-9.2,0 Z" fill="#2e6e3c"/>
+    <path d="M0,-11 L0,0 L-9.2,0 Z" fill="#3c8b4b"/>
+    <path d="M0,-19.5 L7.2,-7 L-7.2,-7 Z" fill="#347a42"/>
+    <path d="M0,-19.5 L0,-7 L-7.2,-7 Z" fill="#459c56"/>
+  </g>`;
+}
+function artForest(rnd) {
+  const spots = [[-33, -8, .8], [-20, -24, .74], [20, -24, .76], [33, -6, .82], [-32, 16, .95], [32, 16, .96], [-14, 30, 1.05], [12, 32, 1.02]];
+  return spots.sort((a, b) => a[1] - b[1])
+    .map(([x, y, s]) => gTree(x + (rnd() - .5) * 6, y + (rnd() - .5) * 4, s * (.92 + rnd() * .18))).join('');
+}
+
+function gMount(x, b, w, h) {
+  const lit = '#98a5b0', shd = '#5b6874', snow = '#f0f4f6', snow2 = '#bcc8d0';
+  return `<g>
+    <ellipse cx="${f1(x)}" cy="${f1(b)}" rx="${f1(w * .8)}" ry="3" fill="#3d474f" opacity=".16"/>
+    <path d="M${f1(x - w)},${f1(b)} L${f1(x)},${f1(b - h)} L${f1(x)},${f1(b)} Z" fill="${lit}"/>
+    <path d="M${f1(x)},${f1(b - h)} L${f1(x + w)},${f1(b)} L${f1(x)},${f1(b)} Z" fill="${shd}"/>
+    <path d="M${f1(x - w * .26)},${f1(b - h * .7)} L${f1(x)},${f1(b - h)} L${f1(x)},${f1(b - h * .7)} Z" fill="${snow}"/>
+    <path d="M${f1(x)},${f1(b - h)} L${f1(x + w * .26)},${f1(b - h * .7)} L${f1(x)},${f1(b - h * .7)} Z" fill="${snow2}"/>
+    <path d="M${f1(x - w)},${f1(b)} L${f1(x)},${f1(b - h)} L${f1(x + w)},${f1(b)}" fill="none" stroke="#39434c" stroke-width="1.6" stroke-linejoin="round" opacity=".7"/>
+  </g>`;
+}
+function gOre(x, y, s) {
+  return `<g transform="translate(${f1(x)},${f1(y)}) scale(${s.toFixed(2)})">
+    <ellipse cy="7" rx="7" ry="2.2" fill="#2f383f" opacity=".22"/>
+    <path d="M-7,6 L-4,-6 L2,-8 L7,2 L3,7 Z" fill="#4a555e"/>
+    <path d="M-4,-6 L2,-8 L1,1 L-5,2 Z" fill="#6d7a84"/>
+    <path d="M2,-8 L7,2 L1,1 Z" fill="#39434b"/>
+    <circle cx="-1" cy="-2" r="1.5" fill="#8fd6d0" opacity=".85"/>
+    <circle cx="3" cy="3" r="1.1" fill="#8fd6d0" opacity=".6"/>
+  </g>`;
+}
+function artMountains(rnd) {
+  return gMount(-25, 30, 22, 40) + gMount(24, 32, 24, 44) + gMount(-1, 40, 21, 28) +
+    gOre(31, 2, .85 + rnd() * .2) + gOre(-32, 8, .78 + rnd() * .2);
+}
+
+function gEar(rot) {
+  const k = [];
+  for (let i = 0; i < 5; i++) {
+    const y = -2 - i * 3.4, r = 3.1 - i * .32;
+    k.push(`<ellipse cx="${f1(-r)}" cy="${f1(y)}" rx="2.5" ry="1.7" transform="rotate(-32 ${f1(-r)} ${f1(y)})" fill="#e9c258" stroke="#7d5510" stroke-width=".9"/>`);
+    k.push(`<ellipse cx="${f1(r)}" cy="${f1(y)}" rx="2.5" ry="1.7" transform="rotate(32 ${f1(r)} ${f1(y)})" fill="#f2d67e" stroke="#7d5510" stroke-width=".9"/>`);
+  }
+  return `<g transform="rotate(${rot})">
+    <path d="M0,13 L0,-4" stroke="#7d5510" stroke-width="2.4" stroke-linecap="round"/>
+    ${k.join('')}
+    <ellipse cy="-18.5" rx="2" ry="3.4" fill="#f4dc92" stroke="#7d5510" stroke-width=".9"/>
+  </g>`;
+}
+function gSheaf(x, y, s) {
+  return `<g transform="translate(${f1(x)},${f1(y)}) scale(${(s * .88).toFixed(2)})">
+    <ellipse cy="13" rx="8" ry="2.2" fill="#6d4b0d" opacity=".18"/>
+    ${gEar(-17)}${gEar(15)}${gEar(0)}
+    <rect x="-6" y="2" width="12" height="4.6" rx="2.3" fill="#7b5510"/>
+    <rect x="-6" y="2" width="12" height="2" rx="1" fill="#ab7d20"/>
+  </g>`;
+}
+
+function artFields(rnd) {
+  const rows = [];
+  for (let i = 0; i < 7; i++) {
+    const y = -26 + i * 9.4, w = 44 - Math.abs(y) * .34;
+    rows.push(`<path d="M${f1(-w)},${f1(y)} Q0,${f1(y + 3.6)} ${f1(w)},${f1(y)}" stroke="#a97c1a" stroke-width="2.6" fill="none" opacity=".42"/>`);
+    rows.push(`<path d="M${f1(-w)},${f1(y + 3)} Q0,${f1(y + 6.6)} ${f1(w)},${f1(y + 3)}" stroke="#f6dc8c" stroke-width="1.4" fill="none" opacity=".34"/>`);
+  }
+  return rows.join('') + gSheaf(-27, 14, .92 + rnd() * .1) + gSheaf(2, 28, 1.05 + rnd() * .1) + gSheaf(28, 6, .86 + rnd() * .1);
+}
+
+function gBrick(x, y, s) {
+  return `<g transform="translate(${f1(x)},${f1(y)}) scale(${s.toFixed(2)})">
+    <path d="M0,-7 L11,-1.5 L0,4 L-11,-1.5 Z" fill="#e0996a"/>
+    <path d="M-11,-1.5 L0,4 L0,12 L-11,6.5 Z" fill="#a8552c"/>
+    <path d="M11,-1.5 L0,4 L0,12 L11,6.5 Z" fill="#83401f"/>
+  </g>`;
+}
+function artHills(rnd) {
+  const t = [];
+  for (let i = 0; i < 3; i++) {
+    const y = -14 + i * 15, w = 42 - i * 3;
+    t.push(`<path d="M${f1(-w)},${f1(y)} Q0,${f1(y - 7)} ${f1(w)},${f1(y)} L${f1(w)},${f1(y + 5)} Q0,${f1(y - 2)} ${f1(-w)},${f1(y + 5)} Z" fill="#a85b30" opacity=".55"/>`);
+    t.push(`<path d="M${f1(-w)},${f1(y)} Q0,${f1(y - 7)} ${f1(w)},${f1(y)}" stroke="#e09a63" stroke-width="1.6" fill="none" opacity=".5"/>`);
+  }
+  return t.join('') +
+
+    gBrick(-28, 10, .88) + gBrick(-6, 26, 1.05) + gBrick(22, 14, .95) + gBrick(30, -8, .78) + gBrick(-30, -10, .76);
+}
+
+function gSheep(x, y, s, flip) {
+  return `<g transform="translate(${f1(x)},${f1(y)}) scale(${(flip ? -s : s).toFixed(2)},${s.toFixed(2)})">
+    <ellipse cx="0" cy="11" rx="9.5" ry="2.6" fill="#3f5324" opacity=".22"/>
+    <rect x="-5" y="4" width="2.6" height="7" rx="1.3" fill="#5e5a4e"/>
+    <rect x="3" y="4" width="2.6" height="7" rx="1.3" fill="#4e4b41"/>
+    <ellipse cx="0" cy="-1" rx="10.5" ry="7.5" fill="#efeade"/>
+    <ellipse cx="-3" cy="-3.5" rx="6.5" ry="4.4" fill="#fdfcf7"/>
+    <circle cx="-7.5" cy="-3" r="2.6" fill="#fdfcf7"/><circle cx="1" cy="-7" r="3.2" fill="#f6f2e8"/>
+    <ellipse cx="8.5" cy="-3.5" rx="4.2" ry="4.8" fill="#5e5a4e"/>
+    <ellipse cx="11.6" cy="-2" rx="1.8" ry="1.4" fill="#43403a"/>
+    <circle cx="10.2" cy="-5" r=".9" fill="#1d1b18"/>
+  </g>`;
+}
+function artPasture(rnd) {
+  const g = [];
+  for (let i = 0; i < 3; i++) {
+    const y = -18 + i * 17, w = 42 - i * 2;
+    g.push(`<path d="M${f1(-w)},${f1(y + 6)} Q${f1(-w * .35)},${f1(y - 6)} 0,${f1(y + 2)} Q${f1(w * .4)},${f1(y + 9)} ${f1(w)},${f1(y - 1)} L${f1(w)},${f1(y + 12)} L${f1(-w)},${f1(y + 12)} Z" fill="#8bb04c" opacity=".5"/>`);
+  }
+  const tuft = (x, y, s) => `<g transform="translate(${f1(x)},${f1(y)}) scale(${s})">
+    <path d="M0,0 L-4,-7 M0,0 L0,-9 M0,0 L4,-7" stroke="#6d9439" stroke-width="1.8" stroke-linecap="round" fill="none"/></g>`;
+  const t = [tuft(-34, -6, 1), tuft(-16, -20, .9), tuft(16, -18, 1), tuft(34, -8, .95), tuft(-8, 34, 1.1), tuft(24, 26, .9), tuft(-32, 26, 1)].join('');
+  return g.join('') + t +
+    gSheep(-25, 12, .92 + rnd() * .1, false) + gSheep(6, 28, 1.06, true) + gSheep(28, 2, .84, false) + gSheep(-14, -14, .74, true);
+}
+
+function artDesert(rnd) {
+  const d = [];
+  for (let i = 0; i < 3; i++) {
+    const y = -10 + i * 16;
+    d.push(`<path d="M-44,${f1(y + 8)} Q-16,${f1(y - 6)} 4,${f1(y + 3)} Q24,${f1(y + 11)} 44,${f1(y - 1)} L44,${f1(y + 16)} L-44,${f1(y + 16)} Z" fill="#d4bd88" opacity=".6"/>`);
+    d.push(`<path d="M-44,${f1(y + 8)} Q-16,${f1(y - 6)} 4,${f1(y + 3)} Q24,${f1(y + 11)} 44,${f1(y - 1)}" stroke="#f2e4bd" stroke-width="1.5" fill="none" opacity=".55"/>`);
+  }
+  d.push(`<g transform="translate(-27,4)">
+    <ellipse cy="16" rx="10" ry="3" fill="#96814f" opacity=".4"/>
+    <rect x="-4" y="-16" width="8" height="32" rx="4" fill="#4f7f45"/>
+    <rect x="-4" y="-16" width="3.6" height="32" rx="1.8" fill="#65a057"/>
+    <path d="M-4,-2 L-13,-2 L-13,-13" stroke="#4f7f45" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M4,-8 L12,-8 L12,-17" stroke="#5b9150" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>`);
+  const rock = (x, y, s) => `<g transform="translate(${f1(x)},${f1(y)}) scale(${s})">
+    <path d="M-8,4 L-5,-4 L2,-6 L8,0 L6,4 Z" fill="#9d8760"/>
+    <path d="M-5,-4 L2,-6 L1,1 L-6,1 Z" fill="#c3ad82"/>
+    <path d="M2,-6 L8,0 L1,1 Z" fill="#8a7452"/></g>`;
+  d.push(rock(10, 30, 1) + rock(31, 6, .8) + rock(24, -16, .7));
+  return d.join('');
+}
+
+const TER_FN = { forest: artForest, pasture: artPasture, fields: artFields, hills: artHills, mountains: artMountains, desert: artDesert };
+
+/* ── 정적 레이어: 바다·섬 슬래브·타일·숫자·항구 ─────────── */
+function buildStaticSVG() {
+  const B = S.B, R = B.R, o = [];
+
+  o.push('<defs>');
+  for (const k in TER_ART) {
+    o.push(`<linearGradient id="tg-${k}" x1="0.15" y1="0" x2="0.75" y2="1">
+      <stop offset="0" stop-color="${shade(TER_ART[k].top, .1)}"/>
+      <stop offset="0.55" stop-color="${TER_ART[k].top}"/>
+      <stop offset="1" stop-color="${TER_ART[k].bot}"/></linearGradient>`);
+  }
+  o.push(`<linearGradient id="slab" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#6b5738"/><stop offset="1" stop-color="#3a2c1b"/></linearGradient>`);
+  o.push(`<radialGradient id="tok" cx="0.36" cy="0.28" r="0.85">
+    <stop offset="0" stop-color="#fdf7e6"/><stop offset="1" stop-color="#dcd0b0"/></radialGradient>`);
+  o.push(`<linearGradient id="dock" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#9c7a4c"/><stop offset="1" stop-color="#6a4f2e"/></linearGradient>`);
+  o.push(`<clipPath id="hexclip"><polygon points="${hexPath({ cx: 0, cy: 0 }, R - 1.5)}"/></clipPath>`);
+  o.push('</defs>');
+
+  // 바다 물결
+  o.push('<g opacity=".13" fill="none" stroke="#93d6e6" stroke-width="1.2">');
+  for (let i = 0; i < 6; i++) o.push(`<circle cx="330" cy="302" r="${228 + i * 25}"/>`);
+  o.push('</g>');
+
+  // 섬 그림자 + 두께
+  const ring = B.ringV.map(id => B.vertices[id]);
+  const poly = d => ring.map(v => `${f1(v.x)},${f1(v.y + d)}`).join(' ');
+  o.push(`<polygon points="${poly(22)}" fill="#061b25" opacity=".45"/>`);
+  o.push(`<polygon points="${poly(13)}" fill="url(#slab)"/>`);
+  o.push(`<polygon points="${poly(13)}" fill="none" stroke="#2a2013" stroke-width="2"/>`);
+  o.push(`<polygon points="${poly(0)}" fill="#7a6440"/>`);
+
+  // 타일
+  for (const h of B.hexes) {
+    const a = TER_ART[h.terrain], rnd = tileRnd(h.id * 7 + 3);
+    o.push(`<g transform="translate(${f1(h.cx)},${f1(h.cy)})">
+      <polygon points="${hexPath({ cx: 0, cy: 0 }, R - 1.5)}" fill="url(#tg-${h.terrain})"/>
+      <g clip-path="url(#hexclip)">${TER_FN[h.terrain](rnd)}
+        <polygon points="${hexPath({ cx: 0, cy: 0 }, R - 1.5)}" fill="none" stroke="#000" stroke-opacity=".22" stroke-width="9"/>
+        <path d="M${f1(-(R - 1.5) * 0.866)},${f1(-(R - 1.5) * .5)} L0,${f1(-(R - 1.5))} L${f1((R - 1.5) * .866)},${f1(-(R - 1.5) * .5)}" fill="none" stroke="#fff" stroke-opacity=".26" stroke-width="3"/>
+      </g>
+      <polygon points="${hexPath({ cx: 0, cy: 0 }, R - 1.5)}" fill="none" stroke="#20180d" stroke-opacity=".55" stroke-width="1.8" stroke-linejoin="round"/>
+    </g>`);
+
+    // 자원 이름표
+    o.push(`<g transform="translate(${f1(h.cx)},${f1(h.cy - 30)})">
+      <rect x="-22" y="-9" width="44" height="17" rx="8.5" fill="#14100a" opacity=".5"/>
+      <text class="hexlabel" y="4">${a.ko}</text></g>`);
+
+    // 숫자 토큰
+    if (h.number) {
+      const hot = h.number === 6 || h.number === 8, np = pips(h.number);
+      o.push(`<g transform="translate(${f1(h.cx)},${f1(h.cy - 2)})">
+        <ellipse cy="5" rx="17.5" ry="16" fill="#12100a" opacity=".42"/>
+        <circle r="17" fill="#8d7f5f"/>
+        <circle r="15.6" cy="-1.2" fill="url(#tok)"/>
+        <circle r="13" cy="-1.2" fill="none" stroke="#b6a582" stroke-width=".9" opacity=".8"/>
+        <text class="toknum${hot ? ' hot' : ''}" y="1" style="font-size:${h.number >= 10 ? 13 : 15}px">${h.number}</text>
+        <g>${Array.from({ length: np }, (_, i) =>
+          `<circle class="tokpip${hot ? ' hot' : ''}" cx="${f1((i - (np - 1) / 2) * 4.4)}" cy="9.5" r="1.35"/>`).join('')}</g>
+      </g>`);
+    }
+  }
+
+  // 항구 — 나무 부두
+  for (const port of B.ports) {
+    const e = B.edges[port.edge];
+    const a = B.vertices[e.v[0]], b = B.vertices[e.v[1]];
+    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    const hc = B.hexes[e.hexes[0]];
+    let dx = mx - hc.cx, dy = my - hc.cy;
+    const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
+    const px = mx + dx * 31, py = my + dy * 31;
+    const col = port.type === 'any' ? '#c3ae83' : shade(RHEX[port.type], .18);
+    o.push(`<line x1="${f1(a.x)}" y1="${f1(a.y)}" x2="${f1(px)}" y2="${f1(py)}" stroke="#2b1f12" stroke-width="4.5" stroke-linecap="round" opacity=".55"/>`);
+    o.push(`<line x1="${f1(b.x)}" y1="${f1(b.y)}" x2="${f1(px)}" y2="${f1(py)}" stroke="#2b1f12" stroke-width="4.5" stroke-linecap="round" opacity=".55"/>`);
+    o.push(`<line x1="${f1(a.x)}" y1="${f1(a.y)}" x2="${f1(px)}" y2="${f1(py)}" stroke="#a5854f" stroke-width="2.6" stroke-linecap="round"/>`);
+    o.push(`<line x1="${f1(b.x)}" y1="${f1(b.y)}" x2="${f1(px)}" y2="${f1(py)}" stroke="#a5854f" stroke-width="2.6" stroke-linecap="round"/>`);
+    o.push(`<g transform="translate(${f1(px)},${f1(py)})">
+      <rect x="-22" y="-11" width="44" height="30" rx="7" fill="#1a1108" opacity=".5"/>
+      <rect x="-22" y="-14" width="44" height="29" rx="7" fill="url(#dock)" stroke="#2f2113" stroke-width="1.6"/>
+      <rect x="-18" y="-11" width="36" height="3" rx="1.5" fill="#c39b5f" opacity=".5"/>
+      <text class="port-l" y="-1">${port.ratio}:1</text>
+      <text class="port-l" y="10" style="font-size:8.5px;fill:${col}">${port.type === 'any' ? '아무거나' : RKO[port.type]}</text>
+    </g>`);
+  }
+
+  return o.join('');
+}
+
+/* ── 3D 말 ───────────────────────────────────────────────── */
+const DVX = 6, DVY = -4;   // 깊이 방향 벡터
+
+function gSettlement(pi) {
+  const c = PIECE[pi], P = (x, y) => `${f1(x)},${f1(y)}`;
+  const w = 11.5, H = 12, rh = 10.5, dx = 7.5, dy = -5.5;
+  const roofR = shade(c.base, .26), roofF = shade(c.base, .1);
+  return `<g>
+    <ellipse cx="4" cy="11" rx="17" ry="5.4" fill="#0a1519" opacity=".42"/>
+    <polygon points="${P(w, 0)} ${P(w + dx, dy)} ${P(w + dx, -H + dy)} ${P(w, -H)}" fill="${c.side}" stroke="${c.dark}" stroke-width="1.2" stroke-linejoin="round"/>
+    <polygon points="${P(w, -H)} ${P(0, -H - rh)} ${P(dx, -H - rh + dy)} ${P(w + dx, -H + dy)}" fill="${roofR}" stroke="${c.dark}" stroke-width="1.2" stroke-linejoin="round"/>
+    <polygon points="${P(-w, 0)} ${P(w, 0)} ${P(w, -H)} ${P(-w, -H)}" fill="${c.base}" stroke="${c.dark}" stroke-width="1.3" stroke-linejoin="round"/>
+    <polygon points="${P(-w - 1.5, -H)} ${P(w + 1.5, -H)} ${P(0, -H - rh)}" fill="${roofF}" stroke="${c.dark}" stroke-width="1.3" stroke-linejoin="round"/>
+    <rect x="-3.6" y="-8" width="7.2" height="8" rx="1" fill="${c.dark}" opacity=".65"/>
+    <rect x="-9" y="-9.5" width="4" height="4" rx=".8" fill="#ffe9b0" opacity=".55"/>
+    <rect x="5" y="-9.5" width="4" height="4" rx=".8" fill="#ffe9b0" opacity=".4"/>
+    <path d="M${P(-w, 0)} L${P(-w, -H)} L${P(0, -H - rh)}" fill="none" stroke="${shade(c.top, .3)}" stroke-width="1.6" stroke-linejoin="round" opacity=".9"/>
+  </g>`;
+}
+
+function gCity(pi) {
+  const c = PIECE[pi], P = (x, y) => `${f1(x)},${f1(y)}`;
+  const dx = 7.5, dy = -5.5;
+  const roofR = shade(c.base, .26), roofF = shade(c.base, .1);
+  const bl = -18, br = 1, bH = 11, brh = 8;          // 본채
+  const tl = 3, tr = 17, tH = 23, trh = 8;           // 탑
+  return `<g>
+    <ellipse cx="4" cy="12" rx="25" ry="6" fill="#0a1519" opacity=".44"/>
+    <polygon points="${P(tr, 0)} ${P(tr + dx, dy)} ${P(tr + dx, -tH + dy)} ${P(tr, -tH)}" fill="${c.side}" stroke="${c.dark}" stroke-width="1.2" stroke-linejoin="round"/>
+    <polygon points="${P(tr, -tH)} ${P((tl + tr) / 2, -tH - trh)} ${P((tl + tr) / 2 + dx, -tH - trh + dy)} ${P(tr + dx, -tH + dy)}" fill="${roofR}" stroke="${c.dark}" stroke-width="1.2" stroke-linejoin="round"/>
+    <polygon points="${P(br, 0)} ${P(br + dx, dy)} ${P(br + dx, -bH + dy)} ${P(br, -bH)}" fill="${shade(c.side, -.08)}" stroke="${c.dark}" stroke-width="1.1" stroke-linejoin="round"/>
+    <polygon points="${P(bl, 0)} ${P(br, 0)} ${P(br, -bH)} ${P(bl, -bH)}" fill="${c.base}" stroke="${c.dark}" stroke-width="1.3" stroke-linejoin="round"/>
+    <polygon points="${P(bl - 1.5, -bH)} ${P(br + 1.5, -bH)} ${P((bl + br) / 2, -bH - brh)}" fill="${roofF}" stroke="${c.dark}" stroke-width="1.3" stroke-linejoin="round"/>
+    <polygon points="${P(tl, 0)} ${P(tr, 0)} ${P(tr, -tH)} ${P(tl, -tH)}" fill="${c.base}" stroke="${c.dark}" stroke-width="1.3" stroke-linejoin="round"/>
+    <polygon points="${P(tl - 1.5, -tH)} ${P(tr + 1.5, -tH)} ${P((tl + tr) / 2, -tH - trh)}" fill="${roofF}" stroke="${c.dark}" stroke-width="1.3" stroke-linejoin="round"/>
+    <rect x="-14" y="-7.5" width="4.6" height="7.5" rx="1" fill="${c.dark}" opacity=".6"/>
+    <rect x="-6.5" y="-9" width="4.6" height="4.4" rx=".8" fill="#ffe9b0" opacity=".5"/>
+    <rect x="6" y="-19" width="5" height="5" rx="1" fill="#ffe9b0" opacity=".55"/>
+    <rect x="6" y="-10" width="5" height="5" rx="1" fill="#ffe9b0" opacity=".4"/>
+    <rect x="12" y="-19" width="3.4" height="5" rx=".8" fill="${c.dark}" opacity=".45"/>
+    <path d="M${P(bl, 0)} L${P(bl, -bH)} L${P((bl + br) / 2, -bH - brh)}" fill="none" stroke="${shade(c.top, .3)}" stroke-width="1.5" stroke-linejoin="round" opacity=".85"/>
+    <path d="M${P(tl, -tH * .55)} L${P(tl, -tH)} L${P((tl + tr) / 2, -tH - trh)}" fill="none" stroke="${shade(c.top, .3)}" stroke-width="1.5" stroke-linejoin="round" opacity=".85"/>
+  </g>`;
+}
+
+function gRoad(a, b, pi) {
+  const c = PIECE[pi];
+  const ux = (b.x - a.x) * .18, uy = (b.y - a.y) * .18;
+  const x1 = a.x + ux, y1 = a.y + uy, x2 = b.x - ux, y2 = b.y - uy;
+  const L = (dy, col, w) => `<line x1="${f1(x1)}" y1="${f1(y1 + dy)}" x2="${f1(x2)}" y2="${f1(y2 + dy)}" stroke="${col}" stroke-width="${w}" stroke-linecap="round"/>`;
+  return L(6, '#0b1a1f', 11) + L(4.5, c.dark, 10.5) + L(2.6, c.side, 10.5) + L(0, c.base, 9.5) + L(-1.9, c.top, 4.4);
+}
+
+function gRobber(x, y) {
+  return `<g class="robber" transform="translate(${f1(x)},${f1(y)})">
+    <ellipse cy="17" rx="13" ry="4.2" fill="#07131a" opacity=".5"/>
+    <path d="M-11,17 C-11,6 -6,1 -3,-2 L3,-2 C6,1 11,6 11,17 Z" fill="#39424a"/>
+    <path d="M-11,17 C-11,6 -6,1 -3,-2 L0,-2 L0,17 Z" fill="#4d5860"/>
+    <ellipse cx="0" cy="-8" rx="7.2" ry="7.6" fill="#39424a"/>
+    <ellipse cx="-2.2" cy="-9.5" rx="4.6" ry="5" fill="#5a666f"/>
+    <ellipse cy="17" rx="11" ry="3.4" fill="#232a30"/>
+  </g>`;
+}
+
+/* ── 게임판 렌더 ─────────────────────────────────────────── */
+function drawBoard() {
+  const B = S.B, R = B.R, out = [];
+  if (!S.staticSVG) S.staticSVG = buildStaticSVG();
+  out.push(S.staticSVG);
+
+  // 도적이 막은 타일 어둡게
+  const rh = B.hexes[S.robber];
+  out.push(`<polygon points="${hexPath(rh, R - 1.5)}" fill="#080d10" opacity=".46"/>`);
+
+  // 도로 → 건물 (위쪽부터 그려 겹침이 자연스럽게)
+  for (const e of B.edges) {
+    if (e.road === null) continue;
+    out.push(gRoad(B.vertices[e.v[0]], B.vertices[e.v[1]], e.road));
+  }
+  const built = B.vertices.filter(v => v.b).sort((a, b) => a.y - b.y);
+  for (const v of built) {
+    out.push(`<g transform="translate(${f1(v.x)},${f1(v.y + 5)})">${v.b.type === 'city' ? gCity(v.b.p) : gSettlement(v.b.p)}</g>`);
+  }
+
+  out.push(gRobber(rh.cx - 26, rh.cy - 6));
+
+  // 선택 하이라이트
+  if (S.pick && S.pick.seat === ME) {
+    const col = PIECE[S.cur].base;
+    if (S.pick.kind === 'v') {
+      for (const id of S.pick.options) {
+        const v = B.vertices[id];
+        out.push(`<g class="spot" data-pick="v" data-id="${id}" transform="translate(${f1(v.x)},${f1(v.y)})">
+          <circle class="halo" r="17" fill="${col}" opacity=".2"/>
+          <circle class="core" r="9" fill="${col}" stroke="#fff" stroke-width="2.6" opacity=".92"/>
+        </g>`);
+      }
+    } else if (S.pick.kind === 'e') {
+      for (const id of S.pick.options) {
+        const e = B.edges[id], a = B.vertices[e.v[0]], b = B.vertices[e.v[1]];
+        const ux = (b.x - a.x) * .18, uy = (b.y - a.y) * .18;
+        out.push(`<g class="eplace" data-pick="e" data-id="${id}">
+          <line x1="${f1(a.x + ux)}" y1="${f1(a.y + uy)}" x2="${f1(b.x - ux)}" y2="${f1(b.y - uy)}" stroke="transparent" stroke-width="22" stroke-linecap="round"/>
+          <line class="core" x1="${f1(a.x + ux)}" y1="${f1(a.y + uy)}" x2="${f1(b.x - ux)}" y2="${f1(b.y - uy)}" stroke="#0b1a1f" stroke-width="11" stroke-linecap="round" stroke-opacity=".45"/>
+          <line class="core" x1="${f1(a.x + ux)}" y1="${f1(a.y + uy)}" x2="${f1(b.x - ux)}" y2="${f1(b.y - uy)}" stroke="${col}" stroke-width="8" stroke-linecap="round" stroke-opacity=".85"/>
+        </g>`);
+      }
+    } else if (S.pick.kind === 'h') {
+      for (const id of S.pick.options) {
+        const h = B.hexes[id];
+        out.push(`<g class="spot" data-pick="h" data-id="${id}">
+          <polygon points="${hexPath(h, R - 5)}" fill="#0b1216" opacity=".3"/>
+          <circle class="core" cx="${f1(h.cx)}" cy="${f1(h.cy)}" r="11" fill="#f4efe1" stroke="#14181a" stroke-width="2.6" opacity=".95"/>
+        </g>`);
+      }
+    }
+  }
+
+  $('#board').innerHTML = out.join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   화면·조작·진행
+   ═══════════════════════════════════════════════════════════════ */
+
+const $ = s => document.querySelector(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+let SPEED = 1;
+
+let ME = 0;        // 이 화면이 조작하는 자리
+let NET = null;    // null = 혼자 하기, { role: 'host' | 'guest' } = 온라인 방
+
+function logMsg(html, sys) {
+  if (!S) return;
+  S.log.push({ html, sys });
+  if (S.log.length > 400) S.log.splice(0, S.log.length - 300);
+  renderLog();
+}
+
+/* ── 선택 상태 ───────────────────────────────────────────── */
+function setPick(kind, options, fn, label, cancelable) {
+  S.pick = { kind, options: new Set(options), fn, label: label || '', cancelable: !!cancelable, seat: S.cur };
+  render();
+}
+function clearPick() { S.pick = null; }
+
+/* ── 게임판 그리기 ───────────────────────────────────────── */
+function hexPath(h, R) {
+  const p = [];
+  for (let k = 0; k < 6; k++) {
+    const a = (60 * k - 30) * Math.PI / 180;
+    p.push(`${(h.cx + R * Math.cos(a)).toFixed(2)},${(h.cy + R * Math.sin(a)).toFixed(2)}`);
+  }
+  return p.join(' ');
+}
+
+/* ── 주사위 ──────────────────────────────────────────────── */
+const DIEPIP = {
+  1: [[2, 2]], 2: [[1, 1], [3, 3]], 3: [[1, 1], [2, 2], [3, 3]],
+  4: [[1, 1], [1, 3], [3, 1], [3, 3]], 5: [[1, 1], [1, 3], [2, 2], [3, 1], [3, 3]],
+  6: [[1, 1], [1, 3], [2, 1], [2, 3], [3, 1], [3, 3]]
+};
+function renderDice(animate) {
+  const box = $('#diceover');
+  if (!S.dice[0]) { box.innerHTML = ''; return; }
+  box.innerHTML = S.dice.map(d =>
+    `<div class="die${animate ? ' roll' : ''}">${DIEPIP[d].map(([r, c]) => `<i style="grid-row:${r};grid-column:${c}"></i>`).join('')}</div>`
+  ).join('');
+}
+
+/* ── 사이드바 ────────────────────────────────────────────── */
+function render() {
+  if (!S) return;
+  drawBoard();
+  const me = S.players[ME], cur = S.players[S.cur];
+  const myTurn = S.cur === ME && !me.ai;
+
+  // 점수판
+  $('#plist').innerHTML = S.players.map(p => {
+    const own = p.i === ME;
+    const vp = own ? vpOf(p) : publicVP(p);
+    const tags = [];
+    tags.push(`<span>손패 ${handCount(p)}</span>`);
+    tags.push(`<span>도로 ${15 - p.roadsLeft}</span>`);
+    if (p.roadLen >= 3) tags.push(`<span class="${S.longestOwner === p.i ? 'on' : ''}">최장 ${p.roadLen}</span>`);
+    if (p.knights) tags.push(`<span class="${S.armyOwner === p.i ? 'on' : ''}">기사 ${p.knights}</span>`);
+    const dcount = p.devs.length + p.newDevs.length + p.vpCards;
+    if (dcount) tags.push(`<span>발전 ${dcount}</span>`);
+    const badge = p.ai ? ' <span style="font-weight:400;color:var(--ink-3);font-size:11px">AI</span>'
+      : (NET && own ? ' <span style="font-weight:400;color:var(--ink-3);font-size:11px">(나)</span>' : '');
+    const off = NET && !p.ai && NET.offline && NET.offline.includes(p.i)
+      ? ' <span style="font-weight:600;color:#c0433f;font-size:11px">접속 끊김</span>' : '';
+    return `<div class="prow${p.i === S.cur ? ' active' : ''}">
+      <span class="swatch" style="background:${p.color}"></span>
+      <div><div class="pname">${esc(p.name)}${badge}${off}</div>
+      <div class="pmeta">${tags.join('')}</div></div>
+      <div class="pvp">${vp}<small>${own ? '점' : '공개'}</small></div>
+    </div>`;
+  }).join('');
+  $('#deckcount').textContent = `발전카드 ${S.deck.length}`;
+
+  // 내 자원
+  $('#hand').innerHTML = RES.map(r =>
+    `<div class="rc" data-r="${r}"><div class="bar" style="background:${RVAR[r]}"></div>
+      <span class="n">${me.res[r]}</span><span class="l">${RKO[r]}</span></div>`).join('');
+  $('#handcount').textContent = `${handCount(me)}장${handCount(me) > 7 ? ' · 7 위험' : ''}`;
+
+  // 발전카드
+  const canPlay = myTurn && !me.playedDev && (S.phase === 'action' || S.phase === 'roll') && S.winner === null && !S.pick && !S.busy;
+  const counts = {};
+  me.devs.forEach(c => counts[c] = (counts[c] || 0) + 1);
+  const newCounts = {};
+  me.newDevs.forEach(c => newCounts[c] = (newCounts[c] || 0) + 1);
+  let dv = Object.keys(counts).map(c =>
+    `<button class="dev" data-dev="${c}" ${canPlay ? '' : 'disabled'} title="${DEV_DESC[c]}">${DEV_KO[c]}<span class="k">${counts[c]}</span></button>`).join('');
+  dv += Object.keys(newCounts).map(c =>
+    `<button class="dev" disabled title="이번 턴에 산 카드는 다음 턴부터 사용할 수 있습니다">${DEV_KO[c]}<span class="k">${newCounts[c]} · 대기</span></button>`).join('');
+  if (me.vpCards) dv += `<button class="dev" disabled>승리점수<span class="k">${me.vpCards}</span></button>`;
+  $('#devs').innerHTML = dv || '<div class="empty">아직 없습니다.</div>';
+
+  // 행동 버튼
+  const acting = myTurn && S.phase === 'action' && S.winner === null && !S.pick && !S.busy;
+  $('#aRoad').disabled = !(acting && canAfford(me, COST.road) && me.roadsLeft > 0 && legalRoads(ME).length);
+  $('#aSettle').disabled = !(acting && canAfford(me, COST.settle) && me.settLeft > 0 && legalSettlements(ME, false).length);
+  $('#aCity').disabled = !(acting && canAfford(me, COST.city) && me.cityLeft > 0 && legalCities(ME).length);
+  $('#aDev').disabled = !(acting && canAfford(me, COST.dev) && S.deck.length > 0);
+  $('#aTrade').disabled = !acting;
+  $('#stockline').textContent = `정착지 ${me.settLeft} · 도시 ${me.cityLeft} · 도로 ${me.roadsLeft}`;
+
+  // 상태바
+  $('#turnchip').querySelector('.swatch').style.background = cur.color;
+  $('#turnname').textContent = S.winner !== null ? '게임 종료' : (S.cur === ME && !NET ? '나의 차례' : `${cur.name}의 차례`);
+  $('#phasemsg').innerHTML = tx(phaseMessage());
+
+  const mb = $('#btnMain');
+  if (S.pick && S.pick.seat === ME) {
+    mb.innerHTML = '<span class="t">선택 취소</span>';
+    mb.disabled = !S.pick.cancelable;
+    mb.className = 'btn center';
+  } else if (S.winner !== null) {
+    mb.innerHTML = NET ? '<span class="t">게임 종료</span>' : '<span class="t">새 게임</span>';
+    mb.disabled = !!NET; mb.className = 'btn primary center';
+  } else if (!myTurn || S.busy) {
+    mb.innerHTML = '<span class="t">기다리는 중</span>'; mb.disabled = true; mb.className = 'btn center';
+  } else if (S.phase === 'roll') {
+    mb.innerHTML = '<span class="t">주사위 굴리기</span>'; mb.disabled = false; mb.className = 'btn primary center';
+  } else if (S.phase === 'action') {
+    mb.innerHTML = '<span class="t">턴 종료</span>'; mb.disabled = false; mb.className = 'btn primary center';
+  } else {
+    mb.innerHTML = '<span class="t">진행 중</span>'; mb.disabled = true; mb.className = 'btn center';
+  }
+  renderDice(false);
+  renderLog();
+  syncPromptUI();
+  if (tradeUI) tradeUI.redraw();
+  if (NET && NET.role === 'host') pushState();
+}
+
+function phaseMessage() {
+  const cur = S.players[S.cur];
+  const mine = S.cur === ME && !cur.ai;
+  const who = `<b>${esc(cur.name)}</b>`;
+  if (S.winner !== null) return `<b>${esc(S.players[S.winner].name)}</b>가 10점을 달성했습니다.`;
+  if (S.prompt && S.prompt.seat !== ME) {
+    const pp = S.players[S.prompt.seat];
+    if (S.prompt.kind === 'discard') return `<b>${esc(pp.name)}</b>가 버릴 자원을 고르는 중…`;
+    return `<b>${esc(pp.name)}</b>가 고르는 중…`;
+  }
+  if (S.pick && mine) return S.pick.label;
+  switch (S.phase) {
+    case 'setupS': return !mine ? `${who}가 정착지를 고르는 중…` : '시작 정착지를 놓을 자리를 고르세요.';
+    case 'setupR': return !mine ? `${who}가 도로를 놓는 중…` : '방금 놓은 정착지에 붙는 도로를 고르세요.';
+    case 'roll': return !mine ? `${who}의 차례입니다…` : '주사위를 굴려 생산을 시작하세요.';
+    case 'action': return !mine ? `${who}가 생각 중…` : `주사위 <b>${S.dice[0] + S.dice[1]}</b> · 건설·교역 후 턴을 넘기세요.`;
+    default: return !mine ? `${who}가 진행 중…` : '진행 중…';
+  }
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+// 언어별 문장 번역 (영어일 때 /mgh/i18n/catan.js 의 CATAN_TR)
+function tx(html) { return window.CATAN_TR ? window.CATAN_TR(html) : html; }
+function nm(p) { return `<b style="color:${p.hex}">${esc(p.name)}</b>`; }
+
+/* ── 기록 ────────────────────────────────────────────────── */
+let logShown = 0, logRef = null;
+function renderLog() {
+  const box = $('#log');
+  if (!box) return;
+  if (logRef !== S.log || logShown > S.log.length) { box.innerHTML = ''; logShown = 0; logRef = S.log; }
+  for (; logShown < S.log.length; logShown++) {
+    const l = S.log[logShown];
+    const d = document.createElement('div');
+    if (l.sys) d.className = 'sys';
+    d.innerHTML = tx(l.html);
+    box.appendChild(d);
+  }
+  box.scrollTop = box.scrollHeight;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   온라인 (미니게임천국 방) — 방장 브라우저가 규칙 엔진을 돌리고,
+   다른 참가자는 상태를 받아 그리며 자기 행동(의도)만 방장에게 보낸다.
+   ═══════════════════════════════════════════════════════════════ */
+let VER = 0, pushQueued = false, winShown = false, finishSent = false;
+
+function serialize() {
+  return {
+    v: 1, rng: S.rnd.state(), seed: S.seed, B: S.B,
+    players: S.players.map(p => ({ ...p, ports: [...p.ports] })),
+    deck: S.deck, bank: S.bank, robber: S.robber, cur: S.cur, phase: S.phase, dice: S.dice, turn: S.turn,
+    setupOrder: S.setupOrder, setupIdx: S.setupIdx, lastSettle: S.lastSettle, freeRoads: S.freeRoads,
+    longestOwner: S.longestOwner, longestLen: S.longestLen, armyOwner: S.armyOwner, armySize: S.armySize,
+    winner: S.winner, log: S.log.slice(-80), busy: S.busy,
+    pick: S.pick ? { kind: S.pick.kind, options: [...S.pick.options], label: S.pick.label, cancelable: !!S.pick.cancelable, seat: S.pick.seat } : null,
+    prompt: S.prompt || null, offer: S.offer || null, promptSeq: S.promptSeq || 0
+  };
+}
+function deserialize(o) {
+  return {
+    ...o, rnd: mulberry32(o.rng),
+    players: o.players.map(p => ({ ...p, ports: new Set(p.ports) })),
+    pick: o.pick ? { ...o.pick, options: new Set(o.pick.options), fn: null } : null,
+    prompt: o.prompt || null, offer: o.offer || null, staticSVG: null
+  };
+}
+
+function pushState() {
+  if (pushQueued) return;
+  pushQueued = true;
+  queueMicrotask(() => {
+    pushQueued = false;
+    if (!S || !NET || NET.role !== 'host') return;
+    VER++;
+    MGH.net.send({ type: 'net:state', ver: VER, state: serialize(), turn: S.turn, cur: S.cur, winner: S.winner });
+  });
+}
+
+// 참가자: 방장이 보낸 상태 적용
+function applyRemoteState(msg) {
+  // 순서 보장은 포털이 담당(현재 방장이 보낸 것만 순서대로 전달)
+  const prev = S;
+  const board = prev && prev.staticSVG && prev.seed === msg.state.seed ? prev.staticSVG : null;
+  S = deserialize(msg.state);
+  S.staticSVG = board;
+  if (tradeUI && !(S.cur === ME && S.phase === 'action')) closeTrade();
+  render();
+  if (prev && prev.dice && (prev.dice[0] !== S.dice[0] || prev.dice[1] !== S.dice[1] || prev.turn !== S.turn) && S.dice[0]) renderDice(true);
+  if (S.winner !== null && !winShown) showWin();
+}
+
+// 이 화면에서 한 행동 — 방장/혼자면 바로 적용, 참가자면 방장에게 전송
+function act(intent) {
+  if (!NET || NET.role === 'host') applyIntent(ME, intent);
+  else MGH.net.send({ type: 'net:intent', intent });
+}
+
+function applyIntent(seat, it) {
+  if (!S || !it) return;
+  const p = S.players[seat];
+  if (!p) return;
+  switch (it.t) {
+    case 'pick': if (S.pick && S.pick.seat === seat && S.pick.fn) onPick(it.kind, +it.id); return;
+    case 'cancel': if (S.pick && S.pick.seat === seat && S.pick.cancelable) { clearPick(); render(); } return;
+    case 'prompt': resolvePrompt(seat, it.value); return;
+    case 'respond': respondOffer(seat, !!it.yes); return;
+  }
+  if (S.winner !== null || S.cur !== seat || p.ai || S.busy) return;
+  switch (it.t) {
+    case 'roll': if (S.phase === 'roll' && !S.pick) rollDice(); return;
+    case 'end': if (S.phase === 'action' && !S.pick) endTurn(); return;
+    case 'road':
+      if (S.phase === 'action' && !S.pick && canAfford(p, COST.road) && p.roadsLeft > 0 && legalRoads(seat).length) startBuildRoad(seat, false);
+      return;
+    case 'settle':
+      if (S.phase === 'action' && !S.pick && canAfford(p, COST.settle) && p.settLeft > 0 && legalSettlements(seat, false).length) {
+        setPick('v', legalSettlements(seat, false), vid => { placeSettlement(seat, vid); afterBuild(); }, '정착지를 놓을 교차점을 고르세요.', true);
+      }
+      return;
+    case 'city':
+      if (S.phase === 'action' && !S.pick && canAfford(p, COST.city) && p.cityLeft > 0 && legalCities(seat).length) {
+        setPick('v', legalCities(seat), vid => { upgradeCity(seat, vid); afterBuild(); }, '도시로 키울 정착지를 고르세요.', true);
+      }
+      return;
+    case 'buyDev':
+      if (S.phase === 'action' && !S.pick && canAfford(p, COST.dev) && S.deck.length) {
+        const c = buyDev(seat);
+        if (!NET) {
+          if (c === 'vp') logMsg('숨겨진 승리점수 카드를 뽑았습니다. +1점');
+          else if (c) logMsg(`<b>${DEV_KO[c]}</b> 카드를 뽑았습니다. 다음 턴부터 사용할 수 있습니다.`);
+        }
+        afterBuild();
+      }
+      return;
+    case 'dev': playDev(seat, it); return;
+    case 'bank': bankTrade(seat, it.give, it.get); return;
+    case 'offer': makeOffer(seat, it.give, it.get); return;
+    case 'accept': acceptOffer(seat, +it.to); return;
+    case 'closeOffer': if (S.offer && S.offer.from === seat) { S.offer = null; render(); } return;
+  }
+}
+
+/* ── 선택 요청(프롬프트): 주사위 7 버리기, 도적 피해자 고르기 ── */
+let promptWaiter = null;
+function askSeat(seat, kind, data) {
+  return new Promise(resolve => {
+    S.promptSeq = (S.promptSeq || 0) + 1;
+    S.prompt = { seat, kind, id: S.promptSeq, ...data };
+    promptWaiter = { seat, kind, resolve };
+    render();
+    if (S.players[seat].ai) autoPrompt();
+  });
+}
+function resolvePrompt(seat, value) {
+  const w = promptWaiter;
+  if (!w || !S.prompt || S.prompt.seat !== seat) return;
+  const p = S.players[seat];
+  if (w.kind === 'discard') {
+    if (value && value.auto) { /* AI가 이미 처리 */ }
+    else {
+      const sel = value || {};
+      const tot = RES.reduce((s, r) => s + (+sel[r] || 0), 0);
+      if (tot !== S.prompt.n || RES.some(r => (+sel[r] || 0) < 0 || (+sel[r] || 0) > p.res[r])) return;
+      for (const r of RES) { const k = +sel[r] || 0; p.res[r] -= k; S.bank[r] += k; }
+    }
+    logMsg(`${nm(p)} 자원 ${S.prompt.n}장 버림`);
+  } else if (w.kind === 'victim') {
+    if (!S.prompt.list.includes(+value)) return;
+    value = +value;
+  }
+  S.prompt = null; promptWaiter = null;
+  w.resolve(value);
+}
+function autoPrompt() {
+  if (!S.prompt || !promptWaiter) return;
+  const p = S.players[S.prompt.seat];
+  if (S.prompt.kind === 'discard') { aiDiscard(p, S.prompt.n); resolvePrompt(p.i, { auto: true }); }
+  else if (S.prompt.kind === 'victim') resolvePrompt(p.i, aiPickVictim(S.prompt.list));
+}
+
+/* ── 방장: 자리 주인이 나가거나 돌아올 때 ── */
+function setSeatAI(seat, ai) {
+  const p = S && S.players[seat];
+  if (!p || p.ai === ai) return;
+  p.ai = ai;
+  logMsg(ai ? `${nm(p)} 자리를 AI가 이어받습니다.` : `${nm(p)} 님이 돌아왔습니다.`, true);
+  if (ai) {
+    if (S.prompt && S.prompt.seat === seat) autoPrompt();
+    if (S.offer && S.offer.resp[seat] === 'pending') {
+      const j = aiJudgeTrade(p, S.offer.give, S.offer.get, S.players[S.offer.from]);
+      S.offer.resp[seat] = { ok: j.ok, why: j.why };
+    }
+    if (S.cur === seat && S.winner === null) driveAI(seat);
+  }
+  render();
+}
+
+function autoPick(seat) {
+  const pk = S.pick, fn = pk.fn;
+  if (!fn) { clearPick(); return; }
+  if (pk.kind === 'h') { S.pick = null; fn(aiRobberTarget(seat)); return; }
+  if (S.phase === 'setupS' && pk.kind === 'v') { clearPick(); fn(aiSetupSettlement(seat)); return; }
+  if (S.phase === 'setupR' && pk.kind === 'e') { clearPick(); fn(aiSetupRoad(seat, S.lastSettle)); return; }
+  if (pk.kind === 'e' && !pk.cancelable) {
+    const e = aiBestRoad(seat);
+    clearPick();
+    if (e !== null) fn(e); else { S.freeRoads = 0; afterBuild(); }
+    return;
+  }
+  clearPick(); render();
+}
+
+// AI가 된 자리(또는 복원된 AI 차례)를 현재 단계부터 이어서 진행
+async function driveAI(seat) {
+  for (let i = 0; i < 300; i++) {
+    if (!S || S.winner !== null || S.cur !== seat || !S.players[seat].ai) return;
+    if (S.prompt && S.prompt.seat === seat) { autoPrompt(); await sleep(60); continue; }
+    if (S.pick && S.pick.seat === seat) { autoPick(seat); await sleep(60); continue; }
+    if (S.busy) { await sleep(250); continue; }
+    if (S.phase === 'setupS') { setupStep(); return; }
+    if (S.phase === 'setupR') {
+      const e = aiSetupRoad(seat, S.lastSettle);
+      if (e === undefined) { S.setupIdx++; clearPick(); render(); setTimeout(setupStep, 200); }
+      else doSetupRoad(e);
+      return;
+    }
+    if (S.phase === 'roll') { aiTurn(seat); return; }
+    if (S.phase === 'action') { aiContinue(seat); return; }
+    await sleep(250);
+  }
+}
+
+// 저장된 상태에서 이어하기 (방장 새로고침 / 방장 교체)
+function resumeFlow() {
+  S.busy = false;
+  S.pick = null;
+  S.prompt = null;
+  S.offer = null;
+  promptWaiter = null;
+  if (S.phase === 'busy') S.phase = S.dice[0] ? 'action' : 'roll';
+  if (S.winner !== null) { render(); showWin(); return; }
+  const p = S.players[S.cur];
+  if (p.ai) { render(); driveAI(S.cur); return; }
+  if (S.phase === 'setupS') { setupStep(); return; }
+  if (S.phase === 'setupR') {
+    const opts = legalSetupRoads(S.lastSettle);
+    if (!opts.length) { S.setupIdx++; setupStep(); return; }
+    setPick('e', opts, doSetupRoad, '정착지에 이어지는 도로를 놓으세요.');
+    return;
+  }
+  if (S.phase === 'action' && S.freeRoads > 0 && p.roadsLeft > 0 && legalRoads(S.cur).length) { startBuildRoad(S.cur, true); return; }
+  render();
+}
+
+// 포털(부모 창)에서 오는 메시지
+MGH.net.on(msg => {
+  if (msg.type === 'net:init') {
+    NET = { role: msg.role, offline: [] };
+    ME = msg.mySeat | 0;
+    hideModal();
+    $('#btnNew').hidden = true;
+    if (msg.role === 'host') {
+      if (msg.state) {
+        S = deserialize(msg.state);
+        (msg.players || []).forEach((q, i) => { if (S.players[i]) { S.players[i].ai = !!q.ai; if (q.name && !q.ai) S.players[i].name = q.name; } });
+        VER = (msg.ver | 0) + 1;
+        logShown = 0; logRef = null;
+        resumeFlow();
+      } else {
+        startGame(msg.players.length, false, msg.players);
+      }
+    } else if (msg.state) {
+      applyRemoteState({ ver: msg.ver, state: msg.state });
+    } else {
+      $('#phasemsg').textContent = '방장이 게임을 준비하는 중…';
+    }
+  } else if (msg.type === 'net:state') {
+    if (NET && NET.role === 'guest') applyRemoteState(msg);
+  } else if (msg.type === 'net:intent') {
+    if (NET && NET.role === 'host') applyIntent(msg.seat | 0, msg.intent);
+  } else if (msg.type === 'net:setAI') {
+    if (NET && NET.role === 'host') setSeatAI(msg.seat | 0, !!msg.ai);
+  } else if (msg.type === 'net:presence') {
+    if (NET) { NET.offline = msg.offline || []; if (S) render(); }
+  } else if (msg.type === 'net:requestState') {
+    if (NET && NET.role === 'host' && S) { VER++; MGH.net.send({ type: 'net:state', ver: VER, state: serialize(), turn: S.turn, cur: S.cur, winner: S.winner }); }
+  }
+});
+
+/* ── 진행 ────────────────────────────────────────────────── */
+function startGame(n, allAI, seats) {
+  newGame(n, seats);
+  if (allAI) { S.players.forEach(p => p.ai = true); }
+  hideModal();
+  winShown = false;
+  logShown = 0; logRef = null;
+  logMsg(`<b>${n}인 게임</b> — 먼저 10점에 닿는 개척자가 승리합니다.`, true);
+  logMsg('정착지 2곳과 도로 2개를 번갈아 놓습니다. 두 번째 정착지는 시작 자원을 줍니다.', true);
+  setupStep();
+}
+
+function setupStep() {
+  if (S.setupIdx >= S.setupOrder.length) {
+    S.cur = 0; S.phase = 'roll'; clearPick();
+    logMsg('초기 배치가 끝났습니다. 첫 턴을 시작합니다.', true);
+    startTurn();
+    return;
+  }
+  S.cur = S.setupOrder[S.setupIdx];
+  S.phase = 'setupS';
+  const p = S.players[S.cur];
+  if (p.ai) {
+    clearPick(); render();
+    const seat = S.cur, idx = S.setupIdx;
+    setTimeout(async () => {
+      if (S.cur !== seat || S.setupIdx !== idx || S.phase !== 'setupS') return;
+      const v = aiSetupSettlement(S.cur);
+      doSetupSettle(v);
+      await sleep(430 * SPEED);
+      if (S.cur !== seat || S.phase !== 'setupR') return;
+      const e = aiSetupRoad(S.cur, v);
+      if (e === undefined) { S.setupIdx++; clearPick(); render(); setTimeout(setupStep, 200); }
+      else doSetupRoad(e);
+    }, 480 * SPEED);
+  } else {
+    setPick('v', legalSettlements(S.cur, true), doSetupSettle, '시작 정착지를 놓을 자리를 고르세요.');
+  }
+}
+function doSetupSettle(vid) {
+  placeSettlement(S.cur, vid, true);
+  S.lastSettle = vid;
+  S.phase = 'setupR';
+  if (S.setupIdx >= S.players.length) {
+    const p = S.players[S.cur], got = [];
+    for (const hid of S.B.vertices[vid].hexes) {
+      const h = S.B.hexes[hid];
+      if (h.res) { give(p, h.res, 1); got.push(RKO[h.res]); }
+    }
+    if (got.length) logMsg(`${nm(p)} 시작 자원 ${got.join(' ')}`);
+  }
+  const opts = legalSetupRoads(vid);
+  if (S.players[S.cur].ai) { clearPick(); render(); }
+  else if (!opts.length) { S.setupIdx++; clearPick(); render(); setTimeout(setupStep, 250); }
+  else setPick('e', opts, doSetupRoad, '정착지에 이어지는 도로를 놓으세요.');
+}
+function doSetupRoad(eid) {
+  placeRoad(S.cur, eid, true);
+  S.setupIdx++;
+  clearPick(); render();
+  setTimeout(setupStep, 300 * SPEED);
+}
+
+function startTurn() {
+  const p = S.players[S.cur];
+  p.playedDev = false;
+  S.dice = [0, 0];
+  S.phase = 'roll';
+  S.offer = null;
+  clearPick();
+  render();
+  if (p.ai) { const seat = p.i, turn = S.turn; setTimeout(() => { if (S.cur === seat && S.turn === turn && S.phase === 'roll') aiTurn(seat); }, 520 * SPEED); }
+}
+
+async function rollDice() {
+  const p = S.players[S.cur];
+  const d1 = 1 + Math.floor(S.rnd() * 6), d2 = 1 + Math.floor(S.rnd() * 6);
+  S.dice = [d1, d2];
+  S.phase = 'busy'; S.busy = true;
+  render(); renderDice(true);
+  await sleep(520 * SPEED);
+  const sum = d1 + d2;
+  logMsg(`${nm(p)} 주사위 <b>${sum}</b> (${d1}+${d2})`);
+  if (sum === 7) {
+    await handleSeven();
+  } else {
+    const out = produce(sum);
+    if (out.lines.length) out.lines.forEach(l => logMsg(l));
+    else logMsg('아무도 생산하지 못했습니다.', true);
+    S.lastGain = out.gains[ME];
+  }
+  S.busy = false;
+  if (S.winner === null) S.phase = 'action';
+  render();
+  if (S.lastGain) { flashGains(S.lastGain); S.lastGain = null; }
+}
+function flashGains(g) {
+  if (!g) return;
+  for (const r of RES) if (g[r]) {
+    const el = document.querySelector(`.rc[data-r="${r}"]`);
+    if (el) { el.classList.remove('gain'); void el.offsetWidth; el.classList.add('gain'); }
+  }
+}
+
+async function handleSeven() {
+  logMsg('7! 손패가 8장 이상이면 절반을 버립니다.', true);
+  for (const p of S.players) {
+    const n = handCount(p);
+    if (n <= 7) continue;
+    const d = Math.floor(n / 2);
+    if (p.ai) {
+      aiDiscard(p, d);
+      logMsg(`${nm(p)} 자원 ${d}장 버림`);
+      render(); await sleep(320 * SPEED);
+    } else {
+      await askSeat(p.i, 'discard', { n: d });
+      render();
+    }
+  }
+  await moveRobber(S.cur);
+}
+
+async function moveRobber(pi) {
+  const p = S.players[pi];
+  if (p.ai) {
+    await sleep(420 * SPEED);
+    S.robber = aiRobberTarget(pi);
+    render();
+    logMsg(`${nm(p)}가 도적을 ${TERRAIN[S.B.hexes[S.robber].terrain].ko}(${S.B.hexes[S.robber].number || '-'})(으)로 옮겼습니다.`);
+    await sleep(300 * SPEED);
+    const v = robberVictims(S.robber, pi);
+    if (v.length) {
+      const t = aiPickVictim(v);
+      const r = stealFrom(pi, t);
+      if (r) logMsg(`${nm(p)}가 ${nm(S.players[t])}에게서 자원 1장을 훔쳤습니다${!NET && t === ME ? ` — ${RKO[r]}` : ''}.`);
+      render();
+    }
+  } else {
+    const opts = S.B.hexes.filter(h => h.id !== S.robber).map(h => h.id);
+    const hex = await new Promise(res => {
+      S.pick = { kind: 'h', options: new Set(opts), fn: res, label: '도적을 옮길 타일을 고르세요.', cancelable: false, seat: pi };
+      render();
+      if (S.players[pi].ai) driveAI(pi);
+    });
+    clearPick();
+    S.robber = hex;
+    logMsg(`${nm(p)}가 도적을 ${TERRAIN[S.B.hexes[hex].terrain].ko}(${S.B.hexes[hex].number || '-'})(으)로 옮겼습니다.`);
+    render();
+    const v = robberVictims(hex, pi);
+    let t = null;
+    if (v.length === 1) t = v[0];
+    else if (v.length > 1) t = await askSeat(pi, 'victim', { list: v });
+    if (t !== null) {
+      const r = stealFrom(pi, t);
+      if (!r) logMsg(`${nm(S.players[t])}에게 훔칠 자원이 없습니다.`, true);
+      else if (NET) logMsg(`${nm(p)}가 ${nm(S.players[t])}에게서 자원 1장을 빼앗았습니다.`);
+      else logMsg(`${nm(S.players[t])}에게서 <b>${RKO[r]}</b> 1장을 빼앗았습니다.`);
+    } else {
+      logMsg('훔칠 상대가 없습니다.', true);
+    }
+    render();
+  }
+}
+
+function afterBuild() {
+  updateLongest(); updateArmy();
+  if (checkWin()) { render(); showWin(); return true; }
+  render();
+  return false;
+}
+
+function endTurn() {
+  const p = S.players[S.cur];
+  p.devs.push(...p.newDevs); p.newDevs = [];
+  p.playedDev = false;
+  S.offer = null;
+  clearPick();
+  if (checkWin()) { render(); showWin(); return; }
+  S.cur = (S.cur + 1) % S.players.length;
+  S.turn++;
+  startTurn();
+}
+
+/* ── AI 턴 ───────────────────────────────────────────────── */
+async function aiTurn(pi) {
+  const p = S.players[pi];
+  S.busy = true;
+  // 도적이 내 타일에 있으면 굴리기 전에 기사
+  if (p.devs.includes('knight') && !p.playedDev &&
+      S.B.hexes[S.robber].corners.some(v => S.B.vertices[v].b && S.B.vertices[v].b.p === pi)) {
+    await aiPlayKnight(pi);
+  }
+  await sleep(260 * SPEED);
+  await rollDice();
+  if (S.winner !== null) { S.busy = false; return; }
+  await aiContinue(pi);
+}
+
+async function aiContinue(pi) {
+  S.busy = true;
+  const turn = S.turn;
+  for (let k = 0; k < 16; k++) {
+    if (S.turn !== turn || S.cur !== pi) return;
+    const acted = await aiAction(pi);
+    if (!acted || S.winner !== null) break;
+    await sleep(360 * SPEED);
+  }
+  S.busy = false;
+  if (S.winner !== null) { render(); return; }
+  await sleep(240 * SPEED);
+  if (S.turn === turn && S.cur === pi) endTurn();
+}
+
+async function aiPlayKnight(pi) {
+  const p = S.players[pi];
+  p.devs.splice(p.devs.indexOf('knight'), 1);
+  p.knights++; p.playedDev = true;
+  logMsg(`${nm(p)} 기사 카드 사용`);
+  updateArmy(); render();
+  await moveRobber(pi);
+  if (checkWin()) { render(); showWin(); return true; }
+  render();
+  return true;
+}
+
+async function aiAction(pi) {
+  const p = S.players[pi];
+  if (S.winner !== null) return false;
+
+  if (p.cityLeft > 0 && canAfford(p, COST.city)) {
+    const v = aiBestCity(pi);
+    if (v !== null) { upgradeCity(pi, v); return !afterBuild(); }
+  }
+  if (p.settLeft > 0 && canAfford(p, COST.settle)) {
+    const v = aiBestSettlement(pi);
+    if (v !== null) { placeSettlement(pi, v); return !afterBuild(); }
+  }
+  if (!p.playedDev && p.devs.length) {
+    if (await aiPlayDev(pi)) return S.winner === null;
+  }
+  if (p.roadsLeft > 0 && canAfford(p, COST.road)) {
+    const wantRoad = legalSettlements(pi, false).length === 0 ||
+      (p.res.lumber >= 2 && p.res.brick >= 2) || p.roadLen >= 4;
+    if (wantRoad) {
+      const e = aiBestRoad(pi);
+      if (e !== null) {
+        placeRoad(pi, e);
+        logMsg(`${nm(p)} 도로 건설`);
+        return !afterBuild();
+      }
+    }
+  }
+  if (S.deck.length && canAfford(p, COST.dev)) { buyDev(pi); return !afterBuild(); }
+  if (aiBankTrade(p)) { render(); return true; }
+  return false;
+}
+
+async function aiPlayDev(pi) {
+  const p = S.players[pi];
+  const has = c => p.devs.includes(c);
+  const need = aiNeed(p);
+  const use = c => { p.devs.splice(p.devs.indexOf(c), 1); p.playedDev = true; logMsg(`${nm(p)} ${DEV_KO[c]} 카드 사용`); };
+
+  if (has('knight') && (p.knights + 1 >= 3 && p.knights + 1 > S.armySize && S.armyOwner !== pi)) {
+    return await aiPlayKnight(pi);
+  }
+  if (has('monopoly')) {
+    let best = null, bs = 0;
+    for (const r of RES) {
+      const t = S.players.reduce((s, q) => s + (q.i === pi ? 0 : q.res[r]), 0);
+      if (t > bs) { bs = t; best = r; }
+    }
+    if (bs >= 3) {
+      use('monopoly');
+      let got = 0;
+      for (const q of S.players) if (q.i !== pi) { got += q.res[best]; p.res[best] += q.res[best]; q.res[best] = 0; }
+      logMsg(`${nm(p)}가 <b>${RKO[best]}</b>를 독점해 ${got}장을 가져갔습니다.`);
+      render(); return true;
+    }
+  }
+  if (has('year_of_plenty')) {
+    const want = RES.filter(r => need[r] > 0);
+    if (want.length) {
+      use('year_of_plenty');
+      const picks = [];
+      for (let i = 0; i < 2; i++) {
+        const n2 = aiNeed(p);
+        const w = RES.filter(r => n2[r] > 0 && S.bank[r] > 0);
+        const r = w.length ? w[0] : RES.find(x => S.bank[x] > 0);
+        if (r) { give(p, r, 1); picks.push(RKO[r]); }
+      }
+      logMsg(`${nm(p)}가 풍년으로 ${picks.join(' ')}를 받았습니다.`);
+      render(); return true;
+    }
+  }
+  if (has('road_building') && p.roadsLeft >= 1 && legalRoads(pi).length) {
+    use('road_building');
+    for (let i = 0; i < 2; i++) {
+      if (!p.roadsLeft) break;
+      const e = aiBestRoad(pi);
+      if (e === null) break;
+      placeRoad(pi, e, true);
+    }
+    logMsg(`${nm(p)}가 무료 도로를 놓았습니다.`);
+    return !afterBuild();
+  }
+  if (has('knight')) return await aiPlayKnight(pi);
+  return false;
+}
+
+/* ── 사람 조작 (방장/혼자 모드에서 실제 규칙 적용) ───────── */
+function onPick(kind, id) {
+  if (!S.pick || S.pick.kind !== kind || !S.pick.options.has(id) || !S.pick.fn) return;
+  const fn = S.pick.fn;
+  if (kind !== 'h') clearPick();
+  fn(id);
+}
+
+function startBuildRoad(pi, free) {
+  const p = S.players[pi];
+  setPick('e', legalRoads(pi), eid => {
+    placeRoad(pi, eid, free);
+    logMsg(`${nm(p)} 도로 건설`);
+    if (free && S.freeRoads > 1 && p.roadsLeft > 0 && legalRoads(pi).length) {
+      S.freeRoads--;
+      startBuildRoad(pi, true);
+      afterBuild();
+      return;
+    }
+    S.freeRoads = 0;
+    afterBuild();
+  }, free ? `무료 도로를 놓으세요 (남은 ${S.freeRoads}개)` : '도로를 놓을 변을 고르세요.', !free);
+}
+
+async function playDev(pi, it) {
+  const p = S.players[pi];
+  const card = it.card;
+  if (p.playedDev || !p.devs.includes(card) || S.pick) return;
+  if (!(S.phase === 'action' || S.phase === 'roll')) return;
+  if (card === 'knight') {
+    p.devs.splice(p.devs.indexOf('knight'), 1);
+    p.knights++; p.playedDev = true;
+    logMsg(`${nm(p)} 기사 카드 사용`);
+    updateArmy(); render();
+    const wasRoll = S.phase === 'roll';
+    S.busy = true;
+    await moveRobber(pi);
+    S.busy = false;
+    if (wasRoll && S.phase === 'roll') { /* 굴리기 전 기사 — 계속 굴리기 단계 */ }
+    afterBuild();
+    return;
+  }
+  if (S.phase !== 'action') return;
+  if (card === 'road_building') {
+    if (!legalRoads(pi).length || !p.roadsLeft) { logMsg('놓을 수 있는 도로가 없습니다.', true); render(); return; }
+    p.devs.splice(p.devs.indexOf('road_building'), 1);
+    p.playedDev = true;
+    S.freeRoads = Math.min(2, p.roadsLeft);
+    logMsg(`${nm(p)} 도로 건설 카드 사용 — 도로 2개 무료`);
+    startBuildRoad(pi, true);
+    return;
+  }
+  if (card === 'year_of_plenty') {
+    const picks = Array.isArray(it.picks) ? it.picks.slice(0, 2) : [];
+    if (picks.length !== 2 || picks.some(r => !RES.includes(r))) return;
+    const need = {}; picks.forEach(r => need[r] = (need[r] || 0) + 1);
+    if (Object.keys(need).some(r => S.bank[r] < need[r])) return;
+    p.devs.splice(p.devs.indexOf('year_of_plenty'), 1);
+    p.playedDev = true;
+    picks.forEach(r => give(p, r, 1));
+    logMsg(`${nm(p)} 풍년 카드 사용 — ${picks.map(r => RKO[r]).join(' ')} 획득`);
+    afterBuild();
+    return;
+  }
+  if (card === 'monopoly') {
+    const r = it.res;
+    if (!RES.includes(r)) return;
+    p.devs.splice(p.devs.indexOf('monopoly'), 1);
+    p.playedDev = true;
+    let got = 0;
+    for (const q of S.players) if (q.i !== pi) { got += q.res[r]; p.res[r] += q.res[r]; q.res[r] = 0; }
+    logMsg(`${nm(p)} 독점 카드 사용 — <b>${RKO[r]}</b> ${got}장 확보`);
+    afterBuild();
+  }
+}
+
+/* ── 교역 규칙 ── */
+function cleanAmounts(o) {
+  const out = {};
+  for (const r of RES) out[r] = Math.max(0, Math.min(40, Math.floor(+((o || {})[r]) || 0)));
+  return out;
+}
+function bankTradeOK(p, give_, get_) {
+  const gt = RES.reduce((s, r) => s + get_[r], 0);
+  if (!gt) return false;
+  let units = 0;
+  for (const r of RES) {
+    if (!give_[r]) continue;
+    if (give_[r] > p.res[r]) return false;
+    const rate = tradeRate(p, r);
+    if (give_[r] % rate !== 0) return false;
+    units += give_[r] / rate;
+  }
+  if (!units || units !== gt) return false;
+  return RES.every(r => S.bank[r] >= get_[r]);
+}
+function tradeText(o) { return RES.filter(r => o[r]).map(r => `${RKO[r]}${o[r]}`).join(' '); }
+
+function bankTrade(pi, g, t) {
+  const p = S.players[pi];
+  if (S.phase !== 'action' || S.pick) return;
+  const give_ = cleanAmounts(g), get_ = cleanAmounts(t);
+  if (!bankTradeOK(p, give_, get_)) return;
+  for (const r of RES) if (give_[r]) { p.res[r] -= give_[r]; S.bank[r] += give_[r]; }
+  for (const r of RES) if (get_[r]) { p.res[r] += get_[r]; S.bank[r] -= get_[r]; }
+  logMsg(`${nm(p)} 은행 교역 — ${tradeText(give_)} → ${tradeText(get_)}`);
+  render();
+}
+
+function makeOffer(pi, g, t) {
+  const p = S.players[pi];
+  if (S.phase !== 'action' || S.pick) return;
+  const give_ = cleanAmounts(g), get_ = cleanAmounts(t);
+  if (!RES.some(r => give_[r]) || !RES.some(r => get_[r])) return;
+  if (RES.some(r => give_[r] > p.res[r])) return;
+  const resp = {};
+  for (const q of S.players) {
+    if (q.i === pi) continue;
+    if (q.ai) { const j = aiJudgeTrade(q, give_, get_, p); resp[q.i] = { ok: j.ok, why: j.why }; }
+    else resp[q.i] = 'pending';
+  }
+  S.offer = { from: pi, give: give_, get: get_, resp, id: Date.now() };
+  if (NET) logMsg(`${nm(p)} 교역 제안 — ${tradeText(give_)} 주고 ${tradeText(get_)} 받기`, true);
+  render();
+}
+
+function respondOffer(seat, yes) {
+  const o = S.offer;
+  if (!o || o.resp[seat] !== 'pending') return;
+  const q = S.players[seat];
+  const can = RES.every(r => (o.get[r] || 0) <= q.res[r]);
+  o.resp[seat] = yes && can ? { ok: true, why: '수락' } : { ok: false, why: yes ? '그 자원이 없습니다' : '거절' };
+  render();
+}
+
+function acceptOffer(pi, to) {
+  const o = S.offer;
+  if (!o || o.from !== pi) return;
+  const r_ = o.resp[to];
+  if (!r_ || r_ === 'pending' || !r_.ok) return;
+  const p = S.players[pi], q = S.players[to];
+  if (RES.some(r => o.give[r] > p.res[r]) || RES.some(r => o.get[r] > q.res[r])) {
+    o.resp[to] = { ok: false, why: '그 자원이 없습니다' };
+    render();
+    return;
+  }
+  for (const r of RES) if (o.give[r]) { p.res[r] -= o.give[r]; q.res[r] += o.give[r]; }
+  for (const r of RES) if (o.get[r]) { q.res[r] -= o.get[r]; p.res[r] += o.get[r]; }
+  logMsg(`${nm(p)} ↔ ${nm(q)} 교역 — ${tradeText(o.give)} 주고 ${tradeText(o.get)} 받음`);
+  S.offer = null;
+  render();
+}
+
+/* ── 화면 조작 → 의도(act) ─────────────────────────────── */
+function bindUI() {
+  $('#board').addEventListener('click', ev => {
+    const t = ev.target.closest('[data-pick]');
+    if (!t || !S.pick || S.pick.seat !== ME) return;
+    act({ t: 'pick', kind: t.dataset.pick, id: +t.dataset.id });
+  });
+
+  $('#btnMain').addEventListener('click', () => {
+    if (S.winner !== null) { if (!NET) showSetupModal(); return; }
+    if (S.pick && S.pick.seat === ME) { if (S.pick.cancelable) act({ t: 'cancel' }); return; }
+    if (S.cur !== ME || S.busy) return;
+    if (S.phase === 'roll') act({ t: 'roll' });
+    else if (S.phase === 'action') act({ t: 'end' });
+  });
+
+  $('#aRoad').addEventListener('click', () => act({ t: 'road' }));
+  $('#aSettle').addEventListener('click', () => act({ t: 'settle' }));
+  $('#aCity').addEventListener('click', () => act({ t: 'city' }));
+  $('#aDev').addEventListener('click', () => act({ t: 'buyDev' }));
+  $('#aTrade').addEventListener('click', showTradeModal);
+
+  $('#devs').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-dev]');
+    if (!b || b.disabled) return;
+    const card = b.dataset.dev;
+    if (card === 'year_of_plenty') showYearOfPlenty();
+    else if (card === 'monopoly') showMonopoly();
+    else act({ t: 'dev', card });
+  });
+
+  $('#btnNew').addEventListener('click', () => { if (!NET) showSetupModal(); });
+  $('#btnRules').addEventListener('click', showRules);
+  $('#btnTheme').addEventListener('click', () => {
+    const r = document.documentElement;
+    const now = r.getAttribute('data-theme');
+    r.setAttribute('data-theme', now === 'dark' ? 'light' : 'dark');
+  });
+  $('#veil').addEventListener('click', ev => {
+    if (ev.target.id === 'veil' && $('#veil').dataset.dismiss === '1') { if (tradeUI) closeTrade(); else hideModal(); }
+  });
+}
+
+/* ── 모달 ────────────────────────────────────────────────── */
+let modalKind = null;
+function showModal(html, dismissable, kind) {
+  $('#modal').innerHTML = tx(html);
+  $('#veil').dataset.dismiss = dismissable ? '1' : '0';
+  $('#veil').hidden = false;
+  modalKind = kind || 'other';
+}
+function hideModal() { $('#veil').hidden = true; $('#modal').innerHTML = ''; modalKind = null; }
+
+function showSetupModal() {
+  showModal(`<div class="mh"><span class="eyebrow">새 게임</span><h2>몇 명이 섬에 갑니까?</h2></div>
+    <div class="mb"><p>당신 한 명과 AI 개척자들이 겨룹니다. 사람이 적을수록 자원 경쟁이 덜하고 게임이 빨리 끝납니다.</p>
+    <div class="setup-grid">
+      <button class="chip" data-n="2">2인 · AI 1명</button>
+      <button class="chip" data-n="3">3인 · AI 2명</button>
+      <button class="chip sel" data-n="4">4인 · AI 3명</button>
+    </div>
+    <p class="note">정식 규칙 — 발전카드 25장, 항구 9곳, 최장 교역로·최대 기사력 포함.</p>
+    ${MGH.embedded ? '<p class="note">친구와 함께 하려면 포털의 <b>온라인 대전</b>에서 방을 만드세요.</p>' : ''}</div>
+    <div class="mf"><button class="btn primary" id="mStart"><span class="t">시작하기</span></button></div>`, false, 'setup');
+  let n = 4;
+  $('#modal').querySelectorAll('[data-n]').forEach(b => b.addEventListener('click', () => {
+    n = +b.dataset.n;
+    $('#modal').querySelectorAll('[data-n]').forEach(x => x.classList.toggle('sel', x === b));
+  }));
+  $('#mStart').addEventListener('click', () => startGame(n));
+}
+
+function showRules() {
+  if (tradeUI) closeTrade();
+  showModal(`<div class="mh"><span class="eyebrow">규칙 요약</span><h2>카탄 섬에서 이기는 법</h2></div>
+    <div class="mb">
+      <p><b>10점</b>에 먼저 닿으면 승리합니다. 정착지 1점, 도시 2점, 숨은 승리점수 카드 1점, 최장 교역로 2점, 최대 기사력 2점.</p>
+      <p><b>턴 순서</b> — 주사위를 굴려 생산 → 건설·교역 → 턴 종료. 굴린 숫자의 타일에 접한 정착지는 1장, 도시는 2장을 받습니다. 도적이 올라간 타일은 생산하지 않습니다.</p>
+      <p><b>7이 나오면</b> 손패가 8장 이상인 사람은 절반을 버리고, 굴린 사람이 도적을 옮긴 뒤 그 타일에 접한 상대 하나에게서 자원 1장을 훔칩니다.</p>
+      <p><b>건설 비용</b> — 도로: 나무1 흙1 · 정착지: 나무1 흙1 양털1 밀1 · 도시: 밀2 광석3 · 발전카드: 양털1 밀1 광석1.</p>
+      <p><b>거리 규칙</b> — 정착지는 다른 정착지·도시와 한 칸 이상 떨어져야 하고, 자기 도로에 이어져야 합니다.</p>
+      <p><b>교역</b> — 은행과는 같은 자원 4장을 아무 1장으로. 항구를 낀 정착지가 있으면 3:1 또는 해당 자원 2:1. 다른 개척자에게는 원하는 조합을 제안할 수 있습니다.</p>
+      <p><b>발전카드</b> — 산 턴에는 쓸 수 없습니다(승리점수 카드는 자동 계산). 한 턴에 한 장만 사용합니다.</p>
+    </div>
+    <div class="mf"><button class="btn primary" id="rClose"><span class="t">닫기</span></button></div>`, true, 'rules');
+  $('#rClose').addEventListener('click', () => { hideModal(); syncPromptUI(); });
+}
+
+/* 프롬프트/교역 제안 모달 — 상태(S.prompt, S.offer)를 보고 이 화면에 필요한 것을 띄운다 */
+let promptKey = null;
+function syncPromptUI() {
+  if (!S) return;
+  let want = null;
+  if (S.prompt && S.prompt.seat === ME && !S.players[ME].ai) want = `p:${S.prompt.kind}:${S.prompt.id}`;
+  else if (S.offer && S.offer.resp && S.offer.resp[ME] === 'pending') want = `o:${S.offer.id}`;
+  if (want === promptKey) return;
+  if (promptKey && (modalKind === 'discard' || modalKind === 'victim' || modalKind === 'respond')) hideModal();
+  promptKey = want;
+  if (!want) return;
+  if (modalKind === 'rules') return;   // 규칙을 닫으면 다시 띄움
+  if (tradeUI) closeTrade();
+  if (want.startsWith('p:discard')) drawDiscard();
+  else if (want.startsWith('p:victim')) drawVictim();
+  else drawRespond();
+}
+
+function drawDiscard() {
+  const p = S.players[ME], n = S.prompt.n;
+  const sel = { lumber: 0, brick: 0, wool: 0, grain: 0, ore: 0 };
+  const draw = () => {
+    const tot = RES.reduce((s, r) => s + sel[r], 0);
+    showModal(`<div class="mh"><span class="eyebrow">주사위 7</span><h2>자원 ${n}장을 버려야 합니다</h2></div>
+      <div class="mb"><p>손패가 ${handCount(p)}장이라 절반을 잃습니다. 버릴 카드를 고르세요.</p>
+      <div>${RES.map(r => `<div class="stepper">
+        <span class="nm"><span class="swatch" style="background:${RVAR[r]}"></span>${RKO[r]} <span class="note">보유 ${p.res[r]}</span></span>
+        <span class="ct"><button data-d="-1" data-r="${r}" ${sel[r] === 0 ? 'disabled' : ''}>−</button>
+        <span class="v">${sel[r]}</span>
+        <button data-d="1" data-r="${r}" ${sel[r] >= p.res[r] || tot >= n ? 'disabled' : ''}>+</button></span></div>`).join('')}</div>
+      <p class="note">선택 ${tot} / ${n}</p></div>
+      <div class="mf"><button class="btn primary" id="dOk" ${tot === n ? '' : 'disabled'}><span class="t">버리기</span></button></div>`, false, 'discard');
+    $('#modal').querySelectorAll('[data-d]').forEach(b => b.addEventListener('click', () => {
+      sel[b.dataset.r] += +b.dataset.d; draw();
+    }));
+    $('#dOk').addEventListener('click', () => {
+      hideModal();
+      act({ t: 'prompt', value: { ...sel } });
+    });
+  };
+  draw();
+}
+
+function drawVictim() {
+  const list = S.prompt.list;
+  showModal(`<div class="mh"><span class="eyebrow">도적</span><h2>누구에게서 훔칠까요?</h2></div>
+    <div class="mb"><div class="chips">${list.map(i =>
+      `<button class="chip" data-v="${i}"><span class="swatch" style="background:${S.players[i].color};display:inline-block;vertical-align:-1px;margin-right:5px"></span>${esc(S.players[i].name)} · ${handCount(S.players[i])}장</button>`).join('')}</div></div>`, false, 'victim');
+  $('#modal').querySelectorAll('[data-v]').forEach(b => b.addEventListener('click', () => {
+    hideModal();
+    act({ t: 'prompt', value: +b.dataset.v });
+  }));
+}
+
+function drawRespond() {
+  const o = S.offer, from = S.players[o.from], me = S.players[ME];
+  const can = RES.every(r => (o.get[r] || 0) <= me.res[r]);
+  showModal(`<div class="mh"><span class="eyebrow">교역 제안</span><h2>${esc(from.name)}의 제안</h2></div>
+    <div class="mb">
+      <p>${nm(from)}가 <b>${tradeText(o.give)}</b>를 주고, 당신의 <b>${tradeText(o.get)}</b>를 원합니다.</p>
+      ${can ? '' : '<p class="note">요청한 자원이 부족해 수락할 수 없습니다.</p>'}
+    </div>
+    <div class="mf"><button class="btn" id="oNo"><span class="t">거절</span></button>
+    <button class="btn primary" id="oYes" ${can ? '' : 'disabled'}><span class="t">수락</span></button></div>`, false, 'respond');
+  $('#oNo').addEventListener('click', () => { hideModal(); act({ t: 'respond', yes: false }); });
+  $('#oYes').addEventListener('click', () => { hideModal(); act({ t: 'respond', yes: true }); });
+}
+
+function showYearOfPlenty() {
+  const sel = [];
+  const draw = () => {
+    showModal(`<div class="mh"><span class="eyebrow">풍년</span><h2>은행에서 자원 2장</h2></div>
+      <div class="mb"><p>원하는 자원을 두 번 고르세요. 같은 자원을 두 번 골라도 됩니다.</p>
+      <div class="chips">${RES.map(r => `<button class="chip" data-r="${r}" ${S.bank[r] <= sel.filter(x => x === r).length ? 'disabled' : ''}>
+        <span class="swatch" style="background:${RVAR[r]};display:inline-block;vertical-align:-1px;margin-right:5px"></span>${RKO[r]}</button>`).join('')}</div>
+      <p class="note">고른 카드 — ${sel.length ? sel.map(r => RKO[r]).join(', ') : '없음'}</p></div>
+      <div class="mf"><button class="btn" id="yClose"><span class="t">닫기</span></button></div>`, true, 'yop');
+    $('#yClose').addEventListener('click', hideModal);
+    $('#modal').querySelectorAll('[data-r]').forEach(b => b.addEventListener('click', () => {
+      sel.push(b.dataset.r);
+      if (sel.length === 2) { hideModal(); act({ t: 'dev', card: 'year_of_plenty', picks: sel.slice() }); }
+      else draw();
+    }));
+  };
+  draw();
+}
+
+function showMonopoly() {
+  showModal(`<div class="mh"><span class="eyebrow">독점</span><h2>어떤 자원을 쓸어올까요?</h2></div>
+    <div class="mb"><p>고른 자원을 모든 상대가 전부 내놓습니다.</p>
+    <div class="chips">${RES.map(r => `<button class="chip" data-r="${r}">
+      <span class="swatch" style="background:${RVAR[r]};display:inline-block;vertical-align:-1px;margin-right:5px"></span>${RKO[r]}</button>`).join('')}</div></div>
+    <div class="mf"><button class="btn" id="mClose"><span class="t">닫기</span></button></div>`, true, 'mono');
+  $('#mClose').addEventListener('click', hideModal);
+  $('#modal').querySelectorAll('[data-r]').forEach(b => b.addEventListener('click', () => {
+    hideModal();
+    act({ t: 'dev', card: 'monopoly', res: b.dataset.r });
+  }));
+}
+
+/* ── 교역 창 ─────────────────────────────────────────────── */
+let tradeUI = null;
+function closeTrade() {
+  const had = tradeUI;
+  tradeUI = null;
+  if (had) {
+    hideModal();
+    if (S && S.offer && S.offer.from === ME) act({ t: 'closeOffer' });
+  }
+}
+function showTradeModal() {
+  const give_ = { lumber: 0, brick: 0, wool: 0, grain: 0, ore: 0 };
+  const get_ = { lumber: 0, brick: 0, wool: 0, grain: 0, ore: 0 };
+  const anyOffer = () => RES.some(r => give_[r]) && RES.some(r => get_[r]);
+
+  const stepRow = (me, r, val, t, plusOff, locked) => `<div class="stepper">
+    <span class="nm"><span class="swatch" style="background:${RVAR[r]}"></span>${RKO[r]}${t === 'g' ? ` <span class="note">${me.res[r]}</span>` : ''}</span>
+    <span class="ct"><button data-d="-1" data-t="${t}" data-r="${r}" ${val === 0 || locked ? 'disabled' : ''}>−</button>
+    <span class="v">${val}</span>
+    <button data-d="1" data-t="${t}" data-r="${r}" ${plusOff || locked ? 'disabled' : ''}>+</button></span></div>`;
+
+  const redraw = () => {
+    if (!S || S.cur !== ME || S.phase !== 'action') { closeTrade(); return; }
+    const me = S.players[ME];
+    const o = S.offer && S.offer.from === ME ? S.offer : null;
+    const rates = RES.map(r => `${RKO[r]} ${tradeRate(me, r)}:1`).join(' · ');
+    let responses = '';
+    if (o) {
+      responses = Object.keys(o.resp).map(k => {
+        const q = S.players[+k], v = o.resp[k];
+        const pend = v === 'pending';
+        return `<div class="r ${pend ? '' : v.ok ? 'yes' : 'no'}">
+          <span class="swatch" style="background:${q.color}"></span>${esc(q.name)}
+          <span class="verdict">${pend ? '응답 기다리는 중…' : `${v.ok ? '수락' : '거절'} — ${v.why}`}</span>
+          ${!pend && v.ok ? `<button class="chip" data-acc="${q.i}" style="padding:3px 10px">교환</button>` : ''}
+        </div>`;
+      }).join('');
+    }
+    const view = o ? { g: o.give, r: o.get } : { g: give_, r: get_ };
+    const scroll = $('#modal').scrollTop;
+    showModal(`<div class="mh"><span class="eyebrow">교역</span><h2>무엇을 주고 무엇을 받을까요?</h2></div>
+      <div class="mb">
+        <div class="trade-grid">
+          <div class="trade-col"><span class="eyebrow">내가 주는 것</span>
+            ${RES.map(r => stepRow(me, r, view.g[r], 'g', view.g[r] >= me.res[r], !!o)).join('')}</div>
+          <div class="trade-col"><span class="eyebrow">내가 받는 것</span>
+            ${RES.map(r => stepRow(me, r, view.r[r], 'r', view.r[r] >= S.bank[r], !!o)).join('')}</div>
+        </div>
+        <p class="note">내 교역 비율 — ${rates}</p>
+        ${responses ? `<div class="resp">${responses}</div>` : ''}
+      </div>
+      <div class="mf">
+        <button class="btn" id="tClose"><span class="t">${o ? '제안 취소' : '닫기'}</span></button>
+        ${o ? '' : `<button class="btn" id="tOffer" ${anyOffer() ? '' : 'disabled'}><span class="t">개척자들에게 제안</span></button>
+        <button class="btn primary" id="tBank" ${bankTradeOK(me, give_, get_) ? '' : 'disabled'}><span class="t">은행·항구와 교환</span></button>`}
+      </div>`, true, 'trade');
+    $('#modal').scrollTop = scroll;
+
+    $('#modal').querySelectorAll('[data-d]').forEach(b => b.addEventListener('click', () => {
+      const t = b.dataset.t === 'g' ? give_ : get_;
+      t[b.dataset.r] = Math.max(0, t[b.dataset.r] + (+b.dataset.d));
+      redraw();
+    }));
+    $('#tClose').addEventListener('click', closeTrade);
+    const tb = $('#tBank');
+    if (tb) tb.addEventListener('click', () => {
+      const g = { ...give_ }, r = { ...get_ };
+      tradeUI = null; hideModal();
+      act({ t: 'bank', give: g, get: r });
+    });
+    const to = $('#tOffer');
+    if (to) to.addEventListener('click', () => act({ t: 'offer', give: { ...give_ }, get: { ...get_ } }));
+    $('#modal').querySelectorAll('[data-acc]').forEach(b => b.addEventListener('click', () => {
+      tradeUI = null; hideModal();
+      act({ t: 'accept', to: +b.dataset.acc });
+    }));
+  };
+  tradeUI = { redraw };
+  redraw();
+}
+
+/* ── 결과 ────────────────────────────────────────────────── */
+function showWin() {
+  winShown = true;
+  if (tradeUI) { tradeUI = null; }
+  const w = S.players[S.winner];
+  const ranking = S.players.slice().sort((a, b) => vpOf(b) - vpOf(a));
+  const rows = ranking.map(p => {
+    const bits = [];
+    let base = 0;
+    for (const v of S.B.vertices) if (v.b && v.b.p === p.i) base += v.b.type === 'city' ? 2 : 1;
+    bits.push(`건물 ${base}`);
+    if (p.vpCards) bits.push(`카드 ${p.vpCards}`);
+    if (S.longestOwner === p.i) bits.push('최장 교역로 2');
+    if (S.armyOwner === p.i) bits.push('최대 기사력 2');
+    return `<div class="scoreline"><span><span class="swatch" style="background:${p.color};display:inline-block;vertical-align:-1px;margin-right:6px"></span>${esc(p.name)}</span><span>${bits.join(' · ')} = <b>${vpOf(p)}점</b></span></div>`;
+  }).join('');
+  showModal(`<div class="mh"><span class="eyebrow">게임 종료 · ${S.turn}턴</span></div>
+    <div class="mb"><div class="win"><div class="big" style="color:${w.hex}">${esc(w.name)} 승리</div>
+    <p style="margin-top:6px">${w.i === ME ? '섬은 당신의 것입니다.' : '다음 판에서 되갚아 줍시다.'}</p></div>
+    <div>${rows}</div></div>
+    <div class="mf"><button class="btn" id="wLook"><span class="t">판 살펴보기</span></button>
+    ${NET ? '' : '<button class="btn primary" id="wNew"><span class="t">새 게임</span></button>'}</div>`, true, 'win');
+  $('#wLook').addEventListener('click', hideModal);
+  if (!NET) $('#wNew').addEventListener('click', showSetupModal);
+  if (NET && NET.role === 'host' && !finishSent) {
+    finishSent = true;
+    pushState();
+    MGH.net.send({ type: 'net:finished', winner: S.winner, turn: S.turn, scores: S.players.map(p => vpOf(p)) });
+  }
+}
+
+/* ── 자동 대국 (검증용) ──────────────────────────────────── */
+window.__sim = function (n) {
+  SPEED = 0;
+  startGame(n, true);
+  return true;
+};
+window.__state = () => ({
+  winner: S.winner, turn: S.turn, phase: S.phase, busy: S.busy,
+  vps: S.players.map(p => vpOf(p)),
+  hexes: S.B.hexes.length, verts: S.B.vertices.length, edges: S.B.edges.length,
+  ports: S.B.ports.length, perim: S.B.edges.filter(e => e.hexes.length === 1).length,
+  portVerts: S.B.vertices.filter(v => v.port).length,
+  bank: S.bank, deck: S.deck.length,
+  totalRes: S.players.reduce((a, p) => a + handCount(p), 0),
+  numbers: S.B.hexes.filter(h => h.number).length,
+  adj6_8: S.B.hexes.some(h => (h.number === 6 || h.number === 8) && h.adj.some(a => [6, 8].includes(S.B.hexes[a].number)))
+});
+window.__net = { serialize: () => serialize(), applyIntent: (s, i) => applyIntent(s, i), setSeatAI: (s, a) => setSeatAI(s, a), me: () => ME };
+
+/* ── 시작 ────────────────────────────────────────────────── */
+bindUI();
+newGame(4);
+render();
+// 포털 온라인 방에서 열리면(?online=1) 방장의 신호를 기다리고, 아니면 혼자 하기 설정 창
+if (new URLSearchParams(location.search).get('online') === '1') {
+  $('#btnNew').hidden = true;
+  $('#phasemsg').textContent = '온라인 방에 연결하는 중…';
+  MGH.net.send({ type: 'net:ready' });
+} else {
+  showSetupModal();
+}
+
+</script>
+</body>
+</html>

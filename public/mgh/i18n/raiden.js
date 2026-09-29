@@ -1,0 +1,31 @@
+/* 라이덴 슈팅 (SKY STRIKE) — 영어 사전 */
+MGH.dict({
+  exact: {
+    "SKY STRIKE — 종스크롤 슈팅": "SKY STRIKE — Vertical Shooter",
+    "균형형 · 부채꼴 시작": "Balanced · starts with Spread",
+    "고기동 · 전방탄 시작": "Agile · starts with Straight",
+    "연사 특화 · 저속": "Rapid fire · slow",
+    "초소형 판정 · 유도 시작": "Tiny hitbox · starts with Laser",
+    "폭탄 4개 보유": "Carries 4 bombs",
+    "전천후 · 소형 판정": "All-rounder · small hitbox",
+    "기체를 고르고 한 번 더 누르면 출격": "Pick a ship, then press again to launch",
+    "방향키로 선택 · ENTER 출격 | 탭으로 선택 · 다시 탭 출격": "Arrows to pick · ENTER to launch | Tap to pick · tap again to launch",
+    "보스 접근 중": "Boss approaching",
+    "RED — 부채꼴 확산": "RED — Spread shot",
+    "탄 수 증가 · 넓게 퍼짐": "More bullets · wide spread",
+    "BLUE — 전방 확산": "BLUE — Forward shot",
+    "탄 수 증가 · 앞으로 관통형": "More bullets · piercing forward",
+    "PURPLE — 유도 레이저": "PURPLE — Homing laser",
+    "적을 추적하는 레이저": "Lasers that chase enemies",
+    "같은 색을 계속 먹으면 데미지 상승": "Keep collecting the same color to raise damage",
+    "파워업 3개 + 💣 1개 → 보스 출현": "3 power-ups + 1 💣 → the boss appears",
+    "이동: 방향키 / WASD · 드래그 폭탄: X · 💣 일시정지: P": "Move: Arrows / WASD · drag   Bomb: X · 💣   Pause: P",
+    "화면을 탭하거나 SPACE를 누르세요": "Tap the screen or press SPACE",
+    "P 키로 계속": "Press P to continue",
+    "탭 / SPACE 로 기체 선택": "Tap / SPACE to choose a ship",
+    "다음 스테이지 준비…": "Get ready for the next stage…",
+  },
+  patterns: [
+    [/^STAGE (\d+) 도달 · ([\s\S]*)$/, "Reached STAGE $1 · $2"],
+  ],
+});
