@@ -583,7 +583,7 @@
 
   function fullReset(){
     resetBoardOnly();
-    clearMap();
+    buildSelectedMap(); // 초기화 후에도 선택한 맵이 그대로 보이도록 다시 배치
     arrivalOrder = [];
     totalBalls = 0;
     document.getElementById('winnerBanner').style.display = 'none';
@@ -788,6 +788,8 @@
 
   document.getElementById('startBtn').addEventListener('click', startRace);
   document.getElementById('resetBtn').addEventListener('click', fullReset);
+  // 맵을 바꾸면 즉시 새 맵으로 교체 (진행 중이던 추첨은 초기화)
+  document.getElementById('mapSelect').addEventListener('change', fullReset);
 
   // ---------- init ----------
   initEngine();
