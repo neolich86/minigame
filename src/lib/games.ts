@@ -30,10 +30,10 @@ export interface Game {
 export const GAMES: Game[] = [
   {
     id: "catan",
-    title: { ko: "카탄 섬 개척기", en: "Settlers of Catan" },
+    title: { ko: "헥사 아일랜드", en: "Hexa Isle" },
     desc: {
-      ko: "친구와 온라인 대전, 또는 AI 최대 3명과 겨루는 정식 규칙 카탄. 10점을 먼저 모으면 승리",
-      en: "Full-rule Catan — play online with friends or against up to 3 AI. First to 10 points wins",
+      ko: "육각형 타일 섬을 개척하는 전략 보드게임. 친구와 온라인 대전, 또는 AI 최대 3명과 겨뤄 10점을 먼저 모으면 승리",
+      en: "A strategy board game of settling a hex-tile island — play online with friends or against up to 3 AI. First to 10 points wins",
     },
     genre: "board",
     thumb: "/thumbs/catan.jpg",
@@ -42,10 +42,10 @@ export const GAMES: Game[] = [
   },
   {
     id: "lexio",
-    title: { ko: "LEXIO", en: "LEXIO" },
+    title: { ko: "타일러쉬", en: "Tile Rush" },
     desc: {
-      ko: "친구와 온라인 대전, 또는 AI와 겨루는 한국식 카드 게임 렉시오. 페어·조합 대응 전략이 핵심",
-      en: "A Korean climbing card game — play online with friends or against AI. Countering combos is the key",
+      ko: "손패의 숫자 타일을 먼저 털어내면 이기는 대전 게임. 친구와 온라인 대전, 또는 AI와 대결. 페어·조합 대응 전략이 핵심",
+      en: "Be the first to shed every number tile in your hand — play online with friends or against AI. Countering combos is the key",
     },
     genre: "board",
     thumb: "/thumbs/lexio.jpg",
@@ -115,7 +115,7 @@ export const GAMES: Game[] = [
   },
   {
     id: "raiden",
-    title: { ko: "라이덴 슈팅", en: "Raiden Shooter" },
+    title: { ko: "스카이 스트라이크", en: "Sky Strike" },
     desc: {
       ko: "보스전이 있는 세로 스크롤 전투기 슈팅 게임, 레이저와 폭탄으로 화면을 정리",
       en: "A vertical-scroll shooter with boss battles — clear the screen with lasers and bombs",

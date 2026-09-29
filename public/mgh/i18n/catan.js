@@ -1,4 +1,4 @@
-/* 카탄 섬 개척기 — 영어 사전
+/* 헥사 아일랜드 — 영어 사전
  * 게임 상태(기록 등)는 한국어로 만들어져 온라인 방의 모든 참가자에게 똑같이 전달되고,
  * 각 참가자의 화면에서 자기 언어로 바꿔 보여준다. 그래서 이름(<b>)이 끼어 있는 문장은
  * CATAN_TR 이 HTML 단위로 통째로 번역하고, 나머지 글자는 공용 사전(MGH.dict)이 번역한다. */
@@ -79,7 +79,7 @@
   }
 
   var exact = {
-    "카탄 섬 개척기": "Settlers of Catan",
+    "헥사 아일랜드": "Hexa Isle",
     "10점 선취 · 정식 규칙": "First to 10 · full rules",
     "테마": "Theme", "규칙": "Rules", "새 게임": "New game",
     "게임을 시작합니다.": "Starting the game.",
@@ -147,7 +147,7 @@
     "에서 방을 만드세요.": ".",
     "시작하기": "Start",
     "규칙 요약": "Rules summary",
-    "카탄 섬에서 이기는 법": "How to win on Catan",
+    "헥사 아일랜드에서 이기는 법": "How to win on Hexa Isle",
     "10점": "10 VP",
     "에 먼저 닿으면 승리합니다. 정착지 1점, 도시 2점, 숨은 승리점수 카드 1점, 최장 교역로 2점, 최대 기사력 2점.": " — reach it first to win. Settlement 1, city 2, hidden VP card 1, Longest Road 2, Largest Army 2.",
     "턴 순서": "Turn order",
@@ -185,7 +185,7 @@
     "최장 교역로 2": "Longest Road 2",
     "최대 기사력 2": "Largest Army 2",
     "아무거나": "Any",
-    "카탄 게임판": "Catan board",
+    "헥사 아일랜드 게임판": "Hexa Isle board",
   };
   for (var r in RES) exact[r] = RES[r];
   for (var t in TER) exact[t] = TER[t];

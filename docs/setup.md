@@ -22,9 +22,9 @@ GitHub(`neolich86/minigame`) → Vercel 자동 배포, 계정·랭킹·온라인
 새로 만든다면 [supabase.com](https://supabase.com) → New project (리전 Seoul 권장).
 
 1. 왼쪽 **SQL Editor → New query** 에서 아래 파일을 **순서대로** 하나씩 통째로 붙여 넣고 **Run** (모두 재실행 안전)
-   1. `supabase/migrations/0001_portal.sql` — 공용 프로필 · 랭킹 · 카탄 온라인 방 (`leaderboard`, `ranked_boards`, `mg_*`)
+   1. `supabase/migrations/0001_portal.sql` — 공용 프로필 · 랭킹 · 헥사 아일랜드 온라인 방 (`leaderboard`, `ranked_boards`, `mg_*`)
    2. `supabase/migrations/0002_td_ranking.sql` — 랜덤 타워 디펜스 · Element Siege 랭킹 보드
-   3. `supabase/migrations/0003_lexio_online.sql` — 렉시오 온라인 (`rooms`, `room_members`, `game_states`, `game_public`)
+   3. `supabase/migrations/0003_lexio_online.sql` — 타일러쉬 온라인 (`rooms`, `room_members`, `game_states`, `game_public`)
    4. `supabase/migrations/0004_room_delete.sql` — 방장의 방 삭제 기능
 2. **Project Settings → API (API Keys)** 에서 복사
    - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
@@ -75,7 +75,7 @@ GitHub(`neolich86/minigame`) → Vercel 자동 배포, 계정·랭킹·온라인
 2. **로그인** → 이메일 가입/로그인, 카카오 로그인 → 오른쪽 위에 닉네임 표시
 3. **내 정보**에서 닉네임 변경
 4. 랭킹 게임(무기 강화가 가장 빠름: Lv.2 이상 도달) → "새 기록!" 알림 → 오른쪽 랭킹 패널과 `/ranking`에 표시
-5. **카탄 → 온라인 대전 → 방 만들기** → 다른 브라우저(시크릿 창)에서 다른 계정으로 코드 입력해 참가 → 준비 → 방장이 시작
+5. **헥사 아일랜드 → 온라인 대전 → 방 만들기** → 다른 브라우저(시크릿 창)에서 다른 계정으로 코드 입력해 참가 → 준비 → 방장이 시작
    - 빈 자리는 방장이 "AI로 채우기"
    - 게임 중 참가자가 나가면 방장이 "AI로 대체" 가능, 다시 들어오면 자리 복귀
    - 방장이 새로고침해도 저장된 상태에서 이어짐. 방장이 45초 이상 사라지면 다른 참가자가 "내가 방장 이어받기"
@@ -85,6 +85,10 @@ GitHub(`neolich86/minigame`) → Vercel 자동 배포, 계정·랭킹·온라인
 Vercel → Settings → Domains에서 도메인 추가 → 안내대로 DNS 설정 → 위의 Supabase Redirect URLs · 카카오 Web 도메인 · `NEXT_PUBLIC_SITE_URL`을 새 주소로 추가/변경.
 
 ---
+
+## 게임 이름 참고
+저작권·상표 문제로 화면에 보이는 이름을 바꿨고, 주소와 DB의 내부 id는 기존 그대로입니다.
+- 헥사 아일랜드(Hexa Isle) = `catan` · 타일러쉬(Tile Rush) = `lexio` · 스카이 스트라이크(Sky Strike) = `raiden`
 
 ## 구조 요약
 
@@ -102,8 +106,8 @@ Vercel → Settings → Domains에서 도메인 추가 → 안내대로 DNS 설�
 
 ### 다국어
 - 서버는 `Accept-Language`, 브라우저는 `navigator.languages`로 판단 (한국어면 ko, 아니면 en). 직접 바꾸면 쿠키 `mgh_lang`에 저장
-- 자체 다국어가 있는 게임(오리파·렉시오·랜타디·Element Siege·세계도시 타이핑)은 브리지가 브라우저 언어를 포털 언어로 맞춰서 그대로 따라감
-- 한국어 전용 게임(카탄·무기 강화·궁수 서바이버·라이덴·로또·핀볼)은 `/mgh/i18n/<게임>.js` 사전으로 화면·캔버스 글자를 번역. 번역이 빠진 문구는 개발자 도구 콘솔에서 `MGH.missing()`으로 확인
+- 자체 다국어가 있는 게임(오리파·타일러쉬·랜타디·Element Siege·세계도시 타이핑)은 브리지가 브라우저 언어를 포털 언어로 맞춰서 그대로 따라감
+- 한국어 전용 게임(헥사 아일랜드·무기 강화·궁수 서바이버·스카이 스트라이크·로또·핀볼)은 `/mgh/i18n/<게임>.js` 사전으로 화면·캔버스 글자를 번역. 번역이 빠진 문구는 개발자 도구 콘솔에서 `MGH.missing()`으로 확인
 
 ### 랭킹 추가하는 법
 1. 게임 코드에서 기록이 나오는 곳에 `if (window.MGH) MGH.submitScore('<보드id>', 점수, {추가정보})`
@@ -112,7 +116,7 @@ Vercel → Settings → Domains에서 도메인 추가 → 안내대로 DNS 설�
 - 점수는 높을수록 좋은 기준입니다 (시간이 짧을수록 좋은 게임은 "점수 = 기준값 − 시간"처럼 변환)
 - 게임은 브라우저에서 돌아가므로 서버는 범위·빈도만 검사합니다. 조작을 완전히 막을 수는 없습니다
 
-### 렉시오 온라인 방식
+### 타일러쉬 온라인 방식 (내부 id: lexio)
 - 규칙 판정·AI는 전부 DB 함수(서버)가 처리. 화면은 공개 상태(`game_public`)와 내 손패(`get_my_hand`)만 받아 그림 → 손패가 다른 사람에게 노출되지 않음
 - 기존 lexio-online 앱과 같은 테이블을 쓰므로, 같은 Supabase 프로젝트라면 두 사이트의 방이 공유됨
 
@@ -121,7 +125,7 @@ Vercel → Settings → Domains에서 도메인 추가 → 안내대로 DNS 설�
 - 플레이 시간은 배속과 관계없는 실제 시간. 세이브 코드로 불러온 판은 랭킹에 등록하지 않음
 - Element Siege 50라운드 클리어는 '클리어'로 표시(내부 값 51)
 
-### 카탄 온라인 방식
-- 방장 브라우저가 기존 카탄 규칙 엔진을 그대로 돌리고, Supabase Realtime으로 상태(방장→모두)와 행동(참가자→방장)을 주고받습니다
+### 헥사 아일랜드 온라인 방식 (내부 id: catan)
+- 방장 브라우저가 기존 규칙 엔진을 그대로 돌리고, Supabase Realtime으로 상태(방장→모두)와 행동(참가자→방장)을 주고받습니다
 - 방장은 2초마다 스냅샷을 `mg_room_states`에 저장 → 새로고침·방장 교체 시 이어서 진행
 - 한계: 방장이 마음먹으면 조작할 수 있고, 모든 참가자의 손패 정보가 상태에 포함됩니다 (친구끼리 플레이 전제)

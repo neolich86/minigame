@@ -1,4 +1,4 @@
-/* LEXIO — 자체 다국어가 놓친 정적 문구 보완 */
+/* 타일러쉬(Tile Rush) — 자체 다국어가 놓친 정적 문구 보완 */
 MGH.dict({ exact: {
   "인원 수": "Players", "3명": "3", "4명": "4", "5명": "5", "라운드 수": "Rounds", "AI 난이도": "AI difficulty",
   "쉬움": "Easy", "보통": "Normal", "어려움": "Hard", "게임 시작": "Start game", "타일을 섞는 중...": "Shuffling tiles...",

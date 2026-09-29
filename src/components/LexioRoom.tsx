@@ -1,6 +1,6 @@
 "use client";
 
-// 렉시오 온라인 방 — 대기실 + 게임 화면. 규칙 판정은 전부 서버(DB 함수)가 하고,
+// 타일러쉬(구 렉시오) 온라인 방 — 대기실 + 게임 화면. 규칙 판정은 전부 서버(DB 함수)가 하고,
 // 이 화면은 game_public(공개 상태)과 내 손패(get_my_hand)만 받아서 그린다.
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -37,7 +37,7 @@ const TILE_COLOR: Record<Tile["color"], { bg: string; fg: string }> = {
 
 const TX = {
   ko: {
-    title: "렉시오 온라인", room: "방", waiting: "대기 중", playing: "진행 중", finished: "종료",
+    title: "타일러쉬 온라인", room: "방", waiting: "대기 중", playing: "진행 중", finished: "종료",
     share: "코드를 친구에게 공유하세요", empty: "빈 자리", fillAI: "AI로 채우기", host: "방장", ai: "AI",
     ready: "준비 완료", notReady: "대기 중", readyBtn: "준비 완료", unready: "준비 취소", rounds: "라운드 수",
     start: "게임 시작", leave: "방 나가기", waitHost: "전원 준비 완료 — 방장이 시작하길 기다리고 있어요.",
@@ -49,7 +49,7 @@ const TX = {
     solo: "혼자 하기 (AI 대전)",
   },
   en: {
-    title: "LEXIO Online", room: "Room", waiting: "Waiting", playing: "Playing", finished: "Finished",
+    title: "Tile Rush Online", room: "Room", waiting: "Waiting", playing: "Playing", finished: "Finished",
     share: "Share the code with friends", empty: "Empty seat", fillAI: "Fill with AI", host: "Host", ai: "AI",
     ready: "Ready", notReady: "Not ready", readyBtn: "Ready", unready: "Cancel ready", rounds: "Rounds",
     start: "Start game", leave: "Leave room", waitHost: "Everyone's ready — waiting for the host to start.",
@@ -349,7 +349,7 @@ function LexioGame({ roomId, mySeat, members, onLeave, onDelete }: { roomId: str
     <div className="wrap mid">
       <div className="panel">
         <div className="row spread wrap-row" style={{ marginBottom: 6 }}>
-          <h1 style={{ margin: 0, fontSize: 19 }}>LEXIO · {L.round} {gp.round}/{gp.total_rounds}</h1>
+          <h1 style={{ margin: 0, fontSize: 19 }}>{lang === "ko" ? "타일러쉬" : "Tile Rush"} · {L.round} {gp.round}/{gp.total_rounds}</h1>
           <div className="row">
             <button className="btn sm" onClick={() => setShowRanks((v) => !v)}>{L.ranks}</button>
             <span className="small" style={{ color: myTurn ? "var(--gold)" : "var(--text-dim)", fontWeight: 700 }}>{status}</span>

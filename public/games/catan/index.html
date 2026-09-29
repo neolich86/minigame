@@ -5,7 +5,7 @@
 <link rel="canonical" href="/play/catan">
 <script src="/mgh/bridge.js"></script><script src="/mgh/i18n/catan.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>카탄 섬 개척기</title>
+<title>헥사 아일랜드</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -291,7 +291,7 @@ h1,h2,h3{margin:0; text-wrap:balance}
 <div id="app">
   <div id="stage">
     <header id="top">
-      <h1>카탄 섬 개척기</h1>
+      <h1>헥사 아일랜드</h1>
       <span class="sub">10점 선취 &middot; 정식 규칙</span>
       <span class="spacer"></span>
       <button class="iconbtn" id="btnTheme" type="button">테마</button>
@@ -300,7 +300,7 @@ h1,h2,h3{margin:0; text-wrap:balance}
     </header>
 
     <div id="boardwrap">
-      <svg id="board" viewBox="44 54 572 496" role="img" aria-label="카탄 게임판"></svg>
+      <svg id="board" viewBox="44 54 572 496" role="img" aria-label="헥사 아일랜드 게임판"></svg>
     </div>
 
     <div class="card" id="phasebar">
@@ -348,7 +348,7 @@ h1,h2,h3{margin:0; text-wrap:balance}
 
 <script>
 /* ═══════════════════════════════════════════════════════════════
-   카탄 섬 개척기 — 규칙 엔진
+   헥사 아일랜드 — 규칙 엔진
    ═══════════════════════════════════════════════════════════════ */
 'use strict';
 
@@ -2261,7 +2261,7 @@ function showSetupModal() {
 
 function showRules() {
   if (tradeUI) closeTrade();
-  showModal(`<div class="mh"><span class="eyebrow">규칙 요약</span><h2>카탄 섬에서 이기는 법</h2></div>
+  showModal(`<div class="mh"><span class="eyebrow">규칙 요약</span><h2>헥사 아일랜드에서 이기는 법</h2></div>
     <div class="mb">
       <p><b>10점</b>에 먼저 닿으면 승리합니다. 정착지 1점, 도시 2점, 숨은 승리점수 카드 1점, 최장 교역로 2점, 최대 기사력 2점.</p>
       <p><b>턴 순서</b> — 주사위를 굴려 생산 → 건설·교역 → 턴 종료. 굴린 숫자의 타일에 접한 정착지는 1장, 도시는 2장을 받습니다. 도적이 올라간 타일은 생산하지 않습니다.</p>

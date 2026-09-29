@@ -1,6 +1,6 @@
 # 미니 게임 천국 · Mini Game Heaven
 
-직접 만든 브라우저 게임 모음 포털 — 로그인(이메일·카카오), 게임별 랭킹, 카탄 온라인 대전, 한국어/영어 자동 전환.
+직접 만든 브라우저 게임 모음 포털 — 로그인(이메일·카카오), 게임별 랭킹, 헥사 아일랜드·타일러쉬 온라인 대전, 한국어/영어 자동 전환.
 
 - Next.js 16 (App Router) + Supabase(Auth · Postgres · Realtime) + Vercel
 - 기존 단일 HTML 게임은 `public/games/<id>/index.html`에서 그대로 서빙하고, `public/mgh/bridge.js`로 포털과 연결
