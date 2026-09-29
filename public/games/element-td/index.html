@@ -906,6 +906,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   }
 
   function applyLoadedState(data){
+    rankedRun = false; // 불러온 판은 랭킹에 등록하지 않음
     let idCounter = 0;
     state.gold = data.gold;
     state.life = data.life;
@@ -1171,8 +1172,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   }
 
   // ---------- 초기화 ----------
+  // 랭킹용: 실제 플레이 시간(초)과 랭킹 대상 여부(세이브 불러오면 제외). 루프는 한 번만 시작
+  let playTime = 0, rankedRun = true, loopStarted = false;
+  function submitRanking(roundValue){
+    if(!window.MGH || !rankedRun) return;
+    const sec = Math.floor(playTime);
+    MGH.submitScore('element-td', roundValue * 1000000 + Math.max(0, 999999 - sec), { round: roundValue, sec: sec });
+  }
+
   function initGame(){
     state = freshState();
+    playTime = 0; rankedRun = true;
     state.path = generateRoute();
     state.cumDist = computeCumulative(state.path);
     state.pathLen = state.cumDist[state.cumDist.length-1];
@@ -1182,7 +1192,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     updateHUD();
     selectTower(null);
     renderBag();
-    requestAnimationFrame(loop);
+    if(!loopStarted){ loopStarted = true; requestAnimationFrame(loop); }
   }
 
   // ---------- 몬스터 생성 ----------
@@ -1513,6 +1523,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     ov.classList.remove('hidden'); ov.classList.add('win');
     document.getElementById('overlayTitle').textContent = tr('win_title');
     document.getElementById('overlayDesc').textContent = tr('win_desc');
+    submitRanking(51); // 50라운드 클리어
   }
   function triggerLose(){
     state.running = false; state.lost = true;
@@ -1521,6 +1532,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     document.getElementById('overlayTitle').textContent = tr('lose_title');
     document.getElementById('overlayDesc').textContent = tr('lose_desc', {round: state.round});
     updateHUD();
+    submitRanking(Math.min(state.round, 50));
   }
 
   // ---------- 렌더 (아이소메트릭) ----------
@@ -2284,6 +2296,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     dt = Math.min(dt, 0.05); // 탭 비활성 시 점프 방지
 
     if(state.running){
+      playTime += dt;
       update(dt * state.speedMult);
     }
     render();

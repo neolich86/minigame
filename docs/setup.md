@@ -21,8 +21,10 @@ GitHub(`neolich86/minigame`) → Vercel 자동 배포, 계정·랭킹·온라인
 **렉시오 온라인과 같은 Supabase 프로젝트를 그대로 써도 됩니다** (포털 공용 계정 = 같은 `profiles` 테이블). 새 테이블/함수는 `leaderboard`, `ranked_boards`, `mg_*` 이름이라 렉시오와 충돌하지 않습니다.
 새로 만든다면 [supabase.com](https://supabase.com) → New project (리전 Seoul 권장).
 
-1. 왼쪽 **SQL Editor → New query** → `supabase/migrations/0001_portal.sql` 내용을 통째로 붙여 넣고 **Run**
-   - 여러 번 실행해도 안전합니다. Table Editor에 `leaderboard`, `ranked_boards`, `mg_rooms`, `mg_room_members`, `mg_room_states`가 생기면 성공
+1. 왼쪽 **SQL Editor → New query** 에서 아래 파일을 **순서대로** 하나씩 통째로 붙여 넣고 **Run** (모두 재실행 안전)
+   1. `supabase/migrations/0001_portal.sql` — 공용 프로필 · 랭킹 · 카탄 온라인 방 (`leaderboard`, `ranked_boards`, `mg_*`)
+   2. `supabase/migrations/0002_td_ranking.sql` — 랜덤 타워 디펜스 · Element Siege 랭킹 보드
+   3. `supabase/migrations/0003_lexio_online.sql` — 렉시오 온라인 (`rooms`, `room_members`, `game_states`, `game_public`)
 2. **Project Settings → API (API Keys)** 에서 복사
    - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
    - anon(또는 publishable) 키 → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -89,7 +91,7 @@ Vercel → Settings → Domains에서 도메인 추가 → 안내대로 DNS 설�
 |---|---|
 | `/` | 게임 목록 (장르 필터, 온라인·랭킹 배지, 내 최고 기록) |
 | `/play/<게임>` | 게임 플레이 + 랭킹 패널 |
-| `/online/catan`, `/online/catan/<코드>` | 온라인 대전 로비 · 방 |
+| `/online/catan`, `/online/lexio`, `/online/<게임>/<코드>` | 온라인 대전 로비 · 방 |
 | `/ranking` | 전체 랭킹 |
 | `/login`, `/me` | 로그인(이메일·카카오), 내 정보 |
 | `public/games/<게임>/index.html` | 기존 단일 HTML 게임 (그대로 서빙) |
@@ -108,6 +110,15 @@ Vercel → Settings → Domains에서 도메인 추가 → 안내대로 DNS 설�
 3. `src/lib/games.ts`의 해당 게임에 `boards` 추가
 - 점수는 높을수록 좋은 기준입니다 (시간이 짧을수록 좋은 게임은 "점수 = 기준값 − 시간"처럼 변환)
 - 게임은 브라우저에서 돌아가므로 서버는 범위·빈도만 검사합니다. 조작을 완전히 막을 수는 없습니다
+
+### 렉시오 온라인 방식
+- 규칙 판정·AI는 전부 DB 함수(서버)가 처리. 화면은 공개 상태(`game_public`)와 내 손패(`get_my_hand`)만 받아 그림 → 손패가 다른 사람에게 노출되지 않음
+- 기존 lexio-online 앱과 같은 테이블을 쓰므로, 같은 Supabase 프로젝트라면 두 사이트의 방이 공유됨
+
+### 타워 디펜스 랭킹
+- 점수 = 도달 라운드 × 1,000,000 + (999,999 − 실제 플레이 시간(초)) → 라운드가 높을수록, 같으면 시간이 짧을수록 위
+- 플레이 시간은 배속과 관계없는 실제 시간. 세이브 코드로 불러온 판은 랭킹에 등록하지 않음
+- Element Siege 50라운드 클리어는 '클리어'로 표시(내부 값 51)
 
 ### 카탄 온라인 방식
 - 방장 브라우저가 기존 카탄 규칙 엔진을 그대로 돌리고, Supabase Realtime으로 상태(방장→모두)와 행동(참가자→방장)을 주고받습니다

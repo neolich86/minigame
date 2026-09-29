@@ -713,6 +713,8 @@ for (const key in ASSET_DATA) {
   let monsters = [];
   let effects = []; // temp visual effects {type,...,life}
   let gameOver = false;
+  // 랭킹용: 실제 플레이 시간(초, 배속과 무관한 현실 시간)과 이번 판이 랭킹 대상인지(세이브 불러오면 제외)
+  let playTime = 0, rankedRun = true;
   let spawnQueue = [];
   let spawnTimer = 0;
   let monsterIdSeed = 1;
@@ -956,6 +958,7 @@ for (const key in ASSET_DATA) {
   }
 
   function applyLoadedState(state){
+    rankedRun = false; // 불러온 판은 랭킹에 등록하지 않음
     round = state.round - 1; // startRound() below increments by 1
     gold = state.gold;
     hillHP = Math.min(hillMaxHP, state.hillHP);
@@ -1326,6 +1329,10 @@ for (const key in ASSET_DATA) {
     gameOver = true;
     closeTowerPanel();
     overlayTextEl.textContent = S.gameOverText(round);
+    if (window.MGH && rankedRun && round >= 1) {
+      const sec = Math.floor(playTime);
+      MGH.submitScore('random-td', round * 1000000 + Math.max(0, 999999 - sec), { round: round, sec: sec });
+    }
     overlayEl.style.display = 'flex';
   }
 
@@ -1606,6 +1613,7 @@ for (const key in ASSET_DATA) {
 
   function loop(now){
     const rawDt = Math.min(0.05, (now-lastTime)/1000);
+    if (!gameOver) playTime += rawDt;
     lastTime = now;
     const dt = Math.min(0.15, rawDt * gameSpeed);
     update(dt);
@@ -1694,6 +1702,7 @@ for (const key in ASSET_DATA) {
 
   document.getElementById('restartBtn').addEventListener('click', () => {
     gold = 100; hillHP = 100; round = 0;
+    playTime = 0; rankedRun = true;
     towers = new Array(GRID_COLS*GRID_ROWS).fill(null);
     monsters = []; effects = []; spawnQueue = [];
     gameOver = false;

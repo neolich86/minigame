@@ -6,32 +6,65 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useApp } from "./AppProvider";
 import { gameById } from "@/lib/games";
 import { errorKey, type MsgKey } from "@/lib/i18n";
-import { createRoom, fetchMyRooms, joinRoom, type Room } from "@/lib/rooms";
+import { createRoom, fetchMyRooms, joinRoom } from "@/lib/rooms";
+import { lxCreateRoom, lxErrorText, lxJoinRoom, lxMyRooms } from "@/lib/lexio";
+
+// 게임별 방 방식: 카탄 = 방장 브라우저 진행(mg_* 테이블), 렉시오 = 서버 판정(rooms 테이블)
+interface RoomLite {
+  id: string;
+  code: string;
+  status: string;
+  max_players: number;
+}
+const ONLINE: Record<string, {
+  players: number[];
+  def: number;
+  create: (players: number, nick: string | null) => Promise<{ code: string }>;
+  join: (code: string, nick: string | null) => Promise<unknown>;
+  mine: () => Promise<RoomLite[]>;
+}> = {
+  catan: {
+    players: [2, 3, 4],
+    def: 4,
+    create: (n) => createRoom("catan", n),
+    join: (c) => joinRoom(c),
+    mine: () => fetchMyRooms("catan"),
+  },
+  lexio: {
+    players: [3, 4, 5],
+    def: 4,
+    create: (n, nick) => lxCreateRoom(nick, n),
+    join: (c, nick) => lxJoinRoom(c, nick),
+    mine: () => lxMyRooms(),
+  },
+};
 import { cloudEnabled } from "@/lib/supabase";
 
 export function OnlineLobby({ gameId }: { gameId: string }) {
   const game = gameById(gameId)!;
-  const { t, lang, user, loading } = useApp();
+  const { t, lang, user, profile, loading } = useApp();
   const router = useRouter();
-  const [players, setPlayers] = useState(4);
+  const cfg = ONLINE[gameId];
+  const [players, setPlayers] = useState(cfg.def);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<MsgKey | null>(null);
-  const [rooms, setRooms] = useState<Room[]>([]);
+  const [err, setErr] = useState<string | null>(null);
+  const [rooms, setRooms] = useState<RoomLite[]>([]);
+  const errText = (e: unknown) => (gameId === "lexio" ? lxErrorText(e, lang) : t(errorKey(e) as MsgKey));
 
   useEffect(() => {
     if (!user) return;
-    fetchMyRooms(gameId).then(setRooms).catch(() => {});
-  }, [user, gameId]);
+    cfg.mine().then(setRooms).catch(() => {});
+  }, [user, cfg]);
 
   async function create() {
     setBusy(true);
     setErr(null);
     try {
-      const r = await createRoom(gameId, players);
+      const r = await cfg.create(players, profile?.nickname ?? null);
       router.push(`/online/${gameId}/${r.code}`);
     } catch (e) {
-      setErr(errorKey(e));
+      setErr(errText(e));
       setBusy(false);
     }
   }
@@ -43,10 +76,10 @@ export function OnlineLobby({ gameId }: { gameId: string }) {
     setBusy(true);
     setErr(null);
     try {
-      await joinRoom(c);
+      await cfg.join(c, profile?.nickname ?? null);
       router.push(`/online/${gameId}/${c}`);
     } catch (e2) {
-      setErr(errorKey(e2));
+      setErr(errText(e2));
       setBusy(false);
     }
   }
@@ -107,7 +140,7 @@ export function OnlineLobby({ gameId }: { gameId: string }) {
               <div className="row wrap-row" style={{ marginBottom: 14 }}>
                 <span className="muted small">{t("players")}</span>
                 <div className="seg">
-                  {[2, 3, 4].map((n) => (
+                  {cfg.players.map((n) => (
                     <button key={n} className={players === n ? "on" : ""} onClick={() => setPlayers(n)}>
                       {t("playersN", { n })}
                     </button>
@@ -135,7 +168,7 @@ export function OnlineLobby({ gameId }: { gameId: string }) {
           </div>
           {err && (
             <div className="notice err" style={{ marginTop: 14 }}>
-              {t(err)}
+              {err}
             </div>
           )}
           {rooms.length > 0 && (

@@ -8,8 +8,10 @@ export interface Board {
   id: string; // DB game_id 로 저장되는 값 — supabase/migrations 의 ranked_boards 와 반드시 일치
   label: { ko: string; en: string };
   unit: { ko: string; en: string };
-  /** 점수 표시 포맷 */
-  format?: "number" | "time" | "won" | "level";
+  /** 점수 표시 포맷 — roundtime: 점수 = 라운드×1,000,000 + (999,999−초) */
+  format?: "number" | "time" | "won" | "level" | "roundtime";
+  /** roundtime 에서 이 라운드를 넘으면 '클리어'로 표시 */
+  maxRound?: number;
 }
 
 export interface Game {
@@ -42,12 +44,13 @@ export const GAMES: Game[] = [
     id: "lexio",
     title: { ko: "LEXIO", en: "LEXIO" },
     desc: {
-      ko: "AI 3인과 겨루는 한국식 카드 게임 렉시오, 페어·조합 대응 전략이 핵심",
-      en: "A Korean climbing card game against 3 AI — countering pairs and combos is the key",
+      ko: "친구와 온라인 대전, 또는 AI와 겨루는 한국식 카드 게임 렉시오. 페어·조합 대응 전략이 핵심",
+      en: "A Korean climbing card game — play online with friends or against AI. Countering combos is the key",
     },
     genre: "board",
     thumb: "/thumbs/lexio.jpg",
     src: "/games/lexio/index.html",
+    online: true,
   },
   {
     id: "world-typing",
@@ -144,6 +147,7 @@ export const GAMES: Game[] = [
     genre: "strategy",
     thumb: "/thumbs/random-td.jpg",
     src: "/games/random-td/index.html",
+    boards: [{ id: "random-td", label: { ko: "도달 라운드", en: "Round reached" }, unit: { ko: "", en: "" }, format: "roundtime" }],
   },
   {
     id: "element-td",
@@ -155,6 +159,7 @@ export const GAMES: Game[] = [
     genre: "strategy",
     thumb: "/thumbs/element-td.jpg",
     src: "/games/element-td/index.html",
+    boards: [{ id: "element-td", label: { ko: "도달 라운드", en: "Round reached" }, unit: { ko: "", en: "" }, format: "roundtime", maxRound: 50 }],
   },
 ];
 
@@ -185,6 +190,13 @@ export function formatScore(board: Board, score: number, lang: Lang): string {
       return "₩" + score.toLocaleString("ko-KR");
     case "level":
       return `Lv.${score}`;
+    case "roundtime": {
+      const round = Math.floor(score / 1000000);
+      const sec = 999999 - (score % 1000000);
+      const t = `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+      if (board.maxRound && round > board.maxRound) return (lang === "ko" ? "클리어 · " : "Clear · ") + t;
+      return (lang === "ko" ? `${round}라운드 · ` : `Round ${round} · `) + t;
+    }
     default: {
       const u = board.unit[lang];
       return score.toLocaleString(lang === "ko" ? "ko-KR" : "en-US") + (u ? ` ${u}` : "");
