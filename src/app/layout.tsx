@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { LANG_COOKIE, normLang, pickLang, translate, type Lang } from "@/lib/i18n";
 import "./globals.css";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://minigame-heaven.vercel.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://minigame-on.vercel.app";
 
 async function serverLang(): Promise<{ lang: Lang; fromCookie: boolean }> {
   const c = normLang((await cookies()).get(LANG_COOKIE)?.value);

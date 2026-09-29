@@ -13,7 +13,7 @@ GitHub(`neolich86/minigame`) → Vercel 자동 배포, 계정·랭킹·온라인
 2. `neolich86/minigame` 선택 → Import (Framework: Next.js 자동 인식, 빌드 설정은 그대로)
    - v2 코드는 `portal-v2` 브랜치에 있습니다. `main`에 합치기 전이라면 **Settings → Git → Production Branch**를 `portal-v2`로 바꾸거나, 합친 뒤 배포하세요.
    - ⚠️ 지금 EdgeOne(`game-zip.edgeone.dev`)이 이 리포의 `main`을 배포하고 있다면, Vercel 주소가 준비된 뒤에 `main`에 합치세요 (합치면 EdgeOne의 정적 사이트는 더 이상 동작하지 않습니다).
-3. 환경변수는 일단 비워두고 **Deploy** → 할당된 주소 확인 (예: `https://minigame-heaven.vercel.app`)
+3. 환경변수는 일단 비워두고 **Deploy** → 할당된 주소 확인 (예: `https://minigame-on.vercel.app`)
 4. 이후 브랜치에 push할 때마다 자동 재배포됩니다.
 
 ## 1. Supabase
