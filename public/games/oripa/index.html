@@ -489,6 +489,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 
   <div class="toolbar">
+    <button class="btn btn-ghost" id="btnRules">📜 게임 룰</button>
     <button class="btn btn-ghost" id="btnDex">📖 컬렉션 도감 보기</button>
   </div>
 
@@ -531,7 +532,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="bankrupt-stamp" id="bankruptStamp">파산</div>
     <p id="bankruptBody">봉투를 더 살 수 없을 만큼 자금이 바닥났습니다.<br>
     미개봉 봉투가 전부 폐기되고, 그동안 모은 <strong>컬렉션도 초기화</strong>됩니다.<br>
-    난이도도 <strong>EASY로 초기화</strong>되며, 자금 100,000원으로 새 오리파가 시작됩니다.</p>
+    난이도도 <strong>EASY로 초기화</strong>되며, 자금 500,000원으로 새 오리파가 시작됩니다.</p>
     <button class="btn btn-danger" id="btnBankruptOk" style="width:100%;">확인하고 다시 시작</button>
   </div>
 </div>
@@ -551,6 +552,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <button class="btn btn-ghost" id="btnQuit" style="color:#241f14;border-color:#cbb884;">그만하기</button>
       <button class="btn btn-primary" id="btnRestart">새 오리파 시작</button>
     </div>
+  </div>
+</div>
+
+<!-- 게임 룰 안내 모달 -->
+<div class="overlay hidden" id="rulesOverlay">
+  <div class="settle-box">
+    <h3 id="rulesTitle">게임 룰</h3>
+    <ol id="rulesList" style="text-align:left;margin:14px 0 10px;padding-left:20px;line-height:1.7;font-size:14px;"></ol>
+    <div class="sub-line" id="rulesRates" style="margin-bottom:14px;"></div>
+    <button class="btn btn-primary" id="btnRulesClose" style="width:100%;">확인</button>
   </div>
 </div>
 
@@ -610,6 +621,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       statPrice: "봉투 가격",
       statDex: "도감 수집률",
       btnDex: "📖 컬렉션 도감 보기",
+      rulesBtn: "📜 게임 룰",
+      rulesTitle: "게임 룰",
+      rule1: "S등급 카드를 뽑으면 다음 난이도로 이동합니다.",
+      rule2: "그 외 등급 카드를 뽑으면 되팔기 후 다른 카드를 다시 뽑을 수 있습니다.",
+      rule3: "난이도가 올라가면 되팔기 시 자금 회수율이 낮아집니다.",
+      rulesRates: "난이도별 되팔기 회수율 — {rates}",
+      rulesClose: "확인",
       panelTitleSuffix: " 봉투 매대",
       panelSub: "봉투 1개 {price} · 클릭해서 개봉",
       footnote: "[{series} · {diff}] 등급별 가치: S {S} · A {A} · B {B} · C {C} · D {D}원 (전체 100장 풀, 카드당 1장 · 비복원 · 하우스엣지 {edge}%)<br>되팔기는 카드 가치의 {sellPct}% ({diff} 기준) · 자금이 {threshold} 미만이 되면 파산(미개봉 봉투 폐기 + 컬렉션 몰수 + EASY로 초기화) · 1등 카드를 획득하면 다음 난이도로 이동",
@@ -655,6 +673,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       statPrice: "Envelope Price",
       statDex: "Collection",
       btnDex: "📖 View Collection",
+      rulesBtn: "📜 Rules",
+      rulesTitle: "Game Rules",
+      rule1: "Pull an S-grade card to advance to the next difficulty.",
+      rule2: "Pull any other grade and you can sell it back, then pull another card.",
+      rule3: "Higher difficulties return less money when you sell cards back.",
+      rulesRates: "Sell-back rate by difficulty — {rates}",
+      rulesClose: "OK",
       panelTitleSuffix: " Envelope Stand",
       panelSub: "1 envelope = {price} · Click to open",
       footnote: "[{series} · {diff}] Grade values: S {S} · A {A} · B {B} · C {C} · D {D} (100-card pool, one of each · no repeats · house edge {edge}%)<br>Sell back for {sellPct}% of value (at {diff}) · Falling below {threshold} triggers bankruptcy (unopened envelopes discarded + collection wiped + reset to EASY) · Pulling the #1 card advances you to the next difficulty",
@@ -702,7 +727,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     return str;
   }
 
-  const START_CASH = 100000;
+  const START_CASH = 500000;
   const ENVELOPE_PRICE = 20000;
   const TOTAL_CARDS = 100;
 
@@ -1275,6 +1300,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   el.btnSeriesPokemon.addEventListener("click", ()=> switchSeries("pokemon"));
   el.btnSeriesOnePiece.addEventListener("click", ()=> switchSeries("onepiece"));
 
+  // ===== 게임 룰 안내 =====
+  const rulesOverlay = document.getElementById("rulesOverlay");
+  function openRules(){
+    document.getElementById("rulesTitle").textContent = t("rulesTitle");
+    document.getElementById("rulesList").innerHTML = ["rule1","rule2","rule3"].map(k => "<li>" + t(k) + "</li>").join("");
+    const rates = DIFF_ORDER.map(k => DIFFICULTIES[k].label + " " + Math.round(DIFFICULTIES[k].sellBackRate*100) + "%").join(" · ");
+    document.getElementById("rulesRates").textContent = t("rulesRates", { rates: rates });
+    document.getElementById("btnRulesClose").textContent = t("rulesClose");
+    rulesOverlay.classList.remove("hidden");
+  }
+  document.getElementById("btnRules").addEventListener("click", openRules);
+  document.getElementById("btnRulesClose").addEventListener("click", ()=> rulesOverlay.classList.add("hidden"));
+  rulesOverlay.addEventListener("click", (e)=>{ if(e.target === rulesOverlay) rulesOverlay.classList.add("hidden"); });
+
   // ===== 컬렉션 도감 =====
   el.btnDex.addEventListener("click", ()=>{
     renderDex();
@@ -1308,6 +1347,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     el.statPriceLabel.textContent = t("statPrice");
     el.statDexLabel.textContent = t("statDex");
     el.btnDex.textContent = t("btnDex");
+    document.getElementById("btnRules").textContent = t("rulesBtn");
     el.statPrice.textContent = won(ENVELOPE_PRICE);
     el.revealCloseHint.textContent = t("revealCloseHint");
     el.btnSell.textContent = t("sellBtn");
