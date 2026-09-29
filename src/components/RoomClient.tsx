@@ -14,6 +14,7 @@ import { errorKey, type MsgKey } from "@/lib/i18n";
 import {
   SEAT_COLORS,
   claimHost,
+  deleteRoom,
   fetchMembers,
   fetchRoom,
   fetchSavedState,
@@ -79,6 +80,7 @@ export function RoomClient({ gameId, code }: { gameId: string; code: string }) {
     try {
       const [r, m] = await Promise.all([fetchRoom(roomId), fetchMembers(roomId)]);
       if (r) setRoom(r);
+      else if (roomRef.current) setFatal("roomDeleted"); // 방장이 방을 삭제함
       setMembers(m);
     } catch {
       /* 일시적 오류는 다음 이벤트에서 복구 */
@@ -269,6 +271,16 @@ export function RoomClient({ gameId, code }: { gameId: string; code: string }) {
     router.push(`/online/${gameId}`);
   }
 
+  async function removeRoom() {
+    if (!room || !window.confirm(t("deleteConfirm"))) return;
+    try {
+      await deleteRoom(room.id);
+      router.push(`/online/${gameId}`);
+    } catch (e) {
+      setErr(errorKey(e));
+    }
+  }
+
   function copyInvite() {
     const url = `${window.location.origin}/online/${gameId}/${code}`;
     navigator.clipboard?.writeText(url).then(() => {
@@ -309,6 +321,7 @@ export function RoomClient({ gameId, code }: { gameId: string; code: string }) {
         <div className="play-main">
           <div className="play-bar">
             <button className="btn sm ghost" onClick={leave}>{t("leave")}</button>
+            {isHost && <button className="btn sm ghost" onClick={removeRoom}>🗑 {t("deleteRoom")}</button>}
             <span className="title">{game.title[lang]} · <span style={{ fontFamily: "Space Mono, monospace", color: "var(--gold)" }}>{room.code}</span></span>
             {members.map((m) => (
               <span key={m.seat} className="row" style={{ gap: 5, fontSize: 12 }}>
@@ -414,7 +427,10 @@ export function RoomClient({ gameId, code }: { gameId: string; code: string }) {
         </div>
         {err && <div className="notice err" style={{ marginTop: 14 }}>{t(err)}</div>}
         <div className="row spread wrap-row" style={{ marginTop: 18 }}>
-          <button className="btn ghost" onClick={leave}>{t("leave")}</button>
+          <div className="row">
+            <button className="btn ghost" onClick={leave}>{t("leave")}</button>
+            {isHost && <button className="btn ghost" onClick={removeRoom}>🗑 {t("deleteRoom")}</button>}
+          </div>
           {isHost ? (
             <div className="row wrap-row">
               <span className="muted small">{!full ? t("needFull") : !allReady ? t("needAllReady") : ""}</span>

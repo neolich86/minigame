@@ -70,6 +70,7 @@ export const lxJoinRoom = (code: string, nickname: string | null) =>
   rpc<LexioRoom>("join_room", { p_code: code.toUpperCase(), p_nickname: nickname });
 export const lxFillAI = (roomId: string, seat: number) => rpc<void>("fill_with_ai", { p_room_id: roomId, p_seat: seat });
 export const lxSetReady = (roomId: string, ready: boolean) => rpc<void>("set_ready", { p_room_id: roomId, p_ready: ready });
+export const lxDeleteRoom = (roomId: string) => rpc<void>("delete_room", { p_room_id: roomId });
 export const lxLeave = (roomId: string) => rpc<void>("leave_room", { p_room_id: roomId });
 export const lxStart = (roomId: string, rounds: number) => rpc<void>("start_game", { p_room_id: roomId, p_total_rounds: rounds });
 export const lxNextRound = (roomId: string) => rpc<void>("start_next_round", { p_room_id: roomId });

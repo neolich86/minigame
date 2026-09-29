@@ -46,6 +46,7 @@ export const heartbeat = (roomId: string) => rpc<void>("mg_heartbeat", { p_room:
 export const claimHost = (roomId: string) => rpc<Room>("mg_claim_host", { p_room: roomId });
 export const replaceWithAI = (roomId: string, seat: number) => rpc<void>("mg_replace_with_ai", { p_room: roomId, p_seat: seat });
 export const finishRoom = (roomId: string, result: unknown) => rpc<void>("mg_finish_room", { p_room: roomId, p_result: result });
+export const deleteRoom = (roomId: string) => rpc<void>("mg_delete_room", { p_room: roomId });
 export const leaveRoom = (roomId: string) => rpc<void>("mg_leave_room", { p_room: roomId });
 
 export async function fetchRoom(roomId: string): Promise<Room | null> {

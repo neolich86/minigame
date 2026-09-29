@@ -25,6 +25,7 @@ GitHub(`neolich86/minigame`) → Vercel 자동 배포, 계정·랭킹·온라인
    1. `supabase/migrations/0001_portal.sql` — 공용 프로필 · 랭킹 · 카탄 온라인 방 (`leaderboard`, `ranked_boards`, `mg_*`)
    2. `supabase/migrations/0002_td_ranking.sql` — 랜덤 타워 디펜스 · Element Siege 랭킹 보드
    3. `supabase/migrations/0003_lexio_online.sql` — 렉시오 온라인 (`rooms`, `room_members`, `game_states`, `game_public`)
+   4. `supabase/migrations/0004_room_delete.sql` — 방장의 방 삭제 기능
 2. **Project Settings → API (API Keys)** 에서 복사
    - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
    - anon(또는 publishable) 키 → `NEXT_PUBLIC_SUPABASE_ANON_KEY`

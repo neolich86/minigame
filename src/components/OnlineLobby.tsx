@@ -6,8 +6,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useApp } from "./AppProvider";
 import { gameById } from "@/lib/games";
 import { errorKey, type MsgKey } from "@/lib/i18n";
-import { createRoom, fetchMyRooms, joinRoom } from "@/lib/rooms";
-import { lxCreateRoom, lxErrorText, lxJoinRoom, lxMyRooms } from "@/lib/lexio";
+import { createRoom, deleteRoom, fetchMyRooms, joinRoom } from "@/lib/rooms";
+import { lxCreateRoom, lxDeleteRoom, lxErrorText, lxJoinRoom, lxMyRooms } from "@/lib/lexio";
 
 // 게임별 방 방식: 카탄 = 방장 브라우저 진행(mg_* 테이블), 렉시오 = 서버 판정(rooms 테이블)
 interface RoomLite {
@@ -15,6 +15,7 @@ interface RoomLite {
   code: string;
   status: string;
   max_players: number;
+  host_user_id: string;
 }
 const ONLINE: Record<string, {
   players: number[];
@@ -22,6 +23,7 @@ const ONLINE: Record<string, {
   create: (players: number, nick: string | null) => Promise<{ code: string }>;
   join: (code: string, nick: string | null) => Promise<unknown>;
   mine: () => Promise<RoomLite[]>;
+  del: (roomId: string) => Promise<void>;
 }> = {
   catan: {
     players: [2, 3, 4],
@@ -29,6 +31,7 @@ const ONLINE: Record<string, {
     create: (n) => createRoom("catan", n),
     join: (c) => joinRoom(c),
     mine: () => fetchMyRooms("catan"),
+    del: (id) => deleteRoom(id),
   },
   lexio: {
     players: [3, 4, 5],
@@ -36,6 +39,7 @@ const ONLINE: Record<string, {
     create: (n, nick) => lxCreateRoom(nick, n),
     join: (c, nick) => lxJoinRoom(c, nick),
     mine: () => lxMyRooms(),
+    del: (id) => lxDeleteRoom(id),
   },
 };
 import { cloudEnabled } from "@/lib/supabase";
@@ -183,6 +187,24 @@ export function OnlineLobby({ gameId }: { gameId: string }) {
                     <Link className="btn sm" href={`/online/${gameId}/${r.code}`}>
                       {t("enter")}
                     </Link>
+                    {r.host_user_id === user.id && (
+                      <button
+                        className="btn sm ghost"
+                        disabled={busy}
+                        onClick={async () => {
+                          if (!window.confirm(t("deleteConfirm"))) return;
+                          setErr(null);
+                          try {
+                            await cfg.del(r.id);
+                            setRooms((list) => list.filter((x) => x.id !== r.id));
+                          } catch (e) {
+                            setErr(errText(e));
+                          }
+                        }}
+                      >
+                        🗑 {t("deleteRoom")}
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

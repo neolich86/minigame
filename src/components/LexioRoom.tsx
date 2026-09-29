@@ -11,6 +11,7 @@ import {
   lxFetchGame,
   lxFetchMembers,
   lxFetchRoom,
+  lxDeleteRoom,
   lxFillAI,
   lxJoinRoom,
   lxLeave,
@@ -94,10 +95,14 @@ export function LexioRoomClient({ code }: { code: string }) {
   const [rounds, setRounds] = useState(5);
   const [copied, setCopied] = useState(false);
 
+  const loaded = useRef(false);
   const refresh = useCallback(async (id: string) => {
     try {
       const [r, m] = await Promise.all([lxFetchRoom(id), lxFetchMembers(id)]);
-      if (r) setRoom(r);
+      if (r) {
+        loaded.current = true;
+        setRoom(r);
+      } else if (loaded.current) setFatal("__deleted__"); // 방장이 방을 삭제함
       setMembers(m);
     } catch {}
   }, []);
@@ -157,6 +162,16 @@ export function LexioRoomClient({ code }: { code: string }) {
     router.push("/online/lexio");
   }
 
+  async function removeRoom() {
+    if (!room || !window.confirm(t("deleteConfirm"))) return;
+    try {
+      await lxDeleteRoom(room.id);
+      router.push("/online/lexio");
+    } catch (e) {
+      setErr(lxErrorText(e, lang));
+    }
+  }
+
   if (!cloudEnabled) return <div className="wrap narrow"><div className="notice">{t("serverMissing")}</div></div>;
   if (loading) return <div className="wrap narrow muted">{L.loading}</div>;
   if (!user) {
@@ -170,7 +185,7 @@ export function LexioRoomClient({ code }: { code: string }) {
   if (fatal) {
     return (
       <div className="wrap narrow">
-        <div className="notice err" style={{ marginBottom: 14 }}>{fatal}</div>
+        <div className="notice err" style={{ marginBottom: 14 }}>{fatal === "__deleted__" ? t("roomDeleted") : fatal}</div>
         <Link className="btn" href="/online/lexio">{L.back}</Link>
       </div>
     );
@@ -178,7 +193,7 @@ export function LexioRoomClient({ code }: { code: string }) {
   if (!room || !me) return <div className="wrap narrow muted">{L.loading}</div>;
 
   if (room.status !== "waiting") {
-    return <LexioGame roomId={room.id} mySeat={me.seat} members={members} onLeave={leave} />;
+    return <LexioGame roomId={room.id} mySeat={me.seat} members={members} onLeave={leave} onDelete={isHost ? removeRoom : undefined} />;
   }
 
   const seats = Array.from({ length: room.max_players }, (_, i) => members.find((m) => m.seat === i) ?? null);
@@ -240,6 +255,7 @@ export function LexioRoomClient({ code }: { code: string }) {
 
         <div className="row wrap-row" style={{ marginTop: 18, gap: 10 }}>
           <button className="btn ghost" onClick={leave}>{L.leave}</button>
+          {isHost && <button className="btn ghost" onClick={removeRoom}>🗑 {t("deleteRoom")}</button>}
           <span style={{ flex: 1 }} />
           <button className={`btn ${me.is_ready ? "" : "primary"}`} disabled={busy} onClick={() => run(() => lxSetReady(room.id, !me.is_ready))}>
             {me.is_ready ? L.unready : L.readyBtn}
@@ -263,8 +279,8 @@ export function LexioRoomClient({ code }: { code: string }) {
   );
 }
 
-function LexioGame({ roomId, mySeat, members, onLeave }: { roomId: string; mySeat: number; members: LexioMember[]; onLeave: () => void }) {
-  const { lang } = useApp();
+function LexioGame({ roomId, mySeat, members, onLeave, onDelete }: { roomId: string; mySeat: number; members: LexioMember[]; onLeave: () => void; onDelete?: () => void }) {
+  const { lang, t } = useApp();
   const L = TX[lang];
   const [gp, setGp] = useState<GamePublic | null>(null);
   const [hand, setHand] = useState<Tile[]>([]);
@@ -452,6 +468,7 @@ function LexioGame({ roomId, mySeat, members, onLeave }: { roomId: string; mySea
 
         <div className="row" style={{ justifyContent: "flex-end", marginTop: 16 }}>
           <button className="btn sm ghost" onClick={onLeave}>{gp.status === "finished" ? L.back : L.leave}</button>
+          {onDelete && <button className="btn sm ghost" onClick={onDelete}>🗑 {t("deleteRoom")}</button>}
         </div>
       </div>
     </div>
