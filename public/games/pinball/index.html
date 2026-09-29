@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<link rel="canonical" href="/play/pinball">
+<script src="/mgh/bridge.js"></script><script src="/mgh/i18n/pinball.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>핀볼 추첨기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<style>
+  :root{
+    --bg: #0a0d16;
+    --panel: #12172a;
+    --panel-2: #171d34;
+    --line: #2a3253;
+    --cyan: #2de2e6;
+    --magenta: #ff3d81;
+    --amber: #ffc857;
+    --text: #e7ecf5;
+    --muted: #8891a8;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; background:var(--bg); color:var(--text);
+    font-family:'Rajdhani',sans-serif;
+    min-height:100vh;
+  }
+  body{
+    background:
+      radial-gradient(circle at 20% 0%, rgba(45,226,230,0.08), transparent 40%),
+      radial-gradient(circle at 80% 100%, rgba(255,61,129,0.08), transparent 45%),
+      var(--bg);
+    padding:20px;
+  }
+  .marquee{
+    text-align:center;
+    padding:18px 10px 14px;
+    position:relative;
+    margin-bottom:18px;
+  }
+  .marquee .bulbs{
+    display:flex; justify-content:center; gap:10px; margin-bottom:8px;
+  }
+  .marquee .bulb{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--amber);
+    box-shadow:0 0 6px 2px rgba(255,200,87,0.6);
+    animation:blink 1.4s infinite;
+  }
+  .marquee .bulb:nth-child(odd){animation-delay:0.35s; background:var(--cyan); box-shadow:0 0 6px 2px rgba(45,226,230,0.6);}
+  .marquee .bulb:nth-child(3n){animation-delay:0.7s; background:var(--magenta); box-shadow:0 0 6px 2px rgba(255,61,129,0.6);}
+  @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:0.25;} }
+  .marquee h1{
+    font-family:'Orbitron',sans-serif;
+    font-weight:900;
+    font-size:clamp(26px,4vw,42px);
+    letter-spacing:3px;
+    margin:0;
+    color:#fff;
+    text-shadow:
+      0 0 6px rgba(255,255,255,0.5),
+      0 0 18px var(--cyan),
+      0 0 34px rgba(45,226,230,0.5);
+  }
+  .marquee p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-size:14px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+  }
+  .app{
+    max-width:1180px;
+    margin:0 auto;
+    display:flex;
+    gap:18px;
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+  .board-col{
+    flex:1 1 640px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .controls{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px 18px;
+  }
+  .controls-row{
+    display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end;
+  }
+  .field{
+    display:flex; flex-direction:column; gap:6px; flex:1 1 220px;
+  }
+  label{
+    font-size:12px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--cyan); font-weight:700;
+  }
+  input[type=text]{
+    background:#0d1122; border:1px solid var(--line); border-radius:8px;
+    color:var(--text); padding:10px 12px; font-family:'Rajdhani',sans-serif;
+    font-size:16px; font-weight:600; outline:none; transition:border-color .15s;
+  }
+  input[type=text]:focus{border-color:var(--cyan); box-shadow:0 0 0 2px rgba(45,226,230,0.2);}
+  select{
+    background:#0d1122; border:1px solid var(--line); border-radius:8px;
+    color:var(--text); padding:10px 12px; font-family:'Rajdhani',sans-serif;
+    font-size:15px; font-weight:600; outline:none;
+  }
+  .seg{
+    display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden;
+  }
+  .seg button{
+    flex:1; background:#0d1122; color:var(--muted); border:none; padding:10px 14px;
+    font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; cursor:pointer;
+    transition:all .15s;
+  }
+  .seg button.active{ background:var(--cyan); color:#0a0d16; }
+  .btnrow{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .btn{
+    border:none; border-radius:8px; padding:12px 22px; font-family:'Orbitron',sans-serif;
+    font-weight:700; font-size:13px; letter-spacing:1px; cursor:pointer;
+    transition:transform .1s, box-shadow .15s;
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn-start{ background:linear-gradient(135deg,var(--cyan),#1fa9ad); color:#04181a; box-shadow:0 0 16px rgba(45,226,230,0.35);}
+  .btn-start:hover{ box-shadow:0 0 24px rgba(45,226,230,0.55);}
+  .btn-reset{ background:#1b2140; color:var(--text); border:1px solid var(--line);}
+  .btn-reset:hover{ border-color:var(--magenta); color:var(--magenta);}
+  .btn:disabled{ opacity:0.4; cursor:not-allowed; box-shadow:none; }
+  .legend{
+    display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;
+  }
+  .chip{
+    display:flex; align-items:center; gap:6px;
+    background:#0d1122; border:1px solid var(--line); border-radius:20px;
+    padding:5px 10px 5px 6px; font-size:13px; font-weight:600;
+  }
+  .dot{ width:12px;height:12px;border-radius:50%; flex-shrink:0; }
+  .board-frame{
+    background:linear-gradient(180deg,#1a2036,#0f1324);
+    border-radius:18px;
+    padding:10px;
+    border:1px solid var(--line);
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.6), 0 10px 30px rgba(0,0,0,0.4);
+  }
+  .board-viewport{
+    position:relative;
+    width:100%;
+    max-width:760px;
+    margin:0 auto;
+    border-radius:12px;
+    background:#070a13;
+  }
+  .board-viewport canvas{
+    display:block;
+    width:100%;
+    height:auto;
+    border-radius:12px;
+  }
+  .board-results{
+    position:absolute;
+    top:10px; right:10px;
+    width:150px;
+    max-height:45vh;
+    background:rgba(10,13,22,0.88);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:8px 8px 6px;
+    backdrop-filter:blur(2px);
+    display:flex; flex-direction:column;
+    z-index:3;
+  }
+  .board-results h2{
+    font-family:'Orbitron',sans-serif; font-size:10px; letter-spacing:1.5px;
+    margin:0 0 6px; color:var(--cyan); text-transform:uppercase; text-align:center;
+  }
+  .winner-banner{
+    display:none;
+    text-align:center;
+    padding:14px;
+    border-radius:12px;
+    background:linear-gradient(135deg, rgba(255,200,87,0.15), rgba(255,61,129,0.15));
+    border:1px solid var(--amber);
+    font-family:'Orbitron',sans-serif;
+    font-weight:700;
+    font-size:18px;
+    color:var(--amber);
+    text-shadow:0 0 12px rgba(255,200,87,0.5);
+  }
+  .result-list{
+    list-style:none; margin:0; padding:0;
+    max-height:100%; overflow-y:auto;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .result-list li{
+    display:flex; align-items:center; gap:6px;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:6px;
+    padding:5px 7px; font-weight:700; font-size:12px;
+    animation:pop .25s ease;
+  }
+  @keyframes pop{ from{ transform:scale(0.9); opacity:0;} to{ transform:scale(1); opacity:1;} }
+  .rank{
+    font-family:'Orbitron',sans-serif; font-size:10px; color:var(--muted);
+    width:18px; text-align:center; flex-shrink:0;
+  }
+  .result-list li.win-first, .result-list li.win-last{
+    border-color:var(--amber); box-shadow:0 0 8px rgba(255,200,87,0.35);
+  }
+  .result-list li .medal{ margin-left:auto; font-size:13px; }
+  .empty-msg{ color:var(--muted); font-size:11px; text-align:center; padding:14px 2px; }
+  .hint{
+    color:var(--muted); font-size:12px; line-height:1.5; margin-top:6px;
+  }
+  ::-webkit-scrollbar{ width:8px; }
+  ::-webkit-scrollbar-thumb{ background:var(--line); border-radius:4px; }
+</style>
+</head>
+<body>
+
+<div class="marquee">
+  <div class="bulbs">
+    <div class="bulb"></div><div class="bulb"></div><div class="bulb"></div>
+    <div class="bulb"></div><div class="bulb"></div><div class="bulb"></div>
+    <div class="bulb"></div>
+  </div>
+  <h1>핀볼 추첨기</h1>
+  <p>PINBALL LOTTERY MACHINE</p>
+</div>
+
+<div class="app">
+  <div class="board-col">
+    <div class="controls">
+      <div class="controls-row">
+        <div class="field" style="flex:1 1 320px;">
+          <label>참가 공 입력 (예: a10, b5, c7, d3)</label>
+          <input type="text" id="ballInput" value="a10, b5, c7, d3" placeholder="이름과 개수를 붙여서 입력하세요">
+        </div>
+        <div class="field" style="flex:0 0 200px;">
+          <label>당첨 조건</label>
+          <div class="seg" id="winModeSeg">
+            <button data-mode="first">첫 도착</button>
+            <button data-mode="last" class="active">마지막 도착</button>
+          </div>
+        </div>
+        <div class="field" style="flex:0 0 180px;">
+          <label>핀볼 맵</label>
+          <select id="mapSelect">
+            <option value="1" selected>맵 1 · 클래식</option>
+            <option value="3">맵 2 · 깔때기</option>
+            <option value="4">맵 3 · 로터 필드</option>
+          </select>
+        </div>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="btnrow">
+        <button class="btn btn-start" id="startBtn">▶ 추첨 시작</button>
+        <button class="btn btn-reset" id="resetBtn">↺ 초기화</button>
+      </div>
+      <div class="hint">맵은 3배 긴 트랙이며, 창을 확대해 보여드리니 브라우저 스크롤로 위아래를 살펴보며 진행 상황을 확인하세요. 결승 게이트 바로 위에는 360도로 회전하며 게이트에 닿는 장애물이 진입을 방해합니다.</div>
+    </div>
+
+    <div class="winner-banner" id="winnerBanner"></div>
+
+    <div class="board-frame">
+      <div class="board-viewport" id="boardViewport">
+        <canvas id="board" width="620" height="2280"></canvas>
+        <div class="board-results">
+          <h2>도착 순서</h2>
+          <ul class="result-list" id="resultList">
+            <li class="empty-msg" style="display:list-item; background:none; border:none;">추첨 시작 시<br>순서대로 표시됩니다</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const { Engine, Runner, Bodies, Composite, Body, Events } = Matter;
+
+  // ---------- board geometry (3x longer track + narrow finish gate, fully visible - no scrolling) ----------
+  const CW = 620, CH = 2280;
+  const WALL_T = 20;
+  const GATE_WIDTH = 70;              // narrow entrance width at the finish line
+  const FINISH_Y = CH - 160;          // finish line sits near the bottom, above a collection pit
+  const FUNNEL_H = 260;               // vertical span over which the track narrows into the gate
+  const FUNNEL_TOP = FINISH_Y - FUNNEL_H;
+  const FUNNEL_GAP = 50;              // small buffer before the funnel begins
+  const FIELD_TOP = 90;
+  const FIELD_BOTTOM = FUNNEL_TOP - FUNNEL_GAP;
+  const FIELD_HEIGHT = FIELD_BOTTOM - FIELD_TOP;
+  const UNITS = 3;                    // track is tiled as 3 stacked "screens" worth of obstacles
+  const UNIT_H = FIELD_HEIGHT / UNITS;
+
+  const canvas = document.getElementById('board');
+  const ctx = canvas.getContext('2d');
+
+  let engine, runner;
+  let mapBodies = [];    // pegs/obstacles for current map (cleared between builds)
+  let rotators = [];     // moving obstacles {body,type,...}
+  let funnelBodies = []; // permanent narrow-gate walls (drawn, never cleared)
+  let balls = [];        // {body,name,color,arrived}
+  let clockMs = 0;
+  let totalBalls = 0;
+  let arrivalOrder = [];
+  let releaseTimer = null;
+  let raceActive = false;
+  let nameColors = {};
+
+  // ---------- setup engine ----------
+  function initEngine(){
+    engine = Engine.create();
+    engine.gravity.y = 1;
+    runner = Runner.create();
+    Runner.run(runner, engine);
+    Events.on(engine, 'beforeUpdate', updateRotators);
+    addWalls();
+    addFunnelGate();
+  }
+
+  function addWalls(){
+    const left = Bodies.rectangle(-WALL_T/2, CH/2, WALL_T, CH*2, {isStatic:true});
+    const right = Bodies.rectangle(CW+WALL_T/2, CH/2, WALL_T, CH*2, {isStatic:true});
+    const bottom = Bodies.rectangle(CW/2, CH+WALL_T/2 - 4, CW*2, WALL_T, {isStatic:true});
+    Composite.add(engine.world, [left, right, bottom]);
+  }
+
+  // permanent funnel walls that pinch the track down to a narrow gate before the finish line
+  function addFunnelGate(){
+    const gateLeftX = CW/2 - GATE_WIDTH/2;
+    const gateRightX = CW/2 + GATE_WIDTH/2;
+    // walls terminate exactly at the finish line - no obstacle/floor extends past it
+
+    const leftTop = {x:0, y:FUNNEL_TOP};
+    const leftBot = {x:gateLeftX, y:FINISH_Y};
+    const rightTop = {x:CW, y:FUNNEL_TOP};
+    const rightBot = {x:gateRightX, y:FINISH_Y};
+
+    const leftWall = makeWallBetween(leftTop, leftBot);
+    const rightWall = makeWallBetween(rightTop, rightBot);
+    funnelBodies.push(leftWall, rightWall);
+    Composite.add(engine.world, [leftWall, rightWall]);
+  }
+
+  function makeWallBetween(a,b){
+    const dx = b.x-a.x, dy = b.y-a.y;
+    const len = Math.sqrt(dx*dx+dy*dy);
+    const angle = Math.atan2(dy,dx);
+    const cx = (a.x+b.x)/2, cy = (a.y+b.y)/2;
+    return Bodies.rectangle(cx,cy,len,22,{isStatic:true, angle:angle, restitution:0.4, friction:0.15, label:'funnel'});
+  }
+
+  function clearMap(){
+    if(mapBodies.length) Composite.remove(engine.world, mapBodies);
+    if(rotators.length) Composite.remove(engine.world, rotators.map(r=>r.body));
+    mapBodies = [];
+    rotators = [];
+  }
+
+  function addPeg(x,y,r){
+    const b = Bodies.circle(x,y,r,{isStatic:true, restitution:0.8, friction:0.05, label:'peg'});
+    mapBodies.push(b);
+    return b;
+  }
+  function addBlock(x,y,w,h,angle){
+    const b = Bodies.rectangle(x,y,w,h,{isStatic:true, angle:angle||0, restitution:0.5, friction:0.2, label:'block'});
+    mapBodies.push(b);
+    return b;
+  }
+  function addRotor(x,y,len,thick,speed){
+    const b = Bodies.rectangle(x,y,len,thick,{isStatic:true, restitution:0.75, friction:0.05, label:'rotor'});
+    rotators.push({body:b, type:'spin', speed:speed});
+    mapBodies.push(b);
+    return b;
+  }
+  function addOscillator(baseX,baseY,w,h,amp,speed){
+    const b = Bodies.rectangle(baseX,baseY,w,h,{isStatic:true, restitution:0.6, friction:0.1, label:'osc'});
+    rotators.push({body:b, type:'osc', baseX:baseX, baseY:baseY, amp:amp, speed:speed});
+    mapBodies.push(b);
+    return b;
+  }
+
+  function updateRotators(){
+    const dt = engine.timing.lastDelta || 16.67;
+    clockMs += dt;
+    rotators.forEach(r=>{
+      if(r.type==='spin'){
+        Body.setAngle(r.body, r.body.angle + r.speed*dt/1000);
+      } else if(r.type==='osc'){
+        const x = r.baseX + r.amp*Math.sin((clockMs/1000)*r.speed);
+        Body.setPosition(r.body, {x:x, y:r.baseY});
+      }
+    });
+  }
+
+  // ---------- moving obstacle guarding the gate - a 360-degree rotor touching the finish line ----------
+  function addFinishGuardian(){
+    const rotorLen = 150;
+    addRotor(CW/2, FINISH_Y - rotorLen/2, rotorLen, 14, 2.0);
+  }
+
+  // ---------- 5 maps, each tiled across 3 vertical units to make the track 3x longer ----------
+  function forEachUnit(fn){
+    for(let u=0; u<UNITS; u++){
+      const offset = FIELD_TOP + u*UNIT_H;
+      fn(offset, u);
+    }
+  }
+
+  function buildMap1(){ // classic galton board, repeated down the whole track
+    forEachUnit((offset)=>{
+      const rows = 11, gap = UNIT_H/rows;
+      for(let row=0; row<rows; row++){
+        const y = offset + row*gap + gap/2;
+        const cols = 8 + (row%2===0?0:1);
+        const spacing = CW/(cols+1);
+        for(let c=1;c<=cols;c++){
+          let x = spacing*c + (row%2===0? spacing/2 : 0);
+          if(x < 30 || x > CW-30) continue;
+          addPeg(x,y,7);
+        }
+      }
+    });
+  }
+
+  function buildMap3(){ // funnel: open, evenly-spaced peg field with periodic hourglass pinch points
+    forEachUnit((offset)=>{
+      const rows = 4, pinchClearance = 90;
+      const rowGap = (UNIT_H - pinchClearance) / rows;
+      const cols = 6;
+      const spacing = (CW - 80) / (cols - 1); // wide, constant spacing - always bigger than a ball
+      for(let row=0; row<rows; row++){
+        const y = offset + row*rowGap + rowGap*0.55;
+        for(let c=0; c<cols; c++){
+          let x = 40 + c*spacing + (row%2===0 ? spacing/2 : 0);
+          if(x < 30 || x > CW-30) continue;
+          addPeg(x, y, 8);
+        }
+      }
+      const pinchY = offset + rows*rowGap + pinchClearance*0.5;
+      addBlock(CW*0.16, pinchY, 220, 16, 0.55);
+      addBlock(CW*0.84, pinchY, 220, 16, -0.55);
+    });
+  }
+
+  function buildMap4(){ // rotor field: scattered spinning obstacles + random pegs
+    forEachUnit((offset,u)=>{
+      const relPositions = [
+        [0.25,0.20],[0.50,0.16],[0.75,0.20],
+        [0.20,0.40],[0.50,0.46],[0.80,0.40],
+        [0.30,0.68],[0.70,0.68]
+      ];
+      relPositions.forEach((p,i)=>{
+        const x = CW*p[0], y = offset + UNIT_H*p[1];
+        addRotor(x,y, 130, 10, (((i+u)%2===0)?1:-1)*(1.2 + (i%3)*0.4));
+      });
+      for(let i=0;i<8;i++){
+        addPeg(40 + Math.random()*(CW-80), offset + Math.random()*UNIT_H*0.9 + UNIT_H*0.05, 6);
+      }
+    });
+  }
+
+  const MAP_BUILDERS = {1:buildMap1, 3:buildMap3, 4:buildMap4};
+
+  function buildSelectedMap(){
+    clearMap();
+    const id = document.getElementById('mapSelect').value;
+    MAP_BUILDERS[id]();
+    addFinishGuardian();
+    Composite.add(engine.world, mapBodies);
+  }
+
+  // ---------- input parsing ----------
+  function parseInput(str){
+    const regex = /([^\d,\s]+)\s*(\d+)/g;
+    const out = [];
+    let m;
+    while((m = regex.exec(str)) !== null){
+      const name = m[1].trim();
+      const count = parseInt(m[2],10);
+      if(name && count > 0) out.push({name, count});
+    }
+    return out;
+  }
+
+  function colorForIndex(i,n){
+    const hue = Math.round((360/Math.max(n,1))*i);
+    return `hsl(${hue} 80% 58%)`;
+  }
+
+  function buildLegendAndQueue(){
+    const raw = document.getElementById('ballInput').value;
+    const groups = parseInput(raw);
+    nameColors = {};
+    groups.forEach((g,i)=>{ nameColors[g.name] = colorForIndex(i, groups.length); });
+
+    const legend = document.getElementById('legend');
+    legend.innerHTML = '';
+    groups.forEach(g=>{
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.innerHTML = `<span class="dot" style="background:${nameColors[g.name]}"></span>${g.name} × ${g.count}`;
+      legend.appendChild(chip);
+    });
+
+    let queue = [];
+    groups.forEach(g=>{
+      for(let i=0;i<g.count;i++) queue.push({name:g.name, color:nameColors[g.name]});
+    });
+    for(let i=queue.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [queue[i],queue[j]] = [queue[j],queue[i]];
+    }
+    return {groups, queue};
+  }
+
+  // ---------- ball spawning ----------
+  function spawnBall(name,color){
+    const x = 40 + Math.random()*(CW-80);
+    const body = Bodies.circle(x, 6, 12, {
+      restitution: 0.55, friction: 0.02, frictionAir: 0.0006,
+      density: 0.0018, label:'ball'
+    });
+    body.ballName = name;
+    body.ballColor = color;
+    Composite.add(engine.world, body);
+    balls.push({body, name, color, arrived:false});
+  }
+
+  // ---------- race control ----------
+  function startRace(){
+    if(raceActive) return;
+    const {groups, queue} = buildLegendAndQueue();
+    if(queue.length === 0){
+      alert('공 입력을 확인해주세요. 예: a10, b5, c7, d3');
+      return;
+    }
+    if(queue.length > 160){
+      alert('공 개수가 너무 많습니다 (최대 160개). 개수를 줄여주세요.');
+      return;
+    }
+
+    resetBoardOnly();
+    buildSelectedMap();
+
+    totalBalls = queue.length;
+    arrivalOrder = [];
+    raceActive = true;
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('winnerBanner').style.display = 'none';
+
+    const resultList = document.getElementById('resultList');
+    resultList.innerHTML = '';
+
+    let idx = 0;
+    releaseTimer = setInterval(()=>{
+      if(idx >= queue.length){
+        clearInterval(releaseTimer);
+        releaseTimer = null;
+        return;
+      }
+      const b = queue[idx++];
+      spawnBall(b.name, b.color);
+    }, 130);
+  }
+
+  function resetBoardOnly(){
+    if(releaseTimer){ clearInterval(releaseTimer); releaseTimer = null; }
+    if(balls.length){
+      Composite.remove(engine.world, balls.map(b=>b.body));
+    }
+    balls = [];
+    raceActive = false;
+    document.getElementById('startBtn').disabled = false;
+  }
+
+  function fullReset(){
+    resetBoardOnly();
+    clearMap();
+    arrivalOrder = [];
+    totalBalls = 0;
+    document.getElementById('winnerBanner').style.display = 'none';
+    const resultList = document.getElementById('resultList');
+    resultList.innerHTML = '<li class="empty-msg" style="display:list-item; background:none; border:none;">추첨을 시작하면 결승선을 통과한 순서대로 여기에 표시됩니다.</li>';
+  }
+
+  function getWinMode(){
+    return document.querySelector('#winModeSeg button.active').dataset.mode;
+  }
+
+  function checkArrivals(){
+    if(!raceActive) return;
+    balls.forEach(b=>{
+      if(!b.arrived && b.body.position.y + 12 >= FINISH_Y){
+        b.arrived = true;
+        arrivalOrder.push({name:b.name, color:b.color});
+        addResultRow(b.name, b.color, arrivalOrder.length);
+      }
+    });
+    if(totalBalls > 0 && arrivalOrder.length === totalBalls){
+      finishRace();
+    }
+  }
+
+  function addResultRow(name,color,rank){
+    const resultList = document.getElementById('resultList');
+    const emptyMsg = resultList.querySelector('.empty-msg');
+    if(emptyMsg) emptyMsg.remove();
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="rank">${rank}</span><span class="dot" style="background:${color}"></span><span>${name}</span>`;
+    resultList.appendChild(li);
+    resultList.scrollTop = resultList.scrollHeight;
+  }
+
+  function finishRace(){
+    raceActive = false;
+    document.getElementById('startBtn').disabled = false;
+    const mode = getWinMode();
+    const winner = mode === 'first' ? arrivalOrder[0] : arrivalOrder[arrivalOrder.length-1];
+
+    const banner = document.getElementById('winnerBanner');
+    banner.style.display = 'block';
+    banner.textContent = `🏆 당첨: ${winner.name}  (${mode==='first' ? '첫 번째 도착' : '마지막 도착'})`;
+
+    const items = document.querySelectorAll('#resultList li');
+    const targetIdx = mode==='first' ? 0 : items.length-1;
+    items.forEach((li,i)=>{
+      if(i===targetIdx){
+        li.classList.add(mode==='first' ? 'win-first' : 'win-last');
+        li.innerHTML += '<span class="medal">🏆</span>';
+      }
+    });
+  }
+
+  // ---------- rendering ----------
+  function drawBackground(){
+    ctx.clearRect(0,0,CW,CH);
+    ctx.fillStyle = '#070a13';
+    ctx.fillRect(0,0,CW,CH);
+    ctx.strokeStyle = 'rgba(255,255,255,0.035)';
+    ctx.lineWidth = 2;
+    for(let x=0;x<CW;x+=30){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,CH); ctx.stroke(); }
+    for(let y=0;y<CH;y+=30){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(CW,y); ctx.stroke(); }
+    // unit markers so the long track reads as staged sections
+    ctx.font = '700 26px Rajdhani, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.14)';
+    for(let u=0; u<UNITS; u++){
+      const y = FIELD_TOP + u*UNIT_H;
+      ctx.fillText(`SECTION ${u+1}`, 12, y + 28);
+    }
+  }
+
+  function drawMapBodies(){
+    mapBodies.forEach(b=>{
+      if(b.label==='rotor' || b.label==='osc') return;
+      ctx.save();
+      if(b.circleRadius){
+        ctx.beginPath();
+        ctx.arc(b.position.x, b.position.y, b.circleRadius, 0, Math.PI*2);
+        ctx.fillStyle = '#3a4270';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(45,226,230,0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      } else {
+        const v = b.vertices;
+        ctx.beginPath();
+        ctx.moveTo(v[0].x, v[0].y);
+        for(let i=1;i<v.length;i++) ctx.lineTo(v[i].x, v[i].y);
+        ctx.closePath();
+        ctx.fillStyle = '#232b4d';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.stroke();
+      }
+      ctx.restore();
+    });
+  }
+
+  function drawFunnel(){
+    funnelBodies.forEach(b=>{
+      const v = b.vertices;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(v[0].x, v[0].y);
+      for(let i=1;i<v.length;i++) ctx.lineTo(v[i].x, v[i].y);
+      ctx.closePath();
+      ctx.fillStyle = '#4a5488';
+      ctx.strokeStyle = 'rgba(45,226,230,0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.shadowColor = 'rgba(45,226,230,0.4)';
+      ctx.shadowBlur = 6;
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    });
+    // gate mouth marker
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,200,87,0.5)';
+    ctx.setLineDash([4,6]);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(CW/2-GATE_WIDTH/2, FUNNEL_TOP);
+    ctx.lineTo(CW/2-GATE_WIDTH/2, FINISH_Y);
+    ctx.moveTo(CW/2+GATE_WIDTH/2, FUNNEL_TOP);
+    ctx.lineTo(CW/2+GATE_WIDTH/2, FINISH_Y);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawRotators(){
+    rotators.forEach(r=>{
+      const b = r.body;
+      const v = b.vertices;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(v[0].x, v[0].y);
+      for(let i=1;i<v.length;i++) ctx.lineTo(v[i].x, v[i].y);
+      ctx.closePath();
+      const grad = ctx.createLinearGradient(v[0].x,v[0].y,v[2].x,v[2].y);
+      grad.addColorStop(0, '#ff3d81');
+      grad.addColorStop(1, '#ffc857');
+      ctx.fillStyle = grad;
+      ctx.shadowColor = 'rgba(255,61,129,0.8)';
+      ctx.shadowBlur = 12;
+      ctx.fill();
+      ctx.restore();
+    });
+  }
+
+  function drawFinishLine(){
+    ctx.save();
+    ctx.strokeStyle = '#ffc857';
+    ctx.lineWidth = 6;
+    ctx.setLineDash([16,12]);
+    ctx.shadowColor = 'rgba(255,200,87,0.7)';
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.moveTo(CW/2-GATE_WIDTH/2, FINISH_Y);
+    ctx.lineTo(CW/2+GATE_WIDTH/2, FINISH_Y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255,200,87,0.9)';
+    ctx.font = '700 22px Rajdhani, sans-serif';
+    ctx.fillText('FINISH GATE', CW/2 - 78, FINISH_Y - 16);
+    ctx.restore();
+  }
+
+  function drawBalls(){
+    balls.forEach(b=>{
+      const p = b.body.position;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 12, 0, Math.PI*2);
+      ctx.fillStyle = b.color;
+      ctx.shadowColor = b.color;
+      ctx.shadowBlur = 8;
+      ctx.fill();
+      ctx.restore();
+    });
+  }
+
+  function renderLoop(){
+    drawBackground();
+    drawMapBodies();
+    drawFunnel();
+    drawRotators();
+    drawFinishLine();
+    drawBalls();
+    checkArrivals();
+    requestAnimationFrame(renderLoop);
+  }
+
+  // ---------- UI wiring ----------
+  document.getElementById('winModeSeg').addEventListener('click', (e)=>{
+    if(e.target.tagName !== 'BUTTON') return;
+    document.querySelectorAll('#winModeSeg button').forEach(b=>b.classList.remove('active'));
+    e.target.classList.add('active');
+  });
+
+  document.getElementById('startBtn').addEventListener('click', startRace);
+  document.getElementById('resetBtn').addEventListener('click', fullReset);
+
+  // ---------- init ----------
+  initEngine();
+  buildSelectedMap();
+  buildLegendAndQueue();
+  renderLoop();
+})();
+</script>
+</body>
+</html>

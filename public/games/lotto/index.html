@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<link rel="canonical" href="/play/lotto">
+<script src="/mgh/bridge.js"></script><script src="/mgh/i18n/lotto.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로또 번호 추첨기</title>
+<style>
+  :root{
+    --paper:#fdfdf6;
+    --paper-shadow:#e4e1d2;
+    --deskbg:#e9e6dc;
+    --ink:#1f2318;
+    --ink-soft:#5b5c50;
+    --green:#0f7a3d;
+    --green-dim:#e4f2e8;
+    --red:#c0392b;
+    --red-dim:#fbe7e4;
+    --line:#d9d6c6;
+    --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    --b1:#fbc400; --b2:#69c8f2; --b3:#ff7272; --b4:#aaaaaa; --b5:#b0d840;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:radial-gradient(circle at 20% 10%, #f1efe4 0%, transparent 45%), var(--deskbg);
+    font-family:var(--sans); color:var(--ink);
+    display:flex; justify-content:center; padding:36px 16px 60px;
+  }
+  .wrap{width:100%;max-width:460px;}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--ink-soft);text-align:center;margin-bottom:6px;}
+  h1{font-size:21px;text-align:center;margin:0 0 26px;letter-spacing:-0.02em;}
+
+  /* ---- Receipt ---- */
+  .receipt-holder{position:relative;margin-bottom:22px;}
+  .receipt{
+    background:var(--paper);
+    padding:26px 22px 22px;
+    box-shadow:0 18px 30px -18px rgba(0,0,0,.35), 0 2px 0 var(--paper-shadow);
+    position:relative;
+    clip-path: polygon(
+      0% 10px, 3% 0%, 6% 10px, 9% 0%, 12% 10px, 15% 0%, 18% 10px, 21% 0%, 24% 10px, 27% 0%,
+      30% 10px, 33% 0%, 36% 10px, 39% 0%, 42% 10px, 45% 0%, 48% 10px, 51% 0%, 54% 10px, 57% 0%,
+      60% 10px, 63% 0%, 66% 10px, 69% 0%, 72% 10px, 75% 0%, 78% 10px, 81% 0%, 84% 10px, 87% 0%,
+      90% 10px, 93% 0%, 96% 10px, 99% 0%, 100% 10px,
+      100% calc(100% - 10px), 97% 100%, 94% calc(100% - 10px), 91% 100%, 88% calc(100% - 10px), 85% 100%,
+      82% calc(100% - 10px), 79% 100%, 76% calc(100% - 10px), 73% 100%, 70% calc(100% - 10px), 67% 100%,
+      64% calc(100% - 10px), 61% 100%, 58% calc(100% - 10px), 55% 100%, 52% calc(100% - 10px), 49% 100%,
+      46% calc(100% - 10px), 43% 100%, 40% calc(100% - 10px), 37% 100%, 34% calc(100% - 10px), 31% 100%,
+      28% calc(100% - 10px), 25% 100%, 22% calc(100% - 10px), 19% 100%, 16% calc(100% - 10px), 13% 100%,
+      10% calc(100% - 10px), 7% 100%, 4% calc(100% - 10px), 1% 100%, 0% calc(100% - 10px)
+    );
+  }
+  .r-head{font-family:var(--mono);text-align:center;border-bottom:1px dashed var(--line);padding-bottom:12px;margin-bottom:14px;}
+  .r-head .brand{font-size:15px;font-weight:700;letter-spacing:.06em;}
+  .r-head .sub{font-size:10.5px;color:var(--ink-soft);margin-top:4px;letter-spacing:.08em;}
+
+  .games{padding:16px 0 12px;display:flex;flex-direction:column;gap:14px;}
+  .game-row{display:flex;align-items:center;gap:8px;}
+  .game-label{
+    font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ink-soft);
+    width:16px;flex-shrink:0;
+  }
+  .game-balls{display:flex;gap:6px;flex:1;flex-wrap:wrap;}
+  .ball{
+    width:34px;height:34px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-weight:700;font-size:13px;
+    box-shadow:inset 0 -3px 0 rgba(0,0,0,.15), 0 2px 3px rgba(0,0,0,.2);
+    opacity:0; transform:translateY(-8px) scale(.7);
+    animation:drop .4s cubic-bezier(.34,1.56,.64,1) forwards;
+    flex-shrink:0;
+  }
+  .ball.dark{color:#1f2318;}
+  .ball.light{color:#fff;}
+  @keyframes drop{to{opacity:1;transform:translateY(0) scale(1);}}
+
+  .copy-row-btn{
+    font-family:var(--mono);font-size:11px;font-weight:700;
+    border:1.5px solid var(--ink);background:transparent;color:var(--ink);
+    border-radius:3px;padding:8px 10px;flex-shrink:0;white-space:nowrap;
+  }
+  .copy-row-btn:active{transform:scale(.95);}
+  .copy-row-btn.copied{background:var(--green);border-color:var(--green);color:#fff;}
+
+  .r-meta{
+    font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);
+    border-top:1px dashed var(--line);padding-top:12px;
+    display:flex;justify-content:space-between;
+  }
+  .barcode{margin-top:14px;height:30px;background:repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 5px);opacity:.85;}
+  .empty-note{text-align:center;font-family:var(--mono);font-size:12px;color:var(--ink-soft);padding:30px 0;}
+
+  /* ---- Draw controls ---- */
+  .draw-controls{display:flex;gap:10px;margin-bottom:26px;}
+  button{font-family:var(--sans);cursor:pointer;}
+  .count-toggle{
+    display:flex;border:1.5px solid var(--ink);border-radius:3px;overflow:hidden;flex-shrink:0;
+  }
+  .count-toggle button{
+    font-family:var(--mono);font-size:13px;font-weight:700;
+    background:transparent;color:var(--ink);border:none;padding:0 14px;
+  }
+  .count-toggle button.active{background:var(--ink);color:var(--paper);}
+  .btn{flex:1;padding:13px 10px;border-radius:3px;border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);font-size:14px;font-weight:600;transition:transform .12s ease, opacity .12s ease;}
+  .btn:active{transform:scale(.97);}
+
+  /* ---- Panel ---- */
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:6px;margin-bottom:16px;overflow:hidden;}
+  .panel-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 18px;cursor:pointer;user-select:none;
+  }
+  .panel-title{font-size:13px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px;}
+  .panel-title .count-badge{
+    font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--ink-soft);
+    background:var(--line);border-radius:10px;padding:2px 8px;
+  }
+  .chevron{
+    width:9px;height:9px;border-right:2px solid var(--ink-soft);border-bottom:2px solid var(--ink-soft);
+    transform:rotate(45deg);transition:transform .25s ease;margin-right:2px;
+  }
+  .panel.open .chevron{transform:rotate(-135deg);margin-top:4px;}
+  .panel-body{
+    max-height:0;overflow:hidden;transition:max-height .28s ease;
+  }
+  .panel.open .panel-body{max-height:640px;}
+  .panel-body-inner{padding:0 18px 20px;}
+
+  .panel-hint{font-size:12px;color:var(--ink-soft);margin:0 0 14px;line-height:1.5;}
+  .legend{display:flex;gap:14px;margin-bottom:12px;font-size:11.5px;color:var(--ink-soft);}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+  .dot.inc{background:var(--green);}
+  .dot.exc{background:var(--red);}
+
+  .grid{display:grid;grid-template-columns:repeat(9,1fr);gap:6px;}
+  .cell{
+    aspect-ratio:1;border-radius:50%;border:1.5px solid var(--line);background:#fff;
+    font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink);
+    display:flex;align-items:center;justify-content:center;position:relative;transition:transform .1s ease;
+  }
+  .cell:active{transform:scale(.9);}
+  .cell.include{background:var(--green);border-color:var(--green);color:#fff;}
+  .cell.exclude{background:var(--red-dim);border-color:var(--red);color:var(--red);text-decoration:line-through;}
+
+  .status{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);margin-top:12px;min-height:16px;}
+  .status.warn{color:var(--red);}
+  .reset{font-family:var(--mono);font-size:11px;color:var(--ink-soft);background:none;border:none;text-decoration:underline;padding:0;}
+
+  .official-btn{
+    width:100%;padding:14px;border-radius:3px;border:1.5px solid var(--green);
+    background:var(--green-dim);color:var(--green);font-size:13.5px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .official-btn:active{transform:scale(.98);}
+
+  .toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(12px);
+    background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:12.5px;
+    padding:10px 18px;border-radius:4px;opacity:0;pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease;z-index:10;max-width:90vw;text-align:center;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media (max-width:380px){
+    .ball{width:30px;height:30px;font-size:12px;}
+    .grid{gap:5px;}
+    .copy-row-btn{padding:7px 8px;font-size:10px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">LOTTO · 6 / 45</div>
+  <h1>로또 번호 추첨기</h1>
+
+  <div class="receipt-holder">
+    <div class="receipt">
+      <div class="r-head">
+        <div class="brand">추첨 결과</div>
+        <div class="sub" id="drawSub">아직 추첨하지 않았습니다</div>
+      </div>
+      <div class="games" id="games">
+        <div class="empty-note" id="emptyNote">아래 [번호 뽑기] 버튼을 눌러주세요</div>
+      </div>
+      <div class="r-meta">
+        <span id="metaTime">-</span>
+        <span id="metaId">NO. 000000</span>
+      </div>
+      <div class="barcode"></div>
+    </div>
+  </div>
+
+  <div class="draw-controls">
+    <div class="count-toggle" id="countToggle">
+      <button type="button" data-count="1" class="active">1개</button>
+      <button type="button" data-count="5">5개</button>
+    </div>
+    <button class="btn" id="drawBtn">번호 뽑기</button>
+  </div>
+
+  <div class="panel" id="panel">
+    <div class="panel-header" id="panelHeader">
+      <p class="panel-title">포함 · 제외 번호 설정 <span class="count-badge" id="countBadge">0 / 0</span></p>
+      <span class="chevron"></span>
+    </div>
+    <div class="panel-body">
+      <div class="panel-body-inner">
+        <p class="panel-hint">번호를 탭할 때마다 <b>없음 → 포함(초록) → 제외(빨강)</b> 순으로 바뀝니다. 포함 번호는 모든 게임에 항상 들어가고, 제외 번호는 절대 나오지 않습니다.</p>
+        <div class="legend">
+          <span><i class="dot inc"></i>포함</span>
+          <span><i class="dot exc"></i>제외</span>
+        </div>
+        <div class="grid" id="grid"></div>
+        <div class="status" id="status">포함 0개 · 제외 0개 · <button class="reset" id="resetBtn">초기화</button></div>
+      </div>
+    </div>
+  </div>
+
+  <button class="official-btn" id="officialBtn">동행복권 사이트 바로가기 ↗</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const grid = document.getElementById('grid');
+const gamesEl = document.getElementById('games');
+const drawBtn = document.getElementById('drawBtn');
+const countToggle = document.getElementById('countToggle');
+const resetBtn = document.getElementById('resetBtn');
+const statusEl = document.getElementById('status');
+const countBadge = document.getElementById('countBadge');
+const metaTime = document.getElementById('metaTime');
+const metaId = document.getElementById('metaId');
+const drawSub = document.getElementById('drawSub');
+const toast = document.getElementById('toast');
+const officialBtn = document.getElementById('officialBtn');
+const panel = document.getElementById('panel');
+const panelHeader = document.getElementById('panelHeader');
+
+const state = {}; // num -> 'include' | 'exclude'
+let gameCount = 1;
+let lastGames = []; // array of arrays
+
+function ballClass(n){
+  if(n<=10) return {c:'var(--b1)', mode:'dark'};
+  if(n<=20) return {c:'var(--b2)', mode:'dark'};
+  if(n<=30) return {c:'var(--b3)', mode:'light'};
+  if(n<=40) return {c:'var(--b4)', mode:'light'};
+  return {c:'var(--b5)', mode:'dark'};
+}
+
+function buildGrid(){
+  grid.innerHTML = '';
+  for(let n=1;n<=45;n++){
+    const cell = document.createElement('button');
+    cell.className = 'cell';
+    cell.type = 'button';
+    cell.textContent = n;
+    cell.dataset.num = n;
+    cell.addEventListener('click', ()=> cycle(n));
+    grid.appendChild(cell);
+  }
+}
+
+function includeCount(){ return Object.values(state).filter(v=>v==='include').length; }
+function excludeCount(){ return Object.values(state).filter(v=>v==='exclude').length; }
+
+function cycle(n){
+  const current = state[n];
+  if(!current){
+    state[n] = includeCount() < 6 ? 'include' : 'exclude';
+  } else if(current === 'include'){
+    state[n] = 'exclude';
+  } else {
+    delete state[n];
+  }
+  renderGrid();
+}
+
+function renderGrid(){
+  [...grid.children].forEach(cell=>{
+    const n = cell.dataset.num;
+    cell.classList.remove('include','exclude');
+    if(state[n] === 'include') cell.classList.add('include');
+    if(state[n] === 'exclude') cell.classList.add('exclude');
+  });
+  const inc = includeCount();
+  const exc = excludeCount();
+  countBadge.textContent = `${inc} / ${exc}`;
+  statusEl.innerHTML = `포함 ${inc}개 · 제외 ${exc}개 · <button class="reset" id="resetBtn">초기화</button>`;
+  document.getElementById('resetBtn').addEventListener('click', doReset);
+  statusEl.classList.remove('warn');
+  if(45 - exc < 6){
+    statusEl.innerHTML += ' — 제외 번호가 너무 많습니다';
+    statusEl.classList.add('warn');
+  }
+}
+
+function doReset(){
+  for(const k in state) delete state[k];
+  renderGrid();
+  showToast('초기화되었습니다');
+}
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=> toast.classList.remove('show'), 1600);
+}
+
+function drawOneGame(included, excludedSet){
+  const pool = [];
+  for(let n=1;n<=45;n++){
+    if(!included.includes(n) && !excludedSet.has(n)) pool.push(n);
+  }
+  const need = 6 - included.length;
+  if(pool.length < need) return null;
+  for(let i=pool.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]] = [pool[j],pool[i]];
+  }
+  const picked = included.concat(pool.slice(0, need));
+  picked.sort((a,b)=>a-b);
+  return picked;
+}
+
+function draw(){
+  const included = Object.keys(state).filter(n=>state[n]==='include').map(Number);
+  const excluded = new Set(Object.keys(state).filter(n=>state[n]==='exclude').map(Number));
+
+  if(included.length > 6){
+    showToast('포함 번호는 최대 6개까지 가능합니다');
+    return;
+  }
+
+  const results = [];
+  for(let i=0;i<gameCount;i++){
+    const g = drawOneGame(included, excluded);
+    if(!g){
+      showToast('제외 번호가 너무 많아 6개를 뽑을 수 없습니다');
+      return;
+    }
+    results.push(g);
+  }
+  lastGames = results;
+  renderGames(results);
+
+  const now = new Date();
+  const pad = x => String(x).padStart(2,'0');
+  drawSub.textContent = '추첨 완료';
+  metaTime.textContent = `${now.getFullYear()}.${pad(now.getMonth()+1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  metaId.textContent = 'NO. ' + String(Math.floor(Math.random()*900000)+100000);
+}
+
+function renderGames(games){
+  gamesEl.innerHTML = '';
+  const labels = ['A','B','C','D','E'];
+  games.forEach((nums, gi)=>{
+    const row = document.createElement('div');
+    row.className = 'game-row';
+
+    if(games.length > 1){
+      const label = document.createElement('div');
+      label.className = 'game-label';
+      label.textContent = labels[gi];
+      row.appendChild(label);
+    }
+
+    const ballsWrap = document.createElement('div');
+    ballsWrap.className = 'game-balls';
+    nums.forEach((n,i)=>{
+      const {c,mode} = ballClass(n);
+      const b = document.createElement('div');
+      b.className = 'ball ' + mode;
+      b.style.background = c;
+      b.style.animationDelay = ((gi*6+i)*0.05)+'s';
+      b.textContent = n;
+      ballsWrap.appendChild(b);
+    });
+    row.appendChild(ballsWrap);
+
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'copy-row-btn';
+    copyBtn.textContent = '복사';
+    copyBtn.addEventListener('click', ()=> copyNumbers(nums, copyBtn));
+    row.appendChild(copyBtn);
+
+    gamesEl.appendChild(row);
+  });
+}
+
+async function copyNumbers(nums, btnEl){
+  const text = nums.join(', ');
+  const done = ()=>{
+    showToast('복사되었습니다: ' + text);
+    if(btnEl){
+      const old = btnEl.textContent;
+      btnEl.textContent = '완료';
+      btnEl.classList.add('copied');
+      setTimeout(()=>{ btnEl.textContent = old; btnEl.classList.remove('copied'); }, 1200);
+    }
+  };
+  try{
+    await navigator.clipboard.writeText(text);
+    done();
+  }catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position='fixed';
+    ta.style.opacity='0';
+    document.body.appendChild(ta);
+    ta.select();
+    try{
+      document.execCommand('copy');
+      done();
+    }catch(err){
+      showToast('복사에 실패했습니다');
+    }
+    document.body.removeChild(ta);
+  }
+}
+
+drawBtn.addEventListener('click', draw);
+
+countToggle.addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-count]');
+  if(!btn) return;
+  gameCount = Number(btn.dataset.count);
+  [...countToggle.children].forEach(b=>b.classList.toggle('active', b===btn));
+});
+
+panelHeader.addEventListener('click', ()=>{
+  panel.classList.toggle('open');
+});
+
+officialBtn.addEventListener('click', ()=>{
+  window.open('https://www.dhlottery.co.kr', '_blank', 'noopener');
+});
+
+buildGrid();
+renderGrid();
+</script>
+</body>
+</html>

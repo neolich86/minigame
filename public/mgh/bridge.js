@@ -1,0 +1,236 @@
+/* 미니게임천국 게임 브리지 (모든 게임 <head> 맨 위에서 로드)
+ *  1) 언어: 포털과 같은 언어(mgh:lang)로 게임을 맞춘다. 자체 다국어가 있는 게임은 navigator.language 를
+ *     덮어써서 따라오게 하고, 한국어 전용 게임은 사전(/mgh/i18n/<game>.js)으로 화면·캔버스 글자를 번역한다.
+ *  2) 랭킹: MGH.submitScore(board, score, meta) → 포털(부모 창)이 로그인 사용자 기록으로 등록.
+ *  3) 온라인: MGH.net.send / MGH.net.on — 포털 방 화면과 메시지를 주고받는다 (카탄 멀티플레이).
+ */
+(function () {
+  "use strict";
+  var W = window;
+  if (W.MGH) return;
+  var KO = /[ㄱ-ㆎ가-힣]/;
+  var embedded = W.parent && W.parent !== W;
+  var origin = location.origin;
+
+  function norm(v) { return v === "ko" || v === "en" ? v : null; }
+  function detect() {
+    var q = null;
+    try { q = norm(new URLSearchParams(location.search).get("lang")); } catch (e) {}
+    var s = null;
+    try { s = norm(localStorage.getItem("mgh:lang")); } catch (e) {}
+    if (s) return s;
+    if (q) return q;
+    var list = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || "en"];
+    for (var i = 0; i < list.length; i++) {
+      var l = String(list[i]).toLowerCase();
+      if (l.indexOf("ko") === 0) return "ko";
+      if (l.indexOf("en") === 0) return "en";
+    }
+    return "en";
+  }
+  var LANG = detect();
+  try { localStorage.setItem("mgh:lang", LANG); } catch (e) {}
+
+  // 자체 다국어 게임들이 navigator.language 로 판단하므로 포털 언어로 고정
+  var navLang = LANG === "ko" ? "ko-KR" : "en-US";
+  try {
+    Object.defineProperty(navigator, "language", { configurable: true, get: function () { return navLang; } });
+    Object.defineProperty(navigator, "languages", { configurable: true, get: function () { return [navLang, LANG]; } });
+  } catch (e) {}
+  try { localStorage.setItem("elementSiegeLang", LANG); } catch (e) {}
+  document.documentElement.lang = LANG;
+
+  /* ───────────── 번역 엔진 ───────────── */
+  var exact = Object.create(null);
+  var patterns = [];
+  var frags = [];
+  var cache = new Map();
+  var missing = new Set();
+  var active = false;
+
+  function key(s) { return s.replace(/\s+/g, " ").trim(); }
+
+  function tr(s) {
+    if (!active || typeof s !== "string" || !KO.test(s)) return s;
+    var hit = cache.get(s);
+    if (hit !== undefined) return hit;
+    var m = /^(\s*)([\s\S]*?)(\s*)$/.exec(s);
+    var core = key(m[2]);
+    var out = exact[core];
+    if (out === undefined) {
+      for (var i = 0; i < patterns.length; i++) {
+        var p = patterns[i];
+        p[0].lastIndex = 0;
+        if (p[0].test(core)) {
+          p[0].lastIndex = 0;
+          out = core.replace(p[0], p[1]);
+          break;
+        }
+      }
+    }
+    if (out === undefined) {
+      out = core;
+      for (var j = 0; j < frags.length; j++) out = out.split(frags[j][0]).join(frags[j][1]);
+      if (KO.test(out)) missing.add(core);
+    }
+    // 번역 결과 안에 한국어가 남아 있으면(예: 패턴 치환 후 남은 조각) 조각 사전을 한 번 더 적용
+    if (KO.test(out)) for (var k = 0; k < frags.length; k++) out = out.split(frags[k][0]).join(frags[k][1]);
+    out = m[1] + out + m[3];
+    if (cache.size > 5000) cache.clear();
+    cache.set(s, out);
+    return out;
+  }
+
+  var ATTRS = ["title", "placeholder", "aria-label", "alt", "data-tip"];
+  function trNode(n) {
+    if (n.nodeType === 3) {
+      if (KO.test(n.data)) {
+        var p = n.parentNode;
+        if (p && (p.nodeName === "SCRIPT" || p.nodeName === "STYLE")) return;
+        var v = tr(n.data);
+        if (v !== n.data) n.data = v;
+      }
+      return;
+    }
+    if (n.nodeType !== 1) return;
+    var tag = n.nodeName;
+    if (tag === "SCRIPT" || tag === "STYLE" || tag === "svg" && !n.textContent) return;
+    for (var i = 0; i < ATTRS.length; i++) {
+      var a = n.getAttribute && n.getAttribute(ATTRS[i]);
+      if (a && KO.test(a)) n.setAttribute(ATTRS[i], tr(a));
+    }
+    if ((tag === "INPUT" && /^(button|submit|reset)$/i.test(n.type)) && KO.test(n.value)) n.value = tr(n.value);
+    var walker = document.createTreeWalker(n, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, null);
+    var c = walker.nextNode();
+    while (c) {
+      if (c.nodeType === 3) {
+        if (KO.test(c.data)) {
+          var pp = c.parentNode;
+          if (!(pp && (pp.nodeName === "SCRIPT" || pp.nodeName === "STYLE"))) {
+            var vv = tr(c.data);
+            if (vv !== c.data) c.data = vv;
+          }
+        }
+      } else {
+        for (var j = 0; j < ATTRS.length; j++) {
+          var aa = c.getAttribute(ATTRS[j]);
+          if (aa && KO.test(aa)) c.setAttribute(ATTRS[j], tr(aa));
+        }
+        if (c.nodeName === "INPUT" && /^(button|submit|reset)$/i.test(c.type) && KO.test(c.value)) c.value = tr(c.value);
+      }
+      c = walker.nextNode();
+    }
+  }
+
+  function startDom() {
+    if (document.title && KO.test(document.title)) document.title = tr(document.title);
+    trNode(document.body);
+    var mo = new MutationObserver(function (list) {
+      for (var i = 0; i < list.length; i++) {
+        var r = list[i];
+        if (r.type === "characterData") trNode(r.target);
+        else if (r.type === "attributes") trNode(r.target);
+        else for (var j = 0; j < r.addedNodes.length; j++) trNode(r.addedNodes[j]);
+      }
+    });
+    mo.observe(document.documentElement, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ATTRS });
+  }
+
+  function activate() {
+    if (active || LANG !== "en") return;
+    active = true;
+    var C = W.CanvasRenderingContext2D && W.CanvasRenderingContext2D.prototype;
+    if (C) {
+      ["fillText", "strokeText", "measureText"].forEach(function (fn) {
+        var orig = C[fn];
+        C[fn] = function (t) {
+          var args = Array.prototype.slice.call(arguments);
+          if (typeof t === "string") args[0] = tr(t);
+          return orig.apply(this, args);
+        };
+      });
+    }
+    ["alert", "confirm", "prompt"].forEach(function (fn) {
+      var orig = W[fn];
+      if (!orig) return;
+      W[fn] = function (msg) {
+        var args = Array.prototype.slice.call(arguments);
+        if (typeof msg === "string") args[0] = tr(msg);
+        return orig.apply(W, args);
+      };
+    });
+    if (document.body) startDom();
+    else document.addEventListener("DOMContentLoaded", startDom);
+  }
+
+  /* ───────────── 포털 통신 ───────────── */
+  var netHandlers = [];
+  function toParent(msg) {
+    if (!embedded) return false;
+    msg.mgh = 1;
+    try { W.parent.postMessage(msg, origin); return true; } catch (e) { return false; }
+  }
+  W.addEventListener("message", function (ev) {
+    if (ev.origin !== origin || ev.source !== W.parent) return;
+    var d = ev.data;
+    if (!d || d.mgh !== 1) return;
+    if (d.type === "lang" && norm(d.lang) && d.lang !== LANG) {
+      try { localStorage.setItem("mgh:lang", d.lang); } catch (e) {}
+      var u = new URL(location.href);
+      u.searchParams.set("lang", d.lang);
+      location.replace(u.toString());
+      return;
+    }
+    if (typeof d.type === "string" && d.type.indexOf("net:") === 0) {
+      for (var i = 0; i < netHandlers.length; i++) {
+        try { netHandlers[i](d); } catch (e) { console.error(e); }
+      }
+    }
+  });
+
+  var sessionBest = {};
+  var timers = {};
+
+  W.MGH = {
+    lang: LANG,
+    embedded: embedded,
+    t: tr,
+    /** 게임 안 문자열을 직접 고를 때: MGH.L('한국어', 'English') */
+    L: function (ko, en) { return LANG === "en" ? en : ko; },
+    /** 번역 사전 등록 — { exact: {ko: en}, patterns: [[/re/, 'rep']], frags: [['ko','en']] } */
+    dict: function (d) {
+      if (d.exact) for (var k in d.exact) exact[key(k)] = d.exact[k];
+      if (d.patterns) patterns = patterns.concat(d.patterns);
+      if (d.frags) frags = frags.concat(d.frags).sort(function (a, b) { return b[0].length - a[0].length; });
+      cache.clear();
+      activate();
+    },
+    missing: function () { return Array.from(missing); },
+    /** 랭킹 기록 제출. 같은 판 안에서 여러 번 불러도 되며, 이번 세션 최고치를 넘을 때만 보낸다.
+     *  opts.debounce(ms) 를 주면 마지막 호출 후 그 시간 뒤에 한 번만 보낸다 (계속 오르는 점수용). */
+    submitScore: function (board, score, meta, opts) {
+      score = Math.round(Number(score));
+      if (!isFinite(score) || score <= 0) return;
+      if (sessionBest[board] !== undefined && score <= sessionBest[board]) return;
+      var send = function () {
+        sessionBest[board] = score;
+        toParent({ type: "score", board: board, score: score, meta: meta || {} });
+      };
+      var wait = opts && opts.debounce;
+      if (wait) {
+        clearTimeout(timers[board]);
+        timers[board] = setTimeout(send, wait);
+      } else send();
+    },
+    net: {
+      send: function (msg) { return toParent(msg); },
+      on: function (fn) { netHandlers.push(fn); },
+    },
+  };
+
+  if (embedded) {
+    var ready = function () { toParent({ type: "ready" }); };
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ready);
+    else ready();
+  }
+})();

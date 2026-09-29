@@ -1,0 +1,31 @@
+/* 로또 번호 추첨기 — 영어 사전 */
+MGH.dict({
+  exact: {
+    "로또 번호 추첨기": "Lotto Number Picker",
+    "추첨 결과": "Results",
+    "아직 추첨하지 않았습니다": "No draw yet",
+    "아래 [번호 뽑기] 버튼을 눌러주세요": "Press the [Draw Numbers] button below",
+    "1개": "1 set",
+    "5개": "5 sets",
+    "번호 뽑기": "Draw Numbers",
+    "포함 · 제외 번호 설정": "Include / Exclude Numbers",
+    "번호를 탭할 때마다": "Each tap cycles a number through",
+    "없음 → 포함(초록) → 제외(빨강)": "none → include (green) → exclude (red)",
+    "순으로 바뀝니다. 포함 번호는 모든 게임에 항상 들어가고, 제외 번호는 절대 나오지 않습니다.": ". Included numbers appear in every set; excluded numbers never appear.",
+    "포함": "Include",
+    "제외": "Exclude",
+    "초기화": "Reset",
+    "동행복권 사이트 바로가기 ↗": "Official Dhlottery site ↗",
+    "포함 번호는 최대 6개까지 가능합니다": "You can include up to 6 numbers",
+    "추첨 완료": "Draw complete",
+    "복사": "Copy",
+    "완료": "Done",
+    "복사에 실패했습니다": "Copy failed",
+  },
+  patterns: [
+    [/^포함 (\d+)개 · 제외 (\d+)개 ·$/, "Include $1 · Exclude $2 ·"],
+    [/^복사되었습니다: ([\s\S]*)$/, "Copied: $1"],
+    [/^(\d+)개$/, "$1 sets"],
+  ],
+  frags: [["개", ""]],
+});

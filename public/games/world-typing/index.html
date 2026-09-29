@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-M518PXWLLW"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-M518PXWLLW');
+</script>
+<meta charset="UTF-8">
+<script src="/mgh/bridge.js"></script><script src="/mgh/i18n/world-typing.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>세계도시 타이핑 게임 - 타자 연습 | World City Typing</title>
+<meta name="description" content="세계 여러 도시 이름으로 즐기는 타자 연습 게임. 영타(영문)와 한타(한글) 모드를 선택해 실제 지도 위를 이동하며 타이핑 속도와 정확도를 연습하세요.">
+<meta name="keywords" content="타자 연습, 타이핑 게임, 한타 연습, 영타 연습, 세계지도 게임, 타자 속도 측정, world typing game">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#0B0F1A">
+<link rel="canonical" href="/play/world-typing">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230B0F1A'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='%23F5A623' stroke-width='6'/%3E%3Cline x1='50' y1='20' x2='50' y2='80' stroke='%23F5A623' stroke-width='4'/%3E%3Cline x1='20' y1='50' x2='80' y2='50' stroke='%23F5A623' stroke-width='4'/%3E%3C/svg%3E">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="세계도시 타이핑 게임 - 타자 연습">
+<meta property="og:description" content="세계 여러 도시 이름으로 즐기는 타자 연습 게임. 영타/한타 모드로 실제 지도를 이동하며 속도와 정확도를 겨뤄보세요.">
+<meta property="og:url" content="/play/world-typing">
+<meta property="og:image" content="https://world-typing.edgeone.dev/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="세계도시 타이핑 게임 - 타자 연습">
+<meta name="twitter:description" content="영타/한타 모드로 세계 도시를 타이핑하며 속도와 정확도를 연습하는 웹게임.">
+<meta name="twitter:image" content="https://world-typing.edgeone.dev/og-image.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Game",
+  "name": "세계도시 타이핑 게임 (World City Typing)",
+  "description": "세계 여러 도시 이름을 입력하며 타자 속도와 정확도를 연습하는 웹 기반 타이핑 게임. 영타(영문)와 한타(한글) 연습 모드를 제공합니다.",
+  "genre": ["Typing game", "타자 연습"],
+  "inLanguage": ["ko", "en"],
+  "applicationCategory": "Game",
+  "operatingSystem": "Any (Web Browser)"
+}
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Manrope:wght@400;600;800&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+:root{
+  --bg:#0B0F1A;
+  --panel:#141B2E;
+  --panel-edge:#232C45;
+  --amber:#F5A623;
+  --amber-dim:#8a6420;
+  --mint:#6EE7B7;
+  --red:#FB6B6B;
+  --text:#E7EAF2;
+  --muted:#8A94A6;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;overflow:hidden;}
+
+#map{position:fixed;inset:0;z-index:0;background:#0A0F1C;}
+.leaflet-container{background:#0A0F1C;font-family:'Manrope',sans-serif;}
+.leaflet-tile-pane{filter:invert(94%) hue-rotate(180deg) brightness(.95) contrast(.88) saturate(.5);}
+.leaflet-control-attribution{background:rgba(11,15,26,.6)!important;color:var(--muted)!important;font-size:9px!important;}
+.leaflet-control-attribution a{color:var(--muted)!important;}
+.leaflet-control-zoom{display:none;}
+
+.city-pulse{width:14px;height:14px;border-radius:50%;background:var(--amber);
+  box-shadow:0 0 0 0 rgba(245,166,35,.7);animation:pulse 1.6s ease-out infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(245,166,35,.6);}100%{box-shadow:0 0 0 16px rgba(245,166,35,0);}}
+
+.vignette{position:fixed;inset:0;pointer-events:none;z-index:1;background:
+  radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(6,8,14,.55) 100%);}
+
+.hud{position:fixed;top:20px;left:20px;z-index:6;display:flex;flex-direction:column;gap:10px;}
+.title{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;letter-spacing:.14em;color:var(--amber);}
+.title span{color:var(--muted);font-weight:500;letter-spacing:.05em;}
+
+.modeTag{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--muted);}
+.modeTag b{color:var(--amber);}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;max-width:260px;}
+.chip{font-family:'Manrope',sans-serif;font-size:11px;font-weight:600;padding:5px 10px;border-radius:20px;
+  border:1px solid var(--panel-edge);background:rgba(20,27,46,.7);color:var(--muted);cursor:pointer;letter-spacing:.02em;
+  backdrop-filter:blur(4px);transition:all .15s;}
+.chip.on{color:#1a1200;background:var(--amber);border-color:var(--amber);}
+.chip:hover{border-color:var(--amber);}
+
+.startBtn,.resetBtn,.playAgainBtn{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;letter-spacing:.08em;
+  padding:9px 16px;border-radius:6px;border:1px solid var(--amber);background:rgba(11,15,26,.7);color:var(--amber);
+  cursor:pointer;width:fit-content;transition:all .15s;backdrop-filter:blur(4px);}
+.startBtn:hover,.resetBtn:hover,.playAgainBtn:hover{background:var(--amber);color:#1a1200;}
+
+#overlay,#resultOverlay{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
+  background:rgba(6,8,14,.72);backdrop-filter:blur(3px);}
+#overlay .card,#resultOverlay .card{text-align:center;max-width:460px;padding:0 24px;}
+#overlay h1,#resultOverlay h1{font-family:'JetBrains Mono',monospace;font-size:28px;letter-spacing:.1em;color:var(--amber);margin:0 0 6px;}
+#overlay p,#resultOverlay p{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 22px;}
+#overlay.hidden,#resultOverlay.hidden{display:none;}
+
+.modeSel{display:flex;gap:10px;justify-content:center;margin-bottom:18px;}
+.modeBtn{flex:1;max-width:180px;padding:14px 10px;border-radius:10px;border:1px solid var(--panel-edge);
+  background:rgba(20,27,46,.6);cursor:pointer;transition:all .15s;font-family:'Manrope',sans-serif;}
+.modeBtn b{display:block;font-size:15px;color:var(--text);margin-bottom:3px;}
+.modeBtn small{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--muted);}
+.modeBtn.on{border-color:var(--amber);background:rgba(245,166,35,.12);}
+.modeBtn.on b{color:var(--amber);}
+.modeBtn:hover{border-color:var(--amber-dim);}
+
+.countSel{display:flex;gap:8px;justify-content:center;margin-bottom:10px;flex-wrap:wrap;}
+.countBtn{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:8px 14px;border-radius:20px;
+  border:1px solid var(--panel-edge);background:rgba(20,27,46,.6);color:var(--muted);cursor:pointer;transition:all .15s;}
+.countBtn.on{border-color:var(--amber);background:rgba(245,166,35,.15);color:var(--amber);}
+.countBtn.plus{border-color:var(--amber-dim);color:var(--amber);}
+.countBtn:hover{border-color:var(--amber);}
+.countLabel{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:20px;letter-spacing:.04em;}
+.countLabel b{color:var(--amber);}
+
+#board{position:fixed;left:50%;bottom:36px;transform:translateX(-50%);z-index:6;width:min(560px,92vw);}
+.boardCard{background:linear-gradient(180deg,rgba(20,27,46,.92),rgba(11,15,26,.94));
+  border:1px solid var(--panel-edge);border-radius:14px;padding:20px 22px 16px;
+  box-shadow:0 20px 50px rgba(0,0,0,.5);}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;}
+.eyebrow b{color:var(--amber);}
+
+#cityWrap{perspective:600px;height:52px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.countryLine{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:6px;font-family:'Noto Sans KR',sans-serif;font-size:12px;color:var(--muted);letter-spacing:.02em;}
+.countryLine img{border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.1);display:block;}
+#cityDisplay{font-family:'Noto Sans KR','JetBrains Mono','Malgun Gothic','Apple SD Gothic Neo',sans-serif;font-weight:400;font-size:30px;letter-spacing:.02em;
+  white-space:nowrap;transform-origin:center;transition:transform .18s;}
+#cityDisplay.flap{animation:flap .32s ease;}
+@keyframes flap{0%{transform:rotateX(0);}45%{transform:rotateX(-92deg);}55%{transform:rotateX(-92deg);}100%{transform:rotateX(0);}}
+.ch{color:var(--muted);}
+.ch.ok{color:var(--mint);}
+.ch.bad{color:var(--red);}
+.ch.sp{width:.4em;display:inline-block;}
+
+#typeInput{width:100%;margin-top:12px;background:rgba(255,255,255,.03);border:1px solid var(--panel-edge);
+  border-radius:8px;padding:11px 12px;color:var(--text);font-family:'Noto Sans KR','JetBrains Mono','Malgun Gothic','Apple SD Gothic Neo',sans-serif;font-size:15px;
+  letter-spacing:.01em;outline:none;}
+#typeInput:focus{border-color:var(--amber);}
+#typeInput.err{border-color:var(--red);animation:shake .3s;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px;}
+.stat{text-align:center;}
+.stat b{display:block;font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--amber);}
+.stat span{font-size:10px;color:var(--muted);letter-spacing:.06em;}
+
+.hint{margin-top:10px;font-size:11px;color:var(--muted);text-align:center;letter-spacing:.02em;}
+</style>
+</head>
+<body>
+
+<p style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;">
+세계도시 타이핑 게임은 세계 여러 도시 이름을 입력하며 타자 속도와 정확도를 측정하는 무료 웹 타이핑 게임입니다.
+영타 연습(영문 도시명)과 한타 연습(한글 도시명) 모드를 선택할 수 있고, 25개, 50개, 100개 등 원하는 개수만큼 도시를 골라
+실제 지도 위를 이동하며 타이핑 연습을 할 수 있습니다.
+</p>
+
+<div id="map"></div>
+<div class="vignette"></div>
+
+<div class="hud">
+  <div class="title">WORLD TYPING <span id="hudSubtitle">/ 세계도시 타이핑</span></div>
+  <div class="modeTag">MODE <b id="modeTagLabel">한타</b></div>
+  <div class="chips" id="chips"></div>
+  <button class="resetBtn" id="resetBtn">RESTART</button>
+</div>
+
+<div id="board" style="display:none;">
+  <div class="boardCard">
+    <div class="eyebrow"><span>DESTINATION</span><b id="cityCount">0 / 25</b></div>
+    <div id="cityWrap"><div id="cityDisplay"></div></div>
+    <div class="countryLine">
+      <img id="flagImg" src="" width="22" height="16" alt="">
+      <span id="countryName"></span>
+    </div>
+    <input id="typeInput" type="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="도시 이름을 입력하고 Enter">
+    <div class="stats">
+      <div class="stat"><b id="statWpm">0</b><span id="statSpeedLabel">CPM(타수)</span></div>
+      <div class="stat"><b id="statAcc">100%</b><span>ACCURACY</span></div>
+      <div class="stat"><b id="statCities">0</b><span>CITIES</span></div>
+      <div class="stat"><b id="statTime">00:00</b><span>TIME</span></div>
+    </div>
+    <div class="hint" id="hintText">정확히 입력한 뒤 Enter를 누르면 다음 도시로 이동합니다.</div>
+  </div>
+</div>
+
+<div id="overlay">
+  <div class="card">
+    <h1 id="overlayTitle">WORLD TYPING</h1>
+    <p id="overlayDesc">세계 여러 도시의 이름을 타이핑하며 지도를 여행하세요.<br>도시 이름을 정확히 입력하고 Enter를 누르면 다음 목적지로 이동합니다.</p>
+    <div class="modeSel" id="modeSel">
+      <div class="modeBtn on" data-m="kr"><b id="modeKrLabel">한타 연습</b><small>KOREAN</small></div>
+      <div class="modeBtn" data-m="en"><b id="modeEnLabel">영타 연습</b><small>ENGLISH</small></div>
+    </div>
+    <div class="countSel" id="countSel">
+      <button class="countBtn on" data-c="25">25<span class="cUnit">개</span></button>
+      <button class="countBtn" data-c="50">50<span class="cUnit">개</span></button>
+      <button class="countBtn" data-c="100">100<span class="cUnit">개</span></button>
+      <button class="countBtn plus" id="plusBtn">+25</button>
+    </div>
+    <div class="countLabel"><span id="countLabelPrefix">선택한 도시 수:</span> <b id="countLabelVal">25</b><span class="cUnit">개</span> &nbsp;<span id="countLabelSuffix">(전체 <span id="totalCityCount">100</span>개 중에서 출제, 초과 시 반복)</span></div>
+    <button class="startBtn" id="startBtn" style="margin:0 auto;">시작하기</button>
+  </div>
+</div>
+
+<div id="resultOverlay" class="hidden">
+  <div class="card">
+    <h1 id="resultTitle">완주!</h1>
+    <p id="resultDesc">선택한 도시를 모두 완료했어요. 기록을 확인해보세요.</p>
+    <div class="stats" style="margin-bottom:24px;">
+      <div class="stat"><b id="resWpm">0</b><span id="resSpeedLabel">CPM(타수)</span></div>
+      <div class="stat"><b id="resAcc">100%</b><span>ACCURACY</span></div>
+      <div class="stat"><b id="resCities">0</b><span>CITIES</span></div>
+      <div class="stat"><b id="resTime">00:00</b><span>TIME</span></div>
+    </div>
+    <button class="playAgainBtn" id="playAgainBtn" style="margin:0 auto;">다시하기</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const CITIES = [
+  {n:"Seoul",kr:"서울",lat:37.57,lon:126.98,c:"asia",cc:"kr",country:"대한민국"},{n:"Tokyo",kr:"도쿄",lat:35.68,lon:139.69,c:"asia",cc:"jp",country:"일본"},
+  {n:"Beijing",kr:"베이징",lat:39.90,lon:116.41,c:"asia",cc:"cn",country:"중국"},{n:"Shanghai",kr:"상하이",lat:31.23,lon:121.47,c:"asia",cc:"cn",country:"중국"},
+  {n:"Bangkok",kr:"방콕",lat:13.76,lon:100.50,c:"asia",cc:"th",country:"태국"},{n:"Singapore",kr:"싱가포르",lat:1.35,lon:103.82,c:"asia",cc:"sg",country:"싱가포르"},
+  {n:"Hong Kong",kr:"홍콩",lat:22.32,lon:114.17,c:"asia",cc:"hk",country:"홍콩"},{n:"Taipei",kr:"타이베이",lat:25.03,lon:121.57,c:"asia",cc:"tw",country:"대만"},
+  {n:"Mumbai",kr:"뭄바이",lat:19.08,lon:72.88,c:"asia",cc:"in",country:"인도"},{n:"Delhi",kr:"델리",lat:28.61,lon:77.21,c:"asia",cc:"in",country:"인도"},
+  {n:"Dubai",kr:"두바이",lat:25.20,lon:55.27,c:"asia",cc:"ae",country:"아랍에미리트"},{n:"Istanbul",kr:"이스탄불",lat:41.01,lon:28.98,c:"asia",cc:"tr",country:"튀르키예"},
+  {n:"Jakarta",kr:"자카르타",lat:-6.21,lon:106.85,c:"asia",cc:"id",country:"인도네시아"},{n:"Hanoi",kr:"하노이",lat:21.03,lon:105.85,c:"asia",cc:"vn",country:"베트남"},
+  {n:"Manila",kr:"마닐라",lat:14.60,lon:120.98,c:"asia",cc:"ph",country:"필리핀"},
+  {n:"Busan",kr:"부산",lat:35.18,lon:129.08,c:"asia",cc:"kr",country:"대한민국"},{n:"Osaka",kr:"오사카",lat:34.69,lon:135.50,c:"asia",cc:"jp",country:"일본"},
+  {n:"Kyoto",kr:"교토",lat:35.01,lon:135.77,c:"asia",cc:"jp",country:"일본"},{n:"Guangzhou",kr:"광저우",lat:23.13,lon:113.26,c:"asia",cc:"cn",country:"중국"},
+  {n:"Shenzhen",kr:"선전",lat:22.54,lon:114.06,c:"asia",cc:"cn",country:"중국"},{n:"Chengdu",kr:"청두",lat:30.57,lon:104.07,c:"asia",cc:"cn",country:"중국"},
+  {n:"Kuala Lumpur",kr:"쿠알라룸푸르",lat:3.14,lon:101.69,c:"asia",cc:"my",country:"말레이시아"},{n:"Colombo",kr:"콜롬보",lat:6.93,lon:79.85,c:"asia",cc:"lk",country:"스리랑카"},
+  {n:"Dhaka",kr:"다카",lat:23.81,lon:90.41,c:"asia",cc:"bd",country:"방글라데시"},{n:"Karachi",kr:"카라치",lat:24.86,lon:67.00,c:"asia",cc:"pk",country:"파키스탄"},
+  {n:"Riyadh",kr:"리야드",lat:24.71,lon:46.68,c:"asia",cc:"sa",country:"사우디아라비아"},{n:"Doha",kr:"도하",lat:25.29,lon:51.53,c:"asia",cc:"qa",country:"카타르"},
+  {n:"Tel Aviv",kr:"텔아비브",lat:32.08,lon:34.78,c:"asia",cc:"il",country:"이스라엘"},{n:"Tehran",kr:"테헤란",lat:35.69,lon:51.39,c:"asia",cc:"ir",country:"이란"},
+  {n:"Ulaanbaatar",kr:"울란바토르",lat:47.89,lon:106.91,c:"asia",cc:"mn",country:"몽골"},
+  {n:"London",kr:"런던",lat:51.51,lon:-0.13,c:"europe",cc:"gb",country:"영국"},{n:"Paris",kr:"파리",lat:48.86,lon:2.35,c:"europe",cc:"fr",country:"프랑스"},
+  {n:"Berlin",kr:"베를린",lat:52.52,lon:13.40,c:"europe",cc:"de",country:"독일"},{n:"Rome",kr:"로마",lat:41.90,lon:12.50,c:"europe",cc:"it",country:"이탈리아"},
+  {n:"Madrid",kr:"마드리드",lat:40.42,lon:-3.70,c:"europe",cc:"es",country:"스페인"},{n:"Moscow",kr:"모스크바",lat:55.75,lon:37.62,c:"europe",cc:"ru",country:"러시아"},
+  {n:"Amsterdam",kr:"암스테르담",lat:52.37,lon:4.90,c:"europe",cc:"nl",country:"네덜란드"},{n:"Vienna",kr:"빈",lat:48.21,lon:16.37,c:"europe",cc:"at",country:"오스트리아"},
+  {n:"Prague",kr:"프라하",lat:50.09,lon:14.42,c:"europe",cc:"cz",country:"체코"},{n:"Athens",kr:"아테네",lat:37.98,lon:23.73,c:"europe",cc:"gr",country:"그리스"},
+  {n:"Lisbon",kr:"리스본",lat:38.72,lon:-9.14,c:"europe",cc:"pt",country:"포르투갈"},{n:"Stockholm",kr:"스톡홀름",lat:59.33,lon:18.07,c:"europe",cc:"se",country:"스웨덴"},
+  {n:"Zurich",kr:"취리히",lat:47.37,lon:8.54,c:"europe",cc:"ch",country:"스위스"},{n:"Barcelona",kr:"바르셀로나",lat:41.39,lon:2.17,c:"europe",cc:"es",country:"스페인"},
+  {n:"Warsaw",kr:"바르샤바",lat:52.23,lon:21.01,c:"europe",cc:"pl",country:"폴란드"},{n:"Budapest",kr:"부다페스트",lat:47.50,lon:19.04,c:"europe",cc:"hu",country:"헝가리"},
+  {n:"Bucharest",kr:"부쿠레슈티",lat:44.43,lon:26.10,c:"europe",cc:"ro",country:"루마니아"},{n:"Dublin",kr:"더블린",lat:53.35,lon:-6.26,c:"europe",cc:"ie",country:"아일랜드"},
+  {n:"Brussels",kr:"브뤼셀",lat:50.85,lon:4.35,c:"europe",cc:"be",country:"벨기에"},{n:"Copenhagen",kr:"코펜하겐",lat:55.68,lon:12.57,c:"europe",cc:"dk",country:"덴마크"},
+  {n:"Oslo",kr:"오슬로",lat:59.91,lon:10.75,c:"europe",cc:"no",country:"노르웨이"},{n:"Helsinki",kr:"헬싱키",lat:60.17,lon:24.94,c:"europe",cc:"fi",country:"핀란드"},
+  {n:"Munich",kr:"뮌헨",lat:48.14,lon:11.58,c:"europe",cc:"de",country:"독일"},{n:"Milan",kr:"밀라노",lat:45.46,lon:9.19,c:"europe",cc:"it",country:"이탈리아"},
+  {n:"Kyiv",kr:"키이우",lat:50.45,lon:30.52,c:"europe",cc:"ua",country:"우크라이나"},{n:"Belgrade",kr:"베오그라드",lat:44.79,lon:20.45,c:"europe",cc:"rs",country:"세르비아"},
+  {n:"Reykjavik",kr:"레이캬비크",lat:64.15,lon:-21.94,c:"europe",cc:"is",country:"아이슬란드"},{n:"Edinburgh",kr:"에든버러",lat:55.95,lon:-3.19,c:"europe",cc:"gb",country:"영국"},
+  {n:"New York",kr:"뉴욕",lat:40.71,lon:-74.01,c:"amer",cc:"us",country:"미국"},{n:"Los Angeles",kr:"로스앤젤레스",lat:34.05,lon:-118.24,c:"amer",cc:"us",country:"미국"},
+  {n:"Chicago",kr:"시카고",lat:41.88,lon:-87.63,c:"amer",cc:"us",country:"미국"},{n:"Toronto",kr:"토론토",lat:43.65,lon:-79.38,c:"amer",cc:"ca",country:"캐나다"},
+  {n:"Mexico City",kr:"멕시코시티",lat:19.43,lon:-99.13,c:"amer",cc:"mx",country:"멕시코"},{n:"Sao Paulo",kr:"상파울루",lat:-23.55,lon:-46.63,c:"amer",cc:"br",country:"브라질"},
+  {n:"Rio de Janeiro",kr:"리우데자네이루",lat:-22.91,lon:-43.17,c:"amer",cc:"br",country:"브라질"},{n:"Buenos Aires",kr:"부에노스아이레스",lat:-34.60,lon:-58.38,c:"amer",cc:"ar",country:"아르헨티나"},
+  {n:"Vancouver",kr:"밴쿠버",lat:49.28,lon:-123.12,c:"amer",cc:"ca",country:"캐나다"},{n:"Lima",kr:"리마",lat:-12.05,lon:-77.04,c:"amer",cc:"pe",country:"페루"},
+  {n:"Bogota",kr:"보고타",lat:4.71,lon:-74.07,c:"amer",cc:"co",country:"콜롬비아"},
+  {n:"Miami",kr:"마이애미",lat:25.76,lon:-80.19,c:"amer",cc:"us",country:"미국"},{n:"Houston",kr:"휴스턴",lat:29.76,lon:-95.37,c:"amer",cc:"us",country:"미국"},
+  {n:"Boston",kr:"보스턴",lat:42.36,lon:-71.06,c:"amer",cc:"us",country:"미국"},{n:"Seattle",kr:"시애틀",lat:47.61,lon:-122.33,c:"amer",cc:"us",country:"미국"},
+  {n:"San Francisco",kr:"샌프란시스코",lat:37.77,lon:-122.42,c:"amer",cc:"us",country:"미국"},{n:"Washington",kr:"워싱턴",lat:38.91,lon:-77.04,c:"amer",cc:"us",country:"미국"},
+  {n:"Montreal",kr:"몬트리올",lat:45.50,lon:-73.57,c:"amer",cc:"ca",country:"캐나다"},{n:"Havana",kr:"아바나",lat:23.11,lon:-82.37,c:"amer",cc:"cu",country:"쿠바"},
+  {n:"Panama City",kr:"파나마시티",lat:8.98,lon:-79.52,c:"amer",cc:"pa",country:"파나마"},{n:"Santiago",kr:"산티아고",lat:-33.45,lon:-70.65,c:"amer",cc:"cl",country:"칠레"},
+  {n:"Quito",kr:"키토",lat:-0.18,lon:-78.47,c:"amer",cc:"ec",country:"에콰도르"},{n:"Caracas",kr:"카라카스",lat:10.48,lon:-66.90,c:"amer",cc:"ve",country:"베네수엘라"},
+  {n:"Montevideo",kr:"몬테비데오",lat:-34.90,lon:-56.16,c:"amer",cc:"uy",country:"우루과이"},
+  {n:"Cairo",kr:"카이로",lat:30.04,lon:31.24,c:"africa",cc:"eg",country:"이집트"},{n:"Lagos",kr:"라고스",lat:6.52,lon:3.38,c:"africa",cc:"ng",country:"나이지리아"},
+  {n:"Nairobi",kr:"나이로비",lat:-1.29,lon:36.82,c:"africa",cc:"ke",country:"케냐"},{n:"Cape Town",kr:"케이프타운",lat:-33.92,lon:18.42,c:"africa",cc:"za",country:"남아프리카공화국"},
+  {n:"Johannesburg",kr:"요하네스버그",lat:-26.20,lon:28.05,c:"africa",cc:"za",country:"남아프리카공화국"},{n:"Casablanca",kr:"카사블랑카",lat:33.57,lon:-7.59,c:"africa",cc:"ma",country:"모로코"},
+  {n:"Addis Ababa",kr:"아디스아바바",lat:9.03,lon:38.74,c:"africa",cc:"et",country:"에티오피아"},
+  {n:"Accra",kr:"아크라",lat:5.60,lon:-0.19,c:"africa",cc:"gh",country:"가나"},{n:"Dakar",kr:"다카르",lat:14.72,lon:-17.47,c:"africa",cc:"sn",country:"세네갈"},
+  {n:"Tunis",kr:"튀니스",lat:36.81,lon:10.18,c:"africa",cc:"tn",country:"튀니지"},{n:"Algiers",kr:"알제",lat:36.75,lon:3.06,c:"africa",cc:"dz",country:"알제리"},
+  {n:"Kinshasa",kr:"킨샤사",lat:-4.44,lon:15.27,c:"africa",cc:"cd",country:"콩고민주공화국"},{n:"Dar es Salaam",kr:"다르에스살람",lat:-6.79,lon:39.21,c:"africa",cc:"tz",country:"탄자니아"},
+  {n:"Khartoum",kr:"하르툼",lat:15.55,lon:32.53,c:"africa",cc:"sd",country:"수단"},
+  {n:"Sydney",kr:"시드니",lat:-33.87,lon:151.21,c:"ocean",cc:"au",country:"호주"},{n:"Melbourne",kr:"멜버른",lat:-37.81,lon:144.96,c:"ocean",cc:"au",country:"호주"},
+  {n:"Auckland",kr:"오클랜드",lat:-36.85,lon:174.76,c:"ocean",cc:"nz",country:"뉴질랜드"},{n:"Brisbane",kr:"브리즈번",lat:-27.47,lon:153.03,c:"ocean",cc:"au",country:"호주"},
+  {n:"Perth",kr:"퍼스",lat:-31.95,lon:115.86,c:"ocean",cc:"au",country:"호주"},{n:"Wellington",kr:"웰링턴",lat:-41.29,lon:174.78,c:"ocean",cc:"nz",country:"뉴질랜드"},
+  {n:"Adelaide",kr:"애들레이드",lat:-34.93,lon:138.60,c:"ocean",cc:"au",country:"호주"},{n:"Christchurch",kr:"크라이스트처치",lat:-43.53,lon:172.64,c:"ocean",cc:"nz",country:"뉴질랜드"},
+  {n:"Suva",kr:"수바",lat:-18.14,lon:178.44,c:"ocean",cc:"fj",country:"피지"},
+  {n:"Nagoya",kr:"나고야",lat:35.18,lon:136.91,c:"asia",cc:"jp",country:"일본"},{n:"Sapporo",kr:"삿포로",lat:43.06,lon:141.35,c:"asia",cc:"jp",country:"일본"},
+  {n:"Fukuoka",kr:"후쿠오카",lat:33.59,lon:130.40,c:"asia",cc:"jp",country:"일본"},{n:"Yokohama",kr:"요코하마",lat:35.44,lon:139.64,c:"asia",cc:"jp",country:"일본"},
+  {n:"Xi'an",kr:"시안",lat:34.27,lon:108.95,c:"asia",cc:"cn",country:"중국"},{n:"Nanjing",kr:"난징",lat:32.06,lon:118.79,c:"asia",cc:"cn",country:"중국"},
+  {n:"Wuhan",kr:"우한",lat:30.59,lon:114.31,c:"asia",cc:"cn",country:"중국"},{n:"Chongqing",kr:"충칭",lat:29.56,lon:106.55,c:"asia",cc:"cn",country:"중국"},
+  {n:"Tianjin",kr:"톈진",lat:39.13,lon:117.20,c:"asia",cc:"cn",country:"중국"},{n:"Hangzhou",kr:"항저우",lat:30.27,lon:120.15,c:"asia",cc:"cn",country:"중국"},
+  {n:"Xiamen",kr:"샤먼",lat:24.48,lon:118.08,c:"asia",cc:"cn",country:"중국"},{n:"Macau",kr:"마카오",lat:22.20,lon:113.55,c:"asia",cc:"mo",country:"마카오"},
+  {n:"Ho Chi Minh City",kr:"호치민",lat:10.82,lon:106.63,c:"asia",cc:"vn",country:"베트남"},{n:"Da Nang",kr:"다낭",lat:16.05,lon:108.20,c:"asia",cc:"vn",country:"베트남"},
+  {n:"Phnom Penh",kr:"프놈펜",lat:11.55,lon:104.92,c:"asia",cc:"kh",country:"캄보디아"},{n:"Vientiane",kr:"비엔티안",lat:17.97,lon:102.60,c:"asia",cc:"la",country:"라오스"},
+  {n:"Yangon",kr:"양곤",lat:16.87,lon:96.20,c:"asia",cc:"mm",country:"미얀마"},{n:"Chiang Mai",kr:"치앙마이",lat:18.79,lon:98.99,c:"asia",cc:"th",country:"태국"},
+  {n:"Kolkata",kr:"콜카타",lat:22.57,lon:88.36,c:"asia",cc:"in",country:"인도"},{n:"Bengaluru",kr:"벵갈루루",lat:12.97,lon:77.59,c:"asia",cc:"in",country:"인도"},
+  {n:"Chennai",kr:"첸나이",lat:13.08,lon:80.27,c:"asia",cc:"in",country:"인도"},{n:"Hyderabad",kr:"하이데라바드",lat:17.39,lon:78.49,c:"asia",cc:"in",country:"인도"},
+  {n:"Ahmedabad",kr:"아마다바드",lat:23.03,lon:72.58,c:"asia",cc:"in",country:"인도"},{n:"Islamabad",kr:"이슬라마바드",lat:33.68,lon:73.05,c:"asia",cc:"pk",country:"파키스탄"},
+  {n:"Lahore",kr:"라호르",lat:31.55,lon:74.34,c:"asia",cc:"pk",country:"파키스탄"},{n:"Kathmandu",kr:"카트만두",lat:27.72,lon:85.32,c:"asia",cc:"np",country:"네팔"},
+  {n:"Male",kr:"말레",lat:4.17,lon:73.51,c:"asia",cc:"mv",country:"몰디브"},{n:"Amman",kr:"암만",lat:31.95,lon:35.93,c:"asia",cc:"jo",country:"요르단"},
+  {n:"Beirut",kr:"베이루트",lat:33.89,lon:35.50,c:"asia",cc:"lb",country:"레바논"},{n:"Baghdad",kr:"바그다드",lat:33.31,lon:44.36,c:"asia",cc:"iq",country:"이라크"},
+  {n:"Kuwait City",kr:"쿠웨이트시티",lat:29.38,lon:47.99,c:"asia",cc:"kw",country:"쿠웨이트"},{n:"Muscat",kr:"무스카트",lat:23.61,lon:58.59,c:"asia",cc:"om",country:"오만"},
+  {n:"Abu Dhabi",kr:"아부다비",lat:24.47,lon:54.37,c:"asia",cc:"ae",country:"아랍에미리트"},{n:"Jerusalem",kr:"예루살렘",lat:31.77,lon:35.21,c:"asia",cc:"il",country:"이스라엘"},
+  {n:"Baku",kr:"바쿠",lat:40.41,lon:49.87,c:"asia",cc:"az",country:"아제르바이잔"},{n:"Tbilisi",kr:"트빌리시",lat:41.72,lon:44.83,c:"asia",cc:"ge",country:"조지아"},
+  {n:"Yerevan",kr:"예레반",lat:40.18,lon:44.51,c:"asia",cc:"am",country:"아르메니아"},{n:"Almaty",kr:"알마티",lat:43.24,lon:76.91,c:"asia",cc:"kz",country:"카자흐스탄"},
+  {n:"Tashkent",kr:"타슈켄트",lat:41.30,lon:69.24,c:"asia",cc:"uz",country:"우즈베키스탄"},{n:"Astana",kr:"아스타나",lat:51.17,lon:71.44,c:"asia",cc:"kz",country:"카자흐스탄"},
+  {n:"Hamburg",kr:"함부르크",lat:53.55,lon:9.99,c:"europe",cc:"de",country:"독일"},{n:"Cologne",kr:"쾰른",lat:50.94,lon:6.96,c:"europe",cc:"de",country:"독일"},
+  {n:"Frankfurt",kr:"프랑크푸르트",lat:50.11,lon:8.68,c:"europe",cc:"de",country:"독일"},{n:"Nice",kr:"니스",lat:43.70,lon:7.27,c:"europe",cc:"fr",country:"프랑스"},
+  {n:"Marseille",kr:"마르세유",lat:43.30,lon:5.37,c:"europe",cc:"fr",country:"프랑스"},{n:"Lyon",kr:"리옹",lat:45.76,lon:4.84,c:"europe",cc:"fr",country:"프랑스"},
+  {n:"Turin",kr:"토리노",lat:45.07,lon:7.69,c:"europe",cc:"it",country:"이탈리아"},{n:"Naples",kr:"나폴리",lat:40.85,lon:14.27,c:"europe",cc:"it",country:"이탈리아"},
+  {n:"Venice",kr:"베네치아",lat:45.44,lon:12.34,c:"europe",cc:"it",country:"이탈리아"},{n:"Florence",kr:"피렌체",lat:43.77,lon:11.26,c:"europe",cc:"it",country:"이탈리아"},
+  {n:"Porto",kr:"포르투",lat:41.15,lon:-8.61,c:"europe",cc:"pt",country:"포르투갈"},{n:"Seville",kr:"세비야",lat:37.39,lon:-5.99,c:"europe",cc:"es",country:"스페인"},
+  {n:"Valencia",kr:"발렌시아",lat:39.47,lon:-0.38,c:"europe",cc:"es",country:"스페인"},{n:"Geneva",kr:"제네바",lat:46.20,lon:6.14,c:"europe",cc:"ch",country:"스위스"},
+  {n:"Rotterdam",kr:"로테르담",lat:51.92,lon:4.48,c:"europe",cc:"nl",country:"네덜란드"},{n:"Antwerp",kr:"안트베르펜",lat:51.22,lon:4.40,c:"europe",cc:"be",country:"벨기에"},
+  {n:"Gothenburg",kr:"예테보리",lat:57.71,lon:11.97,c:"europe",cc:"se",country:"스웨덴"},{n:"Krakow",kr:"크라쿠프",lat:50.06,lon:19.94,c:"europe",cc:"pl",country:"폴란드"},
+  {n:"Sofia",kr:"소피아",lat:42.70,lon:23.32,c:"europe",cc:"bg",country:"불가리아"},{n:"Zagreb",kr:"자그레브",lat:45.81,lon:15.98,c:"europe",cc:"hr",country:"크로아티아"},
+  {n:"Ljubljana",kr:"류블랴나",lat:46.06,lon:14.51,c:"europe",cc:"si",country:"슬로베니아"},{n:"Bratislava",kr:"브라티슬라바",lat:48.15,lon:17.11,c:"europe",cc:"sk",country:"슬로바키아"},
+  {n:"Tallinn",kr:"탈린",lat:59.44,lon:24.75,c:"europe",cc:"ee",country:"에스토니아"},{n:"Riga",kr:"리가",lat:56.95,lon:24.11,c:"europe",cc:"lv",country:"라트비아"},
+  {n:"Vilnius",kr:"빌뉴스",lat:54.69,lon:25.28,c:"europe",cc:"lt",country:"리투아니아"},{n:"Minsk",kr:"민스크",lat:53.90,lon:27.57,c:"europe",cc:"by",country:"벨라루스"},
+  {n:"Sarajevo",kr:"사라예보",lat:43.86,lon:18.41,c:"europe",cc:"ba",country:"보스니아헤르체고비나"},{n:"Luxembourg",kr:"룩셈부르크",lat:49.61,lon:6.13,c:"europe",cc:"lu",country:"룩셈부르크"},
+  {n:"Manchester",kr:"맨체스터",lat:53.48,lon:-2.24,c:"europe",cc:"gb",country:"영국"},{n:"Glasgow",kr:"글래스고",lat:55.86,lon:-4.25,c:"europe",cc:"gb",country:"영국"},
+  {n:"Philadelphia",kr:"필라델피아",lat:39.95,lon:-75.16,c:"amer",cc:"us",country:"미국"},{n:"Atlanta",kr:"애틀랜타",lat:33.75,lon:-84.39,c:"amer",cc:"us",country:"미국"},
+  {n:"Dallas",kr:"댈러스",lat:32.78,lon:-96.80,c:"amer",cc:"us",country:"미국"},{n:"Denver",kr:"덴버",lat:39.74,lon:-104.99,c:"amer",cc:"us",country:"미국"},
+  {n:"Las Vegas",kr:"라스베이거스",lat:36.17,lon:-115.14,c:"amer",cc:"us",country:"미국"},{n:"Phoenix",kr:"피닉스",lat:33.45,lon:-112.07,c:"amer",cc:"us",country:"미국"},
+  {n:"San Diego",kr:"샌디에이고",lat:32.72,lon:-117.16,c:"amer",cc:"us",country:"미국"},{n:"Portland",kr:"포틀랜드",lat:45.52,lon:-122.68,c:"amer",cc:"us",country:"미국"},
+  {n:"Detroit",kr:"디트로이트",lat:42.33,lon:-83.05,c:"amer",cc:"us",country:"미국"},{n:"New Orleans",kr:"뉴올리언스",lat:29.95,lon:-90.07,c:"amer",cc:"us",country:"미국"},
+  {n:"Austin",kr:"오스틴",lat:30.27,lon:-97.74,c:"amer",cc:"us",country:"미국"},{n:"Honolulu",kr:"호놀룰루",lat:21.31,lon:-157.86,c:"amer",cc:"us",country:"미국"},
+  {n:"Calgary",kr:"캘거리",lat:51.05,lon:-114.07,c:"amer",cc:"ca",country:"캐나다"},{n:"Ottawa",kr:"오타와",lat:45.42,lon:-75.70,c:"amer",cc:"ca",country:"캐나다"},
+  {n:"Quebec City",kr:"퀘벡시티",lat:46.81,lon:-71.21,c:"amer",cc:"ca",country:"캐나다"},{n:"Guadalajara",kr:"과달라하라",lat:20.66,lon:-103.35,c:"amer",cc:"mx",country:"멕시코"},
+  {n:"Monterrey",kr:"몬테레이",lat:25.69,lon:-100.32,c:"amer",cc:"mx",country:"멕시코"},{n:"Tijuana",kr:"티후아나",lat:32.51,lon:-117.04,c:"amer",cc:"mx",country:"멕시코"},
+  {n:"Cancun",kr:"칸쿤",lat:21.16,lon:-86.85,c:"amer",cc:"mx",country:"멕시코"},{n:"San Juan",kr:"산후안",lat:18.47,lon:-66.11,c:"amer",cc:"pr",country:"푸에르토리코"},
+  {n:"Santo Domingo",kr:"산토도밍고",lat:18.49,lon:-69.93,c:"amer",cc:"do",country:"도미니카공화국"},{n:"Guatemala City",kr:"과테말라시티",lat:14.63,lon:-90.51,c:"amer",cc:"gt",country:"과테말라"},
+  {n:"San Jose",kr:"산호세",lat:9.93,lon:-84.08,c:"amer",cc:"cr",country:"코스타리카"},{n:"Medellin",kr:"메데인",lat:6.25,lon:-75.56,c:"amer",cc:"co",country:"콜롬비아"},
+  {n:"Guayaquil",kr:"과야킬",lat:-2.19,lon:-79.89,c:"amer",cc:"ec",country:"에콰도르"},{n:"La Paz",kr:"라파스",lat:-16.50,lon:-68.15,c:"amer",cc:"bo",country:"볼리비아"},
+  {n:"Asuncion",kr:"아순시온",lat:-25.30,lon:-57.64,c:"amer",cc:"py",country:"파라과이"},{n:"Brasilia",kr:"브라질리아",lat:-15.79,lon:-47.88,c:"amer",cc:"br",country:"브라질"},
+  {n:"Salvador",kr:"사우바도르",lat:-12.97,lon:-38.51,c:"amer",cc:"br",country:"브라질"},{n:"Curitiba",kr:"쿠리치바",lat:-25.43,lon:-49.27,c:"amer",cc:"br",country:"브라질"},
+  {n:"Abuja",kr:"아부자",lat:9.08,lon:7.49,c:"africa",cc:"ng",country:"나이지리아"},{n:"Kano",kr:"카노",lat:12.00,lon:8.52,c:"africa",cc:"ng",country:"나이지리아"},
+  {n:"Kampala",kr:"캄팔라",lat:0.35,lon:32.58,c:"africa",cc:"ug",country:"우간다"},{n:"Kigali",kr:"키갈리",lat:-1.94,lon:30.06,c:"africa",cc:"rw",country:"르완다"},
+  {n:"Lusaka",kr:"루사카",lat:-15.39,lon:28.32,c:"africa",cc:"zm",country:"잠비아"},{n:"Harare",kr:"하라레",lat:-17.83,lon:31.05,c:"africa",cc:"zw",country:"짐바브웨"},
+  {n:"Maputo",kr:"마푸투",lat:-25.97,lon:32.57,c:"africa",cc:"mz",country:"모잠비크"},{n:"Windhoek",kr:"빈트후크",lat:-22.56,lon:17.08,c:"africa",cc:"na",country:"나미비아"},
+  {n:"Gaborone",kr:"가보로네",lat:-24.66,lon:25.91,c:"africa",cc:"bw",country:"보츠와나"},{n:"Antananarivo",kr:"안타나나리보",lat:-18.88,lon:47.51,c:"africa",cc:"mg",country:"마다가스카르"},
+  {n:"Bamako",kr:"바마코",lat:12.65,lon:-8.00,c:"africa",cc:"ml",country:"말리"},{n:"Abidjan",kr:"아비장",lat:5.36,lon:-4.01,c:"africa",cc:"ci",country:"코트디부아르"},
+  {n:"Freetown",kr:"프리타운",lat:8.48,lon:-13.23,c:"africa",cc:"sl",country:"시에라리온"},{n:"Monrovia",kr:"몬로비아",lat:6.30,lon:-10.80,c:"africa",cc:"lr",country:"라이베리아"},
+  {n:"Yaounde",kr:"야운데",lat:3.87,lon:11.52,c:"africa",cc:"cm",country:"카메룬"},{n:"Libreville",kr:"리브르빌",lat:0.39,lon:9.45,c:"africa",cc:"ga",country:"가봉"},
+  {n:"Mogadishu",kr:"모가디슈",lat:2.04,lon:45.34,c:"africa",cc:"so",country:"소말리아"},{n:"Djibouti",kr:"지부티",lat:11.59,lon:43.15,c:"africa",cc:"dj",country:"지부티"},
+  {n:"Alexandria",kr:"알렉산드리아",lat:31.20,lon:29.92,c:"africa",cc:"eg",country:"이집트"},{n:"Marrakesh",kr:"마라케시",lat:31.63,lon:-7.99,c:"africa",cc:"ma",country:"모로코"},
+  {n:"Gold Coast",kr:"골드코스트",lat:-28.02,lon:153.40,c:"ocean",cc:"au",country:"호주"},{n:"Canberra",kr:"캔버라",lat:-35.28,lon:149.13,c:"ocean",cc:"au",country:"호주"},
+  {n:"Hobart",kr:"호바트",lat:-42.88,lon:147.33,c:"ocean",cc:"au",country:"호주"},{n:"Darwin",kr:"다윈",lat:-12.46,lon:130.84,c:"ocean",cc:"au",country:"호주"},
+  {n:"Hamilton",kr:"해밀턴",lat:-37.79,lon:175.28,c:"ocean",cc:"nz",country:"뉴질랜드"},{n:"Port Moresby",kr:"포트모르즈비",lat:-9.44,lon:147.18,c:"ocean",cc:"pg",country:"파푸아뉴기니"},
+  {n:"Nuku'alofa",kr:"누쿠알로파",lat:-21.14,lon:-175.20,c:"ocean",cc:"to",country:"통가"},{n:"Apia",kr:"아피아",lat:-13.83,lon:-171.76,c:"ocean",cc:"ws",country:"사모아"},
+  {n:"Noumea",kr:"누메아",lat:-22.28,lon:166.46,c:"ocean",cc:"nc",country:"뉴칼레도니아"},{n:"Papeete",kr:"파페에테",lat:-17.53,lon:-149.57,c:"ocean",cc:"pf",country:"프랑스령 폴리네시아"}
+];
+const REGIONS = [
+  {k:"all",ko:"전체",en:"All"},{k:"asia",ko:"아시아",en:"Asia"},{k:"europe",ko:"유럽",en:"Europe"},
+  {k:"amer",ko:"아메리카",en:"Americas"},{k:"africa",ko:"아프리카",en:"Africa"},{k:"ocean",ko:"오세아니아",en:"Oceania"}
+];
+
+const chipsEl = document.getElementById('chips');
+const board = document.getElementById('board');
+const overlay = document.getElementById('overlay');
+const resultOverlay = document.getElementById('resultOverlay');
+const cityDisplay = document.getElementById('cityDisplay');
+const input = document.getElementById('typeInput');
+const startBtn = document.getElementById('startBtn');
+const resetBtn = document.getElementById('resetBtn');
+const playAgainBtn = document.getElementById('playAgainBtn');
+const statWpm = document.getElementById('statWpm');
+const statAcc = document.getElementById('statAcc');
+const statCities = document.getElementById('statCities');
+const statTime = document.getElementById('statTime');
+const cityCount = document.getElementById('cityCount');
+const flagImg = document.getElementById('flagImg');
+const countryName = document.getElementById('countryName');
+const modeSel = document.getElementById('modeSel');
+const modeTagLabel = document.getElementById('modeTagLabel');
+const statSpeedLabel = document.getElementById('statSpeedLabel');
+const resSpeedLabel = document.getElementById('resSpeedLabel');
+const countSel = document.getElementById('countSel');
+const plusBtn = document.getElementById('plusBtn');
+const countLabelVal = document.getElementById('countLabelVal');
+const totalCityCount = document.getElementById('totalCityCount');
+const resWpm = document.getElementById('resWpm');
+const resAcc = document.getElementById('resAcc');
+const resCities = document.getElementById('resCities');
+const resTime = document.getElementById('resTime');
+
+totalCityCount.textContent = CITIES.length;
+
+const uiLang = ((navigator.language || navigator.userLanguage || 'ko').toLowerCase().startsWith('ko')) ? 'ko' : 'en';
+
+const STR = {
+  ko:{
+    overlayTitle:"WORLD TYPING",
+    overlayDesc:"세계 여러 도시의 이름을 타이핑하며 지도를 여행하세요.<br>도시 이름을 정확히 입력하고 Enter를 누르면 다음 목적지로 이동합니다.",
+    modeKrLabel:"한타 연습", modeEnLabel:"영타 연습",
+    countPrefix:"선택한 도시 수:",
+    countSuffix:(total)=>`(전체 <span id="totalCityCount">${total}</span>개 중에서 출제, 초과 시 반복)`,
+    cUnit:"개",
+    startBtn:"시작하기",
+    hint:"정확히 입력한 뒤 Enter를 누르면 다음 도시로 이동합니다.",
+    placeholderKr:"도시 이름을 한글로 입력하고 Enter", placeholderEn:"영문 도시 이름을 입력하고 Enter",
+    modeTagKr:"한타", modeTagEn:"영타",
+    speedKr:"CPM(타수)", speedEn:"WPM",
+    resultTitle:"완주!", resultDesc:"선택한 도시를 모두 완료했어요. 기록을 확인해보세요.",
+    playAgain:"다시하기"
+  },
+  en:{
+    overlayTitle:"WORLD TYPING",
+    overlayDesc:"Travel the map by typing the names of cities around the world.<br>Type the city name correctly and press Enter to head to the next destination.",
+    modeKrLabel:"Korean Mode", modeEnLabel:"English Mode",
+    countPrefix:"Cities selected:",
+    countSuffix:(total)=>`(picked from ${total} total, repeats if exceeded)`,
+    cUnit:"",
+    startBtn:"Start",
+    hint:"Type the name correctly and press Enter to move to the next city.",
+    placeholderKr:"Type the Korean city name and press Enter", placeholderEn:"Type the city name and press Enter",
+    modeTagKr:"KR", modeTagEn:"EN",
+    speedKr:"CPM", speedEn:"WPM",
+    resultTitle:"Complete!", resultDesc:"You've finished every selected city. Check out your results.",
+    playAgain:"Play Again"
+  }
+};
+const T = STR[uiLang];
+
+function applyStaticLanguage(){
+  document.getElementById('overlayTitle').textContent = T.overlayTitle;
+  document.getElementById('overlayDesc').innerHTML = T.overlayDesc;
+  document.getElementById('modeKrLabel').textContent = T.modeKrLabel;
+  document.getElementById('modeEnLabel').textContent = T.modeEnLabel;
+  document.getElementById('countLabelPrefix').textContent = T.countPrefix;
+  document.getElementById('countLabelSuffix').innerHTML = T.countSuffix(CITIES.length);
+  document.getElementById('startBtn').textContent = T.startBtn;
+  document.getElementById('hintText').textContent = T.hint;
+  document.getElementById('resultTitle').textContent = T.resultTitle;
+  document.getElementById('resultDesc').textContent = T.resultDesc;
+  document.getElementById('playAgainBtn').textContent = T.playAgain;
+  document.querySelectorAll('.cUnit').forEach(el=>el.textContent = T.cUnit);
+  document.getElementById('hudSubtitle').textContent = uiLang==='ko' ? '/ 세계도시 타이핑' : '/ World City Typing';
+}
+applyStaticLanguage();
+
+const map = L.map('map', {zoomControl:false, attributionControl:true, worldCopyJump:true}).setView([20,10], 2);
+const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution:'&copy; OpenStreetMap contributors',
+  subdomains:'abc', maxZoom:19
+}).addTo(map);
+
+let tileErrorCount = 0;
+tileLayer.on('tileerror', ()=>{
+  tileErrorCount++;
+  if(tileErrorCount === 6){
+    const warn = document.createElement('div');
+    warn.textContent = '지도 타일을 불러오지 못했어요. 인터넷 연결이나 광고 차단 확장 프로그램을 확인해주세요.';
+    warn.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9;max-width:260px;font-size:11px;'+
+      'background:rgba(251,107,107,.15);border:1px solid var(--red);color:var(--red);padding:8px 12px;border-radius:8px;font-family:Manrope,sans-serif;';
+    document.body.appendChild(warn);
+  }
+});
+
+const allDotsLayer = L.layerGroup().addTo(map);
+const cityMarkers = {};
+CITIES.forEach(city=>{
+  const m = L.circleMarker([city.lat, city.lon], {
+    radius:4, color:'transparent', fillColor:'#F5A623', fillOpacity:.55, weight:0
+  }).bindTooltip(city.n, {direction:'top', className:'city-tip'});
+  m.addTo(allDotsLayer);
+  cityMarkers[city.n] = m;
+});
+
+let currentMarker = L.marker([0,0], {
+  icon: L.divIcon({className:'', html:'<div class="city-pulse"></div>', iconSize:[14,14], iconAnchor:[7,7]})
+});
+let trailLine = L.polyline([], {color:'#F5A623', weight:2, opacity:.8, dashArray:'6,8'}).addTo(map);
+let trailCoords = [];
+
+let mode = 'kr';
+let targetCount = 25;
+
+function targetName(city){ return mode==='kr' ? city.kr : city.n; }
+function foldAccents(s){ return s.normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function normCompare(s){ return mode==='kr' ? s.trim() : foldAccents(s).toLowerCase().trim(); }
+
+[...modeSel.children].forEach(btn=>{
+  btn.onclick = ()=>{
+    mode = btn.dataset.m;
+    [...modeSel.children].forEach(b=>b.classList.toggle('on', b===btn));
+  };
+});
+
+[...countSel.querySelectorAll('.countBtn:not(.plus)')].forEach(btn=>{
+  btn.onclick = ()=>{
+    targetCount = parseInt(btn.dataset.c, 10);
+    [...countSel.querySelectorAll('.countBtn:not(.plus)')].forEach(b=>b.classList.toggle('on', b===btn));
+    countLabelVal.textContent = targetCount;
+  };
+});
+plusBtn.onclick = ()=>{
+  targetCount += 25;
+  [...countSel.querySelectorAll('.countBtn:not(.plus)')].forEach(b=>b.classList.remove('on'));
+  countLabelVal.textContent = targetCount;
+};
+
+let activeRegions = new Set(['all']);
+REGIONS.forEach(r=>{
+  const chip = document.createElement('div');
+  chip.className = 'chip' + (r.k==='all' ? ' on' : '');
+  chip.textContent = T === STR.ko ? r.ko : r.en;
+  chip.dataset.k = r.k;
+  chip.onclick = () => toggleRegion(r.k);
+  chipsEl.appendChild(chip);
+});
+function toggleRegion(k){
+  if(k==='all'){
+    activeRegions = new Set(['all']);
+  } else {
+    activeRegions.delete('all');
+    if(activeRegions.has(k)) activeRegions.delete(k); else activeRegions.add(k);
+    if(activeRegions.size===0) activeRegions = new Set(['all']);
+  }
+  [...chipsEl.children].forEach(c=>{
+    c.classList.toggle('on', activeRegions.has(c.dataset.k));
+  });
+  rebuildPool();
+}
+
+let pool = [];
+function rebuildPool(){
+  const filtered = activeRegions.has('all') ? CITIES.slice() : CITIES.filter(c=>activeRegions.has(c.c));
+  pool = shuffle(filtered.slice());
+}
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+function nextCity(excludeName){
+  if(pool.length===0) rebuildPool();
+  let c = pool.pop();
+  if(c && excludeName && c.n===excludeName && pool.length>0){
+    pool.unshift(c);
+    c = pool.pop();
+  }
+  return c;
+}
+rebuildPool();
+
+let currentCity = null;
+function goToCity(city, animate){
+  if(!map.hasLayer(currentMarker)) currentMarker.addTo(map);
+  currentMarker.setLatLng([city.lat, city.lon]);
+  if(animate){
+    map.flyTo([city.lat, city.lon], 5, {duration:1.1});
+  } else {
+    map.setView([city.lat, city.lon], 5, {animate:false});
+  }
+}
+
+function renderCity(target, typedNorm){
+  const targetNorm = normCompare(target);
+  cityDisplay.innerHTML = [...target].map((ch,i)=>{
+    let cls = 'ch';
+    if(i < typedNorm.length){
+      cls += (typedNorm[i] === targetNorm[i]) ? ' ok' : ' bad';
+    }
+    if(ch===' ') cls += ' sp';
+    return `<span class="${cls}">${ch===' '?'&nbsp;':ch}</span>`;
+  }).join('');
+}
+
+let totalTyped=0, correctTyped=0, citiesDone=0, sessionStart=null, timerHandle=null;
+let prevVal = '';
+
+function fmtTime(ms){
+  const s = Math.floor(ms/1000);
+  const mm = String(Math.floor(s/60)).padStart(2,'0');
+  const ss = String(s%60).padStart(2,'0');
+  return `${mm}:${ss}`;
+}
+function computeStats(){
+  const elapsedMs = sessionStart ? Date.now()-sessionStart : 0;
+  const mins = elapsedMs/60000;
+  let speed;
+  if(mode==='en'){
+    speed = mins>0 ? Math.round((correctTyped/5)/mins) : 0;
+  } else {
+    speed = mins>0 ? Math.round(correctTyped/mins) : 0;
+  }
+  const acc = totalTyped>0 ? Math.round((correctTyped/totalTyped)*100) : 100;
+  return {speed, acc, elapsedMs};
+}
+function updateStats(){
+  const {speed, acc, elapsedMs} = computeStats();
+  statWpm.textContent = speed;
+  statAcc.textContent = acc+'%';
+  statCities.textContent = citiesDone;
+  statTime.textContent = fmtTime(elapsedMs);
+}
+
+function setCity(city, animate){
+  currentCity = city;
+  prevVal = '';
+  renderCity(targetName(city), '');
+  cityCount.textContent = `${citiesDone} / ${targetCount}`;
+  flagImg.src = `https://flagcdn.com/48x36/${city.cc}.png`;
+  flagImg.alt = city.country;
+  countryName.textContent = city.country;
+  goToCity(city, animate);
+  input.value = '';
+  input.focus();
+}
+
+function showResult(){
+  const {speed, acc, elapsedMs} = computeStats();
+  resSpeedLabel.textContent = mode==='kr' ? T.speedKr : T.speedEn;
+  resWpm.textContent = speed;
+  resAcc.textContent = acc+'%';
+  resCities.textContent = citiesDone;
+  resTime.textContent = fmtTime(elapsedMs);
+  if(window.MGH && citiesDone >= 25){
+    MGH.submitScore(mode==='kr' ? 'world-typing-kr' : 'world-typing-en', Math.round(speed*acc/100), {speed:speed, acc:acc, cities:citiesDone, ms:elapsedMs});
+  }
+  board.style.display = 'none';
+  resultOverlay.classList.remove('hidden');
+}
+
+function completeCity(){
+  citiesDone++;
+  trailCoords.push([currentCity.lat, currentCity.lon]);
+  trailLine.setLatLngs(trailCoords);
+  const doneMarker = cityMarkers[currentCity.n];
+  if(doneMarker) doneMarker.setStyle({fillColor:'#6EE7B7', fillOpacity:.9, radius:5});
+  cityDisplay.classList.add('flap');
+  const finished = currentCity;
+
+  if(citiesDone >= targetCount){
+    if(timerHandle) clearInterval(timerHandle);
+    setTimeout(()=>{ showResult(); }, 320);
+    return;
+  }
+
+  setTimeout(()=>{
+    cityDisplay.classList.remove('flap');
+    const nc = nextCity(finished.n);
+    setCity(nc, true);
+  }, 320);
+}
+
+input.addEventListener('keydown', (e)=>{
+  if(!currentCity) return;
+  if(e.key==='Enter'){
+    const norm = normCompare(input.value);
+    const target = normCompare(targetName(currentCity));
+    if(norm===target && norm.length>0){
+      completeCity();
+    } else {
+      input.classList.add('err');
+      setTimeout(()=>input.classList.remove('err'),300);
+    }
+    e.preventDefault();
+  }
+});
+
+input.addEventListener('input', ()=>{
+  if(!currentCity) return;
+  const target = targetName(currentCity);
+  const targetNorm = normCompare(target);
+  const newVal = input.value;
+  const newNorm = normCompare(newVal);
+  const oldLen = prevVal.length;
+  const newLen = newNorm.length;
+
+  if(newLen > oldLen){
+    const added = newLen - oldLen;
+    totalTyped += added;
+    const expected = targetNorm.slice(oldLen, newLen);
+    const actual = newNorm.slice(oldLen, newLen);
+    if(actual === expected) correctTyped += added;
+  } else if(newLen === oldLen && newNorm !== prevVal){
+    totalTyped += 1;
+    const idx = newLen - 1;
+    if(idx>=0 && newNorm[idx] === targetNorm[idx]) correctTyped += 1;
+  }
+  prevVal = newNorm;
+
+  renderCity(target, newNorm);
+});
+
+startBtn.onclick = ()=>{
+  overlay.classList.add('hidden');
+  resultOverlay.classList.add('hidden');
+  board.style.display = 'block';
+  modeTagLabel.textContent = mode==='kr' ? T.modeTagKr : T.modeTagEn;
+  statSpeedLabel.textContent = mode==='kr' ? T.speedKr : T.speedEn;
+  input.placeholder = mode==='kr' ? T.placeholderKr : T.placeholderEn;
+  const first = nextCity();
+  sessionStart = Date.now();
+  citiesDone = 0; totalTyped=0; correctTyped=0; trailCoords=[];
+  trailLine.setLatLngs([]);
+  Object.values(cityMarkers).forEach(m=>m.setStyle({fillColor:'#F5A623', fillOpacity:.55, radius:4}));
+  setCity(first, false);
+  if(timerHandle) clearInterval(timerHandle);
+  timerHandle = setInterval(updateStats, 250);
+  setTimeout(()=>map.invalidateSize(), 50);
+};
+
+resetBtn.onclick = ()=>{
+  if(timerHandle) clearInterval(timerHandle);
+  board.style.display = 'none';
+  resultOverlay.classList.add('hidden');
+  overlay.classList.remove('hidden');
+  currentCity = null;
+  rebuildPool();
+};
+
+playAgainBtn.onclick = ()=>{
+  resultOverlay.classList.add('hidden');
+  overlay.classList.remove('hidden');
+  currentCity = null;
+  rebuildPool();
+};
+
+window.addEventListener('resize', ()=>map.invalidateSize());
+window.addEventListener('load', ()=>map.invalidateSize());
+setTimeout(()=>map.invalidateSize(), 300);
+</script>
+</body>
+</html>
