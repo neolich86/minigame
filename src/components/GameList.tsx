@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useApp } from "./AppProvider";
 import { GAMES, GENRES, formatScore, type Genre } from "@/lib/games";
 import { fetchMyScores, type ScoreRow } from "@/lib/supabase";
@@ -15,7 +15,7 @@ const ACCENT: Record<Genre, { c: string; bg: string }> = {
 
 const VIEW_KEY = "mgh:view";
 
-export function GameList() {
+export function GameList({ children }: { children?: ReactNode }) {
   const { t, lang, user } = useApp();
   const [filter, setFilter] = useState<Genre | "all">("all");
   const [view, setView] = useState<"grid" | "list">("grid");
@@ -150,6 +150,8 @@ export function GameList() {
           );
         })}
       </main>
+
+      {children}
 
       <footer className="site-footer">
         <span>{t("footer")}</span>

@@ -1,14 +1,19 @@
 import type { MetadataRoute } from "next";
 import { GAMES } from "@/lib/games";
+import { SITE_URL } from "@/lib/serverLang";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://minigame-on.vercel.app";
+// 한국어 주소 + 영어(?lang=en) 대체 주소를 함께 알려준다
+function entry(path: string, priority: number, changeFrequency: "daily" | "weekly" | "monthly"): MetadataRoute.Sitemap[number] {
+  const url = `${SITE_URL}${path}`;
+  const en = `${url}${path.includes("?") ? "&" : "?"}lang=en`;
+  return { url, lastModified: new Date(), changeFrequency, priority, alternates: { languages: { ko: url, en } } };
+}
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
   return [
-    { url: SITE_URL, lastModified: now, changeFrequency: "weekly", priority: 1 },
-    { url: `${SITE_URL}/ranking`, lastModified: now, changeFrequency: "daily", priority: 0.7 },
-    ...GAMES.map((g) => ({ url: `${SITE_URL}/play/${g.id}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.8 })),
-    ...GAMES.filter((g) => g.online).map((g) => ({ url: `${SITE_URL}/online/${g.id}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.6 })),
+    entry("/", 1, "weekly"),
+    ...GAMES.map((g) => entry(`/play/${g.id}`, 0.8, "monthly")),
+    ...GAMES.filter((g) => g.online).map((g) => entry(`/online/${g.id}`, 0.8, "monthly")),
+    entry("/ranking", 0.6, "daily"),
   ];
 }

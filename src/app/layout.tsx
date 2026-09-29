@@ -1,38 +1,36 @@
 import type { Metadata, Viewport } from "next";
-import { cookies, headers } from "next/headers";
+import Script from "next/script";
 import { AppProvider } from "@/components/AppProvider";
 import { SiteHeader } from "@/components/SiteHeader";
-import { LANG_COOKIE, normLang, pickLang, translate, type Lang } from "@/lib/i18n";
+import { translate } from "@/lib/i18n";
+import { HOME_SEO } from "@/lib/seo";
+import { SITE_URL, langAlternates, serverLang } from "@/lib/serverLang";
 import "./globals.css";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://minigame-on.vercel.app";
-
-async function serverLang(): Promise<{ lang: Lang; fromCookie: boolean }> {
-  const c = normLang((await cookies()).get(LANG_COOKIE)?.value);
-  if (c) return { lang: c, fromCookie: true };
-  return { lang: pickLang((await headers()).get("accept-language")), fromCookie: false };
-}
+const GA_ID = "G-9P8L9T8BS6";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { lang } = await serverLang();
-  const title = lang === "ko" ? "미니 게임 천국 | Mini Game Heaven" : "Mini Game Heaven | 미니 게임 천국";
-  const description = translate(lang, "metaDescription");
+  const { lang, fromParam } = await serverLang();
+  const seo = HOME_SEO[lang];
   return {
     metadataBase: new URL(SITE_URL),
-    title: { default: title, template: `%s | ${translate(lang, "siteName")}` },
-    description,
+    title: { default: seo.title, template: `%s | ${translate(lang, "siteName")}` },
+    description: seo.description,
+    keywords: seo.keywords,
+    applicationName: translate(lang, "siteName"),
     authors: [{ name: "제임스웹" }],
-    alternates: { canonical: "/" },
+    alternates: langAlternates("/", lang, fromParam),
     openGraph: {
       type: "website",
       siteName: translate(lang, "siteName"),
-      title,
-      description,
+      title: seo.title,
+      description: seo.description,
       locale: lang === "ko" ? "ko_KR" : "en_US",
       alternateLocale: lang === "ko" ? "en_US" : "ko_KR",
       images: [{ url: "/og-image.jpg", width: 1200, height: 630 }],
     },
-    twitter: { card: "summary_large_image", title, description, images: ["/og-image.jpg"] },
+    twitter: { card: "summary_large_image", title: seo.title, description: seo.description, images: ["/og-image.jpg"] },
+    robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large" } },
     icons: {
       icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230e1420'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle'%3E%F0%9F%95%B9%EF%B8%8F%3C/text%3E%3C/svg%3E",
     },
@@ -42,7 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0e1420" };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { lang, fromCookie } = await serverLang();
+  const { lang, fixed } = await serverLang();
   return (
     <html lang={lang}>
       <head>
@@ -55,7 +53,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body>
-        <AppProvider initialLang={lang} langFromCookie={fromCookie}>
+        {/* Google Analytics (gtag.js) — 페이지 이동은 GA4 향상된 측정(브라우저 기록 변경)으로 자동 집계 */}
+        <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
+        <Script id="ga-init" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GA_ID}');`}
+        </Script>
+        <AppProvider initialLang={lang} langFromCookie={fixed}>
           <SiteHeader />
           {children}
         </AppProvider>

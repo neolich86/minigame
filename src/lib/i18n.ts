@@ -14,6 +14,8 @@ export function pickLang(list: readonly string[] | string | null | undefined): L
         .split(",")
         .map((s) => s.split(";")[0].trim())
         .filter(Boolean);
+  // 언어 정보가 없으면(검색 로봇 등) 한국어 — 한국 사용자가 주 대상
+  if (!arr.length) return "ko";
   for (const l of arr) {
     const low = l.toLowerCase();
     if (low.startsWith("ko")) return "ko";

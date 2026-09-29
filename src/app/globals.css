@@ -240,3 +240,23 @@ footer.site-footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid 
 .room-list { display: grid; gap: 8px; }
 .room-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
 .net-banner { padding: 8px 14px; background: rgba(251,107,107,.12); color: #ffb3b3; font-size: 12.5px; border-bottom: 1px solid #5a2626; }
+
+/* ---------- SEO 소개 글 ---------- */
+.game-about { padding-top: 36px; padding-bottom: 60px; color: var(--text-dim); line-height: 1.75; font-size: 14.5px; }
+.game-about h1, .game-about .about-title { font-family: "Gothic A1", sans-serif; font-weight: 600; font-size: 24px; color: var(--text); margin: 0 0 10px; }
+.game-about h2 { font-size: 16px; color: var(--text); margin: 28px 0 10px; }
+.game-about ol { padding-left: 20px; margin: 0; }
+.game-about li { margin: 4px 0; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.seo-tag { font-size: 12px; color: var(--teal); background: rgba(77, 219, 199, .08); border: 1px solid var(--teal-dim); padding: 3px 9px; border-radius: 999px; }
+.related { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.related-item { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px; font-size: 13px; font-weight: 600; }
+.related-item:hover { border-color: var(--gold); }
+.related-item img { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+.home-about { padding: 56px 0 0; max-width: none; }
+.home-about h2 { font-family: "Gothic A1", sans-serif; font-weight: 500; font-size: 22px; margin: 0 0 16px; }
+.about-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.about-grid h3 { margin: 0 0 6px; font-size: 15px; }
+.about-grid p { margin: 0 0 10px; font-size: 13px; color: var(--text-dim); line-height: 1.65; }
+.about-links { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; }
+.about-links a { color: var(--gold); text-decoration: none; font-weight: 600; }
