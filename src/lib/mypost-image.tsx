@@ -1,5 +1,6 @@
 // 공유 이미지 (카톡·DM 미리보기 1200×630, 인스타 스토리 1080×1920) 공통 요소
 import { ImageResponse } from "next/og";
+import sharp from "sharp";
 import type { MyPostData } from "./mypost";
 import { MONTH_EN, summarize } from "./mypost-summary";
 
@@ -19,6 +20,19 @@ async function loadFont(text: string) {
     return res.ok ? await res.arrayBuffer() : null;
   } catch {
     return null;
+  }
+}
+
+// 저장된 사진은 WebP 인데 이미지 렌더러(satori)는 WebP 를 못 그린다 → JPEG data URI 로 바꿔서 넘긴다
+async function toJpegDataUri(url: string | undefined, size: number) {
+  if (!url) return undefined;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return undefined;
+    const buf = await sharp(Buffer.from(await res.arrayBuffer())).resize(size, size, { fit: "cover" }).jpeg({ quality: 82 }).toBuffer();
+    return `data:image/jpeg;base64,${buf.toString("base64")}`;
+  } catch {
+    return undefined;
   }
 }
 
@@ -57,7 +71,9 @@ export async function reportImage(d: MyPostData, slug: string, kind: "og" | "sto
   const top = MONTH_EN[s.topMonth].slice(0, 3).toUpperCase();
   const link = `minigame-on.vercel.app/r/${slug}`;
   const texts = ["MY POST", String(d.year), `@${d.u}`, period, s.title, "BEST", "TOTAL LIKES", "POSTS", "TOP MONTH", top, fmt(s.best[0]?.l ?? 0), fmt(s.total), String(s.posts), "나도 만들기 →", link, "올해의 타이틀", "BEST 9"].join("");
-  const font = await loadFont(texts);
+  const tile = kind === "og" ? 172 : 328;
+  const [font, imgs] = await Promise.all([loadFont(texts), Promise.all(s.best.map((p) => toJpegDataUri(p.img, tile)))]);
+  const best = imgs.map((img) => ({ img }));
   const fonts = font ? [{ name: "BHS", data: font, weight: 400 as const, style: "normal" as const }] : undefined;
   const ff = font ? { fontFamily: "BHS" } : {};
   // 한글 글꼴을 못 불러오면 한글 글자(타이틀)는 빼고 그린다 (네모 깨짐 방지)
@@ -85,7 +101,7 @@ export async function reportImage(d: MyPostData, slug: string, kind: "og" | "sto
               <Stat label="POSTS" value={String(s.posts)} w={140} big={40} />
             </div>
           </div>
-          <Grid best={s.best} size={172} gap={8} />
+          <Grid best={best} size={172} gap={8} />
         </div>
       ),
       { width: 1200, height: 630, fonts },
@@ -104,7 +120,7 @@ export async function reportImage(d: MyPostData, slug: string, kind: "og" | "sto
             {s.title}
           </div>
         )}
-        <Grid best={s.best} size={328} gap={8} />
+        <Grid best={best} size={328} gap={8} />
         <div style={{ display: "flex", gap: 16, marginTop: "auto" }}>
           <Stat label="BEST" value={fmt(s.best[0]?.l ?? 0)} w={322} big={60} />
           <Stat label="TOTAL LIKES" value={fmt(s.total)} w={322} big={60} />
