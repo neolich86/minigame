@@ -86,9 +86,6 @@ button{font:inherit;cursor:pointer}
 .tile .fmt{position:absolute;top:5px;right:6px;font-family:var(--f-mono);font-size:9.5px;background:rgba(0,0,0,.45);padding:1px 5px;border-radius:3px}
 .tile .likes{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 5px;background:linear-gradient(transparent,rgba(0,0,0,.6));font-size:12px;font-weight:700}
 .tile.first{outline:2px solid var(--sticker);outline-offset:-2px}
-.edge{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:4px;font-family:var(--f-mono);font-size:10px;color:#F2A33A;letter-spacing:.08em}
-.edge span{display:flex;justify-content:space-between;padding:0 2px}
-.edge em{font-style:normal;color:#8D93A5}
 
 /* stat prints */
 .card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px}
@@ -211,7 +208,6 @@ button{font:inherit;cursor:pointer}
   <section class="sheet" aria-label="좋아요 상위 9개 게시물">
     <div class="sheet-head"><h2>BEST 9</h2><span class="label ko">좋아요 순</span></div>
     <div class="grid9" id="grid9"></div>
-    <div class="edge" id="edge"></div>
   </section>
 
   <section class="card best">
@@ -404,7 +400,6 @@ $('title').textContent=rep.title;
 $('titleWhy').textContent=rep.why;
 
 $('grid9').innerHTML=rep.best9.map((p,i)=>`<a class="tile${i===0?' first':''}" href="${p.url||'#'}" target="_blank" rel="noopener" aria-label="${i+1}위, 좋아요 ${fmt(p.like_count)}개" style="animation-delay:${i*70}ms"><div class="ph" style="${ph(p)}"></div>${p.format!=='IMAGE'?`<span class="fmt">${FMTK[p.format]}</span>`:''}<span class="likes num">♥ ${fmt(p.like_count)}</span></a>`).join('');
-$('edge').innerHTML=rep.best9.map((p,i)=>`<span><b>${String(i+1).padStart(2,'0')}A</b><em>${p.m+1}.${p.day}</em></span>`).join('');
 $('grid9').addEventListener('click',e=>{const a=e.target.closest('.tile');if(a&&a.getAttribute('href')==='#')e.preventDefault()});
 
 const b=rep.best;
