@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<link rel="canonical" href="/play/my-post-2026">
+<script src="/mgh/bridge.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="index,follow">
+<title>My Post 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: one phone-width column read like a developed film roll — contact sheet (BEST 9) first, lab-print stat labels after, share slip at the end */
+:root{
+  --bg:#EEF0F5; --paper:#FFFFFF; --ink:#15171D; --muted:#5E6474; --line:#D9DCE5;
+  --accent:#2F4DF5; --accent-soft:#E3E8FF; --sticker:#FFD43B; --sticker-ink:#1B1600;
+  --bar:#C3CAE0;
+  --f-display:"Black Han Sans","IBM Plex Sans KR","Apple SD Gothic Neo",sans-serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1016; --paper:#171A22; --ink:#ECEEF4; --muted:#9AA1B3; --line:#2A2F3B;
+  --accent:#8A9BFF; --accent-soft:#232A4A; --sticker:#FFD43B; --sticker-ink:#1B1600; --bar:#3A4157; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1016; --paper:#171A22; --ink:#ECEEF4; --muted:#9AA1B3; --line:#2A2F3B;
+  --accent:#8A9BFF; --accent-soft:#232A4A; --sticker:#FFD43B; --sticker-ink:#1B1600; --bar:#3A4157; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding-inline:16px;padding-block:0 120px}
+.wrap{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.num{font-variant-numeric:tabular-nums}
+.label{font-family:var(--f-mono);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.label.ko{font-family:var(--f-body);letter-spacing:.02em;font-size:12px}
+h1,h2{text-wrap:balance;margin:0}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* top bar */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-block:14px 4px;flex-wrap:wrap}
+.mark{font-family:var(--f-display);font-size:20px;letter-spacing:.01em}
+.mark b{color:var(--accent);font-weight:400}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--paper)}
+.seg button{border:0;background:none;color:var(--muted);padding:5px 12px;border-radius:999px;font-size:12.5px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.sample{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.sample i{font-style:normal;font-family:var(--f-mono);font-size:10.5px;border:1px dashed var(--muted);padding:1px 6px;border-radius:4px}
+
+.friend-banner{background:var(--accent-soft);color:var(--ink);border-radius:12px;padding:12px 14px;font-size:14px}
+.friend-banner strong{color:var(--accent)}
+
+/* profile */
+.profile{display:flex;align-items:center;gap:12px;padding-block:6px}
+.avatar{width:52px;height:52px;border-radius:50%;flex:none;background:conic-gradient(from 200deg,#FF9F43,#EE5A8F,#6C5CE7,#FF9F43);display:grid;place-items:center}
+.avatar span{width:46px;height:46px;border-radius:50%;background:var(--paper);display:grid;place-items:center;font-family:var(--f-display);font-size:20px}
+.profile h1{font-size:18px;font-weight:700}
+.profile p{margin:0;color:var(--muted);font-size:13px}
+
+/* hero headline */
+.hero{padding-block:4px 2px}
+.hero .big{font-family:var(--f-display);font-size:clamp(44px,15vw,64px);line-height:.95;letter-spacing:-.01em}
+.hero .big b{color:var(--accent);font-weight:400}
+.sticker{display:inline-flex;align-items:center;gap:8px;margin-top:12px;background:var(--sticker);color:var(--sticker-ink);padding:8px 14px;border-radius:6px;transform:rotate(-2deg);box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.sticker .label{color:var(--sticker-ink);opacity:.7}
+.sticker strong{font-family:var(--f-display);font-weight:400;font-size:20px}
+.sticker-why{font-size:13px;color:var(--muted);margin:10px 0 0}
+
+/* contact sheet */
+.sheet{background:#101217;border-radius:14px;padding:14px 12px 10px;color:#E9ECF3}
+.sheet-head{display:flex;justify-content:space-between;align-items:baseline;padding:0 2px 10px}
+.sheet-head h2{font-family:var(--f-display);font-weight:400;font-size:24px;color:#fff}
+.sheet-head .label{color:#8D93A5}
+.grid9{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.tile{position:relative;aspect-ratio:1;max-width:100%;border-radius:3px;overflow:hidden;display:block;color:#fff;text-decoration:none}
+.tile .ph{position:absolute;inset:0}
+.tile .fmt{position:absolute;top:5px;right:6px;font-family:var(--f-mono);font-size:9.5px;background:rgba(0,0,0,.45);padding:1px 5px;border-radius:3px}
+.tile .likes{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 5px;background:linear-gradient(transparent,rgba(0,0,0,.6));font-size:12px;font-weight:700}
+.tile.first{outline:2px solid var(--sticker);outline-offset:-2px}
+.edge{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:4px;font-family:var(--f-mono);font-size:10px;color:#F2A33A;letter-spacing:.08em}
+.edge span{display:flex;justify-content:space-between;padding:0 2px}
+.edge em{font-style:normal;color:#8D93A5}
+
+/* stat prints */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px}
+.best{display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:center}
+.best .thumb{aspect-ratio:1;border-radius:8px;position:relative;overflow:hidden;max-width:100%}
+.best .v{font-family:var(--f-display);font-size:36px;line-height:1.05}
+.best .v small{font-family:var(--f-body);font-size:14px;font-weight:500;color:var(--muted);margin-left:4px}
+.best p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.stat .v{font-family:var(--f-display);font-size:28px;line-height:1.1}
+.stat .v small{font-family:var(--f-body);font-size:12.5px;color:var(--muted);margin-left:3px}
+.stat .sub{font-size:12px;color:var(--muted)}
+
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px}
+.sec-h h2{font-size:16px;font-weight:700}
+.chart svg{width:100%;height:auto;display:block}
+.chart .b{fill:var(--bar)} .chart .b.top{fill:var(--accent)} .chart .future{fill:none;stroke:var(--line);stroke-dasharray:3 3}
+.chart text{fill:var(--muted);font-family:var(--f-mono);font-size:10px}
+.chart text.val{fill:var(--ink);font-weight:600}
+.chart .grid{stroke:var(--line)}
+
+.fmt-row{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;font-size:13.5px}
+.fmt-rows{display:flex;flex-direction:column;gap:10px}
+.track{height:10px;background:var(--bg);border-radius:6px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--bar);border-radius:6px}
+.track i.top{background:var(--accent)}
+.fmt-row .n{color:var(--muted);font-size:12.5px;text-align:right;min-width:92px}
+
+.heat{display:grid;grid-template-columns:44px repeat(7,minmax(0,1fr));gap:3px;font-size:11px}
+.heat .h{color:var(--muted);text-align:center;font-family:var(--f-mono);font-size:10.5px}
+.heat .rl{color:var(--muted);font-size:11px;align-self:center}
+.heat .c{height:24px;border-radius:4px;background:var(--accent)}
+.heat .c.best{outline:2px solid var(--sticker);outline-offset:1px}
+.golden{margin:12px 0 0;font-size:14px}
+.golden strong{color:var(--accent)}
+
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tags span{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:13px}
+.tags span b{font-family:var(--f-mono);font-size:11px;color:var(--muted);font-weight:500;margin-left:4px}
+.note{font-size:12px;color:var(--muted);margin:10px 0 0}
+
+/* closing slip */
+.slip{background:var(--ink);color:var(--bg);border-radius:14px;padding:22px 18px;display:flex;flex-direction:column;gap:14px}
+.slip h2{font-family:var(--f-display);font-weight:400;font-size:26px;line-height:1.2}
+.slip p{margin:0;opacity:.75;font-size:13.5px}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{border:0;border-radius:10px;padding:12px 10px;font-weight:700;font-size:14px}
+.btn.primary{background:var(--sticker);color:var(--sticker-ink);grid-column:1/-1}
+.btn.ghost{background:transparent;color:var(--bg);border:1px solid color-mix(in srgb,var(--bg) 35%,transparent)}
+.del{background:none;border:0;color:var(--muted);font-size:12.5px;text-decoration:underline;align-self:center;padding:6px}
+.toast{font-size:12.5px;min-height:1.2em;opacity:.8}
+
+.cta-fixed{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--bg) 30%);display:flex;justify-content:center}
+.cta-fixed button{width:100%;max-width:460px;background:var(--accent);color:#fff;border:0;border-radius:12px;padding:15px;font-weight:700;font-size:16px;box-shadow:0 6px 20px rgba(47,77,245,.35)}
+
+/* story preview */
+.modal{position:fixed;inset:0;background:rgba(8,9,12,.72);display:grid;place-items:center;padding:20px 16px;z-index:10}
+.modal-in{display:flex;flex-direction:column;gap:10px;align-items:center;width:100%;max-width:300px}
+.story{width:100%;aspect-ratio:9/16;max-width:100%;background:#101217;color:#fff;border-radius:14px;padding:22px 16px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.story .t{font-family:var(--f-display);font-size:26px;line-height:1}
+.story .t b{color:#9BA9FF;font-weight:400}
+.story .u{font-size:12px;color:#A9AFBF}
+.story .g{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+.story .g div{aspect-ratio:1;border-radius:2px;position:relative;overflow:hidden}
+.story .ss{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:auto}
+.story .ss div{background:#1C2030;border-radius:8px;padding:8px 6px}
+.story .ss .label{font-size:8.5px;color:#8D93A5;letter-spacing:.08em}
+.story .ss strong{display:block;font-family:var(--f-display);font-weight:400;font-size:17px}
+.story .foot{font-family:var(--f-mono);font-size:10px;color:#8D93A5;text-align:center}
+.story .tt{align-self:flex-start;background:var(--sticker);color:var(--sticker-ink);font-family:var(--f-display);font-size:14px;padding:3px 9px;border-radius:4px;transform:rotate(-2deg)}
+.modal .cap{color:#D5D9E3;font-size:12.5px;text-align:center;margin:0}
+.modal .close{background:#fff;color:#111;border:0;border-radius:10px;padding:10px 18px;font-weight:700}
+
+@media (prefers-reduced-motion: no-preference){
+  .tile{animation:dev .6s ease-out both}
+  @keyframes dev{from{filter:brightness(1.6) saturate(.2)}to{filter:none}}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="bar">
+    <div class="mark">MY POST <b>2026</b></div>
+    <div class="seg" role="group" aria-label="보는 사람 전환">
+      <button id="v-me" aria-pressed="true">내 화면</button>
+      <button id="v-friend" aria-pressed="false">친구 화면</button>
+    </div>
+  </div>
+  <div class="sample"><i>PREVIEW</i> 정식 오픈 준비 중이에요. 지금은 가상 계정 샘플로 결과 화면을 미리 볼 수 있어요.</div>
+
+  <div class="friend-banner" id="friendBanner" hidden><strong>@sample.feed</strong> 님이 2026년 피드를 분석해 공유했어요. 내 계정도 1분이면 만들 수 있어요.</div>
+
+  <div class="profile">
+    <div class="avatar"><span>S</span></div>
+    <div>
+      <h1>@sample.feed</h1>
+      <p class="num" id="period"></p>
+    </div>
+  </div>
+
+  <section class="hero">
+    <div class="big">나의 2026<br><b>BEST 9</b></div>
+    <div class="sticker"><span class="label ko">올해의 타이틀</span><strong id="title"></strong></div>
+    <p class="sticker-why" id="titleWhy"></p>
+  </section>
+
+  <section class="sheet" aria-label="좋아요 상위 9개 게시물">
+    <div class="sheet-head"><h2>BEST 9</h2><span class="label ko">좋아요 순</span></div>
+    <div class="grid9" id="grid9"></div>
+    <div class="edge" id="edge"></div>
+  </section>
+
+  <section class="card best">
+    <div class="thumb" id="bestThumb"></div>
+    <div>
+      <div class="label">🔥 Best Post</div>
+      <div class="v num" id="bestLikes"></div>
+      <p id="bestMeta"></p>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><span class="label">❤️ Total Likes</span><span class="v num" id="sTotal"></span><span class="sub" id="sTotalSub"></span></div>
+    <div class="stat"><span class="label">📷 Posts</span><span class="v num" id="sPosts"></span><span class="sub" id="sPostsSub"></span></div>
+    <div class="stat"><span class="label">🏆 Most Popular Month</span><span class="v" id="sMonth"></span><span class="sub num" id="sMonthSub"></span></div>
+    <div class="stat"><span class="label">📈 평균 좋아요</span><span class="v num" id="sAvg"></span><span class="sub" id="sAvgSub"></span></div>
+  </section>
+
+  <section class="card chart">
+    <div class="sec-h"><h2>월별 좋아요</h2><span class="label ko">1월 – 12월</span></div>
+    <div id="chart"></div>
+  </section>
+
+  <section class="card">
+    <div class="sec-h"><h2>무엇이 잘 됐나</h2><span class="label ko">포맷별 평균 좋아요</span></div>
+    <div class="fmt-rows" id="fmtRows"></div>
+  </section>
+
+  <section class="card">
+    <div class="sec-h"><h2>골든 타임</h2><span class="label ko">요일 × 시간대</span></div>
+    <div class="heat" id="heat"></div>
+    <p class="golden" id="golden"></p>
+  </section>
+
+  <section class="card">
+    <div class="sec-h"><h2>자주 쓴 해시태그</h2><span class="label">Top 5</span></div>
+    <div class="tags" id="tags"></div>
+    <p class="note" id="hiddenNote"></p>
+  </section>
+
+  <section class="slip">
+    <h2>내 인스타 2026년을<br>분석해봤습니다.</h2>
+    <p id="slipLine"></p>
+    <div class="btns" id="meBtns">
+      <button class="btn primary" id="bStory">스토리 이미지 만들기</button>
+      <button class="btn ghost" id="bCopy">링크 복사</button>
+      <button class="btn ghost" id="bKakao">카카오톡 공유</button>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+    <button class="del" id="bDel">내 리포트 삭제</button>
+  </section>
+</div>
+
+<div class="cta-fixed" id="cta" hidden><button id="bMake">나도 내 2026 만들기</button></div>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-in">
+    <div class="story" id="story"></div>
+    <p class="cap">실제 서비스에서는 1080×1920 이미지로 저장되어<br>인스타 스토리에 바로 올릴 수 있습니다.</p>
+    <button class="close" id="bClose">닫기</button>
+  </div>
+</div>
+
+<script>
+/* ---------- sample data (seeded, deterministic) ---------- */
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R=rng(2026);
+const MONTH_POSTS=[11,9,13,12,15,14,16,21,16]; // Jan–Sep = 127
+const MONTH_BOOST=[.8,.75,.9,.95,1.05,1.1,1.25,1.7,1.15];
+const TAGS=['일상','카페투어','여행','오운완','주말','맛집','필름카메라','노을','강아지','책스타그램'];
+const TAGW=[9,6,5,4,4,3,3,2,2,1];
+function pickTag(){let s=TAGW.reduce((a,b)=>a+b),r=R()*s;for(let i=0;i<TAGS.length;i++){r-=TAGW[i];if(r<=0)return TAGS[i]}return TAGS[0]}
+const DIM=[31,28,31,30,31,30,31,31,30];
+const posts=[];let id=0;
+MONTH_POSTS.forEach((n,m)=>{for(let k=0;k<n;k++){
+  const day=1+Math.floor(R()*DIM[m]);
+  const hr=[8,12,13,19,20,21,22,23,1][Math.floor(R()*9)];
+  const dow=new Date(Date.UTC(2026,m,day)).getUTCDay();
+  const fr=R(),format=fr<.5?'IMAGE':fr<.78?'CAROUSEL':'REELS';
+  const fmtMul={IMAGE:.85,CAROUSEL:1.05,REELS:1.6}[format];
+  const nightMul=(hr>=20&&hr<=23)?1.25:1, wkMul=(dow===0||dow===6)?1.15:1;
+  const base=Math.exp(Math.log(430)+(R()-.5)*1.3);
+  let likes=Math.round(base*MONTH_BOOST[m]*fmtMul*nightMul*wkMul);
+  const tags=[pickTag()];if(R()<.6)tags.push(pickTag());
+  posts.push({id:++id,m,day,hr,dow,format,like_count:likes,comments_count:Math.round(likes*(.02+R()*.03)),hue:Math.floor(R()*360),tags});
+}});
+// one viral reel in August + two posts with hidden likes
+Object.assign(posts.find(p=>p.m===7&&p.format==='REELS')||posts[100],{like_count:12421,comments_count:388,day:14,hr:21,dow:new Date(Date.UTC(2026,7,14)).getUTCDay(),format:'REELS'});
+posts[5].like_count=null;posts[60].like_count=null;
+
+/* ---------- report computation (mirrors lib/report.ts) ---------- */
+function buildReport(all){
+  const counted=all.filter(p=>p.like_count!=null);
+  const hidden=all.length-counted.length;
+  const total=counted.reduce((s,p)=>s+p.like_count,0);
+  const comments=all.reduce((s,p)=>s+p.comments_count,0);
+  const sorted=[...counted].sort((a,b)=>b.like_count-a.like_count||b.comments_count-a.comments_count||(b.m*40+b.day)-(a.m*40+a.day));
+  const byMonth=Array.from({length:12},()=>({likes:0,posts:0}));
+  all.forEach(p=>{byMonth[p.m].posts++;if(p.like_count!=null)byMonth[p.m].likes+=p.like_count});
+  const topMonth=byMonth.reduce((bi,v,i,a)=>v.likes>a[bi].likes?i:bi,0);
+  const busyMonth=byMonth.reduce((bi,v,i,a)=>v.posts>a[bi].posts?i:bi,0);
+  const fmts=['IMAGE','CAROUSEL','REELS'].map(f=>{const xs=counted.filter(p=>p.format===f);return{f,n:all.filter(p=>p.format===f).length,avg:xs.length?Math.round(xs.reduce((s,p)=>s+p.like_count,0)/xs.length):0}});
+  const slot=h=>h>=5&&h<12?0:h<18?1:h<22?2:3;
+  const heat=Array.from({length:4},()=>Array.from({length:7},()=>({xs:[],n:0,med:0})));
+  counted.forEach(p=>{const c=heat[slot(p.hr)][p.dow];c.xs.push(p.like_count);c.n++});
+  const med=a=>{const x=[...a].sort((p,q)=>p-q),k=x.length>>1;return x.length%2?x[k]:(x[k-1]+x[k])/2};
+  heat.forEach(row=>row.forEach(c=>{if(c.n)c.med=med(c.xs)}));
+  let gold={r:0,d:0,v:0};heat.forEach((row,r)=>row.forEach((c,d)=>{if(c.n>=3&&c.med>gold.v)gold={r,d,v:c.med}}));
+  const tc={};all.forEach(p=>p.tags.forEach(t=>tc[t]=(tc[t]||0)+1));
+  const tags=Object.entries(tc).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const avg=Math.round(total/counted.length);
+  const reelsShare=fmts[2].n/all.length, carShare=fmts[1].n/all.length;
+  const activeMonths=byMonth.filter(v=>v.posts>0).length;
+  let title,why;
+  if(reelsShare>=.6){title='릴스 장인';why='게시물 절반 이상이 릴스였어요.'}
+  else if(sorted[0].like_count>=avg*5){title='한 방의 주인공';why=`BEST POST가 평균의 ${Math.round(sorted[0].like_count/avg)}배를 받았어요.`}
+  else if(activeMonths>=10){title='꾸준함의 아이콘';why='10개월 넘게 매달 피드를 채웠어요.'}
+  else if(byMonth[busyMonth].posts/all.length>=.4){title=`${busyMonth+1}월의 폭주기관차`;why='한 달에 게시물이 몰렸어요.'}
+  else if(carShare>=.5){title='캐러셀 스토리텔러';why='여러 장으로 이야기하는 걸 좋아했어요.'}
+  else {title='피드 큐레이터';why='골고루 잘 채운 한 해였어요.'}
+  return{posts:all.length,counted:counted.length,hidden,total,comments,avg,best9:sorted.slice(0,9),best:sorted[0],byMonth,topMonth,busyMonth,fmts,heat,gold,tags,title,why};
+}
+const rep=buildReport(posts);
+
+/* ---------- render ---------- */
+const $=id=>document.getElementById(id);
+const fmt=n=>n.toLocaleString('ko-KR');
+const MN=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+const EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DOW=['일','월','화','수','목','금','토'];
+const SLOT=['아침','낮','저녁','밤'];
+const FMTK={IMAGE:'사진',CAROUSEL:'캐러셀',REELS:'릴스'};
+const ph=p=>`background:radial-gradient(circle at ${30+p.hue%40}% ${25+p.hue%30}%,hsl(${(p.hue+40)%360} 90% 78% / .9) 0 18%,transparent 19%),linear-gradient(${135+p.hue%90}deg,hsl(${p.hue} 62% 58%),hsl(${(p.hue+50)%360} 55% 32%))`;
+
+$('period').textContent='2026.01.01 – 2026.09.30 · 게시물 '+rep.posts+'개';
+$('title').textContent=rep.title;
+$('titleWhy').textContent=rep.why;
+
+$('grid9').innerHTML=rep.best9.map((p,i)=>`<a class="tile${i===0?' first':''}" href="#" aria-label="${i+1}위, 좋아요 ${fmt(p.like_count)}개" style="animation-delay:${i*70}ms"><div class="ph" style="${ph(p)}"></div>${p.format!=='IMAGE'?`<span class="fmt">${FMTK[p.format]}</span>`:''}<span class="likes num">♥ ${fmt(p.like_count)}</span></a>`).join('');
+$('edge').innerHTML=rep.best9.map((p,i)=>`<span><b>${String(i+1).padStart(2,'0')}A</b><em>${p.m+1}.${p.day}</em></span>`).join('');
+$('grid9').addEventListener('click',e=>{if(e.target.closest('.tile'))e.preventDefault()});
+
+const b=rep.best;
+$('bestThumb').setAttribute('style',ph(b));
+$('bestLikes').innerHTML=`${fmt(b.like_count)}<small>Likes</small>`;
+$('bestMeta').textContent=`${b.m+1}월 ${b.day}일 ${DOW[b.dow]}요일 · ${FMTK[b.format]} · 댓글 ${fmt(b.comments_count)}개`;
+
+$('sTotal').textContent=fmt(rep.total);
+$('sTotalSub').textContent=`댓글 ${fmt(rep.comments)}개`;
+$('sPosts').innerHTML=`${rep.posts}<small>Posts</small>`;
+$('sPostsSub').textContent=`가장 바빴던 달 ${MN[rep.busyMonth]} (${rep.byMonth[rep.busyMonth].posts}개)`;
+$('sMonth').textContent=EN[rep.topMonth];
+$('sMonthSub').textContent=`${MN[rep.topMonth]} 좋아요 ${fmt(rep.byMonth[rep.topMonth].likes)}`;
+$('sAvg').innerHTML=`${fmt(rep.avg)}<small>Likes</small>`;
+$('sAvgSub').textContent=`게시물 1개당`;
+
+// monthly chart
+(function(){
+  const W=340,H=190,L=6,Rp=6,T=22,B=24,cw=(W-L-Rp)/12,bw=cw*.62;
+  const max=Math.max(...rep.byMonth.map(v=>v.likes));
+  const step=max>30000?10000:5000, top=Math.ceil(max/step)*step;
+  const y=v=>T+(H-T-B)*(1-v/top);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="월별 좋아요 합계, 최고는 ${MN[rep.topMonth]}">`;
+  for(let g=step;g<=top;g+=step){s+=`<line class="grid" x1="${L}" x2="${W-Rp}" y1="${y(g)}" y2="${y(g)}"/><text x="${W-Rp}" y="${y(g)-3}" text-anchor="end">${g/1000}k</text>`}
+  rep.byMonth.forEach((v,i)=>{
+    const x=L+i*cw+(cw-bw)/2;
+    if(i>8){s+=`<rect class="future" x="${x}" y="${H-B-24}" width="${bw}" height="24" rx="3"/>`}
+    else{const h=H-B-y(v.likes);s+=`<rect class="b${i===rep.topMonth?' top':''}" x="${x}" y="${y(v.likes)}" width="${bw}" height="${h}" rx="3"/>`;
+      if(i===rep.topMonth)s+=`<text class="val" x="${x+bw/2}" y="${y(v.likes)-5}" text-anchor="middle">${fmt(v.likes)}</text>`}
+    s+=`<text x="${x+bw/2}" y="${H-8}" text-anchor="middle">${i+1}</text>`;
+  });
+  s+=`</svg><p class="note">점선은 아직 오지 않은 달입니다. 12월에 다시 만들면 한 해 전체로 갱신돼요.</p>`;
+  $('chart').innerHTML=s;
+})();
+
+// formats
+(function(){
+  const mx=Math.max(...rep.fmts.map(f=>f.avg));
+  $('fmtRows').innerHTML=rep.fmts.map(f=>`<div class="fmt-row"><span>${FMTK[f.f]}</span><div class="track"><i class="${f.avg===mx?'top':''}" style="width:${Math.round(f.avg/mx*100)}%"></i></div><span class="n num">평균 ${fmt(f.avg)} · ${f.n}개</span></div>`).join('');
+})();
+
+// heatmap
+(function(){
+  const mx=Math.max(...rep.heat.flat().map(c=>c.med));
+  let s='<span></span>'+DOW.map(d=>`<span class="h">${d}</span>`).join('');
+  rep.heat.forEach((row,r)=>{s+=`<span class="rl">${SLOT[r]}</span>`;row.forEach((c,d)=>{const a=c.n?(.12+.88*c.med/mx):.05;const isB=r===rep.gold.r&&d===rep.gold.d;s+=`<span class="c${isB?' best':''}" style="opacity:${a.toFixed(2)}" title="${DOW[d]} ${SLOT[r]} · ${c.n}개 · 중간값 ${fmt(Math.round(c.med))}"></span>`})});
+  $('heat').innerHTML=s;
+  $('golden').innerHTML=`<strong>${DOW[rep.gold.d]}요일 ${SLOT[rep.gold.r]}</strong>에 올린 게시물의 좋아요가 보통 ${fmt(Math.round(rep.gold.v))}개로 가장 반응이 좋았어요.`;
+})();
+$('tags').innerHTML=rep.tags.map(([t,n])=>`<span>#${t}<b>${n}</b></span>`).join('');
+$('hiddenNote').textContent=rep.hidden?`좋아요를 숨긴 게시물 ${rep.hidden}개는 좋아요 집계에서 제외했어요.`:'';
+$('slipLine').textContent=`${rep.posts}개의 게시물, ${fmt(rep.total)}개의 좋아요. 올해의 타이틀은 “${rep.title}”.`;
+
+// story preview
+$('story').innerHTML=`<div class="t">MY POST <b>2026</b></div><div class="u">@sample.feed · 2026.01 – 09</div><div class="tt">${rep.title}</div>
+<div class="g">${rep.best9.map(p=>`<div style="${ph(p)}"></div>`).join('')}</div>
+<div class="ss"><div><span class="label">BEST</span><strong class="num">${fmt(rep.best.like_count)}</strong></div><div><span class="label">TOTAL</span><strong class="num">${fmt(rep.total)}</strong></div><div><span class="label">TOP MONTH</span><strong>${EN[rep.topMonth].slice(0,3).toUpperCase()}</strong></div></div>
+<div class="foot">나도 만들기 → minigame-on.vercel.app</div>`;
+
+/* ---------- interactions ---------- */
+function setView(friend){
+  $('v-me').setAttribute('aria-pressed',!friend);$('v-friend').setAttribute('aria-pressed',friend);
+  $('friendBanner').hidden=!friend;$('cta').hidden=!friend;$('meBtns').hidden=friend;$('bDel').hidden=friend;$('toast').textContent='';
+}
+$('v-me').onclick=()=>setView(false);$('v-friend').onclick=()=>setView(true);
+const toast=t=>{$('toast').textContent=t};
+$('bStory').onclick=()=>{$('modal').hidden=false;$('bClose').focus()};
+$('bClose').onclick=()=>{$('modal').hidden=true;$('bStory').focus()};
+$('modal').onclick=e=>{if(e.target===$('modal'))$('modal').hidden=true};
+$('bCopy').onclick=()=>{const t='내 인스타 2026년을 분석해봤습니다 👉 '+location.origin+'/play/my-post-2026';
+  const p=navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject();p.then(()=>toast('공유 문구를 복사했어요.')).catch(()=>toast(t))};
+$('bKakao').onclick=()=>toast('실제 서비스에서는 카카오톡 공유 창이 열리고, BEST 9 미리보기 카드가 함께 전송됩니다.');
+$('bDel').onclick=()=>toast('실제 서비스에서는 확인 후 리포트와 저장된 썸네일을 모두 삭제합니다.');
+$('bMake').onclick=()=>{setView(false);window.scrollTo({top:0,behavior:'smooth'});toast('정식 오픈 후 인스타그램 로그인으로 내 리포트를 만들 수 있어요. 지금 보이는 화면은 샘플이에요.')};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)$('modal').hidden=true});
+</script>
+
+</body>
+</html>

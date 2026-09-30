@@ -135,6 +135,17 @@ export const GAMES: Game[] = [
     src: "/games/pinball/index.html",
   },
   {
+    id: "my-post-2026",
+    title: { ko: "My Post 2026", en: "My Post 2026" },
+    desc: {
+      ko: "올해 좋아요를 가장 많이 받은 게시물 BEST 9와 월별 좋아요·골든 타임을 한 장으로 정리하는 연말 피드 리포트 (오픈 준비 중, 샘플 미리보기)",
+      en: "A year-in-review feed report: your 9 most-liked posts of the year, monthly likes and best posting times (coming soon, sample preview)",
+    },
+    genre: "casual",
+    thumb: "/thumbs/my-post-2026.jpg",
+    src: "/games/my-post-2026/index.html",
+  },
+  {
     id: "raiden",
     title: { ko: "스카이 스트라이크", en: "Sky Strike" },
     desc: {

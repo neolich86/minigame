@@ -295,6 +295,26 @@ export const GAME_SEO: SeoMap = {
       tags: ["Roulette", "Pinball", "Random picker", "Free"],
     },
   },
+  "my-post-2026": {
+    ko: {
+      title: "My Post 2026 - 올해의 베스트 나인 · 인스타 연말 결산 리포트",
+      h1: "My Post 2026 — 올해 내 피드 BEST 9 결산",
+      description: "올해 좋아요를 가장 많이 받은 게시물 BEST 9, 총 좋아요, 가장 인기 있었던 달, 골든 타임까지 한 번에 보는 연말 피드 결산 리포트. 지금은 샘플 계정으로 결과 화면을 미리 볼 수 있어요.",
+      keywords: ["베스트나인", "베스트 9", "best nine", "인스타 결산", "인스타 연말 결산", "2026 베스트나인", "좋아요 순위", "피드 분석"],
+      about: ["My Post 2026은 한 해 동안 올린 게시물을 좋아요 순으로 모아 BEST 9 격자로 보여주고, 총 좋아요·평균 좋아요·가장 인기 있었던 달·포맷별 반응·골든 타임을 인포그래픽으로 정리하는 연말 결산 리포트입니다.", "정식 오픈 후에는 인스타그램 계정으로 로그인해 내 리포트를 만들고, 스토리 이미지나 링크로 친구에게 공유할 수 있어요. 지금은 가상 계정 샘플로 결과 화면을 미리 볼 수 있습니다."],
+      howTo: ["샘플 리포트를 위에서부터 스크롤해 봅니다.", "[친구 화면]을 눌러 공유받은 친구에게 보이는 화면을 확인합니다.", "[스토리 이미지 만들기]로 공유용 카드를 미리 봅니다."],
+      tags: ["베스트나인", "연말 결산", "피드 분석", "무료"],
+    },
+    en: {
+      title: "My Post 2026 - Your Best Nine & Year-in-Review Feed Report",
+      h1: "My Post 2026 — Your Feed's Best Nine of the Year",
+      description: "See your 9 most-liked posts of the year, total likes, most popular month and best posting time in one year-in-review report. Preview the result page with a sample account for now.",
+      keywords: ["best nine", "best nine 2026", "year in review", "top 9 posts", "most liked posts", "feed recap", "feed analytics"],
+      about: ["My Post 2026 collects the year's posts in order of likes into a Best Nine grid, then charts total and average likes, the most popular month, format performance and your golden posting time.", "After launch you'll sign in with your account to build your own report and share it as a story image or link. For now, preview the result page with a sample account."],
+      howTo: ["Scroll through the sample report.", "Tap Friend view to see what a friend who opens your link sees.", "Tap the story image button to preview the share card."],
+      tags: ["Best Nine", "Year in review", "Feed analytics", "Free"],
+    },
+  },
   weapon: {
     ko: {
       title: "무기 강화 - 무료 강화 시뮬레이터 게임 (Lv.100 도전)",
