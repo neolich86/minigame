@@ -5,11 +5,14 @@ const GRAPH = "https://graph.instagram.com/v25.0";
 export const MYPOST_SCOPE = "instagram_business_basic";
 export const MYPOST_STATE_COOKIE = "mypost_state";
 
-export function mypostConfig(origin: string) {
-  const appId = process.env.INSTAGRAM_APP_ID;
-  const appSecret = process.env.INSTAGRAM_APP_SECRET;
-  // 메타 앱에 등록한 리디렉션 URI 와 글자 하나까지 같아야 한다
-  const redirectUri = process.env.INSTAGRAM_REDIRECT_URI ?? `${origin}/api/mypost/callback`;
+// 메타 앱 "비즈니스 로그인 설정 → OAuth 리디렉션 URI" 에 등록한 값과 글자 하나까지 같아야 한다.
+// 접속 주소(미리보기 배포 주소 등)에 따라 달라지지 않도록 고정값을 쓴다.
+export const MYPOST_REDIRECT_URI = "https://minigame-on.vercel.app/api/mypost/callback";
+
+export function mypostConfig() {
+  const appId = process.env.INSTAGRAM_APP_ID?.trim();
+  const appSecret = process.env.INSTAGRAM_APP_SECRET?.trim();
+  const redirectUri = process.env.INSTAGRAM_REDIRECT_URI?.trim() || MYPOST_REDIRECT_URI;
   return { appId, appSecret, redirectUri };
 }
 

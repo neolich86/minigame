@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const state = q.get("state");
   if (!code || !state || state !== request.cookies.get(MYPOST_STATE_COOKIE)?.value) return back(request, "state");
 
-  const { appId, appSecret, redirectUri } = mypostConfig(request.nextUrl.origin);
+  const { appId, appSecret, redirectUri } = mypostConfig();
   if (!appId || !appSecret) return back(request, "config");
 
   let data;
