@@ -8,5 +8,8 @@ export async function GET(request: NextRequest) {
   const state = crypto.randomUUID();
   const res = NextResponse.redirect(authorizeUrl(appId, redirectUri, state));
   res.cookies.set(MYPOST_STATE_COOKIE, state, { httpOnly: true, secure: true, sameSite: "lax", path: "/api/mypost", maxAge: 600 });
+  // 친구의 공유 링크에서 들어왔으면 기록 (바이럴 추적)
+  const ref = request.nextUrl.searchParams.get("ref")?.replace(/[^A-Za-z0-9]/g, "").slice(0, 16);
+  if (ref) res.cookies.set("mypost_ref", ref, { httpOnly: true, secure: true, sameSite: "lax", path: "/api/mypost", maxAge: 600 });
   return res;
 }

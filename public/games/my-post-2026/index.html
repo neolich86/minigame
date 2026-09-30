@@ -161,6 +161,9 @@ button{font:inherit;cursor:pointer}
 .story .foot{font-family:var(--f-mono);font-size:10px;color:#8D93A5;text-align:center}
 .story .tt{align-self:flex-start;background:var(--sticker);color:var(--sticker-ink);font-family:var(--f-display);font-size:14px;padding:3px 9px;border-radius:4px;transform:rotate(-2deg)}
 .modal .cap{color:#D5D9E3;font-size:12.5px;text-align:center;margin:0}
+.mbtns{display:flex;gap:8px}
+.modal .close.save{background:var(--sticker);color:var(--sticker-ink)}
+.story img{width:100%;height:100%;object-fit:cover;display:block}
 .modal .close{background:#fff;color:#111;border:0;border-radius:10px;padding:10px 18px;font-weight:700}
 
 @media (prefers-reduced-motion: no-preference){
@@ -254,7 +257,7 @@ button{font:inherit;cursor:pointer}
     <div class="btns" id="meBtns">
       <button class="btn primary" id="bStory">스토리 이미지 만들기</button>
       <button class="btn ghost" id="bCopy">링크 복사</button>
-      <button class="btn ghost" id="bKakao">카카오톡 공유</button>
+      <button class="btn ghost" id="bKakao">공유하기</button>
     </div>
     <div class="toast" id="toast" role="status"></div>
     <button class="del" id="bDel">내 리포트 삭제</button>
@@ -266,12 +269,13 @@ button{font:inherit;cursor:pointer}
 <div class="modal" id="modal" hidden>
   <div class="modal-in">
     <div class="story" id="story"></div>
-    <p class="cap">실제 서비스에서는 1080×1920 이미지로 저장되어<br>인스타 스토리에 바로 올릴 수 있습니다.</p>
-    <button class="close" id="bClose">닫기</button>
+    <p class="cap" id="storyCap">로그인해서 내 리포트를 만들면 1080×1920 이미지로 저장해<br>인스타 스토리에 바로 올릴 수 있어요.</p>
+    <div class="mbtns"><button class="close save" id="bSave" hidden>이미지 저장</button><button class="close" id="bClose">닫기</button></div>
   </div>
 </div>
 
 <script>
+(async()=>{
 /* ---------- sample data (seeded, deterministic) ---------- */
 function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 const R=rng(2026);
@@ -300,7 +304,15 @@ posts[5].like_count=null;posts[60].like_count=null;
 
 /* ---------- real data (set by /api/mypost/callback, same-origin sessionStorage) ---------- */
 let REAL=null, LOAD_MSG='';
-try{const raw=sessionStorage.getItem('mypost:data');if(raw)REAL=JSON.parse(raw)}catch(e){}
+const SLUG=(new URLSearchParams(location.search).get('r')||'').replace(/[^A-Za-z0-9]/g,'').slice(0,16);
+let SHARED=null, OWN_TOKEN=null, LAST=null;
+if(SLUG){
+  try{const r=await fetch('/api/mypost/r/'+SLUG,{cache:'no-store'});if(r.ok)SHARED=await r.json();else LOAD_MSG=r.status===404?'리포트를 찾을 수 없어요. 만든 사람이 삭제했을 수 있어요.':'리포트를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.'}catch(e){LOAD_MSG='리포트를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.'}
+  try{OWN_TOKEN=localStorage.getItem('mypost:own:'+SLUG)}catch(e){}
+}
+try{LAST=localStorage.getItem('mypost:last')}catch(e){}
+if(SHARED) REAL=SHARED;
+else try{const raw=sessionStorage.getItem('mypost:data');if(raw)REAL=JSON.parse(raw)}catch(e){}
 let DATA=posts, lastMonth=8, USER={u:'sample.feed',pic:null};
 if(REAL&&REAL.v===1){
   const mapped=REAL.posts.map((x,i)=>{const d=new Date(x.t+9*3600e3);return{id:i+1,m:d.getUTCMonth(),day:d.getUTCDate(),hr:d.getUTCHours(),dow:d.getUTCDay(),format:x.f,like_count:x.l,comments_count:x.c||0,hue:(i*47)%360,tags:x.tags||[],img:x.img,url:x.url}});
@@ -342,6 +354,8 @@ function buildReport(all){
 }
 const rep=buildReport(DATA);
 const IS_REAL=DATA!==posts;
+const IS_SHARED=IS_REAL&&!!SHARED, IS_OWNER=IS_SHARED&&!!OWN_TOKEN;
+const SHARE_URL=IS_SHARED?location.origin+'/r/'+SLUG:location.origin+'/play/my-post-2026';
 
 /* ---------- render ---------- */
 const $=id=>document.getElementById(id);
@@ -370,6 +384,19 @@ if(IS_REAL){
   $('igLogin').hidden=true;$('realRow').hidden=false;
   $('connectNote').textContent='데이터는 이 브라우저 탭에만 있고 서버에는 저장하지 않아요. 탭을 닫으면 사라집니다.';
 }
+if(IS_SHARED&&IS_OWNER){
+  $('connectMsg').textContent='공유 링크가 만들어졌어요. 친구에게 보내 보세요!';
+  $('bSample').hidden=true;
+  $('connectNote').textContent=SHARE_URL+' · 링크를 받은 사람은 누구나 이 리포트를 볼 수 있어요. 아래에서 언제든 삭제할 수 있습니다.';
+}else if(IS_SHARED){
+  $('connect').hidden=true;
+  document.querySelector('.seg').hidden=true;
+}else if(!IS_REAL&&LAST&&!SLUG){
+  const a=document.createElement('a');a.className='ig-btn';a.href='/r/'+LAST;a.target='_top';a.textContent='내 리포트 다시 보기';a.style.background='var(--accent)';
+  $('igLogin').before(a);$('igLogin').textContent='Instagram으로 다시 만들기';
+}
+if(SLUG&&!SHARED){$('igLogin').textContent='Instagram으로 내 리포트 만들기'}
+const LOGIN='/api/mypost/login'+(IS_SHARED&&!IS_OWNER?'?ref='+SLUG:'');
 $('bReload').onclick=()=>{(window.top||window).location.href='/api/mypost/login'};
 $('bSample').onclick=()=>{try{sessionStorage.removeItem('mypost:data')}catch(e){}location.reload()};
 $('title').textContent=rep.title;
@@ -439,19 +466,43 @@ $('story').innerHTML=`<div class="t">MY POST <b>2026</b></div><div class="u">@${
 /* ---------- interactions ---------- */
 function setView(friend){
   $('v-me').setAttribute('aria-pressed',!friend);$('v-friend').setAttribute('aria-pressed',friend);
-  $('friendBanner').hidden=!friend;$('cta').hidden=!friend;$('meBtns').hidden=friend;$('bDel').hidden=friend;$('toast').textContent='';
+  $('friendBanner').hidden=!friend;$('cta').hidden=!friend;$('meBtns').hidden=friend;$('bDel').hidden=friend||!IS_OWNER;$('toast').textContent='';
 }
 $('v-me').onclick=()=>setView(false);$('v-friend').onclick=()=>setView(true);
 const toast=t=>{$('toast').textContent=t};
-$('bStory').onclick=()=>{$('modal').hidden=false;$('bClose').focus()};
+$('bDel').hidden=!IS_OWNER;
+if(IS_SHARED&&!IS_OWNER)setView(true);
+const STORY_URL=IS_SHARED?'/api/mypost/story/'+SLUG+'?v='+REAL.at:null;
+$('bStory').onclick=()=>{
+  if(STORY_URL&&!$('story').dataset.real){$('story').dataset.real='1';$('story').style.padding='0';$('story').innerHTML='<img alt="스토리 공유 이미지" src="'+STORY_URL+'">';$('storyCap').textContent='이미지를 저장해서 인스타 스토리에 올려 보세요.';$('bSave').hidden=false}
+  $('modal').hidden=false;$('bClose').focus()};
+$('bSave').onclick=async()=>{
+  try{const b=await (await fetch(STORY_URL)).blob();const f=new File([b],'my-post-2026.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}}
+  catch(e){if(e&&e.name==='AbortError')return}
+  const a=document.createElement('a');a.href=STORY_URL;a.target='_blank';a.rel='noopener';document.body.append(a);a.click();a.remove();
+  toast('새 탭에서 이미지를 길게 눌러(또는 우클릭) 저장하세요.')};
 $('bClose').onclick=()=>{$('modal').hidden=true;$('bStory').focus()};
 $('modal').onclick=e=>{if(e.target===$('modal'))$('modal').hidden=true};
-$('bCopy').onclick=()=>{const t='내 인스타 2026년을 분석해봤습니다 👉 '+location.origin+'/play/my-post-2026';
+const SHARE_TEXT='내 인스타 2026년을 분석해봤습니다';
+$('bCopy').onclick=()=>{const t=SHARE_TEXT+' 👉 '+SHARE_URL;
   const p=navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject();p.then(()=>toast('공유 문구를 복사했어요.')).catch(()=>toast(t))};
-$('bKakao').onclick=()=>toast('실제 서비스에서는 카카오톡 공유 창이 열리고, BEST 9 미리보기 카드가 함께 전송됩니다.');
-$('bDel').onclick=()=>toast('실제 서비스에서는 확인 후 리포트와 저장된 썸네일을 모두 삭제합니다.');
-$('bMake').onclick=()=>{(window.top||window).location.href='/api/mypost/login'};
+$('bKakao').onclick=async()=>{
+  if(navigator.share){try{await navigator.share({title:'My Post 2026',text:SHARE_TEXT,url:SHARE_URL});return}catch(e){if(e&&e.name==='AbortError')return}}
+  $('bCopy').click()};
+let delArmed=false;
+$('bDel').onclick=async()=>{
+  if(!IS_OWNER)return;
+  if(!delArmed){delArmed=true;$('bDel').textContent='정말 삭제할까요? 한 번 더 누르면 링크와 사진이 모두 삭제돼요';return}
+  $('bDel').disabled=true;$('bDel').textContent='삭제하는 중…';
+  try{const r=await fetch('/api/mypost/r/'+SLUG,{method:'DELETE',headers:{'x-delete-token':OWN_TOKEN}});
+    if(!r.ok&&r.status!==404)throw new Error(String(r.status));
+    try{localStorage.removeItem('mypost:own:'+SLUG);if(localStorage.getItem('mypost:last')===SLUG)localStorage.removeItem('mypost:last')}catch(e){}
+    (window.top||window).location.href='/play/my-post-2026';
+  }catch(e){$('bDel').disabled=false;delArmed=false;$('bDel').textContent='내 리포트 삭제';toast('삭제하지 못했어요. 잠시 후 다시 시도해 주세요.')}};
+$('bMake').onclick=()=>{(window.top||window).location.href=LOGIN};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)$('modal').hidden=true});
+})();
 </script>
 
 </body>

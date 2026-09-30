@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { MYPOST_STATE_COOKIE, exchangeCode, fetchMyPostData, mypostConfig } from "@/lib/mypost";
+import { adminDb, saveReport } from "@/lib/mypost-store";
 
 export const maxDuration = 60;
 
@@ -34,11 +35,28 @@ export async function GET(request: NextRequest) {
     return back(request, "fetch", msg);
   }
 
-  // 리포트 페이지(같은 출처의 iframe)가 sessionStorage 에서 읽는다 — 서버에는 아무것도 남기지 않는다
-  const json = JSON.stringify(data).replace(/</g, "\\u003c");
-  const html = `<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><title>My Post 2026</title>
-<script>try{sessionStorage.setItem("mypost:data",${JSON.stringify(json)})}catch(e){}location.replace("/play/my-post-2026")</script>`;
+  // 저장소가 설정돼 있으면 리포트를 저장하고 공유 링크(/r/slug)로 보낸다. 삭제 토큰은 이 브라우저에만 남긴다.
+  const db = adminDb();
+  let script: string;
+  if (db && data.posts.length) {
+    try {
+      const { slug, token } = await saveReport(db, data, request.cookies.get("mypost_ref")?.value);
+      script = `try{localStorage.setItem(${JSON.stringify("mypost:own:" + slug)},${JSON.stringify(token)});localStorage.setItem("mypost:last",${JSON.stringify(slug)});sessionStorage.removeItem("mypost:data")}catch(e){}location.replace(${JSON.stringify("/r/" + slug)})`;
+    } catch (e) {
+      console.error("[mypost] save", e instanceof Error ? e.message : e);
+      script = "";
+    }
+  } else script = "";
+  if (!script) {
+    // 저장 실패·미설정: 이 탭에서만 보이는 리포트로 (서버에 남기지 않음)
+    const { id: _id, ...pub } = data;
+    void _id;
+    const json = JSON.stringify(pub).replace(/</g, "\\u003c");
+    script = `try{sessionStorage.setItem("mypost:data",${JSON.stringify(json)})}catch(e){}location.replace("/play/my-post-2026")`;
+  }
+  const html = `<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><title>My Post 2026</title><script>${script}</script>`;
   const res = new NextResponse(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
   res.cookies.delete({ name: MYPOST_STATE_COOKIE, path: "/api/mypost" });
+  res.cookies.delete({ name: "mypost_ref", path: "/api/mypost" });
   return res;
 }

@@ -64,6 +64,7 @@ interface IgMedia {
 /** 리포트 페이지(public/games/my-post-2026)가 읽는 압축 형식 */
 export interface MyPostData {
   v: 1;
+  id?: string; // 인스타 사용자 ID — 저장 키로만 쓰고 공개 응답에서는 뺀다
   u: string; // username
   pic?: string;
   followers?: number;
@@ -81,8 +82,8 @@ export function yearStartKst(now = new Date()) {
 }
 
 export async function fetchMyPostData(token: string): Promise<MyPostData> {
-  const me = await graph<{ username: string; profile_picture_url?: string; followers_count?: number }>(
-    "/me?fields=user_id,username,profile_picture_url,followers_count",
+  const me = await graph<{ id: string; username: string; profile_picture_url?: string; followers_count?: number }>(
+    "/me?fields=id,user_id,username,profile_picture_url,followers_count",
     token,
   );
   const { year, start } = yearStartKst();
@@ -113,7 +114,7 @@ export async function fetchMyPostData(token: string): Promise<MyPostData> {
     // 게시물은 최신순 — 올해 이전 게시물이 나오면 더 볼 필요 없다
     next = reachedOld ? undefined : page.paging?.next;
   }
-  return { v: 1, u: me.username, pic: me.profile_picture_url, followers: me.followers_count, year, at: Date.now(), posts };
+  return { v: 1, id: String(me.id), u: me.username, pic: me.profile_picture_url, followers: me.followers_count, year, at: Date.now(), posts };
 }
 
 /** 메타가 보내는 signed_request 검증 (앱 시크릿 HMAC-SHA256). 성공하면 payload 를 돌려준다. */

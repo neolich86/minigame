@@ -27,10 +27,12 @@ GitHub(`neolich86/minigame`) → Vercel 자동 배포, 계정·랭킹·온라인
    3. `supabase/migrations/0003_lexio_online.sql` — 타일러쉬 온라인 (`rooms`, `room_members`, `game_states`, `game_public`)
    4. `supabase/migrations/0004_room_delete.sql` — 방장의 방 삭제 기능
    5. `supabase/migrations/0005_dragon_call.sql` — 드래곤 콜 온라인 방 허용 (4인 2:2 팀전)
+   6. `supabase/migrations/0006_mypost.sql` — My Post 2026 공유 리포트 (`mypost_reports` 테이블, `mypost` 이미지 버킷)
 2. **Project Settings → API (API Keys)** 에서 복사
    - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
    - anon(또는 publishable) 키 → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - ⚠️ `service_role` / secret 키는 절대 넣지 마세요
+   - ⚠️ `service_role` / secret 키는 절대 `NEXT_PUBLIC_` 변수에 넣지 마세요 (브라우저에 노출됨)
+   - My Post 2026 공유 기능만 서버 전용 변수 `SUPABASE_SERVICE_ROLE_KEY`에 service_role(secret) 키를 씁니다 (서버에서만 읽힘)
 3. **Database → Publications(Replication)** 에서 `supabase_realtime`에 `mg_rooms`, `mg_room_members`가 포함됐는지 확인 (SQL이 자동으로 추가함)
 
 ### 이메일 로그인
@@ -67,6 +69,10 @@ GitHub(`neolich86/minigame`) → Vercel 자동 배포, 계정·랭킹·온라인
 - **Vercel → Settings → Environment Variables**
   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
   - `NEXT_PUBLIC_SITE_URL` = 실제 서비스 주소 (canonical·OG·sitemap에 쓰임)
+  - My Post 2026 (인스타 연말 결산)
+    - `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET` = 메타 앱 → Instagram → "Instagram 로그인을 사용한 API 설정" 화면의 Instagram 앱 ID/시크릿
+    - `SUPABASE_SERVICE_ROLE_KEY` = Supabase service_role(secret) 키 — 없으면 리포트가 저장되지 않고 그 탭에서만 보임 (공유 링크 없음)
+    - 메타 앱 비즈니스 로그인 설정: 리디렉션 `…/api/mypost/callback`, 승인 취소 `…/api/mypost/deauthorize`, 데이터 삭제 `…/api/mypost/data-deletion`
 - 등록 후 **Deployments → 최신 배포 → ⋯ → Redeploy** (`NEXT_PUBLIC_` 변수는 빌드 때 들어가므로 재배포 필수)
 - 로컬: `.env.local.example`을 `.env.local`로 복사해 값 입력 → `npm install` → `npm run dev`
 
