@@ -9,7 +9,7 @@ import { errorKey, type MsgKey } from "@/lib/i18n";
 import { createRoom, deleteRoom, fetchMyRooms, joinRoom } from "@/lib/rooms";
 import { lxCreateRoom, lxDeleteRoom, lxErrorText, lxJoinRoom, lxMyRooms } from "@/lib/lexio";
 
-// 게임별 방 방식: 카탄 = 방장 브라우저 진행(mg_* 테이블), 렉시오 = 서버 판정(rooms 테이블)
+// 게임별 방 방식: 카탄·드래곤 콜 = 방장 브라우저 진행(mg_* 테이블), 렉시오 = 서버 판정(rooms 테이블)
 interface RoomLite {
   id: string;
   code: string;
@@ -31,6 +31,14 @@ const ONLINE: Record<string, {
     create: (n) => createRoom("catan", n),
     join: (c) => joinRoom(c),
     mine: () => fetchMyRooms("catan"),
+    del: (id) => deleteRoom(id),
+  },
+  "dragon-call": {
+    players: [4],
+    def: 4,
+    create: () => createRoom("dragon-call", 4),
+    join: (c) => joinRoom(c),
+    mine: () => fetchMyRooms("dragon-call"),
     del: (id) => deleteRoom(id),
   },
   lexio: {
@@ -144,6 +152,7 @@ export function OnlineLobby({ gameId }: { gameId: string }) {
               <div className="row wrap-row" style={{ marginBottom: 14 }}>
                 <span className="muted small">{t("players")}</span>
                 <div className="seg">
+                  {cfg.players.length === 1 && game.teams && <span className="muted small" style={{ marginRight: 8 }}>{lang === "ko" ? "2:2 팀전" : "2 vs 2"}</span>}
                   {cfg.players.map((n) => (
                     <button key={n} className={players === n ? "on" : ""} onClick={() => setPlayers(n)}>
                       {t("playersN", { n })}

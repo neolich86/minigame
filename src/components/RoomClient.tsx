@@ -64,6 +64,9 @@ export function RoomClient({ gameId, code }: { gameId: string; code: string }) {
   const me = members.find((m) => m.user_id === uid) ?? null;
   const isHost = !!room && !!uid && room.host_user_id === uid;
   const role: "host" | "guest" = isHost ? "host" : "guest";
+  const seatColors = game.seatColors ?? SEAT_COLORS;
+  const playerCounts = game.onlinePlayers ?? [2, 3, 4];
+  const teamLabel = (seat: number) => (game.teams ? (lang === "ko" ? (seat % 2 === 0 ? "A팀" : "B팀") : seat % 2 === 0 ? "Team A" : "Team B") : null);
   const roleRef = useRef(role);
   // 실시간 콜백(채널·postMessage)이 항상 최신 값을 보도록 ref 동기화
   useEffect(() => {
@@ -199,7 +202,8 @@ export function RoomClient({ gameId, code }: { gameId: string; code: string }) {
       } else if (d.type === "net:intent" && roleRef.current === "guest") {
         chRef.current?.send({ type: "broadcast", event: "intent", payload: { from: uid, seat: mine.seat, intent: d.intent } });
       } else if (d.type === "net:finished" && roleRef.current === "host") {
-        finishRoom(r.id, { winner: d.winner, scores: d.scores, turn: d.turn }).catch(() => {});
+        const winners = Array.isArray(d.winners) ? d.winners : undefined;
+        finishRoom(r.id, { winner: d.winner, winners, scores: d.scores, turn: d.turn }).catch(() => {});
       }
     }
     window.addEventListener("message", onMsg);
@@ -315,7 +319,10 @@ export function RoomClient({ gameId, code }: { gameId: string; code: string }) {
   // 게임 중 / 종료
   if (room.status !== "waiting") {
     const finished = room.status === "finished";
-    const winnerName = finished && room.result ? members.find((m) => m.seat === room.result!.winner)?.nickname ?? "AI" : null;
+    const nameOf = (seat: number) => members.find((m) => m.seat === seat)?.nickname ?? "AI";
+    const winnerName = finished && room.result
+      ? (room.result.winners?.length ? room.result.winners.map(nameOf).join(" & ") : nameOf(room.result.winner))
+      : null;
     return (
       <div className="play-shell">
         <div className="play-main">
@@ -325,7 +332,7 @@ export function RoomClient({ gameId, code }: { gameId: string; code: string }) {
             <span className="title">{game.title[lang]} · <span style={{ fontFamily: "Space Mono, monospace", color: "var(--gold)" }}>{room.code}</span></span>
             {members.map((m) => (
               <span key={m.seat} className="row" style={{ gap: 5, fontSize: 12 }}>
-                <span style={{ width: 10, height: 10, borderRadius: 3, background: SEAT_COLORS[m.seat], display: "inline-block" }} />
+                <span style={{ width: 10, height: 10, borderRadius: 3, background: seatColors[m.seat], display: "inline-block" }} />
                 {m.is_ai && !m.user_id ? "AI" : m.nickname}
                 {m.is_ai && m.user_id && <span className="pill wait">AI</span>}
                 {offlineSeats.includes(m.seat) && <span className="pill off">{t("offline")}</span>}
@@ -383,22 +390,25 @@ export function RoomClient({ gameId, code }: { gameId: string; code: string }) {
       <div className="panel">
         <div className="row spread wrap-row" style={{ marginBottom: 14 }}>
           <h2 style={{ fontSize: 16, margin: 0 }}>{game.title[lang]}</h2>
-          {isHost ? (
+          {isHost && playerCounts.length > 1 ? (
             <div className="seg">
-              {[2, 3, 4].map((n) => (
+              {playerCounts.map((n) => (
                 <button key={n} className={room.max_players === n ? "on" : ""} onClick={() => run(() => setMaxPlayers(room.id, n))}>
                   {t("playersN", { n })}
                 </button>
               ))}
             </div>
           ) : (
-            <span className="muted small">{t("playersN", { n: room.max_players })}</span>
+            <span className="muted small">
+              {t("playersN", { n: room.max_players })}
+              {game.teams ? (lang === "ko" ? " · 2:2 팀전 (1·3번 vs 2·4번 자리)" : " · 2 vs 2 (seats 1·3 vs 2·4)") : ""}
+            </span>
           )}
         </div>
         <div className="seat-list">
           {seats.map((m, i) => (
             <div key={i} className="seat">
-              <span className="sw" style={{ background: SEAT_COLORS[i] }} />
+              <span className="sw" style={{ background: seatColors[i] }} />
               <div className="who">
                 {m ? (
                   <>
@@ -406,12 +416,12 @@ export function RoomClient({ gameId, code }: { gameId: string; code: string }) {
                       {m.is_ai ? "🤖 AI" : m.nickname}
                       {m.user_id === uid ? ` (${t("you")})` : ""}
                     </b>
-                    <span>{t("seat")} {i + 1}</span>
+                    <span>{t("seat")} {i + 1}{teamLabel(i) ? ` · ${teamLabel(i)}` : ""}</span>
                   </>
                 ) : (
                   <>
                     <b className="muted">{t("emptySeat")}</b>
-                    <span>{t("seat")} {i + 1}</span>
+                    <span>{t("seat")} {i + 1}{teamLabel(i) ? ` · ${teamLabel(i)}` : ""}</span>
                   </>
                 )}
               </div>

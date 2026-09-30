@@ -9,7 +9,7 @@ export interface Room {
   status: "waiting" | "playing" | "finished";
   max_players: number;
   host_seen_at: string;
-  result: { winner: number; scores: number[]; turn: number } | null;
+  result: { winner: number; winners?: number[]; scores: number[]; turn: number } | null;
   created_at: string;
   updated_at: string;
 }

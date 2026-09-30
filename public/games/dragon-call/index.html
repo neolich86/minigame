@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="canonical" href="/play/dragon-call">
+<script src="/mgh/bridge.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>드래곤 콜</title>
+<meta name="description" content="2:2 팀전 클라이밍 카드게임 드래곤 콜 — 콜 선언, 카드 교환, 폭탄, 용과 봉황. 친구와 온라인 대전 또는 AI와 바로 플레이.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='10' y='6' width='40' height='54' rx='6' fill='%23f6efdf' stroke='%23c99a3e' stroke-width='3'/%3E%3Ctext x='30' y='44' font-size='30' text-anchor='middle' fill='%23c2412d' font-family='serif' font-weight='700'%3E龍%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --bg:#0c1214; --felt-1:#17352f; --felt-2:#0f231f; --felt-line:rgba(224,182,90,.16);
+  --panel:rgba(12,22,22,.78); --panel-2:rgba(255,255,255,.05); --line:rgba(255,255,255,.10); --line-2:rgba(255,255,255,.18);
+  --ink:#eef1ec; --ink-2:#b3c0bb; --ink-3:#7d8d88;
+  --gold:#e0b65a; --gold-2:#f3d48b; --verm:#e0573e; --jade:#3fb68e;
+  --teamA:#e0573e; --teamB:#3d8bd9;
+  --card:#f7f1e3; --card-edge:#d9ceb4; --card-ink:#1d2426;
+  --s0:#26323a; --s1:#c43b2b; --s2:#2466b5; --s3:#2b8053;
+  --radius:12px;
+  --font:"Noto Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo",sans-serif;
+  --serif:"Noto Serif KR","Nanum Myeongjo",serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:radial-gradient(120% 90% at 50% 38%, var(--felt-1) 0%, var(--felt-2) 55%, var(--bg) 100%);
+  color:var(--ink); font-family:var(--font); font-size:14px; overflow:hidden;
+  -webkit-tap-highlight-color:transparent; user-select:none;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+.app{display:flex;flex-direction:column;height:100dvh;max-width:1180px;margin:0 auto;padding:0 10px}
+
+/* 상단 */
+.top{display:flex;align-items:center;gap:10px;padding:8px 2px;flex-wrap:wrap}
+.brand{font-family:var(--serif);font-weight:900;font-size:18px;letter-spacing:.02em;color:var(--gold-2);display:flex;align-items:center;gap:6px}
+.brand i{font-style:normal;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:7px;background:var(--verm);color:#fff3dc;font-size:15px}
+.score{display:flex;align-items:center;gap:8px;margin-left:auto;font-family:var(--mono);font-weight:600}
+.score .tm{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line)}
+.score .tm b{font-size:16px}
+.score .tm small{font-family:var(--font);font-weight:500;color:var(--ink-2);font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+.meta{color:var(--ink-3);font-size:11px;font-family:var(--mono)}
+.tbtn{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-size:12px;color:var(--ink-2)}
+.tbtn:hover{border-color:var(--line-2);color:var(--ink)}
+
+/* 테이블 */
+.table{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2.3fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:8px;padding:4px 0}
+.pos-top{grid-column:2;grid-row:1;justify-self:center}
+.pos-left{grid-column:1;grid-row:2;align-self:center}
+.pos-right{grid-column:3;grid-row:2;align-self:center}
+.center{grid-column:2;grid-row:2;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  border:1px dashed var(--felt-line);border-radius:18px;padding:10px;position:relative}
+.seat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:8px 10px;min-width:0;max-width:240px;width:100%;position:relative;transition:box-shadow .2s,border-color .2s}
+.pos-top.seat{width:auto;min-width:200px}
+.seat.turn{border-color:var(--gold);box-shadow:0 0 0 2px rgba(224,182,90,.25),0 0 22px rgba(224,182,90,.18)}
+.seat .nm{display:flex;align-items:center;gap:6px;font-weight:700;font-size:13px;min-width:0}
+.seat .nm span.n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seat .sub{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap;font-size:11px;color:var(--ink-2)}
+.backs{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-weight:600;color:var(--ink)}
+.backs .bk{width:12px;height:17px;border-radius:3px;background:repeating-linear-gradient(45deg,#8e2d20 0 3px,#a8412f 3px 6px);border:1px solid #e0b65a55}
+.pill{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:700;letter-spacing:.01em;white-space:nowrap}
+.pill.call{background:rgba(224,87,62,.18);color:#ff9d86;border:1px solid rgba(224,87,62,.45)}
+.pill.grand{background:rgba(224,182,90,.2);color:var(--gold-2);border:1px solid rgba(224,182,90,.5)}
+.pill.out{background:rgba(63,182,142,.18);color:#7fe0bd;border:1px solid rgba(63,182,142,.45)}
+.pill.ai{background:var(--panel-2);color:var(--ink-3);border:1px solid var(--line)}
+.pill.off{background:rgba(255,255,255,.06);color:#ffb4a6;border:1px solid rgba(255,120,100,.35)}
+.pill.pt{background:var(--panel-2);color:var(--ink-2);border:1px solid var(--line)}
+.pill.ok{background:rgba(63,182,142,.14);color:#7fe0bd;border:1px solid rgba(63,182,142,.35)}
+.seat .play{margin-top:6px;min-height:22px;display:flex;gap:2px;flex-wrap:wrap;align-items:center}
+.bubble{font-size:11px;font-weight:700;color:var(--ink-3);padding:2px 8px;border-radius:99px;border:1px dashed var(--line-2)}
+
+/* 카드 */
+.card{--w:52px;width:var(--w);height:calc(var(--w)*1.42);border-radius:calc(var(--w)*.12);background:linear-gradient(180deg,#fffaf0,var(--card));
+  border:1px solid var(--card-edge);box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 2px 6px rgba(0,0,0,.35);
+  color:var(--card-ink);position:relative;flex:none;display:block;font-family:var(--font);transition:transform .12s ease,box-shadow .12s ease}
+.card .r{position:absolute;left:calc(var(--w)*.1);top:calc(var(--w)*.06);font-weight:900;font-size:calc(var(--w)*.34);line-height:1;letter-spacing:-.04em}
+.card .su{position:absolute;left:calc(var(--w)*.11);top:calc(var(--w)*.43);font-size:calc(var(--w)*.24);line-height:1}
+.card .big{position:absolute;right:calc(var(--w)*.08);bottom:calc(var(--w)*.06);font-size:calc(var(--w)*.5);line-height:1;opacity:.92}
+.card.s0{color:var(--s0)} .card.s1{color:var(--s1)} .card.s2{color:var(--s2)} .card.s3{color:var(--s3)}
+.card.sp .hz{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--serif);font-weight:900;font-size:calc(var(--w)*.62);padding-bottom:calc(var(--w)*.18)}
+.card.sp .lb{position:absolute;left:0;right:0;bottom:calc(var(--w)*.08);text-align:center;font-size:calc(var(--w)*.17);font-weight:700;letter-spacing:-.02em;opacity:.8}
+.card.sp .r{font-size:calc(var(--w)*.28)}
+.card.dr{background:linear-gradient(160deg,#fff4dc,#f3dcae);color:#a3261a;border-color:#c99a3e}
+.card.ph{background:linear-gradient(160deg,#fff6e6,#f7d9c2);color:#c2531b;border-color:#dba06a}
+.card.mj{background:linear-gradient(160deg,#f5fbf3,#dcecd6);color:#2b6e4b;border-color:#a9c9a0}
+.card.dog{background:linear-gradient(160deg,#f5f5f2,#e0ddd4);color:#56524a}
+.card.sm{--w:30px}
+.card.md{--w:44px}
+.card.lg{--w:60px}
+.cards{display:flex;align-items:flex-end;justify-content:center}
+.cards.tight .card+.card{margin-left:calc(var(--w)*-.38)}
+.cards.gap{gap:3px}
+.card.rcv::after{content:attr(data-from);position:absolute;top:-7px;right:-4px;background:var(--gold);color:#241a06;font-size:9px;font-weight:900;padding:1px 5px;border-radius:99px;white-space:nowrap;max-width:60px;overflow:hidden;text-overflow:ellipsis}
+
+/* 가운데 */
+.trick-title{font-size:12px;color:var(--ink-2);text-align:center;min-height:18px}
+.trick-title b{color:var(--ink)}
+.trick-cards{min-height:94px;display:flex;align-items:center;justify-content:center}
+.trick-cards .cards{animation:drop .22s ease-out}
+.fade{opacity:.45;filter:saturate(.6)}
+@keyframes drop{from{transform:translateY(-10px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+.wish{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;background:rgba(63,182,142,.14);border:1px solid rgba(63,182,142,.4);color:#8fe8c7;font-size:12px;font-weight:700}
+.status{font-size:13px;color:var(--gold-2);font-weight:700;text-align:center;min-height:20px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.bombflash{position:absolute;inset:0;border-radius:18px;pointer-events:none;animation:flash .7s ease-out}
+@keyframes flash{0%{box-shadow:inset 0 0 0 3px #ffcf6b,inset 0 0 80px rgba(255,120,60,.55)}100%{box-shadow:inset 0 0 0 0 transparent,inset 0 0 0 transparent}}
+
+/* 내 영역 */
+.me{padding:6px 0 max(10px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:6px}
+.mebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:30px}
+.mebar .nm{font-weight:700;display:flex;align-items:center;gap:6px}
+.hint{font-size:12px;color:var(--ink-2)}
+.hint.bad{color:#ff9d86}
+.hint.good{color:#8fe8c7}
+.actions{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.btn{border:1px solid var(--line-2);background:var(--panel-2);border-radius:10px;padding:8px 16px;font-weight:700;font-size:13.5px;min-height:38px}
+.btn:hover:not(:disabled){border-color:var(--ink-3)}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.btn.gold{background:linear-gradient(180deg,#f0c86c,#d8a543);color:#2a1d05;border-color:#f3d48b}
+.btn.verm{background:linear-gradient(180deg,#ec6c52,#cf4a33);color:#fff4ea;border-color:#ff9d86}
+.btn.jade{background:linear-gradient(180deg,#4fc79d,#2f9b77);color:#06231a;border-color:#8fe8c7}
+.btn.ghost{background:transparent}
+.hand{position:relative;display:flex;justify-content:center;align-items:flex-end;padding-top:14px;min-height:calc(var(--hw,58px)*1.42 + 16px)}
+.hand .card{--w:var(--hw,58px);cursor:pointer}
+.hand .card+.card{margin-left:var(--ov,4px)}
+.hand .card.sel{transform:translateY(-14px);box-shadow:0 0 0 2px var(--gold),0 8px 16px rgba(0,0,0,.45)}
+.hand .card.hid{background:repeating-linear-gradient(45deg,#8e2d20 0 5px,#a8412f 5px 10px);border-color:#e0b65a88}
+.hand .card.hid *{display:none}
+.hand .card.dim{filter:brightness(.72)}
+@media (hover:hover){.hand .card:not(.sel):not(.hid):hover{transform:translateY(-6px)}}
+
+/* 교환 */
+.xch{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.slot{width:92px;border:1px dashed var(--line-2);border-radius:12px;padding:6px;display:flex;flex-direction:column;align-items:center;gap:5px;background:var(--panel-2);cursor:pointer}
+.slot.on{border-style:solid;border-color:var(--gold)}
+.slot .to{font-size:11px;color:var(--ink-2);text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slot .ph{width:44px;height:62px;border-radius:6px;border:1px dashed var(--line-2);display:grid;place-items:center;color:var(--ink-3);font-size:18px}
+
+/* 모달 */
+.modal{position:fixed;inset:0;background:rgba(3,8,9,.62);display:grid;place-items:center;z-index:50;padding:16px;backdrop-filter:blur(2px)}
+.modal[hidden]{display:none}
+.box{background:#132220;border:1px solid var(--line-2);border-radius:16px;padding:18px;max-width:440px;width:100%;max-height:88dvh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.box h2{margin:0 0 6px;font-family:var(--serif);font-size:20px;color:var(--gold-2)}
+.box p{color:var(--ink-2);margin:6px 0 12px;line-height:1.55}
+.box .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.box .row .btn{flex:1}
+.ranks{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+.ranks .btn{padding:8px 0;font-family:var(--mono)}
+.seg{display:flex;gap:6px}
+.seg .btn{flex:1}
+.seg .btn.on{border-color:var(--gold);color:var(--gold-2)}
+table.sum{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+table.sum th,table.sum td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:right}
+table.sum th:first-child,table.sum td:first-child{text-align:left;color:var(--ink-2);font-weight:500}
+table.sum tr.tot td{font-weight:900;font-size:15px;color:var(--ink);font-family:var(--mono)}
+table.sum td{font-family:var(--mono)}
+.rules h3{font-size:14px;margin:14px 0 4px;color:var(--ink)}
+.rules ul{margin:0;padding-left:18px;color:var(--ink-2);line-height:1.6}
+.rules li{margin:2px 0}
+
+/* 기록 */
+.logp{position:fixed;right:10px;top:50px;width:min(320px,calc(100vw - 20px));max-height:60dvh;overflow:auto;background:#101c1b;border:1px solid var(--line-2);border-radius:12px;padding:10px 12px;z-index:40;font-size:12px;line-height:1.55;color:var(--ink-2);box-shadow:0 12px 40px rgba(0,0,0,.45)}
+.logp[hidden]{display:none}
+.logp div{border-bottom:1px solid rgba(255,255,255,.04);padding:2px 0}
+.toast{position:fixed;left:50%;top:56px;transform:translateX(-50%);background:#2a1512;border:1px solid rgba(224,87,62,.6);color:#ffc4b6;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:700;z-index:60;pointer-events:none;opacity:0;transition:opacity .2s}
+.toast.show{opacity:1}
+
+@media (max-width:720px){
+  .app{padding:0 6px}
+  .brand span{display:none}
+  .score .tm small{display:none}
+  .table{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr);gap:6px}
+  .pos-top{grid-column:1 / span 2;grid-row:1}
+  .pos-left{grid-column:1;grid-row:2;align-self:stretch}
+  .pos-right{grid-column:2;grid-row:2;align-self:stretch}
+  .center{grid-column:1 / span 2;grid-row:3}
+  .seat{max-width:none;padding:6px 8px}
+  .pos-top.seat{min-width:0;width:100%}
+  .seat .play .card{--w:24px}
+  .trick-cards{min-height:74px}
+  .trick-cards .card.lg{--w:44px} .trick-cards .card.md{--w:36px}
+  .btn{padding:7px 12px;font-size:13px;min-height:36px}
+  .actions{margin-left:0;width:100%;justify-content:stretch}
+  .actions .btn{flex:1}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand"><i>龍</i><span id="ttl">드래곤 콜</span></div>
+    <div class="meta" id="meta"></div>
+    <div class="score" id="score"></div>
+    <button class="tbtn" id="bRules">규칙</button>
+    <button class="tbtn" id="bLog">기록</button>
+    <button class="tbtn" id="bNew">새 게임</button>
+  </div>
+  <div class="table" id="table">
+    <div class="seat pos-top" id="seat2"></div>
+    <div class="seat pos-left" id="seat3"></div>
+    <div class="center" id="center"></div>
+    <div class="seat pos-right" id="seat1"></div>
+  </div>
+  <div class="me" id="me"></div>
+</div>
+<div class="logp" id="logp" hidden></div>
+<div class="modal" id="modal" hidden><div class="box" id="box"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="engine.js"></script>
+<script>
+'use strict';
+const D = window.DC;
+const { MJ, DOG, PH, DR } = D;
+const L = (ko, en) => MGH.L(ko, en);
+const EN = MGH.lang === 'en';
+const $ = s => document.querySelector(s);
+
+let S = null;          // 게임 상태 (방장/혼자: 원본, 참가자: 방장이 보낸 사본)
+let ME = 0;            // 내 좌석
+let NET = null;        // {role:'host'|'guest', offline:[]}
+let VER = 0;
+let aiTimer = null, nextTimer = null, nextAt = 0;
+let sel = new Set();
+let xch = [null, null, null];   // 교환: [다음, 짝꿍, 이전]
+let xSel = null;                 // 교환 중 고른 카드
+let waitSent = 0;                // 참가자: 보낸 뒤 상태를 기다리는 중
+let lastSeenBomb = 0, lastModalKey = '';
+let modalLock = null;            // 사용자가 연 모달 (규칙·확인 등)
+let dismissed = '';              // 닫은 결과 창 (다시 띄우지 않음)
+const SPEED = { play: 850, trick: 1300, fast: 350 };
+
+document.title = L('드래곤 콜', 'Dragon Call');
+$('#ttl').textContent = L('드래곤 콜', 'Dragon Call');
+$('#bRules').textContent = L('규칙', 'Rules');
+$('#bLog').textContent = L('기록', 'Log');
+$('#bNew').textContent = L('새 게임', 'New game');
+
+/* ───────── 카드 표시 ───────── */
+const SUITS = ['♠', '♥', '♦', '♣'];
+function cardHTML(c, cls = '', extra = '') {
+  if (c === DR) return `<div class="card sp dr ${cls}" data-c="${c}" ${extra}><span class="hz">龍</span><span class="lb">${L('용', 'Dragon')}</span></div>`;
+  if (c === PH) return `<div class="card sp ph ${cls}" data-c="${c}" ${extra}><span class="hz">鳳</span><span class="lb">${L('봉황', 'Phoenix')}</span></div>`;
+  if (c === DOG) return `<div class="card sp dog ${cls}" data-c="${c}" ${extra}><span class="hz">犬</span><span class="lb">${L('개', 'Dog')}</span></div>`;
+  if (c === MJ) return `<div class="card sp mj ${cls}" data-c="${c}" ${extra}><span class="r">1</span><span class="hz">雀</span><span class="lb">${L('참새', 'Sparrow')}</span></div>`;
+  const s = D.suitOf(c), r = D.RANK_LABEL(D.rankOf(c));
+  return `<div class="card s${s} ${cls}" data-c="${c}" ${extra}><span class="r">${r}</span><span class="su">${SUITS[s]}</span><span class="big">${SUITS[s]}</span></div>`;
+}
+const cardsHTML = (cs, size, tight) => `<div class="cards ${tight ? 'tight' : 'gap'}">${D.sortHand(cs).map(c => cardHTML(c, size)).join('')}</div>`;
+// 낸 조합 표시: 봉황을 대신한 숫자 자리에 놓는다
+function playOrder(pl) {
+  const cs = pl.cards;
+  if (!cs.includes(PH) || !['straight', 'pairs', 'fh'].includes(pl.type)) return D.sortHand(cs);
+  let want = [];
+  if (pl.type === 'straight') for (let r = pl.rank - pl.len + 1; r <= pl.rank; r++) want.push(r);
+  else if (pl.type === 'pairs') for (let r = pl.rank - pl.len / 2 + 1; r <= pl.rank; r++) want.push(r, r);
+  else { const other = cs.filter(c => c !== PH && D.rankOf(c) !== pl.rank).map(D.rankOf)[0]; want = [pl.rank, pl.rank, pl.rank, other, other].sort((x, y) => x - y); }
+  const pool = cs.filter(c => c !== PH);
+  return want.map(r => { const i = pool.findIndex(c => D.rankOf(c) === r); return i >= 0 ? pool.splice(i, 1)[0] : PH; });
+}
+function playHTML(pl, where) {
+  const n = pl.cards.length;
+  const size = where === 'seat' ? 'sm' : n <= 5 ? 'lg' : n <= 8 ? 'md' : 'sm';
+  const tight = where === 'seat' || n >= 7;
+  return `<div class="cards ${tight ? 'tight' : 'gap'}">${playOrder(pl).map(c => cardHTML(c, size)).join('')}</div>`;
+}
+const esc = s => String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+const nm = s => esc(S.names[s] || '?');
+const teamColor = s => D.team(s) === 0 ? 'var(--teamA)' : 'var(--teamB)';
+const posOf = s => (s - ME + 4) % 4;
+const comboText = c => D.comboName(c, EN);
+
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast.h);
+  toast.h = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+const ERR = {
+  weak: ['앞의 조합보다 높아야 해요 (같은 종류·같은 장수)', 'Must beat the table (same type and length)'],
+  invalid: ['낼 수 없는 조합이에요', 'Not a valid combination'],
+  turn: ['차례가 아니에요 — 차례 밖에는 폭탄만 낼 수 있어요', 'Not your turn — only bombs can be played out of turn'],
+  wish: ['소원 숫자를 낼 수 있으면 반드시 내야 해요', 'You must fulfil the wish if you can'],
+  lead: ['선은 패스할 수 없어요', 'You cannot pass when leading'],
+  phase: ['지금은 할 수 없어요', 'Not now'],
+  cards: ['카드를 골라 주세요', 'Select cards first'],
+};
+const errText = e => (ERR[e] ? L(ERR[e][0], ERR[e][1]) : e);
+
+/* ───────── 행동 ───────── */
+// 방장/혼자면 바로 적용, 참가자면 방장에게 전송
+function act(it) {
+  if (!S) return;
+  if (!NET || NET.role === 'host') { applyIntent(ME, it); return; }
+  // 참가자: 보내기 전에 같은 엔진으로 미리 검사
+  const pre = precheck(ME, it);
+  if (pre) { toast(errText(pre)); return; }
+  waitSent = Date.now();
+  MGH.net.send({ type: 'net:intent', intent: it });
+  render();
+}
+
+function precheck(seat, it) {
+  if (it.t === 'play') { const r = D.checkPlay(S, seat, it.cards); return r.err || null; }
+  if (it.t === 'pass') return D.checkPass(S, seat);
+  return null;
+}
+
+function applyIntent(seat, it) {
+  if (!S || !it) return;
+  let err = null;
+  switch (it.t) {
+    case 'grand': if (!D.doGrand(S, seat, !!it.v)) err = 'phase'; break;
+    case 'call': if (!D.doCall(S, seat)) err = 'phase'; break;
+    case 'exch': if (!D.doExchange(S, seat, (it.cards || []).map(Number))) err = 'phase'; break;
+    case 'play': err = D.doPlay(S, seat, (it.cards || []).map(Number), it.wish | 0); break;
+    case 'pass': err = D.doPass(S, seat); break;
+    case 'dragon': err = D.doDragon(S, seat, it.to | 0); break;
+    case 'next': if (seat === ME && S.phase === 'roundEnd') { D.newRound(S); } else err = 'phase'; break;
+    default: return;
+  }
+  if (err) {
+    if (seat === ME) toast(errText(err));
+    if (NET && NET.role === 'host') pushState(true);
+    return;
+  }
+  if (seat === ME) { sel.clear(); }
+  changed();
+}
+
+function changed() {
+  pushState();
+  render();
+  schedule();
+}
+
+function pushState(force) {
+  if (!NET || NET.role !== 'host' || !S) return;
+  VER++;
+  MGH.net.send({ type: 'net:state', ver: VER, state: S, turn: S.round, cur: S.turn, winner: S.phase === 'over' ? S.winnerTeam : null });
+  if (S.phase === 'over' && !pushState.finished) {
+    pushState.finished = true;
+    const winners = [0, 1, 2, 3].filter(s => D.team(s) === S.winnerTeam);
+    MGH.net.send({ type: 'net:finished', winner: winners[0], winners, scores: S.scores, turn: S.round });
+  }
+}
+
+// AI 진행 (방장/혼자만)
+function schedule() {
+  if (NET && NET.role !== 'host') return;
+  clearTimeout(aiTimer);
+  if (!S) return;
+  if (S.phase === 'roundEnd') {
+    if (NET && !nextTimer) {
+      nextAt = Date.now() + 15000;
+      nextTimer = setTimeout(() => { nextTimer = null; if (S && S.phase === 'roundEnd') { D.newRound(S); changed(); } }, 15000);
+    }
+    return;
+  }
+  if (nextTimer) { clearTimeout(nextTimer); nextTimer = null; }
+  if (S.phase === 'over') return;
+  let delay = SPEED.play;
+  if (S.phase === 'grand' || S.phase === 'pass') delay = SPEED.fast;
+  else if (!S.trick && S.lastTrick) delay = SPEED.trick;
+  aiTimer = setTimeout(() => {
+    if (!S) return;
+    if (D.aiStep(S)) changed();
+  }, delay);
+}
+
+/* ───────── 렌더 ───────── */
+function render() {
+  if (!S) { renderEmpty(); return; }
+  renderTop();
+  for (let p = 1; p <= 3; p++) renderSeat((ME + p) % 4, $('#seat' + p));
+  renderCenter();
+  renderMe();
+  renderModal();
+  renderLog();
+}
+
+function renderEmpty() {
+  $('#score').innerHTML = '';
+  $('#meta').textContent = '';
+  ['#seat1', '#seat2', '#seat3'].forEach(s => { $(s).innerHTML = ''; });
+  $('#center').innerHTML = `<div class="status">${esc(renderEmpty.msg || '')}</div>`;
+  $('#me').innerHTML = '';
+}
+
+function renderTop() {
+  const my = D.team(ME), op = 1 - my;
+  const names = t => [0, 1, 2, 3].filter(s => D.team(s) === t).map(s => S.names[s]).join(' · ');
+  $('#score').innerHTML = `
+    <div class="tm" title="${esc(names(my))}"><span class="dot" style="background:${teamColor(ME)}"></span><small>${L('우리 팀', 'Us')}</small><b>${S.scores[my]}</b></div>
+    <span class="meta">:</span>
+    <div class="tm" title="${esc(names(op))}"><b>${S.scores[op]}</b><small>${L('상대 팀', 'Them')}</small><span class="dot" style="background:${teamColor(ME + 1)}"></span></div>`;
+  $('#meta').textContent = `R${S.round} · ${L('목표', 'to')} ${S.target}`;
+  $('#bNew').hidden = !!NET;
+}
+
+function seatBadges(s) {
+  const b = [];
+  if (S.calls[s] === 2) b.push(`<span class="pill grand">${L('그랜드 콜', 'Grand Call')}</span>`);
+  else if (S.calls[s] === 1) b.push(`<span class="pill call">${L('콜', 'Call')}</span>`);
+  const oi = S.out.indexOf(s);
+  if (oi >= 0) b.push(`<span class="pill out">${oi + 1}${L('등', EN ? ['st', 'nd', 'rd', 'th'][oi] : '')}</span>`);
+  if (S.ai[s] && NET) b.push(`<span class="pill ai">AI</span>`);
+  if (NET && NET.offline.includes(s)) b.push(`<span class="pill off">${L('접속 끊김', 'offline')}</span>`);
+  return b.join('');
+}
+
+function renderSeat(s, el) {
+  const isPartner = s === (ME + 2) % 4;
+  const n = S.hands[s].length;
+  const turn = S.phase === 'play' && S.turn === s && S.pendingDragon === null;
+  el.classList.toggle('turn', turn || (S.pendingDragon === s));
+  let play = '';
+  if (S.phase === 'play' && S.trick) {
+    const last = [...S.trick.plays].reverse().find(p => p.s === s);
+    const passedNow = S.trick.passed.includes(s);
+    if (passedNow) play = `<span class="bubble">${L('패스', 'Pass')}</span>`;
+    else if (last) play = playHTML(last, 'seat');
+  } else if (S.phase === 'grand') {
+    play = S.grand[s] === null ? `<span class="bubble">${L('고민 중…', 'thinking…')}</span>` : `<span class="pill ok">✓</span>`;
+  } else if (S.phase === 'pass') {
+    play = S.passSel[s] ? `<span class="pill ok">✓ ${L('교환 준비', 'passed')}</span>` : `<span class="bubble">${L('교환 고르는 중…', 'choosing…')}</span>`;
+  }
+  el.innerHTML = `
+    <div class="nm"><span class="dot" style="background:${teamColor(s)}"></span><span class="n">${nm(s)}</span>${isPartner ? `<span class="pill pt">${L('파트너', 'Partner')}</span>` : ''}</div>
+    <div class="sub"><span class="backs"><span class="bk"></span>${S.phase === 'grand' && S.grand[s] === null ? 8 : n}</span>${seatBadges(s)}</div>
+    <div class="play">${play}</div>`;
+}
+
+function renderCenter() {
+  const el = $('#center');
+  let title = '', cards = '', status = '', chips = [];
+  if (S.wish) chips.push(`<span class="wish">✦ ${L('소원', 'Wish')}: ${D.RANK_LABEL(S.wish)}</span>`);
+  if (S.phase === 'grand') {
+    status = L('카드 8장 확인 — 그랜드 콜(±200) 여부를 정하세요', 'First 8 cards — decide on a Grand Call (±200)');
+  } else if (S.phase === 'pass') {
+    status = L('파트너와 상대에게 카드를 한 장씩 보내세요', 'Pass one card to each player');
+  } else if (S.phase === 'play') {
+    if (S.trick) {
+      const t = S.trick.top;
+      title = `<b>${nm(t.s)}</b> · ${comboText(t)}`;
+      cards = playHTML(t, 'center');
+      const pts = D.sumPts(S.trick.cards);
+      if (pts) chips.push(`<span class="pill pt">${L('트릭', 'Trick')} ${pts}${L('점', ' pts')}</span>`);
+    } else if (S.lastTrick) {
+      const lt = S.lastTrick;
+      title = lt.dog
+        ? `<b>${nm(lt.w)}</b> · ${L('개 → 파트너에게 선', 'Dog → lead to partner')}`
+        : `<b>${nm(lt.to)}</b> ${L('트릭 획득', 'takes the trick')}${lt.to !== lt.w ? ` (${L('용 받음', 'Dragon gift')})` : ''} · ${lt.pts}${L('점', ' pts')}`;
+      cards = `<div class="fade">${playHTML(lt.top, 'center')}</div>`;
+    }
+    if (S.pendingDragon !== null) status = S.pendingDragon === ME ? L('용 트릭을 줄 상대를 고르세요', 'Choose an opponent to receive the Dragon trick') : L(`${nm(S.pendingDragon)} — 용 트릭을 줄 상대를 고르는 중`, `${nm(S.pendingDragon)} is choosing who gets the Dragon trick`);
+    else if (S.turn === ME) status = S.trick ? L('내 차례 — 더 높은 조합을 내거나 패스', 'Your turn — beat it or pass') : L('내가 선 — 아무 조합이나 내세요', 'Your lead — play any combination');
+    else if (S.turn >= 0) status = S.trick ? L(`${nm(S.turn)} 차례`, `${nm(S.turn)}'s turn`) : L(`${nm(S.turn)} 선`, `${nm(S.turn)} leads`);
+  } else if (S.phase === 'roundEnd' || S.phase === 'over') {
+    status = S.phase === 'over' ? L('게임 종료', 'Game over') : L('라운드 종료', 'Round over');
+  }
+  const bomb = S.last && S.last.k === 'bomb' && S.last.seq > lastSeenBomb;
+  if (bomb) lastSeenBomb = S.last.seq;
+  el.innerHTML = `
+    <div class="chips">${chips.join('')}</div>
+    <div class="trick-title">${title}</div>
+    <div class="trick-cards">${cards}</div>
+    <div class="status">${status}</div>
+    ${bomb ? '<div class="bombflash"></div>' : ''}`;
+}
+
+function myHandView() {
+  const h = D.sortHand(S.hands[ME] || []);
+  if (S.phase === 'grand' && S.grand[ME] === null) {
+    const first = (S.hands[ME] || []).slice(0, 8);
+    return D.sortHand(first).map(c => ({ c, hid: false })).concat(h.filter(c => !first.includes(c)).map(c => ({ c, hid: true })));
+  }
+  return h.map(c => ({ c, hid: false }));
+}
+
+function selectionInfo() {
+  const cards = [...sel];
+  if (!cards.length || S.phase !== 'play') return null;
+  const top = S.trick ? S.trick.top : null;
+  const r = D.checkPlay(S, ME, cards);
+  if (r.err === 'turn') {
+    const c = D.pickPlay(cards, top);
+    if (c) return { ok: false, neutral: true, text: `${comboText(c)} · ${L('내 차례에 낼 수 있어요', 'playable on your turn')}` };
+  }
+  if (!r.err) {
+    const isB = D.isBomb(r.combo);
+    return { ok: true, combo: r.combo, bomb: isB, text: comboText(r.combo) };
+  }
+  const any = D.interps(cards);
+  if (!any.length) return { ok: false, text: L('조합 아님', 'Not a combination') };
+  return { ok: false, text: `${comboText(D.resolve(any[0], top) || any[0])} — ${errText(r.err)}` };
+}
+
+function renderMe() {
+  const el = $('#me');
+  const hv = myHandView();
+  const inHand = new Set(S.hands[ME] || []);
+  for (const c of [...sel]) if (!inHand.has(c)) sel.delete(c);
+  xch = xch.map(c => (c !== null && inHand.has(c) ? c : null));
+  const guestWaiting = NET && NET.role === 'guest' && waitSent && Date.now() - waitSent < 4000;
+  const recvFrom = {};
+  if (S.phase === 'play' && !S.played[ME] && S.received[ME]) S.received[ME].forEach(([from, c]) => { recvFrom[c] = S.names[from]; });
+
+  let hint = '', actions = '', extra = '';
+  const callBtn = D.canCall(S, ME) ? `<button class="btn verm" data-act="call">${L('콜!', 'Call!')} <small>±100</small></button>` : '';
+
+  if (S.phase === 'grand') {
+    if (S.grand[ME] === null) {
+      hint = L('나머지 6장을 받기 전에 그랜드 콜을 할 수 있어요', 'You may Grand Call before seeing your last 6 cards');
+      actions = `<button class="btn" data-act="grand-no">${L('안 함 (6장 받기)', 'No — take 6 cards')}</button><button class="btn gold" data-act="grand-yes">${L('그랜드 콜!', 'Grand Call!')} <small>±200</small></button>`;
+    } else {
+      hint = L('다른 플레이어를 기다리는 중…', 'Waiting for the others…');
+      actions = callBtn;
+    }
+  } else if (S.phase === 'pass') {
+    if (!S.passSel[ME]) {
+      const tgt = [(ME + 1) % 4, (ME + 2) % 4, (ME + 3) % 4];
+      const lab = [L('다음', 'Next'), L('파트너', 'Partner'), L('이전', 'Prev')];
+      extra = `<div class="xch">${tgt.map((s, i) => `
+        <div class="slot ${xSel !== null ? 'on' : ''}" data-act="slot" data-i="${i}">
+          <div class="to"><span class="dot" style="background:${teamColor(s)}"></span> ${lab[i]} · ${nm(s)}</div>
+          ${xch[i] !== null ? cardHTML(xch[i], 'md') : '<div class="ph">＋</div>'}
+        </div>`).join('')}</div>`;
+      hint = xSel !== null ? L('보낼 자리를 누르세요', 'Tap a slot to send it') : L('카드를 누른 뒤 보낼 자리를 누르세요', 'Tap a card, then a slot');
+      actions = `${callBtn}<button class="btn gold" data-act="exch" ${xch.every(c => c !== null) && !guestWaiting ? '' : 'disabled'}>${L('교환하기', 'Pass cards')}</button>`;
+    } else {
+      hint = L('다른 플레이어의 교환을 기다리는 중…', 'Waiting for the others to pass…');
+      actions = callBtn;
+    }
+  } else if (S.phase === 'play') {
+    const info = selectionInfo();
+    const myTurn = S.turn === ME && S.pendingDragon === null;
+    if (info) hint = `<span class="${info.ok ? 'good' : info.neutral ? '' : 'bad'}">${esc(info.text)}</span>`;
+    else if (S.out.includes(ME)) hint = L('나는 이미 나갔어요 — 파트너를 응원하세요', "You're out — cheer on your partner");
+    else if (D.mustFulfill(S, ME)) hint = `<span class="bad">${L('소원 숫자', 'Wish')} ${D.RANK_LABEL(S.wish)} ${L('— 낼 수 있으면 반드시 내야 해요', '— you must play it if you can')}</span>`;
+    else if (!myTurn && S.trick) hint = L('차례가 아닐 때도 폭탄은 언제든 낼 수 있어요', 'Bombs can be played at any time');
+    const canPlay = info && info.ok && !guestWaiting;
+    const bombOut = info && info.ok && info.bomb && !myTurn;
+    actions = `${callBtn}
+      ${sel.size ? `<button class="btn ghost" data-act="clear">${L('선택 해제', 'Clear')}</button>` : ''}
+      <button class="btn" data-act="pass" ${myTurn && S.trick && !guestWaiting && !D.checkPass(S, ME) ? '' : 'disabled'}>${L('패스', 'Pass')}</button>
+      <button class="btn ${bombOut ? 'verm' : 'gold'}" data-act="play" ${canPlay && (myTurn || bombOut) ? '' : 'disabled'}>${bombOut ? L('💣 폭탄!', '💣 Bomb!') : L('내기', 'Play')}</button>`;
+  }
+
+  const handHTML = hv.map(({ c, hid }) => {
+    const cls = [hid ? 'hid' : '', sel.has(c) || xSel === c ? 'sel' : '', xch.includes(c) ? 'dim' : '', recvFrom[c] ? 'rcv' : ''].join(' ');
+    return cardHTML(c, cls, recvFrom[c] ? `data-from="${esc(recvFrom[c])}"` : '');
+  }).join('');
+
+  el.innerHTML = `
+    ${extra}
+    <div class="mebar">
+      <div class="nm"><span class="dot" style="background:${teamColor(ME)}"></span>${nm(ME)} ${seatBadges(ME)}</div>
+      <div class="hint">${hint}</div>
+      <div class="actions">${actions}</div>
+    </div>
+    <div class="hand" id="hand">${handHTML}</div>`;
+  el.classList.toggle('turn', S.phase === 'play' && S.turn === ME);
+  layoutHand();
+}
+
+function layoutHand() {
+  const h = $('#hand');
+  if (!h) return;
+  const n = h.children.length;
+  const W = h.clientWidth;
+  const w = Math.max(40, Math.min(66, W / 8.2));
+  h.style.setProperty('--hw', w + 'px');
+  if (n <= 1) return;
+  const need = n * w + (n - 1) * 5;
+  const ov = need <= W ? 5 : (W - w) / (n - 1) - w;
+  h.style.setProperty('--ov', ov + 'px');
+}
+window.addEventListener('resize', layoutHand);
+
+/* ───────── 모달 ───────── */
+function showModal(html, key) {
+  $('#box').innerHTML = html;
+  $('#modal').hidden = false;
+  lastModalKey = key || '';
+}
+function hideModal() {
+  $('#modal').hidden = true;
+  lastModalKey = '';
+  modalLock = null;
+}
+
+function renderModal() {
+  if (modalLock) return;
+  if (S.phase === 'play' && S.pendingDragon === ME) {
+    const a = (ME + 1) % 4, b = (ME + 3) % 4;
+    const key = 'dragon' + S.seq;
+    if (lastModalKey.startsWith('dragon')) return;
+    showModal(`<h2>${L('용 트릭 넘기기', 'Give away the Dragon trick')}</h2>
+      <p>${L('용으로 이긴 트릭은 상대 팀 한 명에게 줘야 해요.', 'A trick won with the Dragon must be given to an opponent.')} (${D.sumPts(S.trick.cards)}${L('점', ' pts')})</p>
+      <div class="row"><button class="btn" data-act="dragon" data-to="${a}">${nm(a)} (${S.hands[a].length})</button><button class="btn" data-act="dragon" data-to="${b}">${nm(b)} (${S.hands[b].length})</button></div>`, key);
+    return;
+  }
+  if (S.phase === 'roundEnd' || S.phase === 'over') {
+    const key = S.phase + S.round;
+    if (dismissed === key) return;
+    if (lastModalKey === key) { updateNextCountdown(); return; }
+    showModal(summaryHTML(), key);
+    updateNextCountdown();
+    return;
+  }
+  if (lastModalKey.startsWith('dragon') || lastModalKey.startsWith('roundEnd') || lastModalKey.startsWith('over')) hideModal();
+}
+
+function summaryHTML() {
+  const sm = S.summary, my = D.team(ME), op = 1 - my;
+  const over = S.phase === 'over';
+  const outTxt = sm.out.map((s, i) => `${i + 1}. ${nm(s)}`).join(' · ');
+  const callRows = [0, 1, 2, 3].filter(s => sm.calls[s]).map(s => {
+    const ok = sm.out[0] === s, v = sm.calls[s] === 2 ? 200 : 100;
+    return `<div>${nm(s)} ${sm.calls[s] === 2 ? L('그랜드 콜', 'Grand Call') : L('콜', 'Call')} — <b style="color:${ok ? '#7fe0bd' : '#ff9d86'}">${ok ? L('성공', 'made') : L('실패', 'failed')} ${ok ? '+' : '−'}${v}</b></div>`;
+  }).join('');
+  let head;
+  if (over) {
+    const win = S.winnerTeam === my;
+    const wn = [0, 1, 2, 3].filter(s => D.team(s) === S.winnerTeam).map(nm).join(' & ');
+    head = `<h2>${win ? L('승리! 🏆', 'Victory! 🏆') : L('패배', 'Defeat')}</h2><p>${L(`${wn} 팀이 ${S.target}점을 먼저 넘겼어요.`, `${wn} reached ${S.target} first.`)}</p>`;
+  } else head = `<h2>${L(`${sm.round}라운드 결과`, `Round ${sm.round}`)}</h2><p>${outTxt}${sm.dbl !== null ? ` · <b style="color:var(--gold-2)">${L('원투! +200', 'One-two! +200')}</b>` : ''}</p>`;
+  const row = (label, a, b) => `<tr><td>${label}</td><td>${a}</td><td>${b}</td></tr>`;
+  const sg = v => (v > 0 ? '+' : '') + v;
+  let btn = '';
+  if (over) btn = NET ? `<p class="meta">${L('포털의 “로비로” 버튼으로 돌아갈 수 있어요', 'Use “Back to lobby” above to leave')}</p>` : `<div class="row"><button class="btn gold" data-act="newgame">${L('새 게임', 'New game')}</button><button class="btn ghost" data-act="close">${L('테이블 보기', 'View table')}</button></div>`;
+  else if (!NET || NET.role === 'host') btn = `<div class="row"><button class="btn gold" data-act="next">${L('다음 라운드', 'Next round')} <span id="nextCd"></span></button></div>`;
+  else btn = `<p class="meta">${L('방장이 곧 다음 라운드를 시작해요…', 'The host will start the next round shortly…')}</p>`;
+  return `${head}
+    <table class="sum">
+      <tr><th></th><th><span class="dot" style="background:${teamColor(ME)}"></span> ${L('우리', 'Us')}</th><th><span class="dot" style="background:${teamColor(ME + 1)}"></span> ${L('상대', 'Them')}</th></tr>
+      ${sm.dbl !== null ? row(L('원투', 'One-two'), sm.dbl === my ? '+200' : '0', sm.dbl === op ? '+200' : '0') : row(L('카드 점수', 'Card points'), sm.card[my], sm.card[op])}
+      ${row(L('콜', 'Calls'), sg(sm.call[my]), sg(sm.call[op]))}
+      ${row(L('이번 라운드', 'This round'), sg(sm.pts[my]), sg(sm.pts[op]))}
+      <tr class="tot"><td>${L('총점', 'Total')}</td><td>${sm.scores[my]}</td><td>${sm.scores[op]}</td></tr>
+    </table>
+    ${callRows ? `<div style="margin-top:10px;font-size:13px;line-height:1.7">${callRows}</div>` : ''}
+    ${over ? `<p class="meta" style="margin-top:10px">${outTxt}</p>` : ''}
+    ${btn}`;
+}
+
+function updateNextCountdown() {
+  const el = document.getElementById('nextCd');
+  if (!el || !NET || !nextTimer) return;
+  const s = Math.max(0, Math.ceil((nextAt - Date.now()) / 1000));
+  el.textContent = `(${s})`;
+  clearTimeout(updateNextCountdown.h);
+  updateNextCountdown.h = setTimeout(updateNextCountdown, 1000);
+}
+
+function wishModal(cards) {
+  modalLock = 'wish';
+  const ranks = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+  showModal(`<h2>${L('참새의 소원', "Sparrow's wish")}</h2>
+    <p>${L('숫자를 하나 고르면, 그 숫자를 가진 사람은 낼 수 있을 때 반드시 내야 해요.', 'Name a rank — whoever holds it must play it when they legally can.')}</p>
+    <div class="ranks">${ranks.map(r => `<button class="btn" data-act="wish" data-r="${r}">${D.RANK_LABEL(r)}</button>`).join('')}</div>
+    <div class="row"><button class="btn ghost" data-act="wish" data-r="0">${L('소원 없음', 'No wish')}</button><button class="btn ghost" data-act="close">${L('취소', 'Cancel')}</button></div>`, 'wish');
+  wishModal.cards = cards;
+}
+
+function callConfirm() {
+  modalLock = 'call';
+  showModal(`<h2>${L('콜 선언', 'Call')}</h2>
+    <p>${L('이번 라운드에 내가 1등으로 나가면 +100, 못 하면 −100. 첫 카드를 내기 전까지만 선언할 수 있어요.', 'Go out first this round for +100, or lose 100. You can call only before playing your first card.')}</p>
+    <div class="row"><button class="btn ghost" data-act="close">${L('취소', 'Cancel')}</button><button class="btn verm" data-act="call-yes">${L('콜!', 'Call!')}</button></div>`, 'call');
+}
+
+function rulesHTML() {
+  if (EN) return `<h2>Dragon Call — rules</h2><div class="rules">
+    <h3>Setup</h3><ul><li>4 players in two teams — partners sit opposite. First team to 1,000 wins.</li><li>56 cards: four suits of 2–A plus four specials: Sparrow (1), Dog, Phoenix, Dragon.</li></ul>
+    <h3>Deal, calls and passing</h3><ul><li>After seeing 8 cards you may <b>Grand Call</b> (±200). Then take the other 6.</li><li>Pass one card each to the next player, your partner and the previous player.</li><li>Until you play your first card you may <b>Call</b> (±100): go out first to win it.</li></ul>
+    <h3>Play</h3><ul><li>The Sparrow holder leads. Beat the table with the same type and length, higher, or pass. When everyone else passes, the last player wins the trick and leads.</li><li>Combinations: single, pair, triple, full house, straight (5+), consecutive pairs (2+ pairs).</li><li><b>Bombs</b> — four of a kind or a straight flush (5+) — beat anything and can be played at any time, even out of turn.</li></ul>
+    <h3>Specials</h3><ul><li><b>Sparrow (1)</b>: lowest single, may start a straight. When played you may make a <b>wish</b> for a rank — whoever holds it must play it whenever legal.</li><li><b>Dog</b>: lead only; passes the lead to your partner.</li><li><b>Phoenix</b> (−25): wild card in combos (not bombs); as a single it is ½ above the last card, but can't beat the Dragon.</li><li><b>Dragon</b> (25): highest single. The trick it wins must be given to an opponent.</li></ul>
+    <h3>Scoring</h3><ul><li>5s = 5, 10s and Kings = 10, Dragon 25, Phoenix −25 (100 per round).</li><li>The last player gives their hand to the opponents and their tricks to the first player out.</li><li>If partners go out 1st and 2nd (<b>one-two</b>), their team scores 200 and cards aren't counted.</li></ul></div>
+    <div class="row"><button class="btn gold" data-act="close">OK</button></div>`;
+  return `<h2>드래곤 콜 규칙</h2><div class="rules">
+    <h3>기본</h3><ul><li>4명이 2:2 팀전 — 마주 앉은 사람이 파트너. 먼저 1,000점을 넘긴 팀이 승리.</li><li>카드 56장: 4무늬 × 2~A 52장 + 특수 카드 4장(참새 1, 개, 봉황, 용).</li></ul>
+    <h3>분배 · 선언 · 교환</h3><ul><li>8장을 먼저 보고 <b>그랜드 콜</b>(±200) 여부를 정한 뒤 나머지 6장을 받아요.</li><li>다음 사람·파트너·이전 사람에게 한 장씩 카드를 보내요.</li><li>첫 카드를 내기 전까지 <b>콜</b>(±100)을 선언할 수 있어요 — 1등으로 나가면 성공.</li></ul>
+    <h3>진행</h3><ul><li>참새를 가진 사람이 선. 앞 사람과 같은 종류·같은 장수의 더 높은 조합을 내거나 패스. 나머지가 모두 패스하면 마지막에 낸 사람이 트릭을 가져가고 선이 돼요.</li><li>조합: 싱글, 페어, 트리플, 풀하우스, 스트레이트(5장 이상), 연속 페어(2쌍 이상).</li><li><b>폭탄</b>(포카드, 5장 이상 스트레이트 플러시)은 무엇이든 이기고, 내 차례가 아니어도 언제든 낼 수 있어요.</li></ul>
+    <h3>특수 카드</h3><ul><li><b>참새(1)</b>: 가장 낮은 싱글, 스트레이트 시작 가능. 낼 때 <b>소원</b> 숫자를 말하면, 그 숫자를 가진 사람은 규칙상 낼 수 있을 때 반드시 내야 해요.</li><li><b>개</b>: 선일 때만 낼 수 있고, 선을 파트너에게 넘겨요.</li><li><b>봉황</b>(−25점): 조합에서 아무 숫자 대용(폭탄 제외). 싱글로는 직전 카드 +½, 용은 못 이겨요.</li><li><b>용</b>(25점): 가장 높은 싱글. 용으로 이긴 트릭은 상대 팀 한 명에게 줘야 해요.</li></ul>
+    <h3>점수</h3><ul><li>5 = 5점, 10·K = 10점, 용 25점, 봉황 −25점 (라운드당 합계 100점).</li><li>꼴찌는 손에 남은 카드를 상대 팀에, 먹은 트릭을 1등에게 줘요.</li><li>한 팀이 1·2등으로 나가면(<b>원투</b>) 그 팀 +200, 카드 점수는 세지 않아요.</li></ul></div>
+    <div class="row"><button class="btn gold" data-act="close">${L('확인', 'OK')}</button></div>`;
+}
+
+function setupModal(onStart) {
+  modalLock = 'setup';
+  let target = 1000;
+  const draw = () => showModal(`<h2>${L('드래곤 콜', 'Dragon Call')}</h2>
+    <p>${NET ? L('목표 점수를 정하고 게임을 시작하세요.', 'Choose the target score and start.') : L('나와 AI 파트너 vs AI 2명. 2:2 팀전 클라이밍 카드게임이에요.', 'You and an AI partner vs two AI. A 2-vs-2 team climbing card game.')}</p>
+    <div class="seg"><button class="btn ${target === 1000 ? 'on' : ''}" data-act="target" data-v="1000">1000${L('점 (정식)', ' (standard)')}</button><button class="btn ${target === 500 ? 'on' : ''}" data-act="target" data-v="500">500${L('점 (빠른 게임)', ' (quick)')}</button></div>
+    <div class="row"><button class="btn ghost" data-act="rules">${L('규칙 보기', 'Rules')}</button><button class="btn gold" data-act="start">${L('시작', 'Start')}</button></div>`, 'setup');
+  setupModal.state = { get target() { return target; }, set target(v) { target = v; draw(); }, onStart };
+  draw();
+}
+
+/* ───────── 로그 ───────── */
+function renderLog() {
+  const p = $('#logp');
+  if (p.hidden) return;
+  p.innerHTML = S.log.slice().reverse().map(x => `<div>${esc(x[EN ? 1 : 0])}</div>`).join('');
+}
+
+/* ───────── 입력 ───────── */
+document.addEventListener('click', ev => {
+  const cardEl = ev.target.closest('.hand .card');
+  if (cardEl && S) { onCard(+cardEl.dataset.c); return; }
+  const b = ev.target.closest('[data-act]');
+  if (!b) {
+    if (ev.target.id === 'modal' && modalLock && modalLock !== 'setup') hideModal();
+    return;
+  }
+  const a = b.dataset.act;
+  switch (a) {
+    case 'grand-yes': act({ t: 'grand', v: true }); break;
+    case 'grand-no': act({ t: 'grand', v: false }); break;
+    case 'call': callConfirm(); break;
+    case 'call-yes': hideModal(); act({ t: 'call' }); break;
+    case 'clear': sel.clear(); render(); break;
+    case 'pass': act({ t: 'pass' }); break;
+    case 'play': {
+      const cards = [...sel];
+      const chk = D.checkPlay(S, ME, cards);
+      if (chk.err) { toast(errText(chk.err)); break; }
+      if (cards.includes(MJ)) { wishModal(cards); break; }
+      act({ t: 'play', cards, wish: 0 });
+      break;
+    }
+    case 'wish': { const cards = wishModal.cards; hideModal(); act({ t: 'play', cards, wish: +b.dataset.r }); break; }
+    case 'dragon': hideModal(); lastModalKey = 'dragon-sent'; act({ t: 'dragon', to: +b.dataset.to }); break;
+    case 'slot': onSlot(+b.dataset.i); break;
+    case 'exch': if (xch.every(c => c !== null)) { const cards = xch.slice(); xch = [null, null, null]; xSel = null; act({ t: 'exch', cards }); } break;
+    case 'next': hideModal(); act({ t: 'next' }); break;
+    case 'newgame': hideModal(); startSolo(); break;
+    case 'close': {
+      if (rulesHTML.back) { const st = rulesHTML.back; rulesHTML.back = null; setupModal(st.onStart); setupModal.state.target = st.target; break; }
+      if (/^(roundEnd|over)/.test(lastModalKey)) dismissed = lastModalKey;
+      hideModal(); if (S) render(); break;
+    }
+    case 'rules': { const back = modalLock === 'setup' ? setupModal.state : null; modalLock = 'rules'; showModal(rulesHTML(), 'rules'); if (back) rulesHTML.back = back; break; }
+    case 'target': setupModal.state.target = +b.dataset.v; break;
+    case 'start': { const st = setupModal.state; hideModal(); st.onStart(st.target); break; }
+  }
+});
+
+function onCard(c) {
+  if (S.phase === 'pass' && !S.passSel[ME]) {
+    const i = xch.indexOf(c);
+    if (i >= 0) { xch[i] = null; xSel = null; }
+    else xSel = xSel === c ? null : c;
+    render();
+    return;
+  }
+  if (S.phase !== 'play' || S.out.includes(ME)) return;
+  if (sel.has(c)) sel.delete(c); else sel.add(c);
+  render();
+}
+
+function onSlot(i) {
+  if (xSel !== null) { const j = xch.indexOf(xSel); if (j >= 0) xch[j] = null; xch[i] = xSel; xSel = null; }
+  else if (xch[i] !== null) xch[i] = null;
+  render();
+}
+
+$('#bRules').addEventListener('click', () => { modalLock = 'rules'; showModal(rulesHTML(), 'rules'); });
+$('#bLog').addEventListener('click', () => { const p = $('#logp'); p.hidden = !p.hidden; if (S) renderLog(); });
+$('#bNew').addEventListener('click', () => { if (!NET) setupModal(t => startSolo(t)); });
+document.addEventListener('keydown', ev => {
+  if (!S || ev.target.closest('input,textarea')) return;
+  if (ev.key === 'Escape' && modalLock && modalLock !== 'setup') hideModal();
+});
+
+/* ───────── 시작 ───────── */
+function startSolo(target) {
+  NET = null;
+  ME = 0;
+  sel.clear(); xch = [null, null, null]; xSel = null; lastModalKey = '';
+  const names = [L('나', 'You'), 'AI 1', L('AI 파트너', 'AI Partner'), 'AI 3'];
+  S = D.newGame(names, [false, true, true, true], target || (S && S.target) || 1000);
+  changed();
+}
+
+// 포털(부모 창)에서 오는 메시지
+MGH.net.on(msg => {
+  if (msg.type === 'net:init') {
+    NET = { role: msg.role, offline: [] };
+    ME = msg.mySeat | 0;
+    hideModal();
+    const players = msg.players || [];
+    if (msg.role === 'host') {
+      if (msg.state) {
+        S = msg.state;
+        players.forEach((q, i) => { S.ai[i] = !!q.ai; if (q.name && !q.ai) S.names[i] = q.name; });
+        VER = (msg.ver | 0) + 1;
+        pushState.finished = S.phase === 'over';
+        changed();
+      } else {
+        renderEmpty.msg = L('게임 설정 중…', 'Setting up…');
+        render();
+        setupModal(target => {
+          S = D.newGame(players.map((q, i) => q.ai ? `AI ${i + 1}` : q.name), players.map(q => !!q.ai), target);
+          changed();
+        });
+      }
+    } else if (msg.state) {
+      S = msg.state; VER = msg.ver | 0; render();
+    } else {
+      renderEmpty.msg = L('방장이 게임을 준비하는 중…', 'The host is setting up the game…');
+      render();
+    }
+  } else if (msg.type === 'net:state') {
+    if (NET && NET.role === 'guest') { S = msg.state; VER = msg.ver | 0; waitSent = 0; render(); }
+  } else if (msg.type === 'net:intent') {
+    if (NET && NET.role === 'host' && S) applyIntent(msg.seat | 0, msg.intent || {});
+  } else if (msg.type === 'net:setAI') {
+    if (NET && NET.role === 'host' && S) { S.ai[msg.seat | 0] = !!msg.ai; changed(); }
+  } else if (msg.type === 'net:presence') {
+    if (NET) { NET.offline = msg.offline || []; if (S) render(); }
+  } else if (msg.type === 'net:requestState') {
+    if (NET && NET.role === 'host' && S) pushState(true);
+  }
+});
+
+// 검증용
+window.__dc = { get S() { return S; }, set S(v) { S = v; }, render, act, D, get ME() { return ME; } };
+
+if (new URLSearchParams(location.search).get('online') === '1') {
+  renderEmpty.msg = L('온라인 방에 연결하는 중…', 'Connecting to the room…');
+  $('#bNew').hidden = true;
+  render();
+  MGH.net.send({ type: 'net:ready' });
+} else {
+  renderEmpty.msg = '';
+  render();
+  setupModal(t => startSolo(t));
+}
+</script>
+</body>
+</html>

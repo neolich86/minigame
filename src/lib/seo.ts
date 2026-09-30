@@ -120,6 +120,48 @@ export const GAME_SEO: SeoMap = {
       tags: ["Board game", "Card game", "Online multiplayer", "vs AI", "Free"],
     },
   },
+  "dragon-call": {
+    ko: {
+      title: "드래곤 콜 - 무료 온라인 팀전 카드게임 · 친구와 4인 멀티플레이 클라이밍 카드게임",
+      h1: "드래곤 콜 — 2:2 팀전 온라인 카드게임",
+      description:
+        "파트너와 한 팀이 되어 콜을 선언하고, 카드를 교환하고, 폭탄으로 판을 뒤집는 무료 온라인 클라이밍 카드게임. 친구와 4인 온라인 대전을 하거나 AI 파트너와 바로 플레이하세요.",
+      keywords: ["카드게임", "온라인 카드게임", "팀전 카드게임", "4인 카드게임", "클라이밍 카드게임", "보드게임", "온라인 보드게임", "멀티플레이 카드게임", "boardgame", "드래곤 콜", "무료 카드게임"],
+      about: [
+        "드래곤 콜은 4명이 2:2로 팀을 이루어 겨루는 클라이밍 카드게임입니다. 앞 사람보다 높은 싱글·페어·트리플·풀하우스·스트레이트·연속 페어를 내며 손패를 먼저 털어내고, 가져온 트릭 속 5·10·K 카드로 점수를 모아 먼저 1,000점을 넘긴 팀이 승리해요.",
+        "첫 카드를 내기 전 ‘콜’(±100)이나 8장만 보고 ‘그랜드 콜’(±200)을 선언해 크게 역전할 수 있고, 포카드·스트레이트 플러시 폭탄은 차례가 아니어도 언제든 끼어들 수 있습니다. 소원을 비는 참새, 파트너에게 선을 넘기는 개, 만능 카드 봉황, 가장 강한 용까지 네 장의 특수 카드가 판을 흔들어요.",
+        "로그인하면 방 코드를 친구에게 보내 4인 온라인 대전을 하고, 빈 자리는 AI로 채울 수 있어요. 혼자라면 로그인 없이 AI 파트너와 함께 AI 2명과 바로 겨룰 수 있습니다.",
+      ],
+      howTo: [
+        "8장을 먼저 보고 그랜드 콜 여부를 정한 뒤 나머지 6장을 받습니다.",
+        "다음 사람·파트너·이전 사람에게 카드를 한 장씩 보냅니다.",
+        "참새(1)를 가진 사람부터 조합을 내고, 다음 사람은 같은 종류의 더 높은 조합을 내거나 패스합니다.",
+        "모두 패스하면 마지막에 낸 사람이 트릭을 가져가고 새로 선이 됩니다. 폭탄은 언제든 낼 수 있어요.",
+        "5는 5점, 10·K는 10점, 용 25점, 봉황 −25점. 한 팀이 1·2등으로 나가면 원투 200점!",
+      ],
+      tags: ["카드게임", "팀전", "온라인 대전", "멀티플레이", "AI 대전", "무료"],
+    },
+    en: {
+      title: "Dragon Call - Free Online Team Card Game · 4-Player Multiplayer Climbing Game",
+      h1: "Dragon Call — 2-vs-2 Online Team Card Game",
+      description:
+        "Team up with a partner, make calls, pass cards and turn the table with bombs in this free online climbing card game. Play 4-player online matches with friends, or jump in with an AI partner.",
+      keywords: ["card game", "online card game", "team card game", "4 player card game", "climbing card game", "partnership card game", "board game", "multiplayer card game", "Dragon Call", "free card game"],
+      about: [
+        "Dragon Call is a climbing card game for four players in two partnerships. Beat the table with higher singles, pairs, triples, full houses, straights or runs of pairs, shed your hand, and collect the 5s, 10s and Kings in your tricks. The first team past 1,000 points wins.",
+        "Before your first card you can make a Call (±100), or a Grand Call (±200) after seeing just 8 cards. Bombs — four of a kind or a straight flush — can interrupt at any moment. Four special cards shake things up: the wishing Sparrow, the Dog that hands the lead to your partner, the wild Phoenix and the mighty Dragon.",
+        "Sign in to create a room and invite friends for a 4-player online match — empty seats can be filled with AI. Or play right away with an AI partner against two AI opponents, no account needed.",
+      ],
+      howTo: [
+        "See your first 8 cards and decide on a Grand Call, then take the last 6.",
+        "Pass one card each to the next player, your partner and the previous player.",
+        "The Sparrow (1) holder leads; others must play a higher combo of the same type, or pass.",
+        "When everyone passes, the last player takes the trick and leads. Bombs can be played at any time.",
+        "5s score 5, 10s and Kings 10, Dragon 25, Phoenix −25. Partners going out 1st and 2nd score a 200-point one-two!",
+      ],
+      tags: ["Card game", "Team play", "Online multiplayer", "vs AI", "Free"],
+    },
+  },
   "random-td": {
     ko: {
       title: "랜덤 타워 디펜스 - 무료 방치형 타워디펜스 게임 (랜타디)",
@@ -320,7 +362,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
   ko: {
     heading: "어떤 게임이 있나요?",
     items: [
-      { title: "온라인 보드게임", text: "친구와 방을 만들어 실시간으로 즐기는 무료 온라인 보드게임. 빈 자리는 AI가 채워 주고, 혼자서도 AI와 바로 대결할 수 있어요.", games: ["catan", "lexio"] },
+      { title: "온라인 보드게임", text: "친구와 방을 만들어 실시간으로 즐기는 무료 온라인 보드게임. 빈 자리는 AI가 채워 주고, 혼자서도 AI와 바로 대결할 수 있어요.", games: ["catan", "lexio", "dragon-call"] },
       { title: "방치형 게임", text: "틀어두기만 해도 진행되는 방치형 타워디펜스와 자동 강화. 도달 라운드와 최고 레벨로 랭킹을 겨뤄보세요.", games: ["random-td", "weapon"] },
       { title: "뱀서 · 서바이벌", text: "몰려오는 몬스터 속에서 스킬을 골라 성장하는 뱀서류 서바이벌 로그라이크. 생존 시간 랭킹에 도전하세요.", games: ["archer"] },
       { title: "슈팅 · 타워디펜스", text: "아케이드 종스크롤 비행기 슈팅과 원소 조합 전략 타워디펜스.", games: ["raiden", "element-td"] },
@@ -331,7 +373,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
   en: {
     heading: "What can you play?",
     items: [
-      { title: "Online board games", text: "Free online board games to play live with friends. AI fills empty seats, and you can always play solo against AI.", games: ["catan", "lexio"] },
+      { title: "Online board games", text: "Free online board games to play live with friends. AI fills empty seats, and you can always play solo against AI.", games: ["catan", "lexio", "dragon-call"] },
       { title: "Idle games", text: "Idle tower defense and auto-enhance games that keep going on their own. Compete on round and level leaderboards.", games: ["random-td", "weapon"] },
       { title: "Survivor-like · Survival", text: "A survivor-like roguelite — grow your skills amid endless hordes and chase the survival-time leaderboard.", games: ["archer"] },
       { title: "Shooter · Tower defense", text: "An arcade vertical shooter and an elemental strategy tower defense.", games: ["raiden", "element-td"] },

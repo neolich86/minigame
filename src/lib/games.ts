@@ -25,6 +25,12 @@ export interface Game {
   boards?: Board[];
   /** 로그인 사용자끼리 온라인 대전 가능 (포털 내 방 시스템) */
   online?: boolean;
+  /** 온라인 방에서 고를 수 있는 인원 (기본 2·3·4) */
+  onlinePlayers?: number[];
+  /** 좌석 색 (팀전이면 같은 팀끼리 같은 색) */
+  seatColors?: string[];
+  /** 2:2 팀전 — 좌석 0·2 vs 1·3 */
+  teams?: boolean;
 }
 
 export const GAMES: Game[] = [
@@ -51,6 +57,21 @@ export const GAMES: Game[] = [
     thumb: "/thumbs/lexio.jpg",
     src: "/games/lexio/index.html",
     online: true,
+  },
+  {
+    id: "dragon-call",
+    title: { ko: "드래곤 콜", en: "Dragon Call" },
+    desc: {
+      ko: "2:2 팀전 클라이밍 카드게임. 콜 선언·카드 교환·폭탄, 용과 봉황으로 1000점을 먼저 넘기면 승리. 친구와 온라인 대전 또는 AI와 대결",
+      en: "A 2-vs-2 team climbing card game — calls, card passing, bombs, the Dragon and the Phoenix. First team to 1,000 wins. Play online with friends or against AI",
+    },
+    genre: "board",
+    thumb: "/thumbs/dragon-call.jpg",
+    src: "/games/dragon-call/index.html",
+    online: true,
+    onlinePlayers: [4],
+    seatColors: ["#e0573e", "#3d8bd9", "#e0573e", "#3d8bd9"],
+    teams: true,
   },
   {
     id: "world-typing",
