@@ -45,6 +45,14 @@ button{font:inherit;cursor:pointer}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--paper)}
 .seg button{border:0;background:none;color:var(--muted);padding:5px 12px;border-radius:999px;font-size:12.5px}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.connect{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.connect p{margin:0;font-size:13.5px}
+.connect small{color:var(--muted);font-size:12px;line-height:1.5}
+.connect .err{color:#D6334A;font-weight:600}
+.ig-btn{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--ink);color:var(--bg);text-decoration:none;border-radius:10px;padding:12px;font-weight:700;font-size:14.5px;border:0;width:100%}
+.connect .row{display:flex;gap:8px;flex-wrap:wrap}
+.connect .row button{flex:1;background:none;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:9px;font-size:13px}
+.avatar img{width:46px;height:46px;border-radius:50%;object-fit:cover}
 .sample{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center}
 .sample i{font-style:normal;font-family:var(--f-mono);font-size:10.5px;border:1px dashed var(--muted);padding:1px 6px;border-radius:4px}
 
@@ -171,14 +179,21 @@ button{font:inherit;cursor:pointer}
       <button id="v-friend" aria-pressed="false">친구 화면</button>
     </div>
   </div>
-  <div class="sample"><i>PREVIEW</i> 정식 오픈 준비 중이에요. 지금은 가상 계정 샘플로 결과 화면을 미리 볼 수 있어요.</div>
+  <div class="sample" id="sampleTag"><i>SAMPLE</i> 지금 보이는 화면은 가상 계정 샘플이에요.</div>
+  <section class="connect" id="connect">
+    <p id="connectMsg">내 인스타 계정으로 올해 BEST 9을 만들어 보세요.</p>
+    <p class="err" id="connectErr" hidden></p>
+    <a class="ig-btn" id="igLogin" href="/api/mypost/login" target="_top">Instagram으로 내 리포트 만들기</a>
+    <div class="row" id="realRow" hidden><button id="bReload">다시 불러오기</button><button id="bSample">샘플 보기</button></div>
+    <small id="connectNote">프로페셔널(크리에이터·비즈니스) 계정만 가능해요. 지금은 개발 단계라 테스터로 등록된 계정만 로그인됩니다. 게시물 데이터는 서버에 저장하지 않아요.</small>
+  </section>
 
-  <div class="friend-banner" id="friendBanner" hidden><strong>@sample.feed</strong> 님이 2026년 피드를 분석해 공유했어요. 내 계정도 1분이면 만들 수 있어요.</div>
+  <div class="friend-banner" id="friendBanner" hidden><strong class="uname">@sample.feed</strong> 님이 2026년 피드를 분석해 공유했어요. 내 계정도 1분이면 만들 수 있어요.</div>
 
   <div class="profile">
-    <div class="avatar"><span>S</span></div>
+    <div class="avatar" id="avatar"><span>S</span></div>
     <div>
-      <h1>@sample.feed</h1>
+      <h1 id="uname">@sample.feed</h1>
       <p class="num" id="period"></p>
     </div>
   </div>
@@ -283,6 +298,16 @@ MONTH_POSTS.forEach((n,m)=>{for(let k=0;k<n;k++){
 Object.assign(posts.find(p=>p.m===7&&p.format==='REELS')||posts[100],{like_count:12421,comments_count:388,day:14,hr:21,dow:new Date(Date.UTC(2026,7,14)).getUTCDay(),format:'REELS'});
 posts[5].like_count=null;posts[60].like_count=null;
 
+/* ---------- real data (set by /api/mypost/callback, same-origin sessionStorage) ---------- */
+let REAL=null, LOAD_MSG='';
+try{const raw=sessionStorage.getItem('mypost:data');if(raw)REAL=JSON.parse(raw)}catch(e){}
+let DATA=posts, lastMonth=8, USER={u:'sample.feed',pic:null};
+if(REAL&&REAL.v===1){
+  const mapped=REAL.posts.map((x,i)=>{const d=new Date(x.t+9*3600e3);return{id:i+1,m:d.getUTCMonth(),day:d.getUTCDate(),hr:d.getUTCHours(),dow:d.getUTCDay(),format:x.f,like_count:x.l,comments_count:x.c||0,hue:(i*47)%360,tags:x.tags||[],img:x.img,url:x.url}});
+  if(!mapped.length) LOAD_MSG='@'+REAL.u+' 계정은 올해 올린 게시물이 아직 없어요. 샘플 화면을 보여드릴게요.';
+  else if(!mapped.some(p=>p.like_count!=null)) LOAD_MSG='올해 게시물의 좋아요 수를 읽을 수 없었어요. 좋아요 숨김 설정을 확인해 주세요.';
+  else{DATA=mapped;USER={u:REAL.u,pic:REAL.pic};lastMonth=new Date(REAL.at+9*3600e3).getUTCMonth()}
+}
 /* ---------- report computation (mirrors lib/report.ts) ---------- */
 function buildReport(all){
   const counted=all.filter(p=>p.like_count!=null);
@@ -315,7 +340,8 @@ function buildReport(all){
   else {title='피드 큐레이터';why='골고루 잘 채운 한 해였어요.'}
   return{posts:all.length,counted:counted.length,hidden,total,comments,avg,best9:sorted.slice(0,9),best:sorted[0],byMonth,topMonth,busyMonth,fmts,heat,gold,tags,title,why};
 }
-const rep=buildReport(posts);
+const rep=buildReport(DATA);
+const IS_REAL=DATA!==posts;
 
 /* ---------- render ---------- */
 const $=id=>document.getElementById(id);
@@ -325,15 +351,32 @@ const EN=['January','February','March','April','May','June','July','August','Sep
 const DOW=['일','월','화','수','목','금','토'];
 const SLOT=['아침','낮','저녁','밤'];
 const FMTK={IMAGE:'사진',CAROUSEL:'캐러셀',REELS:'릴스'};
-const ph=p=>`background:radial-gradient(circle at ${30+p.hue%40}% ${25+p.hue%30}%,hsl(${(p.hue+40)%360} 90% 78% / .9) 0 18%,transparent 19%),linear-gradient(${135+p.hue%90}deg,hsl(${p.hue} 62% 58%),hsl(${(p.hue+50)%360} 55% 32%))`;
+const ph=p=>p.img?`background:#333 url('${String(p.img).replace(/['"\\() ]/g,c=>'%'+c.charCodeAt(0).toString(16).padStart(2,'0'))}') center/cover no-repeat`:`background:radial-gradient(circle at ${30+p.hue%40}% ${25+p.hue%30}%,hsl(${(p.hue+40)%360} 90% 78% / .9) 0 18%,transparent 19%),linear-gradient(${135+p.hue%90}deg,hsl(${p.hue} 62% 58%),hsl(${(p.hue+50)%360} 55% 32%))`;
 
-$('period').textContent='2026.01.01 – 2026.09.30 · 게시물 '+rep.posts+'개';
+const pad=n=>String(n).padStart(2,'0');
+const endLabel=IS_REAL?(()=>{const d=new Date(REAL.at+9*3600e3);return `${d.getUTCFullYear()}.${pad(d.getUTCMonth()+1)}.${pad(d.getUTCDate())}`})():'2026.09.30';
+$('period').textContent='2026.01.01 – '+endLabel+' · 게시물 '+rep.posts+'개';
+document.querySelectorAll('.uname').forEach(e=>e.textContent='@'+USER.u);$('uname').textContent='@'+USER.u;
+if(USER.pic){const im=document.createElement('img');im.src=USER.pic;im.alt='';im.referrerPolicy='no-referrer';$('avatar').innerHTML='';$('avatar').append(im)}
+else $('avatar').querySelector('span').textContent=USER.u[0].toUpperCase();
+const ERRS={config:'로그인 설정이 아직 끝나지 않았어요. 잠시 후 다시 시도해 주세요.',denied:'인스타그램 로그인을 취소했어요.',state:'로그인 시간이 지났어요. 다시 시도해 주세요.',fetch:'게시물을 불러오지 못했어요. 프로페셔널 계정인지, 테스터 초대를 수락했는지 확인해 주세요.'};
+let errCode=null;try{errCode=new URLSearchParams((window.top||window).location.search).get('mypost_error')}catch(e){}
+if(errCode){$('connectErr').textContent=ERRS[errCode]||'로그인 중 문제가 생겼어요. 다시 시도해 주세요.';$('connectErr').hidden=false}
+if(LOAD_MSG){$('connectErr').textContent=LOAD_MSG;$('connectErr').hidden=false}
+if(IS_REAL){
+  $('sampleTag').hidden=true;
+  $('connectMsg').textContent='@'+USER.u+' 계정의 실제 데이터로 만든 리포트예요.';
+  $('igLogin').hidden=true;$('realRow').hidden=false;
+  $('connectNote').textContent='데이터는 이 브라우저 탭에만 있고 서버에는 저장하지 않아요. 탭을 닫으면 사라집니다.';
+}
+$('bReload').onclick=()=>{(window.top||window).location.href='/api/mypost/login'};
+$('bSample').onclick=()=>{try{sessionStorage.removeItem('mypost:data')}catch(e){}location.reload()};
 $('title').textContent=rep.title;
 $('titleWhy').textContent=rep.why;
 
-$('grid9').innerHTML=rep.best9.map((p,i)=>`<a class="tile${i===0?' first':''}" href="#" aria-label="${i+1}위, 좋아요 ${fmt(p.like_count)}개" style="animation-delay:${i*70}ms"><div class="ph" style="${ph(p)}"></div>${p.format!=='IMAGE'?`<span class="fmt">${FMTK[p.format]}</span>`:''}<span class="likes num">♥ ${fmt(p.like_count)}</span></a>`).join('');
+$('grid9').innerHTML=rep.best9.map((p,i)=>`<a class="tile${i===0?' first':''}" href="${p.url||'#'}" target="_blank" rel="noopener" aria-label="${i+1}위, 좋아요 ${fmt(p.like_count)}개" style="animation-delay:${i*70}ms"><div class="ph" style="${ph(p)}"></div>${p.format!=='IMAGE'?`<span class="fmt">${FMTK[p.format]}</span>`:''}<span class="likes num">♥ ${fmt(p.like_count)}</span></a>`).join('');
 $('edge').innerHTML=rep.best9.map((p,i)=>`<span><b>${String(i+1).padStart(2,'0')}A</b><em>${p.m+1}.${p.day}</em></span>`).join('');
-$('grid9').addEventListener('click',e=>{if(e.target.closest('.tile'))e.preventDefault()});
+$('grid9').addEventListener('click',e=>{const a=e.target.closest('.tile');if(a&&a.getAttribute('href')==='#')e.preventDefault()});
 
 const b=rep.best;
 $('bestThumb').setAttribute('style',ph(b));
@@ -359,7 +402,7 @@ $('sAvgSub').textContent=`게시물 1개당`;
   for(let g=step;g<=top;g+=step){s+=`<line class="grid" x1="${L}" x2="${W-Rp}" y1="${y(g)}" y2="${y(g)}"/><text x="${W-Rp}" y="${y(g)-3}" text-anchor="end">${g/1000}k</text>`}
   rep.byMonth.forEach((v,i)=>{
     const x=L+i*cw+(cw-bw)/2;
-    if(i>8){s+=`<rect class="future" x="${x}" y="${H-B-24}" width="${bw}" height="24" rx="3"/>`}
+    if(i>lastMonth){s+=`<rect class="future" x="${x}" y="${H-B-24}" width="${bw}" height="24" rx="3"/>`}
     else{const h=H-B-y(v.likes);s+=`<rect class="b${i===rep.topMonth?' top':''}" x="${x}" y="${y(v.likes)}" width="${bw}" height="${h}" rx="3"/>`;
       if(i===rep.topMonth)s+=`<text class="val" x="${x+bw/2}" y="${y(v.likes)-5}" text-anchor="middle">${fmt(v.likes)}</text>`}
     s+=`<text x="${x+bw/2}" y="${H-8}" text-anchor="middle">${i+1}</text>`;
@@ -387,7 +430,7 @@ $('hiddenNote').textContent=rep.hidden?`좋아요를 숨긴 게시물 ${rep.hidd
 $('slipLine').textContent=`${rep.posts}개의 게시물, ${fmt(rep.total)}개의 좋아요. 올해의 타이틀은 “${rep.title}”.`;
 
 // story preview
-$('story').innerHTML=`<div class="t">MY POST <b>2026</b></div><div class="u">@sample.feed · 2026.01 – 09</div><div class="tt">${rep.title}</div>
+$('story').innerHTML=`<div class="t">MY POST <b>2026</b></div><div class="u">@${USER.u} · 2026.01 – ${pad(lastMonth+1)}</div><div class="tt">${rep.title}</div>
 <div class="g">${rep.best9.map(p=>`<div style="${ph(p)}"></div>`).join('')}</div>
 <div class="ss"><div><span class="label">BEST</span><strong class="num">${fmt(rep.best.like_count)}</strong></div><div><span class="label">TOTAL</span><strong class="num">${fmt(rep.total)}</strong></div><div><span class="label">TOP MONTH</span><strong>${EN[rep.topMonth].slice(0,3).toUpperCase()}</strong></div></div>
 <div class="foot">나도 만들기 → minigame-on.vercel.app</div>`;
@@ -406,7 +449,7 @@ $('bCopy').onclick=()=>{const t='내 인스타 2026년을 분석해봤습니다 
   const p=navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject();p.then(()=>toast('공유 문구를 복사했어요.')).catch(()=>toast(t))};
 $('bKakao').onclick=()=>toast('실제 서비스에서는 카카오톡 공유 창이 열리고, BEST 9 미리보기 카드가 함께 전송됩니다.');
 $('bDel').onclick=()=>toast('실제 서비스에서는 확인 후 리포트와 저장된 썸네일을 모두 삭제합니다.');
-$('bMake').onclick=()=>{setView(false);window.scrollTo({top:0,behavior:'smooth'});toast('정식 오픈 후 인스타그램 로그인으로 내 리포트를 만들 수 있어요. 지금 보이는 화면은 샘플이에요.')};
+$('bMake').onclick=()=>{(window.top||window).location.href='/api/mypost/login'};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)$('modal').hidden=true});
 </script>
 
