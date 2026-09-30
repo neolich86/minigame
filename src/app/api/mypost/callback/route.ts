@@ -3,8 +3,12 @@ import { MYPOST_STATE_COOKIE, exchangeCode, fetchMyPostData, mypostConfig } from
 
 export const maxDuration = 60;
 
-function back(request: NextRequest, error: string) {
-  const res = NextResponse.redirect(new URL(`/play/my-post-2026?mypost_error=${error}`, request.url));
+function back(request: NextRequest, error: string, detail?: string) {
+  const u = new URL("/play/my-post-2026", request.url);
+  u.searchParams.set("mypost_error", error);
+  // 메타가 돌려준 오류 문구 (토큰·시크릿은 들어있지 않다) — 원인 파악용으로 화면에 작게 보여준다
+  if (detail) u.searchParams.set("mypost_detail", detail.slice(0, 200));
+  const res = NextResponse.redirect(u);
   res.cookies.delete({ name: MYPOST_STATE_COOKIE, path: "/api/mypost" });
   return res;
 }
@@ -25,8 +29,9 @@ export async function GET(request: NextRequest) {
     const token = await exchangeCode(appId, appSecret, redirectUri, code);
     data = await fetchMyPostData(token);
   } catch (e) {
-    console.error("[mypost]", e instanceof Error ? e.message : e);
-    return back(request, "fetch");
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("[mypost]", msg);
+    return back(request, "fetch", msg);
   }
 
   // 리포트 페이지(같은 출처의 iframe)가 sessionStorage 에서 읽는다 — 서버에는 아무것도 남기지 않는다

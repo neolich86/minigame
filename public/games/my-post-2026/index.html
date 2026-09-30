@@ -361,7 +361,8 @@ if(USER.pic){const im=document.createElement('img');im.src=USER.pic;im.alt='';im
 else $('avatar').querySelector('span').textContent=USER.u[0].toUpperCase();
 const ERRS={config:'로그인 설정이 아직 끝나지 않았어요. 잠시 후 다시 시도해 주세요.',denied:'인스타그램 로그인을 취소했어요.',state:'로그인 시간이 지났어요. 다시 시도해 주세요.',fetch:'게시물을 불러오지 못했어요. 프로페셔널 계정인지, 테스터 초대를 수락했는지 확인해 주세요.'};
 let errCode=null;try{errCode=new URLSearchParams((window.top||window).location.search).get('mypost_error')}catch(e){}
-if(errCode){$('connectErr').textContent=ERRS[errCode]||'로그인 중 문제가 생겼어요. 다시 시도해 주세요.';$('connectErr').hidden=false}
+let errDetail=null;try{errDetail=new URLSearchParams((window.top||window).location.search).get('mypost_detail')}catch(e){}
+if(errCode){$('connectErr').textContent=(ERRS[errCode]||'로그인 중 문제가 생겼어요. 다시 시도해 주세요.')+(errDetail?' [상세: '+errDetail+']':'');$('connectErr').hidden=false}
 if(LOAD_MSG){$('connectErr').textContent=LOAD_MSG;$('connectErr').hidden=false}
 if(IS_REAL){
   $('sampleTag').hidden=true;
