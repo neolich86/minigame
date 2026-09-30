@@ -110,7 +110,7 @@ export async function reportImage(d: MyPostData, slug: string, kind: "og" | "sto
 
   return new ImageResponse(
     (
-      <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", background: INK, padding: "110px 40px 80px", gap: 30, ...ff }}>
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", width: "100%", height: "100%", background: INK, padding: "80px 40px", gap: 30, ...ff }}>
         <div style={{ display: "flex", fontSize: 96, color: "#fff", lineHeight: 1 }}>
           MY POST&nbsp;<span style={{ color: BLUE }}>{d.year}</span>
         </div>
@@ -121,12 +121,12 @@ export async function reportImage(d: MyPostData, slug: string, kind: "og" | "sto
           </div>
         )}
         <Grid best={best} size={328} gap={8} />
-        <div style={{ display: "flex", gap: 16, marginTop: "auto" }}>
+        <div style={{ display: "flex", gap: 16, marginTop: 10 }}>
           <Stat label="BEST" value={fmt(s.best[0]?.l ?? 0)} w={322} big={60} />
           <Stat label="TOTAL LIKES" value={fmt(s.total)} w={322} big={60} />
           <Stat label="TOP MONTH" value={top} w={322} big={60} />
         </div>
-        <div style={{ display: "flex", justifyContent: "center", fontSize: 30, color: MUTED }}>{ko ? `나도 만들기 → ${link}` : `MAKE YOURS → ${link}`}</div>
+        <div style={{ display: "flex", justifyContent: "center", fontSize: 30, color: MUTED, marginTop: 30 }}>{ko ? `나도 만들기 → ${link}` : `MAKE YOURS → ${link}`}</div>
       </div>
     ),
     { width: 1080, height: 1920, fonts },
