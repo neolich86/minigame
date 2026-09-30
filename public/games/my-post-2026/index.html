@@ -457,7 +457,7 @@ $('slipLine').textContent=`${rep.posts}개의 게시물, ${fmt(rep.total)}개의
 $('story').innerHTML=`<div class="t">MY POST <b>2026</b></div><div class="u">@${USER.u} · 2026.01 – ${pad(lastMonth+1)}</div><div class="tt">${rep.title}</div>
 <div class="g">${rep.best9.map(p=>`<div style="${ph(p)}"></div>`).join('')}</div>
 <div class="ss"><div><span class="label">BEST</span><strong class="num">${fmt(rep.best.like_count)}</strong></div><div><span class="label">TOTAL</span><strong class="num">${fmt(rep.total)}</strong></div><div><span class="label">TOP MONTH</span><strong>${EN[rep.topMonth].slice(0,3).toUpperCase()}</strong></div></div>
-<div class="foot">나도 만들기 → minigame-on.vercel.app</div>`;
+<div class="foot">나도 만들기 → https://minigame-on.vercel.app/play/my-post-2026</div>`;
 
 /* ---------- interactions ---------- */
 function setView(friend){

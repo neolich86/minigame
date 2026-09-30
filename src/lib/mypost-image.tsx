@@ -69,7 +69,9 @@ export async function reportImage(d: MyPostData, slug: string, kind: "og" | "sto
   const s = summarize(d);
   const period = `${d.year}.01 – ${String(s.lastMonth + 1).padStart(2, "0")}`;
   const top = MONTH_EN[s.topMonth].slice(0, 3).toUpperCase();
-  const link = `minigame-on.vercel.app/r/${slug}`;
+  // 스토리를 본 친구가 직접 입력해 들어올 주소 — 샘플·로그인 버튼이 있는 시작 페이지
+  const link = "https://minigame-on.vercel.app/play/my-post-2026";
+  void slug;
   const texts = ["MY POST", String(d.year), `@${d.u}`, period, s.title, "BEST", "TOTAL LIKES", "POSTS", "TOP MONTH", top, fmt(s.best[0]?.l ?? 0), fmt(s.total), String(s.posts), "나도 만들기 →", link, "올해의 타이틀", "BEST 9"].join("");
   const tile = kind === "og" ? 172 : 328;
   const [font, imgs] = await Promise.all([loadFont(texts), Promise.all(s.best.map((p) => toJpegDataUri(p.img, tile)))]);
@@ -126,7 +128,7 @@ export async function reportImage(d: MyPostData, slug: string, kind: "og" | "sto
           <Stat label="TOTAL LIKES" value={fmt(s.total)} w={322} big={60} />
           <Stat label="TOP MONTH" value={top} w={322} big={60} />
         </div>
-        <div style={{ display: "flex", justifyContent: "center", fontSize: 30, color: MUTED, marginTop: 30 }}>{ko ? `나도 만들기 → ${link}` : `MAKE YOURS → ${link}`}</div>
+        <div style={{ display: "flex", justifyContent: "center", fontSize: 28, color: MUTED, marginTop: 30 }}>{ko ? `나도 만들기 → ${link}` : `MAKE YOURS → ${link}`}</div>
       </div>
     ),
     { width: 1080, height: 1920, fonts },
