@@ -115,3 +115,19 @@ export async function fetchMyPostData(token: string): Promise<MyPostData> {
   }
   return { v: 1, u: me.username, pic: me.profile_picture_url, followers: me.followers_count, year, at: Date.now(), posts };
 }
+
+/** 메타가 보내는 signed_request 검증 (앱 시크릿 HMAC-SHA256). 성공하면 payload 를 돌려준다. */
+export async function parseSignedRequest(signed: string, appSecret: string): Promise<Record<string, unknown> | null> {
+  const [sig, payload] = signed.split(".");
+  if (!sig || !payload) return null;
+  const b64 = (s: string) => s.replace(/-/g, "+").replace(/_/g, "/");
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(appSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload)));
+  const expected = Buffer.from(mac).toString("base64").replace(/=+$/, "");
+  if (expected !== b64(sig).replace(/=+$/, "")) return null;
+  try {
+    return JSON.parse(Buffer.from(b64(payload), "base64").toString("utf8"));
+  } catch {
+    return null;
+  }
+}
