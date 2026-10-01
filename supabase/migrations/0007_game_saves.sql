@@ -1,4 +1,4 @@
--- 게임별 사용자 저장 데이터 (발자국 지도 등) — 로그인한 사용자의 진행 상황을 계정에 보관
+-- 게임별 사용자 저장 데이터 (Passport Map 등) — 로그인한 사용자의 진행 상황을 계정에 보관
 -- SQL Editor에 붙여 넣고 Run (여러 번 실행해도 안전)
 -- 브라우저(anon 키 + 로그인 세션)에서 직접 읽고 쓰며, RLS로 본인 데이터만 접근할 수 있다.
 
@@ -29,7 +29,7 @@ drop policy if exists "game_saves own delete" on public.game_saves;
 create policy "game_saves own delete" on public.game_saves
   for delete to authenticated using (user_id = auth.uid());
 
--- 게임 첨부 파일 (발자국 지도 사진) — 비공개 버킷, 경로 = <user_id>/<game_id>/<파일>
+-- 게임 첨부 파일 (Passport Map 사진) — 비공개 버킷, 경로 = <user_id>/<game_id>/<파일>
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('game-files', 'game-files', false, 3145728, array['image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do update set public = false, file_size_limit = 3145728,

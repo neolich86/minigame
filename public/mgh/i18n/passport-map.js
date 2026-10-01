@@ -1,10 +1,8 @@
-/* 발자국 지도 — 영어 사전 (나라·도시 이름은 게임이 직접 영어로 표시) */
+/* Passport Map — 영어 사전 (나라·도시 이름은 게임이 직접 영어로 표시) */
 (function () {
   var COLORS = { "블루": "Blue", "하늘": "Sky", "민트": "Mint", "초록": "Green", "노랑": "Yellow", "주황": "Orange", "빨강": "Red", "분홍": "Pink", "보라": "Purple", "갈색": "Brown", "다른": "Custom" };
   MGH.dict({
     exact: {
-      "발자국 지도": "Footprint Map",
-      "나의 발자국 지도": "My Footprint Map",
       "세계지도": "World map",
       "나라": "Countries", "도시": "Cities", "세계": "World",
       "나라·도시 검색 (예: 파리, Japan)": "Search countries & cities (e.g. Paris, 일본)",
@@ -63,7 +61,7 @@
       "이미지를 복사했어요. SNS 글쓰기 창에 붙여넣으세요.": "Image copied. Paste it into your post.",
       "이 브라우저에서는 이미지 복사가 막혀 있어요. ‘이미지 저장’을 이용해 주세요.": "This browser blocks copying images. Try “Save image”.",
       "링크를 복사했어요.": "Link copied.",
-      "인스타그램·카카오톡에는 이미지를 저장한 뒤 앱에서 올려 주세요. 링크를 받은 친구는 바로 자기 발자국 지도를 만들 수 있어요.": "For Instagram or KakaoTalk, save the image and post it from the app. Friends who open the link can start their own Footprint Map.",
+      "인스타그램·카카오톡에는 이미지를 저장한 뒤 앱에서 올려 주세요. 링크를 받은 친구는 바로 자기 Passport Map을 만들 수 있어요.": "For Instagram or KakaoTalk, save the image and post it from the app. Friends who open the link can start their own Passport Map.",
       "개 나라를 다녀왔어요": "countries visited", "개 나라": "countries", "곳의 도시": "cities", "세계 나라 중": "of the world's countries",
     },
     patterns: [
