@@ -3,6 +3,8 @@
  *     덮어써서 따라오게 하고, 한국어 전용 게임은 사전(/mgh/i18n/<game>.js)으로 화면·캔버스 글자를 번역한다.
  *  2) 랭킹: MGH.submitScore(board, score, meta) → 포털(부모 창)이 로그인 사용자 기록으로 등록.
  *  3) 온라인: MGH.net.send / MGH.net.on — 포털 방 화면과 메시지를 주고받는다 (카탄 멀티플레이).
+ *  4) 저장: MGH.save — 로그인 사용자의 게임 데이터·첨부 파일을 계정에 보관 (games.ts 의 saves: true 게임).
+ *     onAuth(fn) 으로 로그인 상태({id, name} 또는 null)를 받고, load/store/putFile/deleteFiles/urls 는 Promise.
  */
 (function () {
   "use strict";
@@ -165,6 +167,7 @@
 
   /* ───────────── 포털 통신 ───────────── */
   var netHandlers = [];
+  var saveReqs = {}, saveSeq = 0, authFns = [], authState; // authState: undefined = 아직 모름
   function toParent(msg) {
     if (!embedded) return false;
     msg.mgh = 1;
@@ -181,12 +184,42 @@
       location.replace(u.toString());
       return;
     }
+    if (d.type === "save:res" && saveReqs[d.id]) {
+      var rq = saveReqs[d.id];
+      delete saveReqs[d.id];
+      if (d.ok) rq.res(d.result);
+      else rq.rej(new Error(d.error || "save_failed"));
+      return;
+    }
+    if (d.type === "save:auth") {
+      authState = d.user || null;
+      for (var a = 0; a < authFns.length; a++) {
+        try { authFns[a](authState, d); } catch (e) { console.error(e); }
+      }
+      return;
+    }
     if (typeof d.type === "string" && d.type.indexOf("net:") === 0) {
       for (var i = 0; i < netHandlers.length; i++) {
         try { netHandlers[i](d); } catch (e) { console.error(e); }
       }
     }
   });
+
+  function saveCall(op, args) {
+    return new Promise(function (res, rej) {
+      if (!embedded) { rej(new Error("standalone")); return; }
+      var id = ++saveSeq;
+      saveReqs[id] = { res: res, rej: rej };
+      if (!toParent({ type: "save:req", id: id, op: op, args: args || {} })) {
+        delete saveReqs[id];
+        rej(new Error("no_portal"));
+        return;
+      }
+      setTimeout(function () {
+        if (saveReqs[id]) { delete saveReqs[id]; rej(new Error("timeout")); }
+      }, 90000);
+    });
+  }
 
   var sessionBest = {};
   var timers = {};
@@ -221,6 +254,18 @@
         clearTimeout(timers[board]);
         timers[board] = setTimeout(send, wait);
       } else send();
+    },
+    save: {
+      /** 로그인 상태가 정해지거나 바뀔 때마다 fn(user|null). 포털 밖(단독 실행)에서는 호출되지 않는다. */
+      onAuth: function (fn) { authFns.push(fn); if (authState !== undefined) fn(authState, { cloud: true }); },
+      user: function () { return authState; },
+      load: function () { return saveCall("load"); },
+      store: function (data) { return saveCall("store", { data: data }); },
+      putFile: function (name, blob) { return saveCall("putFile", { name: name, blob: blob }); },
+      deleteFiles: function (names) { return saveCall("deleteFiles", { names: names }); },
+      urls: function (names) { return saveCall("urls", { names: names }); },
+      /** 포털 로그인 화면으로 이동 (로그인 후 이 게임으로 돌아온다) */
+      login: function () { toParent({ type: "save:login" }); },
     },
     net: {
       send: function (msg) { return toParent(msg); },

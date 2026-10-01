@@ -295,6 +295,26 @@ export const GAME_SEO: SeoMap = {
       tags: ["Roulette", "Pinball", "Random picker", "Free"],
     },
   },
+  "footprint-map": {
+    ko: {
+      title: "발자국 지도 - 다녀온 나라 색칠하기 · 세계 여행 지도 만들기",
+      h1: "발자국 지도 — 다녀온 나라와 도시를 색칠하는 여행 지도",
+      description: "세계지도에서 다녀온 나라를 원하는 색으로 칠하고, 도시에 핀을 꽂고, 장소마다 여행 사진 1장을 남기는 무료 여행 지도. 로그인하면 계정에 저장되고 인스타·X용 공유 이미지도 만들 수 있어요.",
+      keywords: ["여행 지도", "다녀온 나라", "세계지도 색칠", "여행 기록", "방문 국가", "세계 여행 지도", "여행 사진 지도", "visited countries"],
+      about: ["발자국 지도는 세계지도 위에 다녀온 나라를 색칠하고, 도시마다 핀을 찍어 나만의 여행 지도를 만드는 서비스입니다. 나라와 도시마다 사진 1장과 한 줄 메모를 남기면 지도에 마우스를 올렸을 때 사진이 떠요.", "다녀온 나라 수·도시 수·세계 몇 %를 다녀왔는지 한눈에 보이고, 정사각·세로·가로 비율의 공유 이미지로 SNS에 올릴 수 있어요. 로그인하면 어느 기기에서든 같은 지도를 이어서 볼 수 있습니다."],
+      howTo: ["지도에서 나라를 누르고 팔레트에서 색을 골라 칠합니다.", "추천 도시를 누르거나 [핀 찍기]로 다녀온 곳을 표시합니다.", "사진 1장과 메모를 올리고 [공유]로 이미지를 저장하세요."],
+      tags: ["여행", "세계지도", "여행 기록", "무료"],
+    },
+    en: {
+      title: "Footprint Map - Color the Countries You've Visited on a World Map",
+      h1: "Footprint Map — Your Visited Countries & Cities on One Map",
+      description: "Color the countries you've visited in any color, pin your cities and add one travel photo to each place. Log in to keep your map in your account and create a share image for Instagram or X. Free.",
+      keywords: ["visited countries map", "travel map", "countries I've been to", "scratch map", "world travel map", "travel tracker", "travel photo map"],
+      about: ["Footprint Map lets you color in the countries you've visited and drop pins on cities to build your own travel map. Add one photo and a short note to each place, and the photo pops up when you hover over it.", "See how many countries and cities you've been to and what share of the world that is, then export a square, portrait or landscape share image. Log in to pick up the same map on any device."],
+      howTo: ["Click a country and pick a color from the palette.", "Add suggested cities or use Drop pin to mark any place.", "Add a photo and note, then tap Share to save your image."],
+      tags: ["Travel", "World map", "Travel log", "Free"],
+    },
+  },
   "my-post-2026": {
     ko: {
       title: "My Post 2026 - 올해의 베스트 나인 · 인스타 연말 결산 리포트",

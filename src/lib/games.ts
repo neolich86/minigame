@@ -31,6 +31,8 @@ export interface Game {
   seatColors?: string[];
   /** 2:2 팀전 — 좌석 0·2 vs 1·3 */
   teams?: boolean;
+  /** 로그인 사용자의 게임 데이터를 계정에 저장 (bridge.js MGH.save → game_saves / game-files) */
+  saves?: boolean;
 }
 
 export const GAMES: Game[] = [
@@ -144,6 +146,18 @@ export const GAMES: Game[] = [
     genre: "casual",
     thumb: "/thumbs/my-post-2026.jpg",
     src: "/games/my-post-2026/index.html",
+  },
+  {
+    id: "footprint-map",
+    title: { ko: "발자국 지도", en: "Footprint Map" },
+    desc: {
+      ko: "다녀온 나라와 도시를 세계지도에 원하는 색으로 칠하고, 장소마다 사진 1장을 남기는 여행 지도. 로그인하면 계정에 저장되고 SNS 공유 이미지도 만들 수 있어요",
+      en: "Color the countries and cities you've visited on a world map and pin one photo to each place. Log in to keep it in your account and make a share image for social media",
+    },
+    genre: "casual",
+    thumb: "/thumbs/footprint-map.jpg",
+    src: "/games/footprint-map/index.html",
+    saves: true,
   },
   {
     id: "raiden",

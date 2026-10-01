@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useApp } from "./AppProvider";
 import { Leaderboard } from "./Leaderboard";
 import { useToasts } from "./Toasts";
 import { formatScore, gameById } from "@/lib/games";
-import { cloudEnabled, fetchMyRank, fetchMyScores, submitScore, type ScoreRow } from "@/lib/supabase";
+import { cloudEnabled, displayName, fetchMyRank, fetchMyScores, submitScore, type ScoreRow } from "@/lib/supabase";
+import { deleteFiles, fileUrls, loadSave, putFile, storeSave } from "@/lib/saves";
 import { errorKey } from "@/lib/i18n";
 
 const PENDING_KEY = "mgh:pending-scores";
@@ -34,6 +36,7 @@ function writePending(p: Pending[]) {
 
 export function GamePlayer({ gameId }: { gameId: string }) {
   const game = gameById(gameId)!;
+  const router = useRouter();
   const { t, lang, user, loading } = useApp();
   const frame = useRef<HTMLIFrameElement>(null);
   const [tab, setTab] = useState(game.boards?.[0]?.id ?? "");
@@ -117,6 +120,55 @@ export function GamePlayer({ gameId }: { gameId: string }) {
 
   const myRow = mine.find((m) => m.game_id === tab);
   const loginHref = `/login?next=${encodeURIComponent(`/play/${game.id}`)}`;
+
+  // 게임 저장(MGH.save) — 로그인 상태 전달 + 저장 요청 처리
+  const postToGame = useCallback((msg: Record<string, unknown>) => {
+    frame.current?.contentWindow?.postMessage({ ...msg, mgh: 1 }, window.location.origin);
+  }, []);
+  const sendAuth = useCallback(() => {
+    postToGame({
+      type: "save:auth",
+      cloud: cloudEnabled,
+      user: user ? { id: user.id, name: displayName(user) } : null,
+    });
+  }, [postToGame, user]);
+  useEffect(() => {
+    if (game.saves && !loading) sendAuth();
+  }, [game.saves, loading, sendAuth]);
+  useEffect(() => {
+    if (!game.saves) return;
+    async function run(op: string, args: Record<string, unknown>): Promise<unknown> {
+      switch (op) {
+        case "load":
+          return loadSave(game.id);
+        case "store":
+          return storeSave(game.id, args.data);
+        case "putFile":
+          if (!(args.blob instanceof Blob) || typeof args.name !== "string") throw new Error("bad_file");
+          return putFile(game.id, args.name, args.blob);
+        case "deleteFiles":
+          return deleteFiles(game.id, Array.isArray(args.names) ? args.names.filter((n): n is string => typeof n === "string") : []);
+        case "urls":
+          return fileUrls(game.id, Array.isArray(args.names) ? args.names.filter((n): n is string => typeof n === "string") : []);
+      }
+      throw new Error("bad_op");
+    }
+    function onMsg(ev: MessageEvent) {
+      if (ev.origin !== window.location.origin || ev.source !== frame.current?.contentWindow) return;
+      const d = ev.data;
+      if (!d || d.mgh !== 1) return;
+      if (d.type === "ready" && !loading) sendAuth();
+      else if (d.type === "save:login") router.push(loginHref);
+      else if (d.type === "save:req") {
+        run(String(d.op), (d.args ?? {}) as Record<string, unknown>).then(
+          (result) => postToGame({ type: "save:res", id: d.id, ok: true, result }),
+          (e: unknown) => postToGame({ type: "save:res", id: d.id, ok: false, error: e instanceof Error ? e.message : String((e as { message?: string })?.message ?? e) }),
+        );
+      }
+    }
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, [game.saves, game.id, loading, sendAuth, postToGame, loginHref, router]);
 
   return (
     <div className="play-shell">
