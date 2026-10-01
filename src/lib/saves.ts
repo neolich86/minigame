@@ -75,3 +75,75 @@ export async function fileUrls(gameId: string, names: string[]): Promise<Record<
   });
   return out;
 }
+
+/* ───────── 공개 공유 링크 (game_shares + game-public 버킷) ───────── */
+const PUB = "game-public";
+const SLUG_ABC = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+function newSlug(n = 8): string {
+  const b = crypto.getRandomValues(new Uint8Array(n));
+  return Array.from(b, (x) => SLUG_ABC[x % SLUG_ABC.length]).join("");
+}
+
+export interface ShareInfo {
+  slug: string | null;
+  /** 공개 파일 주소 앞부분 — base + 파일이름 */
+  base: string;
+  /** 이미 올라가 있는 공개 파일 이름 */
+  names: string[];
+}
+
+export async function shareInfo(gameId: string): Promise<ShareInfo> {
+  const user = await uid();
+  const c = client();
+  const { data, error } = await c.from("game_shares").select("slug").eq("user_id", user).eq("game_id", gameId).maybeSingle();
+  if (error) throw error;
+  const dir = `${user}/${gameId}`;
+  const { data: files } = await c.storage.from(PUB).list(dir, { limit: 1000 });
+  const base = c.storage.from(PUB).getPublicUrl(`${dir}/`).data.publicUrl;
+  return { slug: data?.slug ?? null, base, names: (files ?? []).map((f) => f.name) };
+}
+
+/** 공개 스냅숏 저장 — files 는 새로 올릴 파일, keep 에 없는 기존 공개 파일은 지운다. 링크(slug)는 처음 만든 것을 유지 */
+export async function publishShare(gameId: string, value: unknown, files: Record<string, Blob>, keep: string[]): Promise<{ slug: string }> {
+  const user = await uid();
+  const c = client();
+  const dir = `${user}/${gameId}`;
+  for (const [name, blob] of Object.entries(files)) {
+    if (!FILE_RE.test(name) || !(blob instanceof Blob)) throw new Error("bad_file");
+    const { error } = await c.storage
+      .from(PUB)
+      .upload(`${dir}/${name}`, blob, { upsert: true, contentType: blob.type || "image/jpeg", cacheControl: name === "og.png" ? "60" : "31536000" });
+    if (error) throw error;
+  }
+  const { data: existing } = await c.from("game_shares").select("slug").eq("user_id", user).eq("game_id", gameId).maybeSingle();
+  const now = new Date().toISOString();
+  let slug = existing?.slug as string | undefined;
+  if (slug) {
+    const { error } = await c.from("game_shares").update({ data: value, updated_at: now }).eq("slug", slug);
+    if (error) throw error;
+  } else {
+    for (let i = 0; i < 3 && !slug; i++) {
+      const s = newSlug();
+      const { error } = await c.from("game_shares").insert({ slug: s, user_id: user, game_id: gameId, data: value, updated_at: now });
+      if (!error) slug = s;
+      else if (error.code !== "23505") throw error;
+    }
+    if (!slug) throw new Error("slug_failed");
+  }
+  const keepSet = new Set(keep);
+  const { data: list } = await c.storage.from(PUB).list(dir, { limit: 1000 });
+  const stale = (list ?? []).map((f) => f.name).filter((n) => !keepSet.has(n));
+  if (stale.length) await c.storage.from(PUB).remove(stale.map((n) => `${dir}/${n}`));
+  return { slug };
+}
+
+/** 공개 중지 — 링크와 공개 사진을 지운다 */
+export async function deleteShare(gameId: string): Promise<void> {
+  const user = await uid();
+  const c = client();
+  const dir = `${user}/${gameId}`;
+  const { error } = await c.from("game_shares").delete().eq("user_id", user).eq("game_id", gameId);
+  if (error) throw error;
+  const { data: list } = await c.storage.from(PUB).list(dir, { limit: 1000 });
+  if (list?.length) await c.storage.from(PUB).remove(list.map((f) => `${dir}/${f.name}`));
+}

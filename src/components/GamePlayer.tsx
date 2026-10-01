@@ -8,7 +8,7 @@ import { Leaderboard } from "./Leaderboard";
 import { useToasts } from "./Toasts";
 import { formatScore, gameById } from "@/lib/games";
 import { cloudEnabled, displayName, fetchMyRank, fetchMyScores, submitScore, type ScoreRow } from "@/lib/supabase";
-import { deleteFiles, fileUrls, loadSave, putFile, storeSave } from "@/lib/saves";
+import { deleteFiles, deleteShare, fileUrls, loadSave, publishShare, putFile, shareInfo, storeSave } from "@/lib/saves";
 import { errorKey } from "@/lib/i18n";
 
 const PENDING_KEY = "mgh:pending-scores";
@@ -148,6 +148,17 @@ export function GamePlayer({ gameId }: { gameId: string }) {
           return putFile(game.id, args.name, args.blob);
         case "deleteFiles":
           return deleteFiles(game.id, Array.isArray(args.names) ? args.names.filter((n): n is string => typeof n === "string") : []);
+        case "shareInfo":
+          return shareInfo(game.id);
+        case "sharePublish": {
+          const files: Record<string, Blob> = {};
+          const raw = (args.files ?? {}) as Record<string, unknown>;
+          for (const k of Object.keys(raw)) if (raw[k] instanceof Blob) files[k] = raw[k] as Blob;
+          const keep = Array.isArray(args.keep) ? args.keep.filter((n): n is string => typeof n === "string") : [];
+          return publishShare(game.id, args.data, files, keep);
+        }
+        case "shareDelete":
+          return deleteShare(game.id);
         case "urls":
           return fileUrls(game.id, Array.isArray(args.names) ? args.names.filter((n): n is string => typeof n === "string") : []);
       }

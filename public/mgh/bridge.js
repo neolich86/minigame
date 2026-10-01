@@ -264,6 +264,10 @@
       putFile: function (name, blob) { return saveCall("putFile", { name: name, blob: blob }); },
       deleteFiles: function (names) { return saveCall("deleteFiles", { names: names }); },
       urls: function (names) { return saveCall("urls", { names: names }); },
+      /** 공개 링크: shareInfo() → {slug, base, names}, sharePublish(data, {name: blob}, keepNames) → {slug}, shareDelete() */
+      shareInfo: function () { return saveCall("shareInfo"); },
+      sharePublish: function (data, files, keep) { return saveCall("sharePublish", { data: data, files: files || {}, keep: keep || [] }); },
+      shareDelete: function () { return saveCall("shareDelete"); },
       /** 포털 로그인 화면으로 이동 (로그인 후 이 게임으로 돌아온다) */
       login: function () { toParent({ type: "save:login" }); },
     },

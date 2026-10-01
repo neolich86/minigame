@@ -235,6 +235,12 @@ svg.map.pinmode{cursor:crosshair}
 .acts .btn{justify-content:center;text-decoration:none;color:var(--ink)}
 .acts .btn.primary{grid-column:1/-1;color:#fff;height:42px;font-weight:600}
 .msg{font-size:12px;color:var(--visited);min-height:16px}
+.linkbox{border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;background:var(--chip)}
+.linkbox b{font-size:13px}
+.linkbox .url{font-family:var(--f-mono);font-size:12.5px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;user-select:all;overflow-wrap:anywhere}
+.viewbar{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:5;background:var(--panel);border:1px solid var(--line);border-radius:999px;box-shadow:var(--shadow);padding:6px 6px 6px 16px;display:flex;align-items:center;gap:12px;max-width:calc(100% - 100px)}
+.viewbar span{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.viewbar a{white-space:nowrap;text-decoration:none;color:#fff;background:var(--visited);border-radius:999px;padding:8px 14px;font-weight:600;font-size:13px}
 @media (max-width:720px){.dlg{grid-template-columns:1fr}.dlg .pv{min-height:0;padding:14px}.dlg .pv canvas{max-height:42vh}}
 
 @media (max-width:720px){
@@ -298,6 +304,7 @@ svg.map.pinmode{cursor:crosshair}
       <div class="row"><button class="sbtn" id="clearSample">예시 지우고 내 지도 시작</button></div>
     </div>
     </div>
+    <div class="viewbar" id="viewBar" hidden><span id="viewTxt">친구의 Passport Map을 보고 있어요</span><a href="/play/passport-map" target="_top">나도 내 지도 만들기</a></div>
     <div class="deco deco-passport">PASSPORT MAP</div>
     <svg class="deco deco-compass" viewBox="-40 -44 80 84" aria-hidden="true"><circle r="26" fill="none" stroke="currentColor" stroke-width="1"/><g fill="currentColor"><path d="M0-34 5 0-5 0z"/><path d="M0 34 5 0-5 0z" opacity=".55"/><path d="M34 0 0 5 0-5z" opacity=".55"/><path d="M-34 0 0 5 0-5z" opacity=".55"/></g><text y="-37" text-anchor="middle" font-size="10" font-family="Georgia,serif" fill="currentColor">N</text></svg>
     <div class="themepop" id="themePop" hidden><h3>지도 테마</h3><div class="tgrid" id="tgrid"></div><label class="chk2"><input type="checkbox" id="labToggle" checked> 유명 도시 이름 표시</label></div>
@@ -315,6 +322,7 @@ svg.map.pinmode{cursor:crosshair}
       <div><div class="lbl">이미지 비율</div><div class="seg" id="shFmt">
         <button data-f="sq" aria-pressed="true">정사각<small>1080×1080</small></button><button data-f="pt" aria-pressed="false">세로<small>1080×1350</small></button><button data-f="ls" aria-pressed="false">가로<small>1200×630</small></button></div></div>
       <label class="chk"><input type="checkbox" id="shPhotos" checked> 올린 사진도 함께 넣기</label>
+      <div class="linkbox" id="linkBox" hidden></div>
       <div class="acts">
         <button class="btn primary" id="shSave">이미지 저장</button>
         <button class="btn" id="shNative" hidden>휴대폰 앱으로 공유</button>
@@ -863,7 +871,7 @@ function shrink(file,max,q){return new Promise((res,rej)=>{const u=URL.createObj
     cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);cv.toBlob(b=>b?res(b):rej(),'image/jpeg',q)};
   im.onerror=()=>{URL.revokeObjectURL(u);rej()};im.src=u})}
 const sampleCache={};
-function photoURL(p){if(blobURL[p])return blobURL[p];if(cloudURL[p])return cloudURL[p];if(mode==='cloud'&&p.startsWith('photos/'))return 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';if(p.startsWith('sample:'))return sampleCache[p]||(sampleCache[p]=drawSample(p));return p}
+function photoURL(p){if(blobURL[p])return blobURL[p];if(/^https?:/.test(p))return p;if(cloudURL[p])return cloudURL[p];if(mode==='cloud'&&p.startsWith('photos/'))return 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';if(p.startsWith('sample:'))return sampleCache[p]||(sampleCache[p]=drawSample(p));return p}
 function drawSample(p){const [, h1, h2, kind]=p.split(':');const cv=document.createElement('canvas');cv.width=560;cv.height=380;const x=cv.getContext('2d');
   const g=x.createLinearGradient(0,0,0,380);g.addColorStop(0,`hsl(${h1} 70% 62%)`);g.addColorStop(1,`hsl(${h2} 80% 82%)`);x.fillStyle=g;x.fillRect(0,0,560,380);
   x.fillStyle=`hsla(${h2} 100% 96% / .9)`;x.beginPath();x.arc(400,130,48,0,7);x.fill();
@@ -920,7 +928,7 @@ async function save(){if(saving){again=true;return}saving=true;setSave('saving',
     if(mode==='artifact'){const files={'data/map.json':{content:snapshot(),contentType:'application/json'}};
       for(const p in photos)files[p]=photos[p];dels.forEach(p=>files[p]=null);
       await window.ART.publish(files)}
-    else if(mode==='cloud'){const fn=p=>p.slice(7);
+    else if(mode==='cloud'){const fn=p=>p.slice(7);schedulePub();
       for(const p in photos)await MG.save.putFile(fn(p),photos[p]);
       await MG.save.store(JSON.parse(snapshot()));
       if(dels.length)await MG.save.deleteFiles(dels.map(fn)).catch(()=>{})}
@@ -1007,6 +1015,34 @@ function drawThemeMap(x,bx,by,bw,bh,th,rad){
   if(th==='passport'&&bw>300){x.fillStyle='rgba(233,201,121,.85)';x.font=`500 ${Math.round(bw/80)}px "IBM Plex Mono",monospace`;x.fillText('P A S S P O R T   M A P',bx+bw*.03,by+bh-bh*.04)}
   x.restore()}
 
+/* ---------- my-map link (portal only) ---------- */
+let PUB=null,pubBusy=false,pubTimer=null,pubArmed=false;
+const VIEW=(()=>{try{return new URLSearchParams(location.search).get('view')}catch(e){return null}})();
+function allPhotoPaths(){return [...Object.values(S.countries).map(o=>o.photo),...S.cities.map(c=>c.photo)].filter(p=>p&&p.startsWith('photos/'))}
+async function refreshPub(){if(mode!=='cloud'){PUB=null;renderLinkBox();return}try{PUB=await MG.save.shareInfo()}catch(e){PUB=null}renderLinkBox();updateShareLinks()}
+async function publishPub(){if(mode!=='cloud'||pubBusy)return;pubBusy=true;renderLinkBox();
+  try{const info=await MG.save.shareInfo();const have=new Set(info.names);const files={},keep=[];
+    for(const p of new Set(allPhotoPaths())){const name=p.slice(7);keep.push(name);if(have.has(name))continue;
+      let b=fileBlobs[p];if(!b){try{b=await (await fetch(photoURL(p))).blob()}catch(e){b=null}}if(b)files[name]=b}
+    const oc=document.createElement('canvas');await renderCard(oc,'ls',false);files['og.png']=await new Promise(r=>oc.toBlob(r,'image/png'));keep.push('og.png');
+    const snap=JSON.parse(snapshot());const fix=o=>{if(o&&o.photo&&o.photo.startsWith('photos/'))o.photo=info.base+o.photo.slice(7)};
+    Object.values(snap.countries).forEach(fix);snap.cities.forEach(fix);delete snap.prefs;snap.og=info.base+'og.png?v='+Date.now();
+    const r=await MG.save.sharePublish(snap,files,keep);PUB={slug:r.slug,base:info.base,names:keep}}
+  catch(e){shMsg('링크를 만들지 못했어요. 잠시 후 다시 시도해 주세요.')}
+  pubBusy=false;renderLinkBox();updateShareLinks()}
+function schedulePub(){if(mode==='cloud'&&PUB&&PUB.slug){clearTimeout(pubTimer);pubTimer=setTimeout(publishPub,6000)}}
+function renderLinkBox(){const box=$('#linkBox');if(!EMB||VIEW){box.hidden=true;return}box.hidden=false;
+  if(mode!=='cloud'){box.innerHTML=`<b>내 지도 링크</b><p class="note">로그인하면 내 지도를 그대로 보여주는 전용 링크를 만들 수 있어요.</p><div class="row"><button class="sbtn" data-l="login">로그인</button></div>`;return}
+  if(pubBusy){box.innerHTML=`<b>내 지도 링크</b><p class="note">${PUB&&PUB.slug?'링크를 최신 지도로 바꾸는 중…':'링크를 만드는 중…'}</p>`;return}
+  if(!PUB||!PUB.slug){box.innerHTML=`<b>내 지도 링크</b><p class="note">링크를 받은 사람은 내 지도와 사진, 메모를 볼 수 있어요. 고칠 수는 없어요.</p><div class="row"><button class="sbtn" data-l="make">내 지도 링크 만들기</button></div>`;return}
+  box.innerHTML=`<b>내 지도 링크 · 공개 중</b><div class="url">${esc(shareURL())}</div><p class="note">지도를 고치면 링크에도 자동으로 반영돼요.</p><div class="row"><button class="sbtn" data-l="copy">링크 복사</button><button class="sbtn danger${pubArmed?' armed':''}" data-l="stop">${pubArmed?'한 번 더 누르면 공개 중지':'공개 중지'}</button></div>`}
+$('#linkBox').addEventListener('click',async e=>{const b=e.target.closest('[data-l]');if(!b)return;const a=b.dataset.l;
+  if(a==='login'){MG&&MG.save&&MG.save.login();return}
+  if(a==='make'){if(isSample){shMsg('예시 지도는 링크로 만들 수 없어요. 내 지도를 먼저 만들어 주세요.');return}await publishPub();if(PUB&&PUB.slug)shMsg('내 지도 링크를 만들었어요.');return}
+  if(a==='copy'){$('#shCopyLink').click();return}
+  if(a==='stop'){if(!pubArmed){pubArmed=true;renderLinkBox();return}pubArmed=false;pubBusy=true;renderLinkBox();
+    try{await MG.save.shareDelete();PUB=null;shMsg('공개를 중지했어요. 이전 링크는 더 이상 열리지 않아요.')}catch(err){shMsg('공개를 중지하지 못했어요.')}pubBusy=false;renderLinkBox();updateShareLinks()}});
+
 /* ---------- share image ---------- */
 const SH={f:'sq',photos:true};
 const FMT={sq:[1080,1080],pt:[1080,1350],ls:[1200,630]};
@@ -1017,52 +1053,55 @@ let shSeq=0,shBlob=null,DL=null;
 function shTitleText(){return (S.share&&S.share.name)||(EN?'My Passport Map':'My Passport Map')}
 function stripePattern(x){const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');g.fillStyle='#FFFFFF';g.fillRect(0,0,48,48);
   g.lineWidth=11;[['#E0393E',0],['#2D5BD0',24]].forEach(([col,o])=>{g.strokeStyle=col;for(let k=-2;k<3;k++){g.beginPath();g.moveTo(o+k*48-10,58);g.lineTo(o+k*48+58,-10);g.stroke()}});return x.createPattern(c,'repeat')}
-async function drawShare(){
-  const seq=++shSeq;const [W,H]=FMT[SH.f];const cv=$('#shareCv');
+async function renderCard(cv,F,P,seq){
+  const [W,H]=FMT[F];
   try{await Promise.all([document.fonts.load('700 40px Hahmlet'),document.fonts.load('600 30px "IBM Plex Sans KR"'),document.fonts.load('400 30px "IBM Plex Sans KR"'),document.fonts.load('500 20px "IBM Plex Mono"')])}catch(e){}
   const items=[];for(const id in S.countries){const st=S.countries[id];if(st.photo)items.push({p:st.photo,name:nmC(C[id]),color:st.color||DEF_C})}
   S.cities.forEach(ct=>{if(ct.photo)items.push({p:ct.photo,name:nmCt(ct),color:ct.color||DEF_P})});
-  const maxPh=SH.photos?({sq:4,pt:6,ls:0})[SH.f]:0;const use=items.slice(0,maxPh);
+  const maxPh=P?({sq:4,pt:6,ls:0})[F]:0;const use=items.slice(0,maxPh);
   const imgs=(await Promise.all(use.map(it=>loadImg(photoURL(it.p))))).map((im,i)=>im&&{im,...use[i]}).filter(Boolean);
-  if(seq!==shSeq)return;
+  if(seq&&seq!==shSeq)return false;
   cv.width=W;cv.height=H;const x=cv.getContext('2d');
   const TC=CARD[TH]||CARD.basic;const BG=TC.bg,BORDER=TC.line,INK=TC.ink,MUTED=TC.muted;
   const DISP='Hahmlet,"Noto Serif KR",serif',BODY='"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif',MONO='"IBM Plex Mono",Menlo,monospace';
   x.fillStyle=stripePattern(x);x.fillRect(0,0,W,H);const B=16;x.fillStyle=BG;rrect(x,B,B,W-2*B,H-2*B,10);x.fill();
   const n=Object.keys(S.countries).length,m=S.cities.length,pc=Math.round(n/195*100);
-  const pad=SH.f==='ls'?48:60;
+  const pad=F==='ls'?48:60;
   // header
-  x.fillStyle=MUTED;x.font=`500 ${SH.f==='ls'?17:20}px ${MONO}`;x.textBaseline='alphabetic';
-  x.fillText('PASSPORT MAP · '+new Date().getFullYear(),pad,pad+(SH.f==='ls'?14:18));
-  x.fillStyle=INK;x.font=`700 ${SH.f==='ls'?42:56}px ${DISP}`;x.fillText(shTitleText(),pad,pad+(SH.f==='ls'?66:86));
+  x.fillStyle=MUTED;x.font=`500 ${F==='ls'?17:20}px ${MONO}`;x.textBaseline='alphabetic';
+  x.fillText('PASSPORT MAP · '+new Date().getFullYear(),pad,pad+(F==='ls'?14:18));
+  x.fillStyle=INK;x.font=`700 ${F==='ls'?42:56}px ${DISP}`;x.fillText(shTitleText(),pad,pad+(F==='ls'?66:86));
   // map box
   let mb;
-  if(SH.f==='ls')mb=[pad,138,780,H-138-pad];
-  else{const top=SH.f==='pt'?190:172;const w=W-2*pad;mb=[pad,top,w,imgs.length||SH.f==='pt'?w*0.5:w*0.56]}
+  if(F==='ls')mb=[pad,138,780,H-138-pad];
+  else{const top=F==='pt'?190:172;const w=W-2*pad;mb=[pad,top,w,imgs.length||F==='pt'?w*0.5:w*0.56]}
   const [bx,by,bw,bh]=mb;drawThemeMap(x,bx,by,bw,bh,TH,18);
   // stats
   const stats=[[n,'나라'],[m,'도시'],[pc+'%','세계']];
-  if(SH.f==='ls'){const sx=bx+bw+44;let sy=by+20;stats.forEach(([v,l])=>{x.fillStyle=INK;x.font=`700 64px ${DISP}`;x.fillText(String(v),sx,sy+58);x.fillStyle=MUTED;x.font=`500 20px ${BODY}`;x.fillText(l==='세계'?'세계 나라 중':l==='나라'?'개 나라':'곳의 도시',sx,sy+90);sy+=(bh-20)/3})}
+  if(F==='ls'){const sx=bx+bw+44;let sy=by+20;stats.forEach(([v,l])=>{x.fillStyle=INK;x.font=`700 64px ${DISP}`;x.fillText(String(v),sx,sy+58);x.fillStyle=MUTED;x.font=`500 20px ${BODY}`;x.fillText(l==='세계'?'세계 나라 중':l==='나라'?'개 나라':'곳의 도시',sx,sy+90);sy+=(bh-20)/3})}
   else{const sy=by+bh+(imgs.length?40:64);const cw=(W-2*pad)/3;stats.forEach(([v,l],i)=>{const cx=pad+cw*i;
       x.fillStyle=INK;x.font=`700 ${imgs.length?64:84}px ${DISP}`;x.fillText(String(v),cx,sy+(imgs.length?60:80));
       x.fillStyle=MUTED;x.font=`500 ${imgs.length?22:26}px ${BODY}`;x.fillText(l==='세계'?'세계 나라 중':l==='나라'?'개 나라를 다녀왔어요':'곳의 도시',cx,sy+(imgs.length?96:124));
       if(i){x.fillStyle=BORDER;x.fillRect(cx-20,sy+8,1.5,imgs.length?88:112)}});
     // photos
-    if(imgs.length){const top=sy+132,bottom=H-pad-24,cols=SH.f==='pt'?3:4,rows=Math.ceil(imgs.length/cols)>1&&SH.f==='pt'?2:1,g=14;
+    if(imgs.length){const top=sy+132,bottom=H-pad-24,cols=F==='pt'?3:4,rows=Math.ceil(imgs.length/cols)>1&&F==='pt'?2:1,g=14;
       const cw2=(W-2*pad-g*(cols-1))/cols,ch=(bottom-top-g*(rows-1))/rows;
       imgs.slice(0,cols*rows).forEach((it,i)=>{const r=Math.floor(i/cols),c=i%cols;const X=pad+c*(cw2+g),Y=top+r*(ch+g);
         x.save();rrect(x,X,Y,cw2,ch,16);x.clip();const sc=Math.max(cw2/it.im.width,ch/it.im.height);
         x.drawImage(it.im,X+(cw2-it.im.width*sc)/2,Y+(ch-it.im.height*sc)/2,it.im.width*sc,it.im.height*sc);
         const gr=x.createLinearGradient(0,Y+ch-70,0,Y+ch);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.6)');x.fillStyle=gr;x.fillRect(X,Y+ch-70,cw2,70);
         x.fillStyle=it.color;x.beginPath();x.arc(X+20,Y+ch-22,6,0,7);x.fill();x.fillStyle='#FFFFFF';x.font=`600 20px ${BODY}`;x.fillText(it.name,X+34,Y+ch-15,cw2-46);x.restore()})}}
-  x.fillStyle=MUTED;x.font=`500 15px ${MONO}`;x.textAlign='right';x.fillText('Passport Map',W-pad,H-pad+(SH.f==='ls'?24:14));x.textAlign='left';
-  shBlob=null;cv.toBlob(b=>{if(seq===shSeq)shBlob=b},'image/png');
+  x.fillStyle=MUTED;x.font=`500 15px ${MONO}`;x.textAlign='right';x.fillText('Passport Map',W-pad,H-pad+(F==='ls'?24:14));x.textAlign='left';
+  return true}
+async function drawShare(){const seq=++shSeq;const cv=$('#shareCv');if(!await renderCard(cv,SH.f,SH.photos,seq))return;
+  shBlob=null;cv.toBlob(b=>{if(seq===shSeq)shBlob=b},'image/png');updateShareLinks()}
+function shareURL(){return (PUB&&PUB.slug)?location.origin+'/m/'+PUB.slug:ARTIFACT_URL}
+function updateShareLinks(){const n=Object.keys(S.countries).length,m=S.cities.length;const u=shareURL();
   const txt=EN?`${shTitleText()} — I've been to ${n} countries and ${m} cities #PassportMap`:`${shTitleText()} — 나라 ${n}곳, 도시 ${m}곳을 다녀왔어요 #PassportMap`;
-  $('#shX').href='https://twitter.com/intent/tweet?text='+encodeURIComponent(txt)+'&url='+encodeURIComponent(ARTIFACT_URL);
-  $('#shFb').href='https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(ARTIFACT_URL);
-}
+  $('#shX').href='https://twitter.com/intent/tweet?text='+encodeURIComponent(txt)+'&url='+encodeURIComponent(u);
+  $('#shFb').href='https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(u)}
 const shMsg=t=>{$('#shMsg').textContent=t};
-function openShare(){hideTip();closeResults();$('#shName').value=(S.share&&S.share.name)||'';shMsg('');$('#shareModal').hidden=false;drawShare();$('#shName').focus()}
+function openShare(){hideTip();closeResults();pubArmed=false;renderLinkBox();$('#shName').value=(S.share&&S.share.name)||'';shMsg('');$('#shareModal').hidden=false;drawShare();$('#shName').focus()}
 function closeShare(){$('#shareModal').hidden=true}
 $('#shareBtn').onclick=openShare;$('#shClose').onclick=closeShare;
 $('#shareModal').addEventListener('click',e=>{if(e.target.id==='shareModal')closeShare()});
@@ -1070,16 +1109,16 @@ let nameT=null;$('#shName').oninput=e=>{S.share=S.share||{};S.share.name=e.targe
 $('#shFmt').onclick=e=>{const b=e.target.closest('button');if(!b)return;SH.f=b.dataset.f;$('#shFmt').querySelectorAll('button').forEach(z=>z.setAttribute('aria-pressed',z===b));drawShare()};
 $('#shPhotos').onchange=e=>{SH.photos=e.target.checked;drawShare()};
 const getBlob=()=>shBlob?Promise.resolve(shBlob):new Promise(r=>$('#shareCv').toBlob(r,'image/png'));
-if(EMB){$('#shNote').textContent='인스타그램·카카오톡에는 이미지를 저장한 뒤 앱에서 올려 주세요. 링크를 받은 친구는 바로 자기 Passport Map을 만들 수 있어요.'}
+if(EMB){$('#shNote').textContent='인스타그램·카카오톡에는 이미지를 저장한 뒤 앱에서 올려 주세요. 내 지도 링크를 만들면 링크 복사·X·페이스북·앱 공유가 모두 내 지도 주소로 공유돼요.'}
 const shFile=b=>new File([b],(EN?'passport-map':'passport-map')+'.png',{type:'image/png'});
 try{if(navigator.canShare&&navigator.canShare({files:[new File([new Blob(['x'],{type:'image/png'})],'t.png',{type:'image/png'})]}))$('#shNative').hidden=false}catch(e){}
-$('#shNative').onclick=async()=>{try{const b=await getBlob();await navigator.share({files:[shFile(b)],title:shTitleText(),text:EN?'My Passport Map':'My Passport Map',url:EMB?ARTIFACT_URL:undefined})}catch(e){if(e&&e.name!=='AbortError')shMsg('공유하지 못했어요. ‘이미지 저장’을 이용해 주세요.')}};
+$('#shNative').onclick=async()=>{try{const b=await getBlob();await navigator.share({files:[shFile(b)],title:shTitleText(),text:EN?'My Passport Map':'My Passport Map',url:EMB?shareURL():undefined})}catch(e){if(e&&e.name!=='AbortError')shMsg('공유하지 못했어요. ‘이미지 저장’을 이용해 주세요.')}};
 $('#shSave').onclick=async()=>{if(!DL){try{const b=await getBlob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=shFile(b).name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);shMsg('이미지를 저장했어요.')}catch(e){shMsg('저장하지 못했어요. ‘이미지 복사’를 이용해 주세요.')}return}
   try{const b=await getBlob();await DL.save({filename:`passport-map-${({sq:'정사각',pt:'세로',ls:'가로'})[SH.f]}.png`,data:b});shMsg('이미지를 저장했어요.')}
   catch(err){const c=err&&err.code;shMsg(c==='declined'?'저장을 취소했어요.':c==='rate_limited'?'저장 창이 이미 열려 있어요.':'저장하지 못했어요. ‘이미지 복사’를 이용해 주세요.')}};
 $('#shCopyImg').onclick=()=>{try{const item=new ClipboardItem({'image/png':getBlob()});navigator.clipboard.write([item]).then(()=>shMsg('이미지를 복사했어요. SNS 글쓰기 창에 붙여넣으세요.'),()=>shMsg('이 브라우저에서는 이미지 복사가 막혀 있어요. ‘이미지 저장’을 이용해 주세요.'))}catch(e){shMsg('이 브라우저에서는 이미지 복사가 막혀 있어요. ‘이미지 저장’을 이용해 주세요.')}};
-$('#shCopyLink').onclick=()=>{const done=()=>shMsg(EMB?'링크를 복사했어요.':'링크를 복사했어요. 공유 설정에서 링크를 공개해야 다른 사람이 열 수 있어요.');
-  try{navigator.clipboard.writeText(ARTIFACT_URL).then(done,()=>shMsg('복사가 막혀 있어요. 이 주소를 복사하세요: '+ARTIFACT_URL))}catch(e){shMsg('이 주소를 복사하세요: '+ARTIFACT_URL)}};
+$('#shCopyLink').onclick=()=>{const done=()=>shMsg(EMB?(PUB&&PUB.slug?'내 지도 링크를 복사했어요.':'게임 링크를 복사했어요. 내 지도를 보여주려면 위에서 내 지도 링크를 만드세요.'):'링크를 복사했어요. 공유 설정에서 링크를 공개해야 다른 사람이 열 수 있어요.');
+  const U=shareURL();try{navigator.clipboard.writeText(U).then(done,()=>shMsg('복사가 막혀 있어요. 이 주소를 복사하세요: '+U))}catch(e){shMsg('이 주소를 복사하세요: '+U)}};
 
 /* ---------- boot ---------- */
 function showLogin(on){$('#login').hidden=!on}
@@ -1096,7 +1135,7 @@ async function bootPortal(){
   let gen=0;
   MG.save.onAuth(async(u,info)=>{const my=++gen;
     if(!u){if(mode==='cloud'){location.reload();return}mode='local';showLogin(info&&info.cloud!==false);setSave('saved','이 브라우저에 저장됨');renderPanel();return}
-    showLogin(false);mode='cloud';setSave('saving','불러오는 중…');
+    showLogin(false);mode='cloud';setSave('saving','불러오는 중…');setTimeout(refreshPub,0);
     let r=null;try{r=await MG.save.load()}catch(e){setSave('error','불러오기 실패');return}
     if(my!==gen)return;
     if(r&&r.data&&r.data.countries){S=r.data;S.cities=S.cities||[];isSample=false;$('#sample').hidden=true;sel=null;panel.hidden=true;renderMap();await refreshUrls();setSave('saved','계정에 저장됨')}
@@ -1107,7 +1146,14 @@ async function bootPortal(){
     if(isSample)$('#sample').querySelector('.row').hidden=false;
     renderPanel()});
 }
+async function bootView(){mode='readonly';$('#pinBtn').hidden=true;$('#shareBtn').hidden=true;$('#sample').hidden=true;$('#viewBar').hidden=false;
+  setSave('idle','불러오는 중');
+  try{const r=await fetch('/api/share/'+encodeURIComponent(VIEW),{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();S=j.data;S.cities=S.cities||[];
+    const nm=S.share&&S.share.name;$('#viewTxt').textContent=nm?nm:(EN?'A friend\'s Passport Map':'친구의 Passport Map을 보고 있어요');setSave('idle','보기 전용')}
+  catch(e){S={v:1,countries:{},cities:[]};$('#viewTxt').textContent=EN?'This map link is no longer available':'공개가 중지됐거나 없는 지도예요';setSave('idle','')}
+  renderMap();resetView()}
 async function boot(){
+  if(VIEW){bootView();return}
   if(EMB&&MG.save){bootPortal();return}
   let loaded=null;
   try{const r=await fetch('data/map.json',{cache:'no-store'});if(r.ok){const j=await r.json();if(j&&j.countries)loaded=j}}catch(e){}
