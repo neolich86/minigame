@@ -16,7 +16,7 @@
   --ocean:#E3E9EE; --land:#F8F7F3; --border:#C3CBD2; --land-hover:#ECEFF2;
   --visited:#2D5BD0; --visited-hover:#2149AE; --pin:#E0393E; --pin-ring:#FFFFFF;
   --ink:#1A2330; --muted:#5D6A78; --panel:#FFFFFF; --line:#DCE1E6; --chip:#EEF2F7;
-  --bar:#FFFFFF; --shadow:0 10px 30px rgba(20,35,60,.16);
+  --bar:#FFFFFF; --shadow:0 10px 30px rgba(20,35,60,.16); --lab:#3A4654; --labh:rgba(248,247,243,.92);
   --f-display:"Hahmlet","Noto Serif KR",Georgia,serif;
   --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
@@ -25,12 +25,12 @@
   --ocean:#0D131A; --land:#222A34; --border:#3A4552; --land-hover:#2B3542;
   --visited:#5D87F0; --visited-hover:#7A9DF5; --pin:#FF5C61; --pin-ring:#0D131A;
   --ink:#E7EBF0; --muted:#95A2AF; --panel:#151C25; --line:#2A3440; --chip:#1E2731;
-  --bar:#151C25; --shadow:0 10px 30px rgba(0,0,0,.45); color-scheme:dark}}
+  --bar:#151C25; --shadow:0 10px 30px rgba(0,0,0,.45); --lab:#C3CCD6; --labh:rgba(34,42,52,.92); color-scheme:dark}}
 :root[data-theme="dark"]{
   --ocean:#0D131A; --land:#222A34; --border:#3A4552; --land-hover:#2B3542;
   --visited:#5D87F0; --visited-hover:#7A9DF5; --pin:#FF5C61; --pin-ring:#0D131A;
   --ink:#E7EBF0; --muted:#95A2AF; --panel:#151C25; --line:#2A3440; --chip:#1E2731;
-  --bar:#151C25; --shadow:0 10px 30px rgba(0,0,0,.45); color-scheme:dark}
+  --bar:#151C25; --shadow:0 10px 30px rgba(0,0,0,.45); --lab:#C3CCD6; --labh:rgba(34,42,52,.92); color-scheme:dark}
 [hidden]{display:none!important}
 html,body{height:100%}
 body{margin:0}
@@ -92,6 +92,20 @@ svg.map.pinmode{cursor:crosshair}
 .deco-compass{width:64px;height:64px;color:rgba(96,66,30,.8)}
 /* ----- map themes (fixed palettes, independent of light/dark) ----- */
 .grat,.ripple,.lshadow,#dots{display:none}
+.lg{pointer-events:none}
+.lg text{font:500 11px var(--f-body);fill:var(--lab);stroke:var(--labh);stroke-width:3px;paint-order:stroke;stroke-linejoin:round}
+.lg circle{fill:var(--lab)}
+.lg.t1 text{font-weight:600;font-size:12px}
+.lg.vis text{font-weight:700}
+.lg.vis circle{display:none}
+.stage[data-mt="passport"]{--lab:#F2D38A;--labh:rgba(19,33,63,.9)}
+.stage[data-mt="vintage"]{--lab:#4A3418;--labh:rgba(246,235,208,.92)}
+.stage[data-mt="vintage"] .lg text{font-family:Georgia,"Noto Serif KR",serif;font-style:italic}
+.stage[data-mt="dots"]{--lab:#17202B;--labh:rgba(250,250,247,.95)}
+.stage[data-mt="paper"]{--lab:#3E5050;--labh:rgba(255,248,236,.95)}
+.stage[data-mt="neon"]{--lab:#CFE3FF;--labh:rgba(7,11,20,.9)}
+.stage[data-mt="globe"]{--lab:#1B2433;--labh:rgba(238,242,230,.92)}
+.chk2{display:flex;align-items:center;gap:8px;font-size:13px}
 .grat{fill:none;vector-effect:non-scaling-stroke}
 .stage[data-mt="passport"]{background:radial-gradient(ellipse at 50% 45%,#1E3159,#0F1B36 75%)}
 .stage[data-mt="passport"] .sphere{fill:transparent;stroke:rgba(212,178,98,.55);stroke-width:.8;vector-effect:non-scaling-stroke}
@@ -266,8 +280,8 @@ svg.map.pinmode{cursor:crosshair}
       </defs>
       <g id="zg"><path class="sphere" id="sphere"/><path class="grat" id="grat"/>
         <g class="ripple"><use href="#landAll" stroke-width="13"/><use href="#landAll" stroke-width="9.5"/><use href="#landAll" stroke-width="6.5"/><use href="#landAll" stroke-width="3.8"/></g>
-        <use href="#landAll" class="lshadow"/><g id="dots"></g><g id="countries"></g><g id="pins"></g></g>
-      <g id="globe" hidden><circle class="gglow" cx="500" cy="250"/><path class="gsea"/><g id="gcountries"></g><path class="gshade"/><g id="gpins"></g></g>
+        <use href="#landAll" class="lshadow"/><g id="dots"></g><g id="countries"></g><g id="pins"></g></g><g id="labels"></g>
+      <g id="globe" hidden><circle class="gglow" cx="500" cy="250"/><path class="gsea"/><g id="gcountries"></g><path class="gshade"/><g id="glabels"></g><g id="gpins"></g></g>
     </svg>
     <div class="legend"><span><i></i>칠한 나라</span><span><i class="p"></i>다녀온 도시</span></div>
     <div class="hint" id="hint" hidden>핀을 찍을 곳을 지도에서 누르세요 · Esc로 취소</div>
@@ -283,7 +297,7 @@ svg.map.pinmode{cursor:crosshair}
     </div>
     <div class="deco deco-passport">PASSPORT MAP</div>
     <svg class="deco deco-compass" viewBox="-40 -44 80 84" aria-hidden="true"><circle r="26" fill="none" stroke="currentColor" stroke-width="1"/><g fill="currentColor"><path d="M0-34 5 0-5 0z"/><path d="M0 34 5 0-5 0z" opacity=".55"/><path d="M34 0 0 5 0-5z" opacity=".55"/><path d="M-34 0 0 5 0-5z" opacity=".55"/></g><text y="-37" text-anchor="middle" font-size="10" font-family="Georgia,serif" fill="currentColor">N</text></svg>
-    <div class="themepop" id="themePop" hidden><h3>지도 테마</h3><div class="tgrid" id="tgrid"></div></div>
+    <div class="themepop" id="themePop" hidden><h3>지도 테마</h3><div class="tgrid" id="tgrid"></div><label class="chk2"><input type="checkbox" id="labToggle" checked> 유명 도시 이름 표시</label></div>
     <div class="zoom"><button id="zin" aria-label="확대">+</button><button id="zout" aria-label="축소">−</button><button id="zreset" aria-label="처음 보기" style="font-size:13px">⤢</button></div>
     <aside class="panel" id="panel" hidden></aside>
   </div>
@@ -610,11 +624,39 @@ function renderGlobe(){if(!isGlobe())return;initGlobe();const pj=gproj(),path=GL
   const gp=$('#gpins');gp.textContent='';const m=svg.getScreenCTM();const u=m?1/m.a:1;
   S.cities.forEach(ct=>{if(!gVisible(ct.lon,ct.lat))return;const [x,y]=pj([ct.lon,ct.lat]);const c=document.createElementNS(NS,'circle');const on=sel&&sel.type==='city'&&sel.id===ct.id;
     c.setAttribute('cx',x.toFixed(2));c.setAttribute('cy',y.toFixed(2));c.setAttribute('r',((on?7.5:5)*u).toFixed(2));c.setAttribute('class','pin'+(ct.photo?' ph':'')+(on?' sel':''));c.style.fill=ct.color||DEF_P;c.dataset.city=ct.id;gp.appendChild(c)})}
-function scheduleGlobe(){if(gRaf)return;gRaf=requestAnimationFrame(()=>{gRaf=0;renderGlobe()})}
+function scheduleGlobe(){if(gRaf)return;gRaf=requestAnimationFrame(()=>{gRaf=0;renderGlobe();updateLabels()})}
 function rotateTo(lon,lat,k){const from=[-G.rot[0],-G.rot[1]],fk=G.k,tk=k||G.k;const it=GL.geoInterpolate(from,[lon,lat]);
   const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;cancelAnimationFrame(anim);
   if(reduce){G.rot=[-lon,-lat];G.k=tk;renderGlobe();return}
   const t0=performance.now();const step=t=>{const u=Math.min(1,(t-t0)/600),e=1-Math.pow(1-u,3);const [lo,la]=it(e);G.rot=[-lo,-la];G.k=fk+(tk-fk)*e;renderGlobe();if(u<1)anim=requestAnimationFrame(step)};anim=requestAnimationFrame(step)}
+
+/* ---------- famous city labels ---------- */
+const T1=new Set('서울 도쿄 베이징 상하이 홍콩 싱가포르 방콕 뉴델리 뭄바이 두바이 이스탄불 모스크바 런던 파리 로마 베를린 마드리드 카이로 케이프타운 나이로비 뉴욕 로스앤젤레스 멕시코시티 리우데자네이루 부에노스아이레스 리마 시드니 밴쿠버 토론토 호놀룰루 레이캬비크 앵커리지'.split(' '));
+const T2=new Set('부산 제주 오사카 교토 삿포로 후쿠오카 오키나와 타이베이 하노이 호찌민 다낭 마닐라 세부 쿠알라룸푸르 자카르타 발리 카트만두 콜롬보 말레 타슈켄트 알마티 울란바토르 블라디보스토크 도하 예루살렘 암만 트빌리시 상트페테르부르크 암스테르담 브뤼셀 빈 프라하 부다페스트 바르샤바 아테네 코펜하겐 스톡홀름 오슬로 헬싱키 리스본 바르셀로나 더블린 에든버러 취리히 밀라노 베네치아 마라케시 요하네스버그 샌프란시스코 라스베이거스 마이애미 시애틀 시카고 보스턴 워싱턴 D.C. 몬트리올 칸쿤 아바나 산티아고 보고타 상파울루 쿠스코 멜버른 퍼스 오클랜드 웰링턴 괌 씨엠립 양곤'.split(' ').concat(['워싱턴 D.C.']));
+const LABS=CITY_LIST.map(c=>({c,tier:T1.has(c.ko)?1:T2.has(c.ko)?2:3}));
+let labOn=true,labRaf=0;
+function labName(c){return EN?c.en:c.ko}
+function buildLabels(g){const out=[];LABS.forEach(L=>{const e=document.createElementNS(NS,'g');e.setAttribute('class','lg t'+L.tier);
+  const d=document.createElementNS(NS,'circle');d.setAttribute('r','2');const t=document.createElementNS(NS,'text');t.setAttribute('x','5');t.setAttribute('y','3.8');t.textContent=labName(L.c);
+  e.appendChild(d);e.appendChild(t);e.style.display='none';g.appendChild(e);out.push({L,e,t,w:0})});return out}
+let FL=null,GLL=null;
+function placeLabels(list,posFn,tierMax,u){ // u = svg units per screen px
+  const sr=svg.getBoundingClientRect(),tl=svgPt(sr.left,sr.top),br=svgPt(sr.right,sr.bottom),taken=[];const vis=new Set(S.cities.map(c=>c.key).filter(Boolean));
+  const order=list.map(o=>({o,pr:vis.has(o.L.c.key)?0:o.L.tier})).sort((a,b)=>a.pr-b.pr);
+  for(const {o,pr} of order){let show=false,p=null;
+    if(labOn&&(pr===0||o.L.tier<=tierMax)){p=posFn(o.L.c);
+      if(p){const [x,y]=p;if(x>tl.x-20*u&&x<br.x&&y>tl.y&&y<br.y+10*u){if(!o.w){o.e.style.display='';o.w=o.t.getComputedTextLength()||o.t.textContent.length*9}
+          const bx={x0:x-3*u,y0:y-8*u,x1:x+(8+o.w)*u,y1:y+6*u};
+          if(!taken.some(b=>bx.x0<b.x1&&bx.x1>b.x0&&bx.y0<b.y1&&bx.y1>b.y0)){taken.push(bx);show=true}}}}
+    o.e.style.display=show?'':'none';o.e.classList.toggle('vis',pr===0);
+    if(show)o.e.setAttribute('transform',`translate(${p[0].toFixed(2)} ${p[1].toFixed(2)}) scale(${u.toFixed(5)})`)}}
+function updateLabels(){labRaf=0;const m=svg.getScreenCTM();if(!m)return;const u=1/m.a;
+  if(isGlobe()){if(!GLL)GLL=buildLabels($('#glabels'));if(FL)FL.forEach(o=>o.e.style.display='none');
+    const pj=gproj();placeLabels(GLL,c=>GL.geoDistance([c.lon,c.lat],[-G.rot[0],-G.rot[1]])<1.36?pj([c.lon,c.lat]):null,G.k<1.5?1:G.k<2.6?2:3,u)}
+  else{if(!FL)FL=buildLabels($('#labels'));if(GLL)GLL.forEach(o=>o.e.style.display='none');
+    placeLabels(FL,c=>{const [x,y]=project(c.lon,c.lat);return [V.x+x*V.k,V.y+y*V.k]},V.k<2?1:V.k<4.5?2:3,u)}}
+function scheduleLabels(){if(!labRaf)labRaf=requestAnimationFrame(updateLabels)}
+$('#labToggle').onchange=e=>{labOn=e.target.checked;S.labels=labOn?undefined:false;scheduleLabels();if(canEdit()&&!isSample)changed(true)};
 
 function renderMap(){
   if((S.theme||'basic')!==TH){applyTheme(S.theme);return}
@@ -623,6 +665,7 @@ function renderMap(){
   S.cities.forEach(ct=>{const [x,y]=project(ct.lon,ct.lat);const c=document.createElementNS(NS,'circle');
     c.setAttribute('cx',x.toFixed(2));c.setAttribute('cy',y.toFixed(2));c.setAttribute('class','pin'+(ct.photo?' ph':'')+(sel&&sel.type==='city'&&sel.id===ct.id?' sel':''));c.style.fill=ct.color||DEF_P;c.dataset.city=ct.id;gP.appendChild(c)});
   sizePins();renderStats();paintDots();renderGlobe();
+  labOn=S.labels!==false;$('#labToggle').checked=labOn;scheduleLabels();
 }
 function sizePins(){const m=zg.getScreenCTM();if(!m)return;const r=(sel?6:5)/m.a;gP.querySelectorAll('circle').forEach(c=>c.setAttribute('r',(c.classList.contains('sel')?7.5/m.a:5/m.a).toFixed(3)))}
 function renderStats(){const n=Object.keys(S.countries).length,m=S.cities.length;
@@ -630,7 +673,7 @@ function renderStats(){const n=Object.keys(S.countries).length,m=S.cities.length
 
 /* ---------- zoom & pan ---------- */
 let V={x:0,y:0,k:1};
-function applyView(){zg.setAttribute('transform',`translate(${V.x.toFixed(2)} ${V.y.toFixed(2)}) scale(${V.k.toFixed(4)})`);sizePins()}
+function applyView(){zg.setAttribute('transform',`translate(${V.x.toFixed(2)} ${V.y.toFixed(2)}) scale(${V.k.toFixed(4)})`);sizePins();scheduleLabels()}
 function clampView(){V.k=Math.min(60,Math.max(1,V.k));const w=1000*V.k,h=500*V.k;
   V.x=Math.min(250,Math.max(1000-w-250,V.x));V.y=Math.min(150,Math.max(500-h-150,V.y));if(V.k===1){V.x=Math.max(-250,Math.min(250,V.x))}}
 function svgPt(cx,cy){const p=svg.createSVGPoint();p.x=cx;p.y=cy;return p.matrixTransform(svg.getScreenCTM().inverse())}
@@ -670,7 +713,7 @@ const endPtr=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(ptrs.size
 svg.addEventListener('pointerup',endPtr);svg.addEventListener('pointercancel',endPtr);
 svg.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse')hideTip()});
 $('#zin').onclick=()=>zoomAt(500,250,1.6);$('#zout').onclick=()=>zoomAt(500,250,1/1.6);$('#zreset').onclick=resetView;
-addEventListener('resize',()=>{sizePins();renderGlobe()});
+addEventListener('resize',()=>{sizePins();renderGlobe();scheduleLabels()});
 
 /* ---------- hover card ---------- */
 const tip=$('#tip');let tipKey=null;
