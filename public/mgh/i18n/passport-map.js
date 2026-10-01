@@ -8,7 +8,7 @@
       "나라·도시 검색 (예: 파리, Japan)": "Search countries & cities (e.g. Paris, 일본)",
       "나라나 도시 검색": "Search countries or cities",
       "지도를 눌러 원하는 곳에 핀을 찍어요": "Click the map to drop a pin anywhere",
-      "핀 찍기": "Drop pin", "목록": "List", "공유": "Share",
+      "핀 찍기": "Drop pin", "테마": "Theme", "지도 테마": "Map theme", "목록": "List", "공유": "Share",
       "불러오는 중": "Loading", "불러오는 중…": "Loading…", "확인 중": "Checking",
       "저장됨": "Saved", "저장 대기": "Unsaved", "저장 중…": "Saving…", "저장 안 됨": "Not saved",
       "이 브라우저에 저장됨": "Saved in this browser", "계정에 저장됨": "Saved to account",
