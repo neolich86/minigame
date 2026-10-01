@@ -186,7 +186,6 @@ button{font:inherit;cursor:pointer}
     <p class="err" id="connectErr" hidden></p>
     <a class="ig-btn" id="igLogin" href="/api/mypost/login" target="_top">Instagram으로 내 리포트 만들기</a>
     <div class="row" id="realRow" hidden><button id="bReload">다시 불러오기</button><button id="bSample">샘플 보기</button></div>
-    <small id="connectNote">프로페셔널(크리에이터·비즈니스) 계정만 가능해요. 지금은 개발 단계라 테스터로 등록된 계정만 로그인됩니다. 게시물 데이터는 서버에 저장하지 않아요.</small>
   </section>
 
   <div class="friend-banner" id="friendBanner" hidden><strong class="uname">@sample.feed</strong> 님이 2026년 피드를 분석해 공유했어요. 내 계정도 1분이면 만들 수 있어요.</div>
@@ -379,12 +378,10 @@ if(IS_REAL){
   $('sampleTag').hidden=true;
   $('connectMsg').textContent='@'+USER.u+' 계정의 실제 데이터로 만든 리포트예요.';
   $('igLogin').hidden=true;$('realRow').hidden=false;
-  $('connectNote').textContent='데이터는 이 브라우저 탭에만 있고 서버에는 저장하지 않아요. 탭을 닫으면 사라집니다.';
 }
 if(IS_SHARED&&IS_OWNER){
   $('connectMsg').textContent='공유 링크가 만들어졌어요. 친구에게 보내 보세요!';
   $('bSample').hidden=true;
-  $('connectNote').textContent=SHARE_URL+' · 링크를 받은 사람은 누구나 이 리포트를 볼 수 있어요. 아래에서 언제든 삭제할 수 있습니다.';
 }else if(IS_SHARED){
   $('connect').hidden=true;
   document.querySelector('.seg').hidden=true;
