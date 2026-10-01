@@ -93,6 +93,9 @@ svg.map.pinmode{cursor:crosshair}
 /* ----- map themes (fixed palettes, independent of light/dark) ----- */
 .grat,.ripple,.lshadow,#dots{display:none}
 .lg{pointer-events:none}
+.lg text,.lg .hit{pointer-events:auto;cursor:pointer}
+.lg .hit{fill:transparent}
+@media (hover:hover){.lg:hover text{text-decoration:underline}}
 .lg text{font:500 11px var(--f-body);fill:var(--lab);stroke:var(--labh);stroke-width:3px;paint-order:stroke;stroke-linejoin:round}
 .lg circle{fill:var(--lab)}
 .lg.t1 text{font-weight:600;font-size:12px}
@@ -623,7 +626,8 @@ function renderGlobe(){if(!isGlobe())return;initGlobe();const pj=gproj(),path=GL
   for(const o of GLB){o.p.setAttribute('d',path(o.f)||'');const id=o.p.dataset.id;if(id){const st=S.countries[id];o.p.classList.toggle('v',!!st);o.p.style.fill=st?(st.color||DEF_C):'';o.p.classList.toggle('sel',!!(sel&&sel.type==='country'&&sel.id===id))}}
   const gp=$('#gpins');gp.textContent='';const m=svg.getScreenCTM();const u=m?1/m.a:1;
   S.cities.forEach(ct=>{if(!gVisible(ct.lon,ct.lat))return;const [x,y]=pj([ct.lon,ct.lat]);const c=document.createElementNS(NS,'circle');const on=sel&&sel.type==='city'&&sel.id===ct.id;
-    c.setAttribute('cx',x.toFixed(2));c.setAttribute('cy',y.toFixed(2));c.setAttribute('r',((on?7.5:5)*u).toFixed(2));c.setAttribute('class','pin'+(ct.photo?' ph':'')+(on?' sel':''));c.style.fill=ct.color||DEF_P;c.dataset.city=ct.id;gp.appendChild(c)})}
+    c.setAttribute('cx',x.toFixed(2));c.setAttribute('cy',y.toFixed(2));c.setAttribute('r',((on?7.5:5)*u).toFixed(2));c.setAttribute('class','pin'+(ct.photo?' ph':'')+(on?' sel':''));c.style.fill=ct.color||DEF_P;c.dataset.city=ct.id;gp.appendChild(c)});
+  scheduleLabels()}
 function scheduleGlobe(){if(gRaf)return;gRaf=requestAnimationFrame(()=>{gRaf=0;renderGlobe();updateLabels()})}
 function rotateTo(lon,lat,k){const from=[-G.rot[0],-G.rot[1]],fk=G.k,tk=k||G.k;const it=GL.geoInterpolate(from,[lon,lat]);
   const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;cancelAnimationFrame(anim);
@@ -638,7 +642,8 @@ let labOn=true,labRaf=0;
 function labName(c){return EN?c.en:c.ko}
 function buildLabels(g){const out=[];LABS.forEach(L=>{const e=document.createElementNS(NS,'g');e.setAttribute('class','lg t'+L.tier);
   const d=document.createElementNS(NS,'circle');d.setAttribute('r','2');const t=document.createElementNS(NS,'text');t.setAttribute('x','5');t.setAttribute('y','3.8');t.textContent=labName(L.c);
-  e.appendChild(d);e.appendChild(t);e.style.display='none';g.appendChild(e);out.push({L,e,t,w:0})});return out}
+  const h=document.createElementNS(NS,'circle');h.setAttribute('r','8');h.setAttribute('class','hit');e.dataset.key=L.c.key;
+  e.appendChild(h);e.appendChild(d);e.appendChild(t);e.style.display='none';g.appendChild(e);out.push({L,e,t,w:0})});return out}
 let FL=null,GLL=null;
 function placeLabels(list,posFn,tierMax,u){ // u = svg units per screen px
   const sr=svg.getBoundingClientRect(),tl=svgPt(sr.left,sr.top),br=svgPt(sr.right,sr.bottom),taken=[];const vis=new Set(S.cities.map(c=>c.key).filter(Boolean));
@@ -719,7 +724,11 @@ addEventListener('resize',()=>{sizePins();renderGlobe();scheduleLabels()});
 const tip=$('#tip');let tipKey=null;
 function hover(e){const t=document.elementFromPoint(e.clientX,e.clientY);if(!t){hideTip();return}
   let key=null,html='';
-  if(t.dataset&&t.dataset.city){const ct=S.cities.find(c=>c.id===t.dataset.city);if(ct){key='ci'+ct.id+ct.photo;html=tipHTML(ct.photo,nmCt(ct),[nmC(C[ct.cc]),ct.memo].filter(Boolean).join(' · '))}}
+  const lg=t.closest&&t.closest('.lg');
+  if(lg&&lg.dataset.key){const x=CITY_LIST.find(c=>c.key===lg.dataset.key);const ct=S.cities.find(c=>c.key===lg.dataset.key);
+    if(ct){key='ci'+ct.id+ct.photo;html=tipHTML(ct.photo,nmCt(ct),[nmC(C[ct.cc]),ct.memo].filter(Boolean).join(' · '))}
+    else if(x){key='pc'+x.key;html=tipHTML(null,EN?x.en:x.ko,canEdit()?'눌러서 다녀온 도시로 추가':nmC(C[x.cc]))}}
+  else if(t.dataset&&t.dataset.city){const ct=S.cities.find(c=>c.id===t.dataset.city);if(ct){key='ci'+ct.id+ct.photo;html=tipHTML(ct.photo,nmCt(ct),[nmC(C[ct.cc]),ct.memo].filter(Boolean).join(' · '))}}
   else if(t.dataset&&t.dataset.id){const c=C[t.dataset.id],st=S.countries[t.dataset.id];
     if(st){const n=S.cities.filter(x=>x.cc===c.id).length;key='co'+c.id+st.photo+n;html=tipHTML(st.photo,nmC(c),[st.memo,n?`도시 ${n}곳`:''].filter(Boolean).join(' · ')||'다녀온 나라')}
     else{key='co'+c.id;html=tipHTML(null,nmC(c),EN?c.ko:c.en)}}
@@ -736,7 +745,8 @@ let pinMode=false;
 function setPinMode(on){pinMode=on;$('#pinBtn').setAttribute('aria-pressed',on);svg.classList.toggle('pinmode',on);$('#hint').hidden=!on}
 $('#pinBtn').onclick=()=>{if(!canEdit()){flash('보기 전용 지도예요');return}setPinMode(!pinMode)};
 addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#themePop').hidden)closeThemes();else if(!$('#shareModal').hidden)closeShare();else if(pinMode)setPinMode(false);else if(!$('#results').hidden)closeResults();else closePanel()}});
-function mapClick(e){const t=document.elementFromPoint(e.clientX,e.clientY);
+function mapClick(e){const t=document.elementFromPoint(e.clientX,e.clientY);const lg=t&&t.closest&&t.closest('.lg');
+  if(lg&&lg.dataset.key){if(pinMode)setPinMode(false);openCityKey(lg.dataset.key);return}
   if(pinMode){let lon,lat;if(isGlobe()){const p=svgPt(e.clientX,e.clientY);const ll=gproj().invert([p.x,p.y]);if(!ll)return;[lon,lat]=ll;if(!gVisible(lon,lat))return}
     else{const p=mapPt(e.clientX,e.clientY);[lon,lat]=invert(p.x,p.y)}if(!isFinite(lon)||!isFinite(lat))return;
     const cc=t&&t.dataset&&t.dataset.id||null;
@@ -749,6 +759,7 @@ function mapClick(e){const t=document.elementFromPoint(e.clientX,e.clientY);
 /* ---------- panel ---------- */
 const panel=$('#panel');
 function open(s,focusName){sel=s;hideTip();renderPanel();renderMap();if(focusName){const i=$('#cname');i&&i.focus()}}
+function openCityKey(key){const ct=S.cities.find(c=>c.key===key);if(ct){open({type:'city',id:ct.id});return}open({type:'pcity',key})}
 function closePanel(){sel=null;panel.hidden=true;renderMap()}
 function canEdit(){return mode==='artifact'||mode==='cloud'||mode==='local'}
 function citiesOf(cc){return S.cities.filter(c=>c.cc===cc)}
@@ -786,6 +797,12 @@ function renderPanel(){
     if(c)h+=`<div><div class="lbl">나라</div><div class="chips"><button class="chip" data-country="${c.id}">${esc(nmC(c))}</button></div></div>`;
     if(ed)h+=`<div class="row"><button class="sbtn danger" data-a="rmcity">이 도시 지우기</button></div>`;
     h+=`</div>`}
+  else if(sel.type==='pcity'){const x=CITY_LIST.find(c=>c.key===sel.key);if(!x){closePanel();return}const c=C[x.cc];
+    const ll=`${Math.abs(x.lat).toFixed(2)}°${x.lat>=0?'N':'S'} ${Math.abs(x.lon).toFixed(2)}°${x.lon>=0?'E':'W'}`;
+    h+=`<div class="ph-head"><span class="code" style="border-color:var(--pin);color:var(--pin)">CITY</span><div><h2>${esc(EN?x.en:x.ko)}</h2><div class="sub">${esc(EN?x.ko:x.en)} · ${ll}</div></div><button class="x" data-a="close" aria-label="닫기">×</button></div><div class="pbody">`;
+    h+=ed?`<button class="toggle" data-a="addpcity">다녀온 도시로 추가</button><p class="note">추가하면 핀이 찍히고, 사진과 메모를 남길 수 있어요.</p>`:`<p class="note">아직 다녀오지 않은 도시예요.</p>`;
+    if(c)h+=`<div><div class="lbl">나라</div><div class="chips"><button class="chip" data-country="${c.id}">${esc(nmC(c))}</button></div></div>`;
+    h+=`</div>`}
   else if(sel.type==='list'){const ids=Object.keys(S.countries).sort((a,b)=>nmC(C[a]).localeCompare(nmC(C[b]),EN?'en':'ko'));
     h+=`<div class="ph-head"><div><h2>다녀온 곳</h2><div class="sub">나라 ${ids.length} · 도시 ${S.cities.length}</div></div><button class="x" data-a="close" aria-label="닫기">×</button></div><div class="pbody"><div class="list">`;
     if(!ids.length)h+=`<p class="empty">아직 칠한 나라가 없어요. 지도에서 나라를 누르거나 위에서 검색해 보세요.</p>`;
@@ -818,6 +835,7 @@ panel.addEventListener('click',e=>{const b=e.target.closest('button,[data-a]');i
     armed=null;const ct=S.cities.find(c=>c.id===sel.id);dropPhoto(ct.photo);S.cities=S.cities.filter(c=>c.id!==sel.id);changed();
     if(ct.cc)open({type:'country',id:ct.cc});else closePanel();return}
   if(a==='pinhere'){setPinMode(true);return}
+  if(a==='addpcity'){const x=CITY_LIST.find(c=>c.key===sel.key);if(x){const ct=addCity(x);open({type:'city',id:ct.id})}return}
 });
 panel.addEventListener('focusout',()=>{});
 function curObj(){if(!sel)return null;return sel.type==='country'?S.countries[sel.id]:S.cities.find(c=>c.id===sel.id)}
