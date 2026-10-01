@@ -200,6 +200,15 @@ svg.map.pinmode{cursor:crosshair}
 .field{width:100%;height:38px;border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:0 10px}
 .err{color:var(--pin);font-size:12px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
+.dates{display:flex;align-items:center;gap:8px}.dates input{flex:1;min-width:0;height:38px;border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:0 8px}
+.choice{position:absolute;z-index:11;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px;width:250px;display:grid;gap:8px}
+.choice h4{margin:0;font-family:var(--f-display);font-size:19px;display:flex;align-items:center;gap:8px}
+.choice .sub{color:var(--muted);font-size:12px;margin-top:-4px}
+.choice button.opt{display:grid;gap:2px;text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 12px}
+.choice button.opt:hover{border-color:var(--visited)}
+.choice button.opt b{font-size:14px}.choice button.opt span{font-size:12px;color:var(--muted)}
+.choice button.opt.main{background:var(--visited);border-color:var(--visited);color:#fff}.choice button.opt.main span{color:rgba(255,255,255,.85)}
+.choice .x{position:absolute;right:6px;top:6px;width:28px;height:28px;font-size:18px}
 .chip{border:1px solid var(--line);background:var(--chip);border-radius:999px;padding:4px 10px;font-size:13px;display:inline-flex;align-items:center;gap:6px}
 .chip.add{background:none;border-style:dashed;color:var(--muted)}
 .chip .dot{width:7px;height:7px;border-radius:50%;background:var(--pin)}
@@ -307,6 +316,7 @@ svg.map.pinmode{cursor:crosshair}
     <div class="viewbar" id="viewBar" hidden><span id="viewTxt">친구의 Passport Map을 보고 있어요</span><a href="/play/passport-map" target="_top">나도 내 지도 만들기</a></div>
     <div class="deco deco-passport">PASSPORT MAP</div>
     <svg class="deco deco-compass" viewBox="-40 -44 80 84" aria-hidden="true"><circle r="26" fill="none" stroke="currentColor" stroke-width="1"/><g fill="currentColor"><path d="M0-34 5 0-5 0z"/><path d="M0 34 5 0-5 0z" opacity=".55"/><path d="M34 0 0 5 0-5z" opacity=".55"/><path d="M-34 0 0 5 0-5z" opacity=".55"/></g><text y="-37" text-anchor="middle" font-size="10" font-family="Georgia,serif" fill="currentColor">N</text></svg>
+    <div class="choice" id="choice" hidden></div>
     <div class="themepop" id="themePop" hidden><h3>지도 테마</h3><div class="tgrid" id="tgrid"></div><label class="chk2"><input type="checkbox" id="labToggle" checked> 유명 도시 이름 표시</label></div>
     <div class="zoom"><button id="zin" aria-label="확대">+</button><button id="zout" aria-label="축소">−</button><button id="zreset" aria-label="처음 보기" style="font-size:13px">⤢</button></div>
     <aside class="panel" id="panel" hidden></aside>
@@ -577,6 +587,13 @@ const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').re
 const PAL=[['#2D5BD0','블루'],['#3BA3E6','하늘'],['#1FA7A0','민트'],['#2E9E5B','초록'],['#E8B517','노랑'],['#F08A24','주황'],['#E0393E','빨강'],['#E0559B','분홍'],['#7A4FD0','보라'],['#8A5A3C','갈색']];
 const DEF_C='#2D5BD0',DEF_P='#E0393E';
 const ARTIFACT_URL=EMB?location.origin+'/play/passport-map':'https://claude.ai/artifact/PGyVGyFPEBPS4Rr9Xea3jj';
+const DAY=864e5;
+function ymd(s){return s?s.replace(/-/g,'.'):''}
+function periodText(o){if(!o||!o.from)return '';const a=o.from,b=o.to&&o.to!==o.from?o.to:'';const n=Math.round((Date.parse(b||a)-Date.parse(a))/DAY)+1;
+  const bt=b?(b.slice(0,4)===a.slice(0,4)?b.slice(5).replace('-','.'):ymd(b)):'';return ymd(a)+(bt?' – '+bt:'')+' · '+n+(EN?(n>1?' days':' day'):'일')}
+function travelDays(){const iv=[];const add=o=>{if(!o||!o.from)return;let a=Date.parse(o.from),b=Date.parse(o.to||o.from);if(isNaN(a))return;if(isNaN(b)||b<a)b=a;iv.push([a,b])};
+  Object.values(S.countries).forEach(add);S.cities.forEach(add);iv.sort((p,q)=>p[0]-q[0]);let tot=0,cs=null,ce=null;
+  for(const [a,b] of iv){if(cs===null){cs=a;ce=b}else if(a<=ce+DAY){ce=Math.max(ce,b)}else{tot+=Math.round((ce-cs)/DAY)+1;cs=a;ce=b}}if(cs!==null)tot+=Math.round((ce-cs)/DAY)+1;return tot}
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 
 /* ---------- projection (Equal Earth, same fit as the baked paths) ---------- */
@@ -682,7 +699,7 @@ function renderMap(){
 }
 function sizePins(){const m=zg.getScreenCTM();if(!m)return;const r=(sel?6:5)/m.a;gP.querySelectorAll('circle').forEach(c=>c.setAttribute('r',(c.classList.contains('sel')?7.5/m.a:5/m.a).toFixed(3)))}
 function renderStats(){const n=Object.keys(S.countries).length,m=S.cities.length;
-  $('#stats').innerHTML=`<span>나라 <b>${n}</b></span><span>도시 <b>${m}</b></span><span>세계 <b>${Math.round(n/195*100)}%</b></span>`}
+  const d=travelDays();$('#stats').innerHTML=`<span>나라 <b>${n}</b></span><span>도시 <b>${m}</b></span>${d?`<span>여행 <b>${d}</b>일</span>`:''}<span>세계 <b>${Math.round(n/195*100)}%</b></span>`}
 
 /* ---------- zoom & pan ---------- */
 let V={x:0,y:0,k:1};
@@ -736,25 +753,25 @@ function hover(e){const t=document.elementFromPoint(e.clientX,e.clientY);if(!t){
   if(lg&&lg.dataset.key){const x=CITY_LIST.find(c=>c.key===lg.dataset.key);const ct=S.cities.find(c=>c.key===lg.dataset.key);
     if(ct){key='ci'+ct.id+ct.photo;html=tipHTML(ct.photo,nmCt(ct),[nmC(C[ct.cc]),ct.memo].filter(Boolean).join(' · '))}
     else if(x){key='pc'+x.key;html=tipHTML(null,EN?x.en:x.ko,canEdit()?'눌러서 다녀온 도시로 추가':nmC(C[x.cc]))}}
-  else if(t.dataset&&t.dataset.city){const ct=S.cities.find(c=>c.id===t.dataset.city);if(ct){key='ci'+ct.id+ct.photo;html=tipHTML(ct.photo,nmCt(ct),[nmC(C[ct.cc]),ct.memo].filter(Boolean).join(' · '))}}
+  else if(t.dataset&&t.dataset.city){const ct=S.cities.find(c=>c.id===t.dataset.city);if(ct){key='ci'+ct.id+ct.photo+ct.from+ct.to;html=tipHTML(ct.photo,nmCt(ct),[nmC(C[ct.cc]),ct.memo].filter(Boolean).join(' · '),periodText(ct))}}
   else if(t.dataset&&t.dataset.id){const c=C[t.dataset.id],st=S.countries[t.dataset.id];
-    if(st){const n=S.cities.filter(x=>x.cc===c.id).length;key='co'+c.id+st.photo+n;html=tipHTML(st.photo,nmC(c),[st.memo,n?`도시 ${n}곳`:''].filter(Boolean).join(' · ')||'다녀온 나라')}
+    if(st){const n=S.cities.filter(x=>x.cc===c.id).length;key='co'+c.id+st.photo+n+st.from+st.to;html=tipHTML(st.photo,nmC(c),[st.memo,n?`도시 ${n}곳`:''].filter(Boolean).join(' · ')||'다녀온 나라',periodText(st))}
     else{key='co'+c.id;html=tipHTML(null,nmC(c),EN?c.ko:c.en)}}
   if(!key){hideTip();return}
   if(key!==tipKey){tip.innerHTML=html;tipKey=key}
   tip.hidden=false;const w=tip.offsetWidth,h=tip.offsetHeight;let x=e.clientX+16,y=e.clientY+16;
   if(x+w>innerWidth-8)x=e.clientX-w-16;if(y+h>innerHeight-8)y=Math.max(8,e.clientY-h-16);if(x<8)x=8;
   tip.style.left=x+'px';tip.style.top=y+'px'}
-function tipHTML(photo,name,sub){return (photo?`<img src="${esc(photoURL(photo))}" alt="">`:'')+`<div class="t"><b>${esc(name)}</b>${sub?`<span>${esc(sub)}</span>`:''}</div>`}
+function tipHTML(photo,name,sub,per){return (photo?`<img src="${esc(photoURL(photo))}" alt="">`:'')+`<div class="t"><b>${esc(name)}</b>${sub?`<span>${esc(sub)}</span>`:''}${per?`<span>${esc(per)}</span>`:''}</div>`}
 function hideTip(){tip.hidden=true;tipKey=null}
 
 /* ---------- clicks ---------- */
 let pinMode=false;
 function setPinMode(on){pinMode=on;$('#pinBtn').setAttribute('aria-pressed',on);svg.classList.toggle('pinmode',on);$('#hint').hidden=!on}
 $('#pinBtn').onclick=()=>{if(!canEdit()){flash('보기 전용 지도예요');return}setPinMode(!pinMode)};
-addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#themePop').hidden)closeThemes();else if(!$('#shareModal').hidden)closeShare();else if(pinMode)setPinMode(false);else if(!$('#results').hidden)closeResults();else closePanel()}});
+addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#choice').hidden)closeChoice();else if(!$('#themePop').hidden)closeThemes();else if(!$('#shareModal').hidden)closeShare();else if(pinMode)setPinMode(false);else if(!$('#results').hidden)closeResults();else closePanel()}});
 function mapClick(e){const t=document.elementFromPoint(e.clientX,e.clientY);const lg=t&&t.closest&&t.closest('.lg');
-  if(lg&&lg.dataset.key){if(pinMode)setPinMode(false);openCityKey(lg.dataset.key);return}
+  if(lg&&lg.dataset.key){if(pinMode)setPinMode(false);openCityKey(lg.dataset.key,e.clientX,e.clientY);return}
   if(pinMode){let lon,lat;if(isGlobe()){const p=svgPt(e.clientX,e.clientY);const ll=gproj().invert([p.x,p.y]);if(!ll)return;[lon,lat]=ll;if(!gVisible(lon,lat))return}
     else{const p=mapPt(e.clientX,e.clientY);[lon,lat]=invert(p.x,p.y)}if(!isFinite(lon)||!isFinite(lat))return;
     const cc=t&&t.dataset&&t.dataset.id||null;
@@ -767,7 +784,22 @@ function mapClick(e){const t=document.elementFromPoint(e.clientX,e.clientY);cons
 /* ---------- panel ---------- */
 const panel=$('#panel');
 function open(s,focusName){sel=s;hideTip();renderPanel();renderMap();if(focusName){const i=$('#cname');i&&i.focus()}}
-function openCityKey(key){const ct=S.cities.find(c=>c.key===key);if(ct){open({type:'city',id:ct.id});return}open({type:'pcity',key})}
+function openCityKey(key,cx,cy){const ct=S.cities.find(c=>c.key===key);if(ct){open({type:'city',id:ct.id});return}
+  if(canEdit()&&cx!=null){showChoice(key,cx,cy);return}open({type:'pcity',key})}
+let choiceKey=null;
+function showChoice(key,cx,cy){const x=CITY_LIST.find(c=>c.key===key);if(!x)return;choiceKey=key;hideTip();const el=$('#choice');
+  el.innerHTML=`<button class="x" data-c="close" aria-label="닫기">×</button><h4>${esc(EN?x.en:x.ko)}</h4><div class="sub">${esc(nmC(C[x.cc]))}</div>
+    <button class="opt" data-c="pin"><b>핀만 찍기</b><span>지도에 다녀온 도시로 표시만 해요</span></button>
+    <button class="opt main" data-c="info"><b>핀 + 정보 입력</b><span>사진, 방문 기간, 메모를 함께 남겨요</span></button>`;
+  el.hidden=false;const st=$('#stage').getBoundingClientRect();const w=el.offsetWidth,h=el.offsetHeight;
+  let l=cx-st.left+14,t=cy-st.top-h/2;if(l+w>st.width-12)l=cx-st.left-w-14;l=Math.max(12,l);t=Math.max(12,Math.min(st.height-h-12,t));el.style.left=l+'px';el.style.top=t+'px';
+  el.querySelector('.opt.main').focus()}
+function closeChoice(){$('#choice').hidden=true;choiceKey=null}
+$('#choice').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(!b)return;const c=b.dataset.c;const x=CITY_LIST.find(z=>z.key===choiceKey);closeChoice();
+  if(c==='close'||!x)return;const ct=addCity(x);renderMap();
+  if(c==='pin'){flash(EN?`Pinned ${x.en}`:`${x.ko}에 핀을 찍었어요`);return}
+  open({type:'city',id:ct.id});const d=$('#dFrom');if(d)d.focus()});
+document.addEventListener('pointerdown',e=>{if(!$('#choice').hidden&&!e.target.closest('#choice'))closeChoice()});
 function closePanel(){sel=null;panel.hidden=true;renderMap()}
 function canEdit(){return mode==='artifact'||mode==='cloud'||mode==='local'}
 function citiesOf(cc){return S.cities.filter(c=>c.cc===cc)}
@@ -777,6 +809,8 @@ function photoBlock(photo){
   return `<div><div class="lbl">사진</div><div class="drop" data-a="pick" tabindex="0" role="button" id="drop"><div><b>사진 1장 올리기</b><br>눌러서 고르거나, 여기로 끌어 놓거나,<br>복사한 사진을 붙여넣으세요</div></div><div class="err" id="perr"></div></div>`}
 function palBlock(cur,label,hint){if(!canEdit())return cur?`<div><div class="lbl">${label}</div><span class="sw" style="background:${cur};display:inline-grid"></span></div>`:'';
   return `<div><div class="lbl">${label}</div><div class="pal">`+PAL.map(([c,n])=>`<button class="sw" data-color="${c}" style="background:${c}" aria-pressed="${cur===c}" aria-label="${n}" title="${n}">${cur===c?'✓':''}</button>`).join('')+`</div><div class="swl">${cur?esc((PAL.find(p=>p[0]===cur)||['','다른'])[1])+' 색이에요':hint}</div></div>`}
+function dateBlock(o){if(!canEdit())return o&&o.from?`<div><div class="lbl">방문 기간</div><div>${esc(periodText(o))}</div></div>`:'';
+  return `<div><div class="lbl">방문 기간</div><div class="dates"><input type="date" id="dFrom" aria-label="방문 시작일" value="${esc(o.from||'')}"><span>~</span><input type="date" id="dTo" aria-label="방문 마지막 날" value="${esc(o.to||'')}"></div><div class="swl" id="dLen">${o.from?esc(periodText(o)):'날짜를 넣으면 여행 기간이 계산돼요'}</div></div>`}
 function renderPanel(){
   if(!sel){panel.hidden=true;return}
   panel.hidden=false;let h='';const ed=canEdit();
@@ -784,7 +818,7 @@ function renderPanel(){
     h+=`<div class="ph-head"><span class="code">${esc(c.id.length===2?c.id:'—')}</span><div><h2>${esc(nmC(c))}</h2><div class="sub">${esc(EN?c.ko:c.en)}</div></div><button class="x" data-a="close" aria-label="닫기">×</button></div><div class="pbody">`;
     h+=palBlock(st?(st.color||DEF_C):null,'색칠하기','색을 누르면 이 나라가 칠해져요');
     if(!ed&&!st)h+=`<p class="note">아직 다녀오지 않은 나라예요.</p>`;
-    if(st){h+=photoBlock(st.photo);
+    if(st){h+=photoBlock(st.photo);h+=dateBlock(st);
       h+= ed?`<div><div class="lbl">한 줄 메모</div><input class="field" id="memo" maxlength="60" placeholder="예: 2024년 봄, 벚꽃 보러" value="${esc(st.memo||'')}"></div>`
             :(st.memo?`<div><div class="lbl">메모</div><div>${esc(st.memo)}</div></div>`:'');}
     h+=`<div><div class="lbl">다녀온 도시</div><div class="chips">`+cs.map(ct=>`<button class="chip" data-city="${ct.id}"><span class="dot" style="background:${ct.color||DEF_P}"></span>${esc(nmCt(ct))}</button>`).join('');
@@ -799,7 +833,7 @@ function renderPanel(){
     h+=`<div class="ph-head"><span class="code" style="border-color:var(--pin);color:var(--pin)">CITY</span><div><h2>${esc(nmCt(ct))}</h2><div class="sub">${ct.en?esc(EN?ct.name:ct.en)+' · ':''}${ll}</div></div><button class="x" data-a="close" aria-label="닫기">×</button></div><div class="pbody">`;
     if(ed&&ct.custom)h+=`<div><div class="lbl">장소 이름</div><input class="field" id="cname" maxlength="40" placeholder="예: 우리 동네 바닷가" value="${esc(ct.name||'')}"></div>`;
     h+=palBlock(ct.color||DEF_P,'핀 색','');
-    h+=photoBlock(ct.photo);
+    h+=photoBlock(ct.photo);h+=dateBlock(ct);
     h+= ed?`<div><div class="lbl">한 줄 메모</div><input class="field" id="memo" maxlength="60" placeholder="예: 야경이 최고였던 곳" value="${esc(ct.memo||'')}"></div>`
           :(ct.memo?`<div><div class="lbl">메모</div><div>${esc(ct.memo)}</div></div>`:'');
     if(c)h+=`<div><div class="lbl">나라</div><div class="chips"><button class="chip" data-country="${c.id}">${esc(nmC(c))}</button></div></div>`;
@@ -819,6 +853,10 @@ function renderPanel(){
     const orphan=S.cities.filter(x=>!x.cc);orphan.forEach(ct=>{h+=`<button class="li" data-city="${ct.id}">${ct.photo?`<img src="${esc(photoURL(ct.photo))}" alt="">`:`<span class="noimg">·</span>`}<div><b>${esc(nmCt(ct))}</b><span>바다 위의 핀</span></div></button>`});
     h+=`</div></div>`}
   panel.innerHTML=h;
+  const dF=$('#dFrom'),dT=$('#dTo');if(dF&&dT){const upd=()=>{const o=sel.type==='country'?S.countries[sel.id]:S.cities.find(c=>c.id===sel.id);if(!o)return;
+      let a=dF.value||'',b=dT.value||'';if(a&&b&&b<a){[a,b]=[b,a];dF.value=a;dT.value=b}if(!a&&b){a=b;b='';dF.value=a;dT.value=''}
+      o.from=a||undefined;o.to=b&&b!==a?b:undefined;$('#dLen').textContent=o.from?periodText(o):'날짜를 넣으면 여행 기간이 계산돼요';renderStats();changed(true)};
+    dF.onchange=upd;dT.onchange=upd;if(!dT.value&&dF.value)dT.min=dF.value;dF.addEventListener('change',()=>{if(dF.value)dT.min=dF.value})}
   const memo=$('#memo');if(memo)memo.oninput=()=>{const o=sel.type==='country'?S.countries[sel.id]:S.cities.find(c=>c.id===sel.id);if(o){o.memo=memo.value.trim()||undefined;changed(true)}};
   const cn=$('#cname');if(cn)cn.oninput=()=>{const o=S.cities.find(c=>c.id===sel.id);if(o){o.name=cn.value.trim();panel.querySelector('h2').textContent=o.name||'이름 없는 곳';changed(true)}};
   const dr=$('#drop');if(dr){dr.ondragover=e=>{e.preventDefault();dr.classList.add('over')};dr.ondragleave=()=>dr.classList.remove('over');
@@ -922,19 +960,28 @@ let saveTimer=null,saving=false,again=false;
 function changed(soft){if(!soft)renderMap();if(isSample){isSample=false;$('#sample').hidden=true}
   if(canEdit()){setSave('dirty','저장 대기');clearTimeout(saveTimer);saveTimer=setTimeout(save,soft?2500:1500)}}
 function snapshot(){return JSON.stringify(S)}
-async function save(){if(saving){again=true;return}saving=true;setSave('saving','저장 중…');
+let cloudAt=null,photoFail=false,failN=0,cloudUser=null;
+function mergeMaps(remote,local){const out={...remote,countries:{...(remote.countries||{})},cities:[...(remote.cities||[])]};
+  for(const id in local.countries)out.countries[id]={...(out.countries[id]||{}),...local.countries[id]};
+  (local.cities||[]).forEach(c=>{const i=out.cities.findIndex(x=>x.id===c.id||(c.key&&x.key===c.key));if(i>=0)out.cities[i]={...out.cities[i],...c};else out.cities.push(c)});
+  ['theme','share','labels','prefs'].forEach(k=>{if(local[k]!==undefined)out[k]=local[k]});return out}
+async function save(){if(!canEdit())return;if(saving){again=true;return}saving=true;setSave('saving','저장 중…');
   const photos={...pendingPhotos},dels=[...deletedPhotos];
   try{
     if(mode==='artifact'){const files={'data/map.json':{content:snapshot(),contentType:'application/json'}};
       for(const p in photos)files[p]=photos[p];dels.forEach(p=>files[p]=null);
       await window.ART.publish(files)}
-    else if(mode==='cloud'){const fn=p=>p.slice(7);schedulePub();
-      for(const p in photos)await MG.save.putFile(fn(p),photos[p]);
-      await MG.save.store(JSON.parse(snapshot()));
+    else if(mode==='cloud'){failN=0;const fn=p=>p.slice(7);schedulePub();
+      for(const p in photos){try{await MG.save.putFile(fn(p),photos[p])}catch(e){delete photos[p];photoFail=true}} // 실패한 사진은 다음 저장 때 다시 올림
+      let res=await MG.save.store(JSON.parse(snapshot()),cloudAt);
+      if(res&&res.conflict){ // 다른 기기에서 그 사이 저장됨 → 합쳐서 다시 저장
+        S=mergeMaps(res.data||{},S);cloudAt=res.updatedAt;renderMap();if(sel)renderPanel();refreshUrls();
+        res=await MG.save.store(JSON.parse(snapshot()),cloudAt)}
+      if(res&&res.updatedAt&&!res.conflict)cloudAt=res.updatedAt;
       if(dels.length)await MG.save.deleteFiles(dels.map(fn)).catch(()=>{})}
     else await localSave(photos,dels);
     for(const p in photos)delete pendingPhotos[p];dels.forEach(p=>deletedPhotos.delete(p));
-    setSave('saved',mode==='local'?'이 브라우저에 저장됨':mode==='cloud'?'계정에 저장됨':'저장됨')}
+    setSave('saved',mode==='local'?'이 브라우저에 저장됨':mode==='cloud'?'계정에 저장됨':'저장됨');if(photoFail){photoFail=false;setTimeout(()=>{if(Object.keys(pendingPhotos).length)changed(true)},8000)}}
   catch(err){const code=err&&(err.code||err.message);
     if(mode==='cloud'&&code==='not_logged_in'){mode='local';showLogin(true)}
     if(['not_writer','not_granted','capability_disabled','not_declared','consent_required','capability_removed'].includes(code)){
@@ -942,8 +989,14 @@ async function save(){if(saving){again=true;return}saving=true;setSave('saving',
     else if(code==='conflict'){setSave('saving','새 버전 불러오는 중…')}
     else if(code==='rate_limited'){setSave('dirty','잠시 후 저장');setTimeout(save,8000)}
     else if(code==='too_large'){setSave('error','용량 초과: 사진 몇 장을 지워 주세요')}
-    else{setSave('error','저장 실패 · 다시 시도 중');setTimeout(save,4000)}}
+    else{setSave('error','저장 실패 · 다시 시도 중');saveEl.title=String(err&&err.message||err);console.error('[passport-map] save',err);setTimeout(save,Math.min(30000,4000*(++failN)))}}
   saving=false;if(again){again=false;save()}}
+function flushSave(){if(saveEl.dataset.s==='dirty'){clearTimeout(saveTimer);save()}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushSave();else pullCloud()});
+addEventListener('pagehide',flushSave);
+async function pullCloud(){if(mode!=='cloud'||saving||saveEl.dataset.s==='dirty')return;
+  try{const r=await MG.save.load();if(!r||!r.data||!r.data.countries)return;if(cloudAt&&Date.parse(r.updatedAt)<=Date.parse(cloudAt)+1)return;
+    if(mode!=='cloud'||saving||saveEl.dataset.s==='dirty')return;S=r.data;S.cities=S.cities||[];cloudAt=r.updatedAt;renderMap();if(sel)renderPanel();refreshUrls();flash(EN?'Updated with changes from another device':'다른 기기에서 고친 내용을 불러왔어요')}catch(e){}}
 addEventListener('beforeunload',e=>{if(saveEl.dataset.s==='dirty'||saveEl.dataset.s==='saving'){e.preventDefault();e.returnValue=''}});
 
 /* IndexedDB fallback for views that can't publish */
@@ -1077,12 +1130,14 @@ async function renderCard(cv,F,P,seq){
   else{const top=F==='pt'?190:172;const w=W-2*pad;mb=[pad,top,w,imgs.length||F==='pt'?w*0.5:w*0.56]}
   const [bx,by,bw,bh]=mb;drawThemeMap(x,bx,by,bw,bh,TH,18);
   // stats
-  const stats=[[n,'나라'],[m,'도시'],[pc+'%','세계']];
-  if(F==='ls'){const sx=bx+bw+44;let sy=by+20;stats.forEach(([v,l])=>{x.fillStyle=INK;x.font=`700 64px ${DISP}`;x.fillText(String(v),sx,sy+58);x.fillStyle=MUTED;x.font=`500 20px ${BODY}`;x.fillText(l==='세계'?'세계 나라 중':l==='나라'?'개 나라':'곳의 도시',sx,sy+90);sy+=(bh-20)/3})}
-  else{const sy=by+bh+(imgs.length?40:64);const cw=(W-2*pad)/3;stats.forEach(([v,l],i)=>{const cx=pad+cw*i;
-      x.fillStyle=INK;x.font=`700 ${imgs.length?64:84}px ${DISP}`;x.fillText(String(v),cx,sy+(imgs.length?60:80));
-      x.fillStyle=MUTED;x.font=`500 ${imgs.length?22:26}px ${BODY}`;x.fillText(l==='세계'?'세계 나라 중':l==='나라'?'개 나라를 다녀왔어요':'곳의 도시',cx,sy+(imgs.length?96:124));
-      if(i){x.fillStyle=BORDER;x.fillRect(cx-20,sy+8,1.5,imgs.length?88:112)}});
+  const days=travelDays();
+  const stats=[[String(n),EN?'':'개국','방문 국가'],[String(m),EN?'':'곳','방문 도시'],[days?String(days):'–',days?(EN?' days':'일'):'','여행 기간 총합'],[String(pc),'%','세계 나라 중']];
+  const stat=(x0,y0,[v,u,l],nf,lf,gap)=>{x.fillStyle=INK;x.font=`700 ${nf}px ${DISP}`;x.fillText(v,x0,y0);const w=x.measureText(v).width;
+    if(u){x.font=`700 ${Math.round(nf*.42)}px ${BODY}`;x.fillText(u,x0+w+4,y0)}x.fillStyle=MUTED;x.font=`500 ${lf}px ${BODY}`;x.fillText(l,x0,y0+gap)};
+  if(F==='ls'){const sx=bx+bw+40;let sy=by+8;const step=(bh-8)/4;stats.forEach(st=>{stat(sx,sy+50,st,52,18,28);sy+=step})}
+  else{const sy=by+bh+(imgs.length?40:64);const cw=(W-2*pad)/4;stats.forEach((st,i)=>{const cx=pad+cw*i+(i?18:0);
+      stat(cx,sy+(imgs.length?56:76),st,imgs.length?56:72,imgs.length?19:22,imgs.length?36:44);
+      if(i){x.fillStyle=BORDER;x.fillRect(cx-18,sy+8,1.5,imgs.length?88:112)}});
     // photos
     if(imgs.length){const top=sy+132,bottom=H-pad-24,cols=F==='pt'?3:4,rows=Math.ceil(imgs.length/cols)>1&&F==='pt'?2:1,g=14;
       const cw2=(W-2*pad-g*(cols-1))/cols,ch=(bottom-top-g*(rows-1))/rows;
@@ -1133,14 +1188,21 @@ async function bootPortal(){
   if(!S||!hasData()){S=sampleState();isSample=true}
   $('#sample').hidden=!isSample;mode='local';renderMap();resetView();setSave('idle','확인 중');
   let gen=0;
-  MG.save.onAuth(async(u,info)=>{const my=++gen;
-    if(!u){if(mode==='cloud'){location.reload();return}mode='local';showLogin(info&&info.cloud!==false);setSave('saved','이 브라우저에 저장됨');renderPanel();return}
-    showLogin(false);mode='cloud';setSave('saving','불러오는 중…');setTimeout(refreshPub,0);
-    let r=null;try{r=await MG.save.load()}catch(e){setSave('error','불러오기 실패');return}
+  MG.save.onAuth(async(u,info)=>{
+    if(u&&cloudUser===u.id&&(mode==='cloud'||mode==='loading'))return; // 같은 계정 재전송(토큰 갱신·탭 복귀)은 무시
+    const my=++gen;
+    if(!u){cloudUser=null;if(mode==='cloud'||mode==='loading'){location.reload();return}mode='local';showLogin(info&&info.cloud!==false);setSave('saved','이 브라우저에 저장됨');renderPanel();return}
+    cloudUser=u.id;showLogin(false);const prevMode=mode;mode='loading';setPinMode&&setPinMode(false);setSave('saving','계정에서 불러오는 중…');renderPanel();
+    let r=null,tries=0;
+    for(;;){try{r=await MG.save.load();break}catch(e){if(my!==gen)return;tries++;setSave('error','불러오기 실패 · 다시 시도 중');saveEl.title=String(e&&e.message||e);await new Promise(z=>setTimeout(z,Math.min(20000,2000*tries)))}}
     if(my!==gen)return;
-    if(r&&r.data&&r.data.countries){S=r.data;S.cities=S.cities||[];isSample=false;$('#sample').hidden=true;sel=null;panel.hidden=true;renderMap();await refreshUrls();setSave('saved','계정에 저장됨')}
+    mode='cloud';setTimeout(refreshPub,0);
+    if(r&&r.data&&r.data.countries){
+      const localDirty=prevMode==='local'&&!isSample&&hasData()&&saveEl.dataset.s==='dirty';
+      S=localDirty?mergeMaps(r.data,S):r.data;S.cities=S.cities||[];cloudAt=r.updatedAt||null;isSample=false;$('#sample').hidden=true;sel=null;panel.hidden=true;renderMap();await refreshUrls();
+      if(localDirty){setSave('dirty','저장 대기');save()}else setSave('saved','계정에 저장됨')}
     else if(!isSample&&hasData()){ // 처음 로그인: 이 브라우저의 지도를 계정으로 옮긴다
-      [...Object.values(S.countries).map(o=>o.photo),...S.cities.map(c=>c.photo)].forEach(p=>{if(p&&fileBlobs[p])pendingPhotos[p]=fileBlobs[p]});
+      allPhotoPaths().forEach(p=>{if(fileBlobs[p])pendingPhotos[p]=fileBlobs[p]});
       setSave('dirty','계정으로 옮기는 중');save()}
     else setSave('saved','계정에 저장됨');
     if(isSample)$('#sample').querySelector('.row').hidden=false;

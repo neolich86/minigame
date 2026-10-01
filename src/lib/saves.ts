@@ -35,14 +35,30 @@ export async function loadSave(gameId: string): Promise<{ data: unknown; updated
   return data ? { data: data.data, updatedAt: data.updated_at as string } : null;
 }
 
-export async function storeSave(gameId: string, value: unknown): Promise<string> {
+/** 저장. prevAt(마지막으로 읽거나 쓴 시각)을 주면, 그 사이 다른 기기가 저장했을 때 덮어쓰지 않고 그쪽 데이터를 돌려준다 */
+export async function storeSave(
+  gameId: string,
+  value: unknown,
+  prevAt?: string,
+): Promise<{ updatedAt: string; conflict?: false } | { conflict: true; data: unknown; updatedAt: string }> {
   const user = await uid();
+  const c = client();
+  if (prevAt) {
+    const { data: cur, error: selErr } = await c
+      .from("game_saves")
+      .select("data, updated_at")
+      .eq("user_id", user)
+      .eq("game_id", gameId)
+      .maybeSingle();
+    if (selErr) throw selErr;
+    if (cur && Date.parse(cur.updated_at as string) > Date.parse(prevAt) + 1) {
+      return { conflict: true, data: cur.data, updatedAt: cur.updated_at as string };
+    }
+  }
   const updatedAt = new Date().toISOString();
-  const { error } = await client()
-    .from("game_saves")
-    .upsert({ user_id: user, game_id: gameId, data: value, updated_at: updatedAt });
+  const { error } = await c.from("game_saves").upsert({ user_id: user, game_id: gameId, data: value, updated_at: updatedAt });
   if (error) throw error;
-  return updatedAt;
+  return { updatedAt };
 }
 
 export async function putFile(gameId: string, name: string, blob: Blob): Promise<void> {

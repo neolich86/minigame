@@ -142,7 +142,7 @@ export function GamePlayer({ gameId }: { gameId: string }) {
         case "load":
           return loadSave(game.id);
         case "store":
-          return storeSave(game.id, args.data);
+          return storeSave(game.id, args.data, typeof args.prevAt === "string" ? args.prevAt : undefined);
         case "putFile":
           if (!(args.blob instanceof Blob) || typeof args.name !== "string") throw new Error("bad_file");
           return putFile(game.id, args.name, args.blob);
