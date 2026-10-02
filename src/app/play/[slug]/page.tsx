@@ -18,6 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title,
     description,
     keywords: seo?.keywords,
+    ...(g.hidden ? { robots: { index: false, follow: false } } : {}),
     alternates: langAlternates(`/play/${g.id}`, lang, fromParam),
     openGraph: { title, description, images: [{ url: g.thumb }], type: "website" },
     twitter: { card: "summary_large_image", title, description, images: [g.thumb] },

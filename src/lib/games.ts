@@ -33,9 +33,12 @@ export interface Game {
   teams?: boolean;
   /** 로그인 사용자의 게임 데이터를 계정에 저장 (bridge.js MGH.save → game_saves / game-files) */
   saves?: boolean;
+  /** 포털 목록·사이트맵·추천에서 숨김 (주소로 직접 들어가면 열림) */
+  hidden?: boolean;
 }
 
-export const GAMES: Game[] = [
+/** 숨긴 게임까지 포함한 전체 목록 — 주소로 찾을 때만 쓴다 */
+const CATALOG: Game[] = [
   {
     id: "catan",
     title: { ko: "헥사 아일랜드", en: "Hexa Isle" },
@@ -146,6 +149,7 @@ export const GAMES: Game[] = [
     genre: "casual",
     thumb: "/thumbs/my-post-2026.jpg",
     src: "/games/my-post-2026/index.html",
+    hidden: true, // 인스타 프로페셔널 계정 + 메타 앱 심사가 필요해 개인용으로만 둠
   },
   {
     id: "passport-map",
@@ -209,10 +213,13 @@ export const GAMES: Game[] = [
   },
 ];
 
+/** 포털에 보이는 게임 */
+export const GAMES: Game[] = CATALOG.filter((g) => !g.hidden);
+
 export const GENRES: Genre[] = ["board", "action", "strategy", "casual"];
 
 export function gameById(id: string): Game | undefined {
-  return GAMES.find((g) => g.id === id);
+  return CATALOG.find((g) => g.id === id);
 }
 
 export function boardById(id: string): { game: Game; board: Board } | undefined {
