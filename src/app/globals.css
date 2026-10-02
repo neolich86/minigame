@@ -296,3 +296,27 @@ footer.site-footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid 
 @media (max-width: 560px) {
   .brand-text { display: none; }
 }
+
+/* 홈·목록 첫 화면의 큰 구분 탭 */
+header.hero { margin-bottom: 28px; }
+.kind-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 0 auto 36px; max-width: 920px; }
+.kind-tab { display: flex; align-items: center; gap: 14px; padding: 18px 20px; border-radius: 16px; background: var(--bg-panel); border: 1.5px solid var(--line); text-decoration: none; color: var(--text); transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease; }
+.kind-tab:hover { transform: translateY(-2px); border-color: var(--tab-c); }
+.kind-tab.kind-game { --tab-c: var(--gold); --tab-bg: var(--gold-dim); }
+.kind-tab.kind-tool { --tab-c: var(--violet); --tab-bg: var(--violet-dim); }
+.kind-tab.kind-app { --tab-c: var(--teal); --tab-bg: rgba(77, 219, 199, .12); }
+.kind-tab.active { border-color: var(--tab-c); background: var(--tab-bg); box-shadow: 0 10px 28px -14px var(--tab-c), 0 0 0 1px var(--tab-c) inset; }
+.kind-tab-icon { font-size: 34px; line-height: 1; flex-shrink: 0; }
+.kind-tab-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kind-tab-text b { font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
+.kind-tab.active .kind-tab-text b { color: var(--tab-c); }
+.kind-tab-text em { font-style: normal; font-family: "Space Mono", monospace; font-size: 12px; font-weight: 700; color: var(--text-dim); margin-left: 4px; vertical-align: 2px; }
+.kind-tab-text small { font-size: 12.5px; color: var(--text-dim); line-height: 1.35; }
+@media (max-width: 640px) {
+  .kind-tabs { gap: 8px; margin-bottom: 26px; }
+  .kind-tab { flex-direction: column; text-align: center; gap: 6px; padding: 14px 6px; border-radius: 14px; }
+  .kind-tab-icon { font-size: 28px; }
+  .kind-tab-text b { font-size: 15px; }
+  .kind-tab-text em { display: none; }
+  .kind-tab-text small { font-size: 10.5px; }
+}

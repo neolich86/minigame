@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useApp } from "./AppProvider";
-import { GENRES, entryPath, formatScore, itemsOf, type Genre, type Kind } from "@/lib/games";
+import { GENRES, KINDS, KIND_INDEX, entryPath, formatScore, itemsOf, type Genre, type Kind } from "@/lib/games";
 import { KIND_SEO } from "@/lib/seo";
 import { fetchMyScores, type ScoreRow } from "@/lib/supabase";
 
@@ -15,6 +15,10 @@ const ACCENT: Record<Genre, { c: string; bg: string }> = {
 };
 
 const VIEW_KEY = "mgh:view";
+
+const KIND_ICON: Record<Kind, string> = { game: "🎮", tool: "🎲", app: "🧭" };
+const KIND_LABEL = { game: "navGames", tool: "navTools", app: "navApps" } as const;
+const KIND_DESC = { game: "kindDesc_game", tool: "kindDesc_tool", app: "kindDesc_app" } as const;
 
 /** 게임(홈) · 추첨·도구 · 서비스 목록 — kind 로 무엇을 보여줄지 정한다 */
 export function GameList({ children, kind = "game" }: { children?: ReactNode; kind?: Kind }) {
@@ -65,6 +69,23 @@ export function GameList({ children, kind = "game" }: { children?: ReactNode; ki
         <h1 className="title">{hero ? hero.heading : t("siteName")}</h1>
         <p className="subtitle">{hero ? hero.subtitle : t("subtitle")}</p>
       </header>
+
+      {/* 게임 · 추첨·도구 · 서비스 큰 탭 — 홈/목록 첫 화면에서 바로 보이게 */}
+      <nav className="kind-tabs" aria-label={t("navGames") + " · " + t("navTools") + " · " + t("navApps")}>
+        {KINDS.map((k) => (
+          <Link key={k} href={KIND_INDEX[k]} className={`kind-tab kind-${k}${k === kind ? " active" : ""}`} aria-current={k === kind ? "page" : undefined}>
+            <span className="kind-tab-icon" aria-hidden>
+              {KIND_ICON[k]}
+            </span>
+            <span className="kind-tab-text">
+              <b>
+                {t(KIND_LABEL[k])} <em>{itemsOf(k).length}</em>
+              </b>
+              <small>{t(KIND_DESC[k])}</small>
+            </span>
+          </Link>
+        ))}
+      </nav>
 
       <div className="controls" style={isGame ? undefined : { justifyContent: "flex-end" }}>
         {isGame && (
