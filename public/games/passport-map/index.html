@@ -200,7 +200,13 @@ svg.map.pinmode{cursor:crosshair}
 .field{width:100%;height:38px;border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:0 10px}
 .err{color:var(--pin);font-size:12px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-.dates{display:flex;align-items:center;gap:8px}.dates input{flex:1;min-width:0;height:38px;border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:0 8px}
+input,button,select,textarea{box-sizing:border-box}
+.pbody{grid-template-columns:minmax(0,1fr)}
+.pbody>*{min-width:0}
+.dates{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:6px}
+.dates input{width:100%;min-width:0;height:40px;border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:0 8px;font:inherit;display:block;-webkit-appearance:none;appearance:none;text-align:left}
+.dates input::-webkit-date-and-time-value{text-align:left}
+@media (max-width:720px){.dates input,.field{font-size:16px}}
 .choice{position:absolute;z-index:11;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px;width:250px;display:grid;gap:8px}
 .choice h4{margin:0;font-family:var(--f-display);font-size:19px;display:flex;align-items:center;gap:8px}
 .choice .sub{color:var(--muted);font-size:12px;margin-top:-4px}
@@ -810,7 +816,7 @@ function photoBlock(photo){
 function palBlock(cur,label,hint){if(!canEdit())return cur?`<div><div class="lbl">${label}</div><span class="sw" style="background:${cur};display:inline-grid"></span></div>`:'';
   return `<div><div class="lbl">${label}</div><div class="pal">`+PAL.map(([c,n])=>`<button class="sw" data-color="${c}" style="background:${c}" aria-pressed="${cur===c}" aria-label="${n}" title="${n}">${cur===c?'✓':''}</button>`).join('')+`</div><div class="swl">${cur?esc((PAL.find(p=>p[0]===cur)||['','다른'])[1])+' 색이에요':hint}</div></div>`}
 function dateBlock(o){if(!canEdit())return o&&o.from?`<div><div class="lbl">방문 기간</div><div>${esc(periodText(o))}</div></div>`:'';
-  return `<div><div class="lbl">방문 기간</div><div class="dates"><input type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="2025.03.01" id="dFrom" aria-label="방문 시작일" value="${esc(ymd(o.from||''))}"><span>~</span><input type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="2025.03.05" id="dTo" aria-label="방문 마지막 날" value="${esc(ymd(o.to||''))}"></div><div class="swl" id="dLen">${o.from?esc(periodText(o)):'예: 2025.03.01 ~ 2025.03.05 (마지막 날은 비워도 돼요)'}</div></div>`}
+  return `<div><div class="lbl">방문 기간</div><div class="dates"><input type="date" id="dFrom" aria-label="방문 시작일" value="${esc(o.from||'')}"><span>~</span><input type="date" id="dTo" aria-label="방문 마지막 날" value="${esc(o.to||'')}"></div><div class="swl" id="dLen">${o.from?esc(periodText(o)):'달력에서 시작일과 마지막 날을 고르세요 (마지막 날은 비워도 돼요)'}</div></div>`}
 function renderPanel(){
   if(!sel){panel.hidden=true;return}
   panel.hidden=false;let h='';const ed=canEdit();
@@ -854,19 +860,16 @@ function renderPanel(){
     h+=`</div></div>`}
   panel.innerHTML=h;
   const dF=$('#dFrom'),dT=$('#dTo');if(dF&&dT){
-    const fmt=inp=>{const d=inp.value.replace(/\D/g,'').slice(0,8);inp.value=d.length>6?d.slice(0,4)+'.'+d.slice(4,6)+'.'+d.slice(6):d.length>4?d.slice(0,4)+'.'+d.slice(4):d}; // 숫자만 입력하면 점을 자동으로 넣는다
-    const parse=v=>{v=v.trim();if(!v)return '';const m=v.match(/^(\d{4})\D?(\d{1,2})\D?(\d{1,2})$/);if(!m)return null;const y=+m[1],mo=+m[2],d=+m[3];
-      const dt=new Date(Date.UTC(y,mo-1,d));if(y<1900||y>2100||dt.getUTCMonth()!==mo-1||dt.getUTCDate()!==d)return null;return `${m[1]}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`};
-    const msg=t=>{$('#dLen').textContent=t};
-    const commit=()=>{const o=sel.type==='country'?S.countries[sel.id]:S.cities.find(c=>c.id===sel.id);if(!o)return;
-      const a=parse(dF.value),b=parse(dT.value);
-      if(a===null){msg('시작일을 2025.03.01처럼 입력해 주세요');return}if(b===null){msg('마지막 날을 2025.03.05처럼 입력해 주세요');return}
-      if(!a&&b){msg('시작일을 먼저 입력해 주세요');return}
-      if(a&&b&&b<a){msg('마지막 날이 시작일보다 빨라요');return}
-      if(a)dF.value=ymd(a);if(b)dT.value=ymd(b);
-      if((o.from||'')===(a||'')&&(o.to||'')===(b&&b!==a?b:'')){msg(o.from?periodText(o):'예: 2025.03.01 ~ 2025.03.05 (마지막 날은 비워도 돼요)');return}
-      o.from=a||undefined;o.to=b&&b!==a?b:undefined;msg(o.from?periodText(o):'예: 2025.03.01 ~ 2025.03.05 (마지막 날은 비워도 돼요)');renderStats();changed(true)};
-    [dF,dT].forEach(inp=>{inp.addEventListener('input',()=>fmt(inp));inp.addEventListener('blur',commit);inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();commit();if(inp===dF)dT.focus();else inp.blur()}})})}
+    // 고른 날짜는 그대로 둔다: 자동 교환·보정 없이, 맞지 않으면 안내만 하고 저장하지 않는다
+    const HINT='달력에서 시작일과 마지막 날을 고르세요 (마지막 날은 비워도 돼요)';const msg=t=>{$('#dLen').textContent=t};
+    const commit=()=>{const o=sel&&(sel.type==='country'?S.countries[sel.id]:S.cities.find(c=>c.id===sel.id));if(!o)return;
+      const a=dF.value||'',b=dT.value||'';
+      if(!a&&b){msg('시작일도 골라 주세요');return}
+      if(a&&b&&b<a){msg('마지막 날이 시작일보다 빨라요. 날짜를 다시 골라 주세요');return}
+      const nf=a||undefined,nt=b&&b!==a?b:undefined;
+      if(o.from!==nf||o.to!==nt){o.from=nf;o.to=nt;renderStats();changed(true)}
+      msg(o.from?periodText(o):HINT)};
+    [dF,dT].forEach(inp=>{inp.addEventListener('change',commit);inp.addEventListener('blur',commit)})}
   const memo=$('#memo');if(memo)memo.oninput=()=>{const o=sel.type==='country'?S.countries[sel.id]:S.cities.find(c=>c.id===sel.id);if(o){o.memo=memo.value.trim()||undefined;changed(true)}};
   const cn=$('#cname');if(cn)cn.oninput=()=>{const o=S.cities.find(c=>c.id===sel.id);if(o){o.name=cn.value.trim();panel.querySelector('h2').textContent=o.name||'이름 없는 곳';changed(true)}};
   const dr=$('#drop');if(dr){dr.ondragover=e=>{e.preventDefault();dr.classList.add('over')};dr.ondragleave=()=>dr.classList.remove('over');
@@ -1004,7 +1007,8 @@ async function save(){if(!canEdit())return;if(saving){again=true;return}saving=t
 function flushSave(){if(saveEl.dataset.s==='dirty'){clearTimeout(saveTimer);save()}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushSave();else pullCloud()});
 addEventListener('pagehide',flushSave);
-async function pullCloud(){if(mode!=='cloud'||saving||saveEl.dataset.s==='dirty')return;
+function editingPanel(){const a=document.activeElement;return !!(a&&a.closest&&a.closest('#panel')&&/^(INPUT|TEXTAREA)$/.test(a.tagName))}
+async function pullCloud(){if(mode!=='cloud'||saving||saveEl.dataset.s==='dirty'||editingPanel())return;
   try{const r=await MG.save.load();if(!r||!r.data||!r.data.countries)return;if(cloudAt&&Date.parse(r.updatedAt)<=Date.parse(cloudAt)+1)return;
     if(mode!=='cloud'||saving||saveEl.dataset.s==='dirty')return;S=r.data;S.cities=S.cities||[];cloudAt=r.updatedAt;renderMap();if(sel)renderPanel();refreshUrls();flash(EN?'Updated with changes from another device':'다른 기기에서 고친 내용을 불러왔어요')}catch(e){}}
 addEventListener('beforeunload',e=>{if(saveEl.dataset.s==='dirty'||saveEl.dataset.s==='saving'){e.preventDefault();e.returnValue=''}});
