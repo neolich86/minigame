@@ -3,6 +3,13 @@ import type { Lang } from "./i18n";
 
 export type Genre = "board" | "action" | "strategy" | "casual";
 
+/** 사이트 안의 큰 구분 — 게임(/play) · 추첨·도구(/tools) · 서비스(/apps) */
+export type Kind = "game" | "tool" | "app";
+export const KINDS: Kind[] = ["game", "tool", "app"];
+export const KIND_BASE: Record<Kind, string> = { game: "/play", tool: "/tools", app: "/apps" };
+/** 구분별 목록 페이지 주소 (게임은 홈) */
+export const KIND_INDEX: Record<Kind, string> = { game: "/", tool: "/tools", app: "/apps" };
+
 /** 랭킹 보드 하나. 한 게임에 보드가 여러 개일 수 있다 (예: 세계도시 타이핑 한타/영타). */
 export interface Board {
   id: string; // DB game_id 로 저장되는 값 — supabase/migrations 의 ranked_boards 와 반드시 일치
@@ -19,6 +26,8 @@ export interface Game {
   title: { ko: string; en: string };
   desc: { ko: string; en: string };
   genre: Genre;
+  /** 기본 game — 추첨기 같은 도구는 tool, 로그인해 쓰는 개인 서비스는 app */
+  kind?: Kind;
   thumb: string;
   /** public/games/<id>/index.html 로 서빙되는 정적 게임 */
   src: string;
@@ -119,6 +128,7 @@ const CATALOG: Game[] = [
   },
   {
     id: "lotto",
+    kind: "tool",
     title: { ko: "로또 번호 추첨기", en: "Lotto Number Picker" },
     desc: {
       ko: "1개부터 5개까지 원하는 만큼 로또 번호를 뽑고 포함·제외 조건도 설정하는 추첨기",
@@ -130,6 +140,7 @@ const CATALOG: Game[] = [
   },
   {
     id: "pinball",
+    kind: "tool",
     title: { ko: "핀볼 추첨기", en: "Pinball Lottery Machine" },
     desc: {
       ko: "참가 공을 입력하고 회전하는 핀볼 맵을 굴려 도착 순서로 당첨을 가리는 추첨기",
@@ -141,6 +152,7 @@ const CATALOG: Game[] = [
   },
   {
     id: "my-post-2026",
+    kind: "app",
     title: { ko: "My Post 2026", en: "My Post 2026" },
     desc: {
       ko: "올해 좋아요를 가장 많이 받은 게시물 BEST 9와 월별 좋아요·골든 타임을 한 장으로 정리하는 연말 피드 리포트 (오픈 준비 중, 샘플 미리보기)",
@@ -153,6 +165,7 @@ const CATALOG: Game[] = [
   },
   {
     id: "passport-map",
+    kind: "app",
     title: { ko: "Passport Map", en: "Passport Map" },
     desc: {
       ko: "다녀온 나라와 도시를 세계지도에 원하는 색으로 칠하고, 장소마다 사진 1장을 남기는 여행 지도. 로그인하면 계정에 저장되고 SNS 공유 이미지도 만들 수 있어요",
@@ -213,8 +226,24 @@ const CATALOG: Game[] = [
   },
 ];
 
-/** 포털에 보이는 게임 */
+/** 포털에 보이는 모든 항목 (게임·도구·서비스) */
 export const GAMES: Game[] = CATALOG.filter((g) => !g.hidden);
+
+export function kindOf(g: Game): Kind {
+  return g.kind ?? "game";
+}
+/** 구분별로 보이는 항목 */
+export function itemsOf(kind: Kind): Game[] {
+  return GAMES.filter((g) => kindOf(g) === kind);
+}
+/** 항목 자체 페이지 주소 — /play/<id> · /tools/<id> · /apps/<id> */
+export function itemPath(g: Game): string {
+  return `${KIND_BASE[kindOf(g)]}/${g.id}`;
+}
+/** 목록에서 눌렀을 때 가는 주소 — 온라인 게임은 로비 */
+export function entryPath(g: Game): string {
+  return g.online ? `/online/${g.id}` : itemPath(g);
+}
 
 export const GENRES: Genre[] = ["board", "action", "strategy", "casual"];
 

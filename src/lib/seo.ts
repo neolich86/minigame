@@ -406,7 +406,6 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
       { title: "방치형 게임", text: "틀어두기만 해도 진행되는 방치형 타워디펜스와 자동 강화. 도달 라운드와 최고 레벨로 랭킹을 겨뤄보세요.", games: ["random-td", "weapon"] },
       { title: "뱀서 · 서바이벌", text: "몰려오는 몬스터 속에서 스킬을 골라 성장하는 뱀서류 서바이벌 로그라이크. 생존 시간 랭킹에 도전하세요.", games: ["archer"] },
       { title: "슈팅 · 타워디펜스", text: "아케이드 종스크롤 비행기 슈팅과 원소 조합 전략 타워디펜스.", games: ["raiden", "element-td"] },
-      { title: "로또 추천 · 룰렛 추첨", text: "로또 6/45 번호 추천 생성기와, 룰렛·돌림판 대신 쓰는 핀볼 추첨기. 모임 벌칙 정하기나 경품 추첨에 좋아요.", games: ["lotto", "pinball"] },
       { title: "카드 뽑기 · 타자 연습", text: "포켓몬·원피스 카드 오리파 시뮬레이터와 세계 지도 타자 연습 게임.", games: ["oripa", "world-typing"] },
     ],
   },
@@ -417,8 +416,65 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
       { title: "Idle games", text: "Idle tower defense and auto-enhance games that keep going on their own. Compete on round and level leaderboards.", games: ["random-td", "weapon"] },
       { title: "Survivor-like · Survival", text: "A survivor-like roguelite — grow your skills amid endless hordes and chase the survival-time leaderboard.", games: ["archer"] },
       { title: "Shooter · Tower defense", text: "An arcade vertical shooter and an elemental strategy tower defense.", games: ["raiden", "element-td"] },
-      { title: "Lotto picker · Roulette draws", text: "A 6/45 lotto number generator, and a pinball draw machine that beats any roulette wheel for picking winners.", games: ["lotto", "pinball"] },
       { title: "Card pulls · Typing", text: "A Pokémon / One Piece oripa card-pull simulator and a world-map typing practice game.", games: ["oripa", "world-typing"] },
     ],
+  },
+};
+
+/** 추첨·도구 / 서비스 목록 페이지 문구 (게임 목록은 홈이 맡는다) */
+export const KIND_SEO: Record<"tool" | "app", Record<Lang, { heading: string; title: string; description: string; keywords: string[]; eyebrow: string; subtitle: string; about: string[] }>> = {
+  tool: {
+    ko: {
+      heading: "추첨·도구",
+      eyebrow: "DRAW & TOOLS",
+      title: "무료 추첨기 모음 - 로또 번호 추천 · 핀볼 룰렛 추첨 · 사다리 대신 쓰는 랜덤 뽑기",
+      description:
+        "로또 6/45 번호 추천 생성기와 룰렛·돌림판 대신 쓰는 핀볼 추첨기. 설치 없이 바로 쓰는 무료 추첨 도구로 경품 추첨, 벌칙 정하기, 순서 정하기를 공정하게 해보세요.",
+      keywords: ["추첨기", "로또", "로또추천", "로또 번호 추천", "로또 번호 생성기", "룰렛", "돌림판", "핀볼 추첨", "랜덤 뽑기", "경품 추첨", "벌칙 정하기", "사다리 타기 대신", "무료 추첨 사이트"],
+      subtitle: "로또 번호를 뽑거나 모임에서 당첨자·순서를 정할 때 바로 쓰는 추첨 도구예요.",
+      about: [
+        "로또 번호 추첨기는 1~5게임을 한 번에 뽑고, 꼭 넣을 번호와 뺄 번호를 정할 수 있어요.",
+        "핀볼 추첨기는 참가자 이름과 공 개수를 넣고 핀볼 맵에 굴려 도착 순서로 당첨을 가립니다. 룰렛·돌림판보다 보는 재미가 있어 모임 벌칙이나 경품 추첨에 좋아요.",
+      ],
+    },
+    en: {
+      heading: "Draw & Tools",
+      eyebrow: "DRAW & TOOLS",
+      title: "Free Random Draw Tools - Lotto Number Picker · Pinball Roulette Draw",
+      description:
+        "A 6/45 lotto number generator and a pinball draw machine that beats any roulette wheel. Free, no-install tools for prize draws, picking winners and deciding turns.",
+      keywords: ["random picker", "lotto number generator", "lottery picker", "roulette", "spin the wheel", "pinball draw", "prize draw", "random name picker"],
+      subtitle: "Quick tools for picking lotto numbers or drawing winners and turns with friends.",
+      about: [
+        "The lotto picker draws 1 to 5 sets at once, with numbers to always include or exclude.",
+        "The pinball draw machine drops each entry onto a pinball map — arrival order decides the winners. More fun to watch than a roulette wheel.",
+      ],
+    },
+  },
+  app: {
+    ko: {
+      heading: "서비스",
+      eyebrow: "MY SERVICES",
+      title: "나만의 기록 서비스 - 여행 지도 만들기 Passport Map",
+      description:
+        "다녀온 나라와 도시를 세계지도에 칠하고 사진을 남기는 여행 지도 Passport Map 등, 로그인해 내 기록을 쌓아가는 무료 웹 서비스 모음이에요.",
+      keywords: ["여행 지도", "여행 지도 만들기", "세계지도 색칠", "다녀온 나라", "여행 기록", "Passport Map", "무료 웹 서비스"],
+      subtitle: "로그인하면 내 기록이 계정에 쌓이는 개인 서비스예요. 게임과 같은 계정으로 쓸 수 있어요.",
+      about: [
+        "Passport Map은 다녀온 나라와 도시를 원하는 색으로 칠하고, 장소마다 사진 1장을 남기는 여행 지도예요. 로그인하면 계정에 저장되고 SNS 공유 이미지도 만들 수 있어요.",
+      ],
+    },
+    en: {
+      heading: "Services",
+      eyebrow: "MY SERVICES",
+      title: "Personal Services - Make Your Travel Map with Passport Map",
+      description:
+        "Free web services that keep your own records — like Passport Map, where you color the countries and cities you've visited on a world map and pin a photo to each.",
+      keywords: ["travel map", "visited countries map", "world map coloring", "travel journal", "Passport Map"],
+      subtitle: "Personal services that save your records to your account — the same account you use for games.",
+      about: [
+        "Passport Map lets you color the countries and cities you've visited and pin one photo to each place. Log in to keep it in your account and make a share image for social media.",
+      ],
+    },
   },
 };

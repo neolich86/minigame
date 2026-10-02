@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { useApp } from "@/components/AppProvider";
-import { ALL_BOARDS, formatScore } from "@/lib/games";
+import { ALL_BOARDS, formatScore, itemPath } from "@/lib/games";
 import { errorKey, type MsgKey } from "@/lib/i18n";
 import { fetchMyScores, setNickname, signOut, type ScoreRow } from "@/lib/supabase";
 
@@ -68,7 +68,7 @@ export default function MePage() {
                 <li key={board.id}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={game.thumb} alt="" width={28} height={28} style={{ borderRadius: 6, objectFit: "cover" }} />
-                  <Link href={`/play/${game.id}`} className="nm" style={{ textDecoration: "none" }}>
+                  <Link href={itemPath(game)} className="nm" style={{ textDecoration: "none" }}>
                     {game.title[lang]}
                     {(game.boards?.length ?? 0) > 1 ? ` · ${board.label[lang]}` : ""}
                   </Link>

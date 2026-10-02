@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useApp } from "./AppProvider";
-import { GAMES, GENRES, formatScore, type Genre } from "@/lib/games";
+import { GENRES, entryPath, formatScore, itemsOf, type Genre, type Kind } from "@/lib/games";
+import { KIND_SEO } from "@/lib/seo";
 import { fetchMyScores, type ScoreRow } from "@/lib/supabase";
 
 const ACCENT: Record<Genre, { c: string; bg: string }> = {
@@ -15,8 +16,12 @@ const ACCENT: Record<Genre, { c: string; bg: string }> = {
 
 const VIEW_KEY = "mgh:view";
 
-export function GameList({ children }: { children?: ReactNode }) {
+/** 게임(홈) · 추첨·도구 · 서비스 목록 — kind 로 무엇을 보여줄지 정한다 */
+export function GameList({ children, kind = "game" }: { children?: ReactNode; kind?: Kind }) {
   const { t, lang, user } = useApp();
+  const ITEMS = useMemo(() => itemsOf(kind), [kind]);
+  const isGame = kind === "game";
+  const hero = kind === "game" ? null : KIND_SEO[kind][lang];
   const [filter, setFilter] = useState<Genre | "all">("all");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [mine, setMine] = useState<ScoreRow[]>([]);
@@ -37,12 +42,12 @@ export function GameList({ children }: { children?: ReactNode }) {
   }, [user]);
 
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: GAMES.length };
-    for (const g of GAMES) c[g.genre] = (c[g.genre] ?? 0) + 1;
+    const c: Record<string, number> = { all: ITEMS.length };
+    for (const g of ITEMS) c[g.genre] = (c[g.genre] ?? 0) + 1;
     return c;
-  }, []);
+  }, [ITEMS]);
 
-  const visible = GAMES.filter((g) => filter === "all" || g.genre === filter);
+  const visible = ITEMS.filter((g) => !isGame || filter === "all" || g.genre === filter);
 
   function changeView(v: "grid" | "list") {
     setView(v);
@@ -55,13 +60,14 @@ export function GameList({ children }: { children?: ReactNode }) {
     <div className="wrap">
       <header className="hero">
         <span className="eyebrow">
-          <span className="dot" /> {t("eyebrow")}
+          <span className="dot" /> {hero ? hero.eyebrow : t("eyebrow")}
         </span>
-        <h1 className="title">{t("siteName")}</h1>
-        <p className="subtitle">{t("subtitle")}</p>
+        <h1 className="title">{hero ? hero.heading : t("siteName")}</h1>
+        <p className="subtitle">{hero ? hero.subtitle : t("subtitle")}</p>
       </header>
 
-      <div className="controls">
+      <div className="controls" style={isGame ? undefined : { justifyContent: "flex-end" }}>
+        {isGame && (
         <div className="filters">
           <button className={`filter-btn${filter === "all" ? " active" : ""}`} onClick={() => setFilter("all")}>
             {t("filterAll")} <span className="count">{counts.all}</span>
@@ -72,6 +78,7 @@ export function GameList({ children }: { children?: ReactNode }) {
             </button>
           ))}
         </div>
+        )}
         <div className="view-toggle">
           <button className={view === "list" ? "active" : ""} onClick={() => changeView("list")} aria-label={t("viewList")}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
@@ -96,20 +103,20 @@ export function GameList({ children }: { children?: ReactNode }) {
       <main className={`games ${view}`}>
         {visible.map((g, i) => {
           const a = ACCENT[g.genre];
-          const n = String(GAMES.indexOf(g) + 1).padStart(2, "0");
+          const n = String(ITEMS.indexOf(g) + 1).padStart(2, "0");
           const title = g.title[lang];
           const best = g.boards
             ?.map((b) => ({ b, row: mine.find((m) => m.game_id === b.id) }))
             .find((x) => x.row);
           const chip = (
             <span className="genre-chip" style={{ color: a.c, background: a.bg }}>
-              {t(`genre_${g.genre}`)}
+              {isGame ? t(`genre_${g.genre}`) : t(kind === "tool" ? "navTools" : "navApps")}
             </span>
           );
           return (
             <Link
               key={g.id}
-              href={g.online ? `/online/${g.id}` : `/play/${g.id}`}
+              href={entryPath(g)}
               className="card"
               style={{ ["--accent" as string]: a.c, animationDelay: `${i * 0.05}s` }}
             >
@@ -121,7 +128,7 @@ export function GameList({ children }: { children?: ReactNode }) {
                 <div className="notch" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={g.thumb} alt={title} loading="lazy" />
-                <span className="play-pill">{t("play")}</span>
+                <span className="play-pill">{isGame ? t("play") : t("openItem")}</span>
               </div>
               <div className="info">
                 <div className="left">
@@ -143,7 +150,7 @@ export function GameList({ children }: { children?: ReactNode }) {
                   {g.online && <span className="badge online">{t("badgeOnline")}</span>}
                   {g.boards && <span className="badge rank">🏆</span>}
                   {chip}
-                  <span className="play-pill">{t("play")}</span>
+                  <span className="play-pill">{isGame ? t("play") : t("openItem")}</span>
                 </div>
               </div>
             </Link>
@@ -156,7 +163,7 @@ export function GameList({ children }: { children?: ReactNode }) {
       <footer className="site-footer">
         <span>{t("footer")}</span>
         <span>
-          {visible.length} / {GAMES.length} {t("gamesUnit")}
+          {visible.length} / {ITEMS.length} {isGame ? t("gamesUnit") : t(kind === "tool" ? "itemsUnit_tool" : "itemsUnit_app")}
         </span>
       </footer>
     </div>

@@ -8,7 +8,8 @@ import { cloudEnabled } from "@/lib/supabase";
 export function SiteHeader() {
   const { t, lang, setLang, user, profile, loading } = useApp();
   const path = usePathname();
-  const inGame = path?.startsWith("/play/") || path?.startsWith("/online/");
+  const inGame = ["/play/", "/online/", "/tools/", "/apps/"].some((p) => path?.startsWith(p));
+  const section = path?.startsWith("/tools") ? "tool" : path?.startsWith("/apps") ? "app" : path === "/" || path?.startsWith("/play/") || path?.startsWith("/online/") ? "game" : "";
   const loginHref = `/login?next=${encodeURIComponent(path || "/")}`;
 
   return (
@@ -17,9 +18,20 @@ export function SiteHeader() {
         <span className="brand-icon" aria-hidden>
           🕹️
         </span>
-        <span>{t("siteName")}</span>
+        <span className="brand-text">{t("siteName")}</span>
       </Link>
       <nav className="nav">
+        <div className="section-nav">
+          <Link href="/" className={`nav-link${section === "game" ? " active" : ""}`} title={t("navGames")} aria-label={t("navGames")}>
+            🎮 <span className="hide-sm">{t("navGames")}</span>
+          </Link>
+          <Link href="/tools" className={`nav-link${section === "tool" ? " active" : ""}`} title={t("navTools")} aria-label={t("navTools")}>
+            🎲 <span className="hide-sm">{t("navTools")}</span>
+          </Link>
+          <Link href="/apps" className={`nav-link${section === "app" ? " active" : ""}`} title={t("navApps")} aria-label={t("navApps")}>
+            🧭 <span className="hide-sm">{t("navApps")}</span>
+          </Link>
+        </div>
         <Link href="/ranking" className={`nav-link${path === "/ranking" ? " active" : ""}`}>
           🏆 <span className="hide-sm">{t("navRanking")}</span>
         </Link>

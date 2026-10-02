@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useApp } from "./AppProvider";
 import { Leaderboard } from "./Leaderboard";
 import { useToasts } from "./Toasts";
-import { formatScore, gameById } from "@/lib/games";
+import { formatScore, gameById, itemPath } from "@/lib/games";
 import { cloudEnabled, displayName, fetchMyRank, fetchMyScores, submitScore, type ScoreRow } from "@/lib/supabase";
 import { deleteFiles, deleteShare, fileUrls, loadSave, publishShare, putFile, shareInfo, storeSave } from "@/lib/saves";
 import { errorKey } from "@/lib/i18n";
@@ -119,7 +119,7 @@ export function GamePlayer({ gameId }: { gameId: string }) {
   }, [user, game.boards, send]);
 
   const myRow = mine.find((m) => m.game_id === tab);
-  const loginHref = `/login?next=${encodeURIComponent(`/play/${game.id}`)}`;
+  const loginHref = `/login?next=${encodeURIComponent(itemPath(game))}`;
 
   // 게임 저장(MGH.save) — 로그인 상태 전달 + 저장 요청 처리
   const postToGame = useCallback((msg: Record<string, unknown>) => {

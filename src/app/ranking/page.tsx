@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useApp } from "@/components/AppProvider";
 import { Leaderboard } from "@/components/Leaderboard";
-import { ALL_BOARDS } from "@/lib/games";
+import { ALL_BOARDS, itemPath } from "@/lib/games";
 
 export default function RankingPage() {
   const { t, lang } = useApp();
@@ -24,7 +24,7 @@ export default function RankingPage() {
             </h2>
             <div className="sub">
               {board.label[lang]} ·{" "}
-              <Link href={`/play/${game.id}`} className="linkbtn">
+              <Link href={itemPath(game)} className="linkbtn">
                 {t("play")}
               </Link>
             </div>

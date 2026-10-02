@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<link rel="canonical" href="/play/my-post-2026">
+<link rel="canonical" href="/apps/my-post-2026">
 <script src="/mgh/bridge.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="index,follow">
@@ -351,7 +351,7 @@ function buildReport(all){
 const rep=buildReport(DATA);
 const IS_REAL=DATA!==posts;
 const IS_SHARED=IS_REAL&&!!SHARED, IS_OWNER=IS_SHARED&&!!OWN_TOKEN;
-const SHARE_URL=IS_SHARED?location.origin+'/r/'+SLUG:location.origin+'/play/my-post-2026';
+const SHARE_URL=IS_SHARED?location.origin+'/r/'+SLUG:location.origin+'/apps/my-post-2026';
 
 /* ---------- render ---------- */
 const $=id=>document.getElementById(id);
@@ -454,7 +454,7 @@ $('slipLine').textContent=`${rep.posts}개의 게시물, ${fmt(rep.total)}개의
 $('story').innerHTML=`<div class="t">MY POST <b>2026</b></div><div class="u">@${USER.u} · 2026.01 – ${pad(lastMonth+1)}</div><div class="tt">${rep.title}</div>
 <div class="g">${rep.best9.map(p=>`<div style="${ph(p)}"></div>`).join('')}</div>
 <div class="ss"><div><span class="label">BEST</span><strong class="num">${fmt(rep.best.like_count)}</strong></div><div><span class="label">TOTAL</span><strong class="num">${fmt(rep.total)}</strong></div><div><span class="label">TOP MONTH</span><strong>${EN[rep.topMonth].slice(0,3).toUpperCase()}</strong></div></div>
-<div class="foot">나도 만들기 → https://minigame-on.vercel.app/play/my-post-2026</div>`;
+<div class="foot">나도 만들기 → https://minigame-on.vercel.app/apps/my-post-2026</div>`;
 
 /* ---------- interactions ---------- */
 function setView(friend){
@@ -500,7 +500,7 @@ $('bDel').onclick=async()=>{
   try{const r=await fetch('/api/mypost/r/'+SLUG,{method:'DELETE',headers:{'x-delete-token':OWN_TOKEN}});
     if(!r.ok&&r.status!==404)throw new Error(String(r.status));
     try{localStorage.removeItem('mypost:own:'+SLUG);if(localStorage.getItem('mypost:last')===SLUG)localStorage.removeItem('mypost:last')}catch(e){}
-    (window.top||window).location.href='/play/my-post-2026';
+    (window.top||window).location.href='/apps/my-post-2026';
   }catch(e){$('bDel').disabled=false;delArmed=false;$('bDel').textContent='내 리포트 삭제';toast('삭제하지 못했어요. 잠시 후 다시 시도해 주세요.')}};
 $('bMake').onclick=()=>{(window.top||window).location.href=LOGIN};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden)$('modal').hidden=true});

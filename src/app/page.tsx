@@ -1,6 +1,6 @@
 import { GameList } from "@/components/GameList";
-import { HomeAbout } from "@/components/SeoSections";
-import { GAMES } from "@/lib/games";
+import { HomeAbout, KindStrip } from "@/components/SeoSections";
+import { GAMES, itemPath } from "@/lib/games";
 import { GAME_SEO, HOME_SEO } from "@/lib/seo";
 import { SITE_URL, serverLang } from "@/lib/serverLang";
 
@@ -23,7 +23,7 @@ export default async function Home() {
       itemListElement: GAMES.map((g, i) => ({
         "@type": "ListItem",
         position: i + 1,
-        url: `${SITE_URL}/play/${g.id}`,
+        url: `${SITE_URL}${itemPath(g)}`,
         name: g.title[lang],
         description: GAME_SEO[g.id]?.[lang]?.description ?? g.desc[lang],
       })),
@@ -33,6 +33,8 @@ export default async function Home() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <GameList>
+        <KindStrip kind="tool" lang={lang} />
+        <KindStrip kind="app" lang={lang} />
         <HomeAbout lang={lang} />
       </GameList>
     </>

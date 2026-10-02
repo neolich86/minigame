@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<link rel="canonical" href="/play/passport-map">
+<link rel="canonical" href="/apps/passport-map">
 <script src="/mgh/bridge.js"></script><script src="/mgh/i18n/passport-map.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Passport Map</title>
@@ -319,7 +319,7 @@ input,button,select,textarea{box-sizing:border-box}
       <div class="row"><button class="sbtn" id="clearSample">예시 지우고 내 지도 시작</button></div>
     </div>
     </div>
-    <div class="viewbar" id="viewBar" hidden><span id="viewTxt">친구의 Passport Map을 보고 있어요</span><a href="/play/passport-map" target="_top">나도 내 지도 만들기</a></div>
+    <div class="viewbar" id="viewBar" hidden><span id="viewTxt">친구의 Passport Map을 보고 있어요</span><a href="/apps/passport-map" target="_top">나도 내 지도 만들기</a></div>
     <div class="deco deco-passport">PASSPORT MAP</div>
     <svg class="deco deco-compass" viewBox="-40 -44 80 84" aria-hidden="true"><circle r="26" fill="none" stroke="currentColor" stroke-width="1"/><g fill="currentColor"><path d="M0-34 5 0-5 0z"/><path d="M0 34 5 0-5 0z" opacity=".55"/><path d="M34 0 0 5 0-5z" opacity=".55"/><path d="M-34 0 0 5 0-5z" opacity=".55"/></g><text y="-37" text-anchor="middle" font-size="10" font-family="Georgia,serif" fill="currentColor">N</text></svg>
     <div class="choice" id="choice" hidden></div>
@@ -592,7 +592,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[\s.'’-]/g,'');
 const PAL=[['#2D5BD0','블루'],['#3BA3E6','하늘'],['#1FA7A0','민트'],['#2E9E5B','초록'],['#E8B517','노랑'],['#F08A24','주황'],['#E0393E','빨강'],['#E0559B','분홍'],['#7A4FD0','보라'],['#8A5A3C','갈색']];
 const DEF_C='#2D5BD0',DEF_P='#E0393E';
-const ARTIFACT_URL=EMB?location.origin+'/play/passport-map':'https://claude.ai/artifact/PGyVGyFPEBPS4Rr9Xea3jj';
+const ARTIFACT_URL=EMB?location.origin+'/apps/passport-map':'https://claude.ai/artifact/PGyVGyFPEBPS4Rr9Xea3jj';
 const DAY=864e5;
 function ymd(s){return s?s.replace(/-/g,'.'):''}
 function periodText(o){if(!o||!o.from)return '';const a=o.from,b=o.to&&o.to!==o.from?o.to:'';const n=Math.round((Date.parse(b||a)-Date.parse(a))/DAY)+1;

@@ -5,7 +5,7 @@ import { adminDb, saveReport } from "@/lib/mypost-store";
 export const maxDuration = 60;
 
 function back(request: NextRequest, error: string, detail?: string) {
-  const u = new URL("/play/my-post-2026", request.url);
+  const u = new URL("/apps/my-post-2026", request.url);
   u.searchParams.set("mypost_error", error);
   // 메타가 돌려준 오류 문구 (토큰·시크릿은 들어있지 않다) — 원인 파악용으로 화면에 작게 보여준다
   if (detail) u.searchParams.set("mypost_detail", detail.slice(0, 200));
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     const { id: _id, ...pub } = data;
     void _id;
     const json = JSON.stringify(pub).replace(/</g, "\\u003c");
-    script = `try{sessionStorage.setItem("mypost:data",${JSON.stringify(json)})}catch(e){}location.replace("/play/my-post-2026")`;
+    script = `try{sessionStorage.setItem("mypost:data",${JSON.stringify(json)})}catch(e){}location.replace("/apps/my-post-2026")`;
   }
   const html = `<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><title>My Post 2026</title><script>${script}</script>`;
   const res = new NextResponse(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
