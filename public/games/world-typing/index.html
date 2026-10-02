@@ -183,7 +183,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
       <img id="flagImg" src="" width="22" height="16" alt="">
       <span id="countryName"></span>
     </div>
-    <input id="typeInput" type="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="도시 이름을 입력하고 Enter">
+    <input id="typeInput" type="text" inputmode="text" enterkeyhint="enter" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="도시 이름을 입력하고 Enter">
     <div class="stats">
       <div class="stat"><b id="statWpm">0</b><span id="statSpeedLabel">CPM(타수)</span></div>
       <div class="stat"><b id="statAcc">100%</b><span>ACCURACY</span></div>
@@ -610,7 +610,28 @@ function setCity(city, animate){
   countryName.textContent = city.country;
   goToCity(city, animate);
   input.value = '';
-  input.focus();
+  keepKeyboard();
+}
+
+// 안드로이드(갤럭시 등)에서는 Enter(완료/이동) 키를 누르면 입력칸에 포커스가 남아 있어도
+// 키보드만 내려가는 경우가 있다. 이때는 focus()만으로는 다시 올라오지 않으므로
+// 키보드가 닫힌 것이 감지되면 blur → focus 로 다시 띄운다. (아이폰은 기존 동작 유지)
+const IS_ANDROID = /Android/i.test(navigator.userAgent);
+function topViewport(){
+  try{ return (window.top && window.top.visualViewport) || window.visualViewport; }catch(e){ return window.visualViewport; }
+}
+let kbOpenHeight = 0;
+function noteKeyboardHeight(){
+  const vv = topViewport();
+  if(vv && document.activeElement === input) kbOpenHeight = kbOpenHeight ? Math.min(kbOpenHeight, vv.height) : vv.height;
+}
+function keepKeyboard(){
+  if(IS_ANDROID && document.activeElement === input){
+    const vv = topViewport();
+    const closed = !vv || !kbOpenHeight || vv.height > kbOpenHeight + 80;
+    if(closed){ input.blur(); }
+  }
+  input.focus({preventScroll:true});
 }
 
 function showResult(){
@@ -651,7 +672,8 @@ function completeCity(){
 
 input.addEventListener('keydown', (e)=>{
   if(!currentCity) return;
-  if(e.key==='Enter'){
+  noteKeyboardHeight();
+  if(e.key==='Enter' || e.keyCode===13){
     const norm = normCompare(input.value);
     const target = normCompare(targetName(currentCity));
     if(norm===target && norm.length>0){
@@ -666,6 +688,7 @@ input.addEventListener('keydown', (e)=>{
 
 input.addEventListener('input', ()=>{
   if(!currentCity) return;
+  noteKeyboardHeight();
   const target = targetName(currentCity);
   const targetNorm = normCompare(target);
   const newVal = input.value;
