@@ -243,6 +243,18 @@ footer.site-footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid 
 
 /* ---------- SEO 소개 글 ---------- */
 .game-about { padding-top: 36px; padding-bottom: 60px; color: var(--text-dim); line-height: 1.75; font-size: 14.5px; }
+.game-about { padding-top: 14px; padding-bottom: 14px; }
+.game-about[open] { padding-bottom: 60px; }
+.game-about > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+.game-about > summary::-webkit-details-marker { display: none; }
+.game-about > summary h1, .game-about > summary .about-title { flex: 1; min-width: 0; margin: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.game-about[open] > summary h1, .game-about[open] > summary .about-title { white-space: normal; font-size: 22px; }
+.about-toggle { flex: none; font-size: 12.5px; color: var(--teal); border: 1px solid var(--teal-dim); border-radius: 999px; padding: 4px 12px; display: inline-flex; align-items: center; gap: 6px; }
+.about-toggle::after { content: ""; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg) translateY(-2px); transition: transform .15s; }
+.game-about[open] .about-toggle::after { transform: rotate(-135deg) translateY(-1px); }
+.game-about .when-open, .game-about[open] .when-closed { display: none; }
+.game-about[open] .when-open { display: inline; }
+.game-about > summary:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; border-radius: 6px; }
 .game-about h1, .game-about .about-title { font-family: "Gothic A1", sans-serif; font-weight: 600; font-size: 24px; color: var(--text); margin: 0 0 10px; }
 .game-about h2 { font-size: 16px; color: var(--text); margin: 28px 0 10px; }
 .game-about ol { padding-left: 20px; margin: 0; }

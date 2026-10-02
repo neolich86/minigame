@@ -600,6 +600,7 @@ function periodText(o){if(!o||!o.from)return '';const a=o.from,b=o.to&&o.to!==o.
 function travelDays(){const iv=[];const add=o=>{if(!o||!o.from)return;let a=Date.parse(o.from),b=Date.parse(o.to||o.from);if(isNaN(a))return;if(isNaN(b)||b<a)b=a;iv.push([a,b])};
   Object.values(S.countries).forEach(add);S.cities.forEach(add);iv.sort((p,q)=>p[0]-q[0]);let tot=0,cs=null,ce=null;
   for(const [a,b] of iv){if(cs===null){cs=a;ce=b}else if(a<=ce+DAY){ce=Math.max(ce,b)}else{tot+=Math.round((ce-cs)/DAY)+1;cs=a;ce=b}}if(cs!==null)tot+=Math.round((ce-cs)/DAY)+1;return tot}
+const FINE=matchMedia('(pointer:fine)').matches; // 휴대폰에서는 자동 포커스로 키보드·달력이 뜨지 않게
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 
 /* ---------- projection (Equal Earth, same fit as the baked paths) ---------- */
@@ -789,7 +790,7 @@ function mapClick(e){const t=document.elementFromPoint(e.clientX,e.clientY);cons
 
 /* ---------- panel ---------- */
 const panel=$('#panel');
-function open(s,focusName){sel=s;hideTip();renderPanel();renderMap();if(focusName){const i=$('#cname');i&&i.focus()}}
+function open(s,focusName){sel=s;hideTip();renderPanel();renderMap();if(focusName&&FINE){const i=$('#cname');i&&i.focus()}}
 function openCityKey(key,cx,cy){const ct=S.cities.find(c=>c.key===key);if(ct){open({type:'city',id:ct.id});return}
   if(canEdit()&&cx!=null){showChoice(key,cx,cy);return}open({type:'pcity',key})}
 let choiceKey=null;
@@ -799,12 +800,12 @@ function showChoice(key,cx,cy){const x=CITY_LIST.find(c=>c.key===key);if(!x)retu
     <button class="opt main" data-c="info"><b>핀 + 정보 입력</b><span>사진, 방문 기간, 메모를 함께 남겨요</span></button>`;
   el.hidden=false;const st=$('#stage').getBoundingClientRect();const w=el.offsetWidth,h=el.offsetHeight;
   let l=cx-st.left+14,t=cy-st.top-h/2;if(l+w>st.width-12)l=cx-st.left-w-14;l=Math.max(12,l);t=Math.max(12,Math.min(st.height-h-12,t));el.style.left=l+'px';el.style.top=t+'px';
-  el.querySelector('.opt.main').focus()}
+  if(FINE)el.querySelector('.opt.main').focus()}
 function closeChoice(){$('#choice').hidden=true;choiceKey=null}
 $('#choice').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(!b)return;const c=b.dataset.c;const x=CITY_LIST.find(z=>z.key===choiceKey);closeChoice();
   if(c==='close'||!x)return;const ct=addCity(x);renderMap();
   if(c==='pin'){flash(EN?`Pinned ${x.en}`:`${x.ko}에 핀을 찍었어요`);return}
-  open({type:'city',id:ct.id});const d=$('#dFrom');if(d)d.focus()});
+  open({type:'city',id:ct.id})});
 document.addEventListener('pointerdown',e=>{if(!$('#choice').hidden&&!e.target.closest('#choice'))closeChoice()});
 function closePanel(){sel=null;panel.hidden=true;renderMap()}
 function canEdit(){return mode==='artifact'||mode==='cloud'||mode==='local'}
@@ -1170,7 +1171,7 @@ function updateShareLinks(){const n=Object.keys(S.countries).length,m=S.cities.l
   $('#shX').href='https://twitter.com/intent/tweet?text='+encodeURIComponent(txt)+'&url='+encodeURIComponent(u);
   $('#shFb').href='https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(u)}
 const shMsg=t=>{$('#shMsg').textContent=t};
-function openShare(){hideTip();closeResults();pubArmed=false;renderLinkBox();$('#shName').value=(S.share&&S.share.name)||'';shMsg('');$('#shareModal').hidden=false;drawShare();$('#shName').focus()}
+function openShare(){hideTip();closeResults();pubArmed=false;renderLinkBox();$('#shName').value=(S.share&&S.share.name)||'';shMsg('');$('#shareModal').hidden=false;drawShare();if(FINE)$('#shName').focus()}
 function closeShare(){$('#shareModal').hidden=true}
 $('#shareBtn').onclick=openShare;$('#shClose').onclick=closeShare;
 $('#shareModal').addEventListener('click',e=>{if(e.target.id==='shareModal')closeShare()});

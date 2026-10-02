@@ -10,8 +10,15 @@ export function GameAbout({ gameId, lang, subHeading }: { gameId: string; lang: 
   if (!g || !seo) return null;
   const related = GAMES.filter((x) => x.id !== g.id && x.genre === g.genre).concat(GAMES.filter((x) => x.id !== g.id && x.genre !== g.genre)).slice(0, 4);
   return (
-    <section className="wrap mid game-about">
-      {subHeading ? <h2 className="about-title">{seo.h1}</h2> : <h1>{seo.h1}</h1>}
+    // 게임 화면을 가리지 않도록 기본은 접힌 상태 — 눌러서 펼친다 (내용은 HTML에 그대로 있어 검색엔진이 읽는다)
+    <details className="wrap mid game-about">
+      <summary>
+        {subHeading ? <h2 className="about-title">{seo.h1}</h2> : <h1>{seo.h1}</h1>}
+        <span className="about-toggle" aria-hidden="true">
+          <span className="when-closed">{lang === "ko" ? "게임 소개 펼치기" : "Show details"}</span>
+          <span className="when-open">{lang === "ko" ? "접기" : "Hide"}</span>
+        </span>
+      </summary>
       <div className="tag-row">
         {seo.tags.map((t) => (
           <span key={t} className="seo-tag">#{t}</span>
@@ -36,7 +43,7 @@ export function GameAbout({ gameId, lang, subHeading }: { gameId: string; lang: 
           </Link>
         ))}
       </div>
-    </section>
+    </details>
   );
 }
 
