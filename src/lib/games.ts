@@ -98,8 +98,8 @@ const CATALOG: Game[] = [
     thumb: "/thumbs/world-typing.jpg",
     src: "/games/world-typing/index.html",
     boards: [
-      { id: "world-typing-kr", label: { ko: "한타", en: "Korean" }, unit: { ko: "타", en: "CPM" } },
-      { id: "world-typing-en", label: { ko: "영타", en: "English" }, unit: { ko: "WPM", en: "WPM" } },
+      { id: "world-typing-kr", label: { ko: "한타", en: "Korean" }, unit: { ko: "점", en: "pts" } },
+      { id: "world-typing-en", label: { ko: "영타", en: "English" }, unit: { ko: "점", en: "pts" } },
     ],
   },
   {

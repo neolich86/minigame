@@ -223,6 +223,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
       <div class="stat"><b id="resCities">0</b><span>CITIES</span></div>
       <div class="stat"><b id="resTime">00:00</b><span>TIME</span></div>
     </div>
+    <p id="resScore" style="margin:-8px 0 22px;font-size:13px;line-height:1.6;color:var(--muted);"></p>
     <button class="playAgainBtn" id="playAgainBtn" style="margin:0 auto;">다시하기</button>
   </div>
 </div>
@@ -404,7 +405,9 @@ const STR = {
     modeTagKr:"한타", modeTagEn:"영타",
     speedKr:"CPM(타수)", speedEn:"WPM",
     resultTitle:"완주!", resultDesc:"선택한 도시를 모두 완료했어요. 기록을 확인해보세요.",
-    playAgain:"다시하기"
+    playAgain:"다시하기",
+    rankScore:(score,speed,acc)=>`랭킹 점수 <b style="color:var(--amber);font-size:16px">${score}</b> = 타수 ${speed} × 정확도 ${acc}%<br>랭킹에는 타수가 아니라 정확도를 반영한 이 점수로 기록돼요.`,
+    rankShort:(n)=>`도시를 ${n}개 이상 완주해야 랭킹에 기록돼요.`
   },
   en:{
     overlayTitle:"WORLD TYPING",
@@ -419,7 +422,9 @@ const STR = {
     modeTagKr:"KR", modeTagEn:"EN",
     speedKr:"CPM", speedEn:"WPM",
     resultTitle:"Complete!", resultDesc:"You've finished every selected city. Check out your results.",
-    playAgain:"Play Again"
+    playAgain:"Play Again",
+    rankScore:(score,speed,acc)=>`Ranking score <b style="color:var(--amber);font-size:16px">${score}</b> = speed ${speed} × accuracy ${acc}%<br>Leaderboards use this accuracy-weighted score, not raw speed.`,
+    rankShort:(n)=>`Finish at least ${n} cities to post to the leaderboard.`
   }
 };
 const T = STR[uiLang];
@@ -641,6 +646,9 @@ function showResult(){
   resAcc.textContent = acc+'%';
   resCities.textContent = citiesDone;
   resTime.textContent = fmtTime(elapsedMs);
+  const rankScoreVal = Math.round(speed*acc/100);
+  const resScoreEl = document.getElementById('resScore');
+  if(resScoreEl) resScoreEl.innerHTML = citiesDone >= 25 ? T.rankScore(rankScoreVal, speed, acc) : T.rankShort(25);
   if(window.MGH && citiesDone >= 25){
     MGH.submitScore(mode==='kr' ? 'world-typing-kr' : 'world-typing-en', Math.round(speed*acc/100), {speed:speed, acc:acc, cities:citiesDone, ms:elapsedMs});
   }
