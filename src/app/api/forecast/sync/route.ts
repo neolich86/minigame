@@ -4,12 +4,15 @@
 // POST ?mode=recent[&back=2&ahead=7]   최근·예정 경기 (전 대회, API 1회, 범위 최대 10일)
 // POST ?mode=season&comp=PL&season=2024 대회 한 시즌 전체 경기 (API 1회) — 과거 시즌 백필용
 // POST ?mode=standings&comp=PL[&season=]  순위표 (API 1회)
+// POST ?mode=teams&comp=PL             팀 목록·대표색 (API 1회)
+// POST ?mode=predict                   예측 생성·잠금·채점·레이팅 (API 호출 없음)
 // GET  ?mode=status                     DB에 쌓인 경기 수·최근 동기화 기록 (API 호출 없음)
 //
 // API 오류(권한 없는 시즌 403, 호출 초과 429 등)는 HTTP 200 + { ok:false, status } 로 돌려준다.
 // 백필 루프가 끊기지 않고 결과표를 남기기 위해서다.
 import { FdClient, FdError, isComp, kstDate } from "@/lib/forecast/fd";
-import { forecastDb, logSync, saveMatches, saveStandings } from "@/lib/forecast/store";
+import { forecastDb, logSync, saveMatches, saveStandings, saveTeamColors } from "@/lib/forecast/store";
+import { runPredict } from "@/lib/forecast/predict";
 import { authError, json } from "@/lib/forecast/auth";
 
 export const dynamic = "force-dynamic";
@@ -25,11 +28,10 @@ export async function POST(req: Request) {
   if (denied) return denied;
   const db = forecastDb();
   if (!db) return json({ error: "supabase_not_configured" }, 503);
-  const fd = FdClient.fromEnv();
-  if (!fd) return json({ error: "FOOTBALL_DATA_TOKEN_missing" }, 503);
-
   const q = new URL(req.url).searchParams;
   const mode = q.get("mode") ?? "recent";
+  const fd = FdClient.fromEnv();
+  if (!fd && mode !== "predict") return json({ error: "FOOTBALL_DATA_TOKEN_missing" }, 503);
   const comp = (q.get("comp") ?? "").toUpperCase();
   let target = "";
 
@@ -40,32 +42,49 @@ export async function POST(req: Request) {
       const from = kstDate(-back);
       const to = kstDate(ahead);
       target = `${from}~${to}`;
-      const r = await fd.matchesBetween(from, to);
+      const r = await fd!.matchesBetween(from, to);
       const rows = await saveMatches(db, r.matches);
       const finished = r.matches.filter((m) => m.status === "FINISHED").length;
       await logSync(db, { mode, target, ok: true, http_status: 200, rows });
-      return json({ ok: true, mode, target, rows, finished, remaining: fd.remaining });
+      return json({ ok: true, mode, target, rows, finished, remaining: fd!.remaining });
     }
 
     if (mode === "season") {
       if (!isComp(comp)) return json({ error: "bad_comp" }, 400);
       const season = q.get("season") ? int(q.get("season"), 0, 1990, 2100) : undefined;
       target = `${comp}/${season ?? "current"}`;
-      const r = await fd.competitionMatches(comp, season);
+      const r = await fd!.competitionMatches(comp, season);
       const rows = await saveMatches(db, r.matches, comp);
       const finished = r.matches.filter((m) => m.status === "FINISHED").length;
       await logSync(db, { mode, target, ok: true, http_status: 200, rows, detail: `finished=${finished}` });
-      return json({ ok: true, mode, target, rows, finished, remaining: fd.remaining });
+      return json({ ok: true, mode, target, rows, finished, remaining: fd!.remaining });
     }
 
     if (mode === "standings") {
       if (!isComp(comp)) return json({ error: "bad_comp" }, 400);
       const season = q.get("season") ? int(q.get("season"), 0, 1990, 2100) : undefined;
       target = `${comp}/${season ?? "current"}`;
-      const r = await fd.standings(comp, season);
+      const r = await fd!.standings(comp, season);
       const rows = await saveStandings(db, comp, r);
       await logSync(db, { mode, target, ok: true, http_status: 200, rows });
-      return json({ ok: true, mode, target, rows, remaining: fd.remaining });
+      return json({ ok: true, mode, target, rows, remaining: fd!.remaining });
+    }
+
+    if (mode === "teams") {
+      if (!isComp(comp)) return json({ error: "bad_comp" }, 400);
+      target = comp;
+      const r = await fd!.competitionTeams(comp);
+      const rows = await saveTeamColors(db, r.teams);
+      await logSync(db, { mode, target, ok: true, http_status: 200, rows });
+      return json({ ok: true, mode, target, rows, remaining: fd!.remaining });
+    }
+
+    if (mode === "predict") {
+      // API 호출 없음 — DB 데이터로 예측 생성·잠금·채점·레이팅
+      target = "all";
+      const r = await runPredict(db);
+      await logSync(db, { mode, target, ok: true, rows: r.predicted, detail: JSON.stringify(r) });
+      return json({ ok: true, mode, target, rows: r.predicted, ...r });
     }
 
     return json({ error: "bad_mode" }, 400);

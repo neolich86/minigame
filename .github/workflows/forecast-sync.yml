@@ -15,9 +15,9 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: "daily = 최근 경기+순위표 / results = 최근 결과만 / backfill = 과거 시즌 적재(무료 범위 확인 겸)"
+        description: "daily = 최근 경기+순위표+예측 / results = 최근 결과+예측 잠금·채점 / predict = 예측만 / teams = 팀 대표색 / backfill = 과거 시즌 적재(무료 범위 확인 겸)"
         type: choice
-        options: [daily, results, backfill]
+        options: [daily, results, predict, teams, backfill]
         default: daily
       comps:
         description: "backfill 대상 대회 (공백 구분)"
@@ -78,10 +78,19 @@ jobs:
           case "$JOB" in
             results)
               call "mode=recent&back=2&ahead=1"
+              call "mode=predict"
               ;;
             daily)
               call "mode=recent&back=2&ahead=7"
               for c in PL PD BL1 SA FL1 PPL DED ELC CL; do call "mode=standings&comp=$c"; done
+              if [ "$(TZ=Asia/Seoul date +%u)" = "1" ]; then for c in PL PD BL1 SA FL1 PPL DED ELC CL; do call "mode=teams&comp=$c"; done; fi
+              call "mode=predict"
+              ;;
+            predict)
+              call "mode=predict"
+              ;;
+            teams)
+              for c in PL PD BL1 SA FL1 PPL DED ELC CL; do call "mode=teams&comp=$c"; done
               ;;
             backfill)
               y=$(TZ=Asia/Seoul date +%Y); m=$(TZ=Asia/Seoul date +%-m)

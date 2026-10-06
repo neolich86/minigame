@@ -127,6 +127,11 @@ export class FdClient {
     return this.get<FdMatchesResponse>(`/matches`, { dateFrom, dateTo });
   }
 
+  /** 대회 참가 팀 목록 (clubColors 포함) */
+  competitionTeams(code: CompCode, season?: number) {
+    return this.get<{ teams: (FdTeam & { clubColors?: string | null })[] }>(`/competitions/${code}/teams`, { season });
+  }
+
   standings(code: CompCode, season?: number) {
     return this.get<FdStandingsResponse>(`/competitions/${code}/standings`, { season });
   }

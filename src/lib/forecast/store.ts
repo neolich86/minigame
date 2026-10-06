@@ -65,3 +65,13 @@ export async function logSync(
 ) {
   await db.from("fc_sync_log").insert({ ...e, detail: e.detail?.slice(0, 500) });
 }
+
+/** 팀 대표색 저장 (fc_teams.club_colors — 0010 마이그레이션 필요) */
+export async function saveTeamColors(db: SupabaseClient, teams: { id: number; name: string | null; shortName?: string | null; tla?: string | null; crest?: string | null; clubColors?: string | null }[]) {
+  const now = new Date().toISOString();
+  const rows = teams
+    .filter((t) => t.id && t.name)
+    .map((t) => ({ id: t.id, name: t.name, short_name: t.shortName ?? null, tla: t.tla ?? null, crest_url: t.crest ?? null, club_colors: t.clubColors ?? null, updated_at: now }));
+  await upsertChunks(db, "fc_teams", rows, "id");
+  return rows.length;
+}
