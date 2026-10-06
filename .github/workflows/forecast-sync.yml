@@ -1,4 +1,4 @@
-# 킥오프 예측 — football-data.org 동기화
+# 스포츠 승부 예측 — football-data.org 동기화
 # 필요한 저장소 Secrets (Settings → Secrets and variables → Actions):
 #   CRON_SECRET          Vercel 환경변수 CRON_SECRET 과 같은 값
 # 선택 Variables:

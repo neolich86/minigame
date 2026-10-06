@@ -1,4 +1,4 @@
-// 킥오프 예측 M1 — football-data 클라이언트·행 변환 테스트 (네트워크 없이 가짜 fetch 사용)
+// 스포츠 승부 예측 M1 — football-data 클라이언트·행 변환 테스트 (네트워크 없이 가짜 fetch 사용)
 // 실행: npx tsx scripts/test-forecast.mts
 import assert from "node:assert/strict";
 import { fitPoisson, poissonLambdas, scoreMatrix, summarize, type MatchLite } from "../src/lib/forecast/model";

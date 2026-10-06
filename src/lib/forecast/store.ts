@@ -1,4 +1,4 @@
-// 킥오프 예측 — Supabase 저장 (서버 전용, service role 키)
+// 스포츠 승부 예측 — Supabase 저장 (서버 전용, service role 키)
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { seasonYear, teamsFrom, toMatchRow, type FdMatch, type FdStandingsResponse } from "./fd";
 

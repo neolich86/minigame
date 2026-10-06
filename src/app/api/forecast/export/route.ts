@@ -1,4 +1,4 @@
-// 킥오프 예측 — 끝난 경기 내보내기 (백테스트용, GitHub Actions 가 호출)
+// 스포츠 승부 예측 — 끝난 경기 내보내기 (백테스트용, GitHub Actions 가 호출)
 // GET /api/forecast/export  (Authorization: Bearer CRON_SECRET)
 // 응답: { columns, rows } — rows 는 [id, comp, season, utc_ms, home, away, hg90, ag90]
 import { authError, json } from "@/lib/forecast/auth";

@@ -1,4 +1,4 @@
-// 킥오프 예측 — 데이터 동기화 (GitHub Actions 스케줄이 호출)
+// 스포츠 승부 예측 — 데이터 동기화 (GitHub Actions 스케줄이 호출)
 // 인증: Authorization: Bearer <CRON_SECRET>
 //
 // POST ?mode=recent[&back=2&ahead=7]   최근·예정 경기 (전 대회, API 1회, 범위 최대 10일)

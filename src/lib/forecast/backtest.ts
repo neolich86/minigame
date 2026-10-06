@@ -1,4 +1,4 @@
-// 킥오프 예측 — 백테스트 엔진 (순수 함수)
+// 스포츠 승부 예측 — 백테스트 엔진 (순수 함수)
 // 과거 경기를 날짜순으로 재생하면서, 매 경기를 "그날 이전 데이터만으로" 예측하고 채점한다.
 import { Elo, fitPoisson, outcome, predict, score, type MatchLite, type Params, type PoissonFit } from "./model";
 

@@ -1,4 +1,4 @@
-// 킥오프 예측 — 백테스트 + 파라미터 탐색
+// 스포츠 승부 예측 — 백테스트 + 파라미터 탐색
 //
 // 실제 데이터:   npx tsx scripts/backtest.mts data.json [--out result.md] [--params best.json]
 //   data.json = /api/forecast/export 응답 ({ columns, rows })
@@ -160,7 +160,7 @@ const head = "| 모델 | 경기 | 로그 손실 ↓ | 브라이어 ↓ | 적중�
 const pstr = (p: Params, keys: (keyof Params)[]) => keys.map((k) => `${k}=${p[k]}`).join(" ");
 
 const md: string[] = [];
-md.push(`## 킥오프 예측 백테스트 ${synth ? "(합성 데이터)" : ""}`);
+md.push(`## 스포츠 승부 예측 백테스트 ${synth ? "(합성 데이터)" : ""}`);
 md.push(`경기 ${all.length}개 · 시즌 ${seasons.join(", ")} · 워밍업 ${warm} · 튜닝 ${tune} · 홀드아웃 ${hold.join(", ") || "없음"} · 실행 ${runs}회 ${secs}초`);
 md.push("", "### 전체 (워밍업 제외)", head,
   line("기준선: 대회별 누적 비율", fin.all.base),

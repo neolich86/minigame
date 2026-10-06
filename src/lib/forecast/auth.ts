@@ -1,4 +1,4 @@
-// 킥오프 예측 — 서버 작업용 라우트 인증 (Authorization: Bearer CRON_SECRET)
+// 스포츠 승부 예측 — 서버 작업용 라우트 인증 (Authorization: Bearer CRON_SECRET)
 
 export const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { "cache-control": "no-store" } });
 

@@ -1,4 +1,4 @@
-# 킥오프 예측 — 모델 백테스트 (수동 실행)
+# 스포츠 승부 예측 — 모델 백테스트 (수동 실행)
 # 사이트의 /api/forecast/export 로 끝난 경기를 받아 scripts/backtest.mts 를 돌리고
 # 결과표를 실행 Summary 에, 고른 파라미터를 아티팩트로 남긴다.
 # 필요한 Secrets: CRON_SECRET (forecast-sync 와 같은 값)
