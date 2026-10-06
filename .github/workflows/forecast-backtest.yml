@@ -8,6 +8,9 @@ name: forecast-backtest
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   backtest:
     runs-on: ubuntu-latest
@@ -44,3 +47,21 @@ jobs:
             backtest.md
             best-params.json
           if-no-files-found: ignore
+      - name: Save results to forecast-results branch
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/res && cp backtest.md best-params.json /tmp/res/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin forecast-results >/dev/null; then
+            git fetch -q --depth 1 origin forecast-results && git checkout -q -B forecast-results FETCH_HEAD
+          else
+            git checkout -q --orphan forecast-results && git rm -rq --cached . && find . -mindepth 1 -maxdepth 1 ! -name .git ! -name node_modules -exec rm -rf {} +
+          fi
+          mkdir -p backtest
+          stamp=$(TZ=Asia/Seoul date +%Y%m%d-%H%M)
+          cp /tmp/res/backtest.md "backtest/${stamp}.md"; cp /tmp/res/best-params.json "backtest/${stamp}.json"
+          cp /tmp/res/backtest.md backtest/latest.md; cp /tmp/res/best-params.json backtest/latest.json
+          git add backtest && git commit -qm "backtest ${stamp} (run ${{ github.run_id }})" && git push -q origin HEAD:forecast-results
