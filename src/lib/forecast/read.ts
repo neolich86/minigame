@@ -48,6 +48,13 @@ export async function matchById(id: number): Promise<MatchRow | null> {
   return rows[0] ?? null;
 }
 
+/** 여러 경기 (내 예측 카드) */
+export async function matchesByIds(ids: number[]): Promise<MatchRow[]> {
+  const c = db();
+  if (!c || !ids.length) return [];
+  return selectMatches((cols) => c.from("fc_matches").select(cols).in("id", ids.slice(0, 30)).order("utc_date").order("id"));
+}
+
 /** 팀의 최근 끝난 경기 (before 이전) */
 export async function recentForm(teamId: number, beforeIso: string, n = 5): Promise<MatchRow[]> {
   const c = db();

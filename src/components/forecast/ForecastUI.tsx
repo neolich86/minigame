@@ -6,6 +6,12 @@ import type { Lang } from "@/lib/i18n";
 import { BACKTEST_V1 } from "@/lib/forecast/backtest-v1";
 import { COMP_NAME, type LeagueSim, type MatchRow, type RatingPoint, type StandingGroup } from "@/lib/forecast/shared";
 import { badgeColors, teamName, teamTla, type TeamInfo } from "@/lib/forecast/teams";
+import { PickBar, PickRow, ShareBox, pickLabel } from "./PicksUI";
+import { cleanName, modelPick, outcomeOf, type Pick } from "@/lib/forecast/picks";
+import { useState } from "react";
+
+/** 아직 시작 전이라 내 예측을 고를 수 있는 경기 */
+const pickable = (m: MatchRow) => (m.status === "SCHEDULED" || m.status === "TIMED") && !!m.home && !!m.away;
 
 export const BASE = "/apps/sports-forecast";
 
@@ -85,6 +91,16 @@ const T = {
     lowerBetter: "낮을수록 좋음",
     kst: "",
     recent30: "최근 30일",
+    pkTitle: "{who}의 승부 예측",
+    pkFriend: "친구",
+    pkMine: "나",
+    pkModel: "모델",
+    pkHits: "맞힌 경기",
+    pkPending: "경기 전",
+    pkEmpty: "예측이 담기지 않은 링크예요. 경기 목록에서 승·무·패를 골라 나만의 예측 카드를 만들어 보세요.",
+    pkMake: "나도 예측하기",
+    pkModelSaid: "모델 {p}",
+    pkHow: "경기 목록에서 경기마다 홈승·무·원정승을 고르면 예측 카드가 만들어져요.",
     simTitle: "시즌 최종 순위 예측",
     simSub: "남은 {n}경기를 모델 확률대로 {s}번 시뮬레이션한 결과예요.",
     expPts: "예상 승점",
@@ -171,6 +187,16 @@ const T = {
     lowerBetter: "lower is better",
     kst: " KST",
     recent30: "Last 30 days",
+    pkTitle: "{who}'s picks",
+    pkFriend: "A friend",
+    pkMine: "Picks",
+    pkModel: "Model",
+    pkHits: "correct",
+    pkPending: "Not played",
+    pkEmpty: "This link has no picks. Choose home, draw or away on the match list to make your own card.",
+    pkMake: "Make my picks",
+    pkModelSaid: "Model: {p}",
+    pkHow: "Pick home, draw or away on each match in the list to build your card.",
     simTitle: "Season projection",
     simSub: "The remaining {n} matches simulated {s} times with the model's probabilities.",
     expPts: "Proj. pts",
@@ -274,7 +300,8 @@ export function MatchCard({ m }: { m: MatchRow }) {
   const top = p?.top_scores?.[0];
   const fin = m.status === "FINISHED";
   return (
-    <Link href={`${BASE}/match/${m.id}`} className="fc-card">
+    <div className="fc-card">
+    <Link href={`${BASE}/match/${m.id}`} className="fc-card-link">
       <div className="fc-card-head">
         <span className="fc-comp">{COMP_NAME[m.competition]?.short[lang] ?? m.competition}</span>
         {fin && p?.hit !== null && p?.hit !== undefined && (
@@ -299,6 +326,8 @@ export function MatchCard({ m }: { m: MatchRow }) {
         </div>
       )}
     </Link>
+    <PickRow matchId={m.id} kickoff={Date.parse(m.utc_date)} open={pickable(m)} />
+    </div>
   );
 }
 
@@ -404,6 +433,7 @@ export function FcHome({
           </div>
         </section>
       ))}
+      <PickBar />
       <Footer />
     </div>
   );
@@ -512,6 +542,7 @@ export function FcMatch({ d }: { d: DetailData }) {
           </div>
         </div>
         <ProbBar m={m} big />
+        <PickRow matchId={m.id} kickoff={Date.parse(m.utc_date)} open={pickable(m)} />
         {p && p.exp_home != null && (
           <div className="fc-xg">
             {t.expGoals} <b>{p.exp_home.toFixed(2)}</b> : <b>{p.exp_away!.toFixed(2)}</b>
@@ -593,6 +624,7 @@ export function FcMatch({ d }: { d: DetailData }) {
           </ul>
         )}
       </section>
+      <PickBar />
       <Footer />
     </div>
   );
@@ -746,6 +778,7 @@ export function FcLeague({
           </div>
         </>
       )}
+      <PickBar />
       <Footer />
     </div>
   );
@@ -848,6 +881,92 @@ export function FcAccuracy({ live }: { live: AccStats }) {
         <p className="muted small">{t.calibSub}</p>
         <CalibChart bins={bt.calib} />
       </section>
+      <Footer />
+    </div>
+  );
+}
+
+/* ───────────── 내 예측 카드 (공유 링크) ───────────── */
+
+export function FcPicks({
+  picks,
+  matches,
+  name,
+  siteUrl,
+  ogPath,
+}: {
+  picks: Record<number, Pick>;
+  matches: MatchRow[];
+  name: string;
+  siteUrl: string;
+  ogPath: string;
+}) {
+  const { t, lang } = useT();
+  const [nm, setNm] = useState(name);
+  const rows = matches.filter((m) => picks[m.id]);
+  const who = cleanName(nm) || t.pkFriend;
+  let done = 0, mine = 0, model = 0;
+  for (const m of rows) {
+    const o = m.status === "FINISHED" ? outcomeOf(m.home_score_90, m.away_score_90) : null;
+    if (!o) continue;
+    done++;
+    if (picks[m.id] === o) mine++;
+    if (modelPick(m.pred) === o) model++;
+  }
+  return (
+    <div className="wrap fc mid">
+      <SubNav active="matches" />
+      <h1 className="page-title">🎯 {fill(t.pkTitle, { who })}</h1>
+      {rows.length === 0 ? (
+        <p className="panel muted">{t.pkEmpty}</p>
+      ) : (
+        <>
+          <div className="fc-picks-sum">
+            <div>
+              <b>{done ? `${mine}/${done}` : rows.length}</b>
+              <span>{done ? `${who} · ${t.pkHits}` : `${t.pkMine} · ${t.games}`}</span>
+            </div>
+            {done > 0 && (
+              <div>
+                <b>{model}/{done}</b>
+                <span>{t.pkModel} · {t.pkHits}</span>
+              </div>
+            )}
+          </div>
+          <ShareBox picks={picks} name={nm} setName={setNm} ogPath={ogPath} siteUrl={siteUrl} editHref={`${BASE}?d=week`} />
+          <div className="fc-plist">
+            {rows.map((m) => {
+              const pk = picks[m.id];
+              const o = m.status === "FINISHED" ? outcomeOf(m.home_score_90, m.away_score_90) : null;
+              const mp = modelPick(m.pred);
+              return (
+                <Link key={m.id} href={`${BASE}/match/${m.id}`} className="fc-prow">
+                  <div>
+                    <div className="teams">
+                      <TeamBadge team={m.home} size={22} />
+                      {m.home ? teamName(m.home, lang) : "TBD"}
+                      <span className="muted small">{o ? `${m.home_score_90}-${m.away_score_90}` : t.vs}</span>
+                      {m.away ? teamName(m.away, lang) : "TBD"}
+                      <TeamBadge team={m.away} size={22} />
+                    </div>
+                    <div className="meta">
+                      {COMP_NAME[m.competition]?.short[lang] ?? m.competition} · {kstParts(m.utc_date, lang).date} {kstParts(m.utc_date, lang).time}
+                      {t.kst}
+                      {mp && m.pred ? ` · ${fill(t.pkModelSaid, { p: `${pickLabel(mp, lang)} ${pct(mp === "H" ? m.pred.p_home : mp === "D" ? m.pred.p_draw : m.pred.p_away)}` })}` : ""}
+                    </div>
+                  </div>
+                  <div>
+                    <span className={`chip ${pk}`}>{pickLabel(pk, lang)}</span>
+                    <div className={`res ${o ? (o === pk ? "ok" : "no") : ""}`}>{o ? (o === pk ? `✅ ${t.hit}` : `❌ ${t.miss}`) : t.pkPending}</div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </>
+      )}
+      <p className="muted small" style={{ marginTop: 18 }}>{t.pkHow}</p>
+      <Link href={`${BASE}?d=week`} className="btn primary" style={{ marginTop: 6 }}>⚽ {t.pkMake}</Link>
       <Footer />
     </div>
   );

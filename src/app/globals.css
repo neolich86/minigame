@@ -455,3 +455,32 @@ header.hero { margin-bottom: 28px; }
   .fc-sim th { font-size: 10px; padding: 6px 3px; }
   .fc-sim td { padding: 7px 3px; }
 }
+/* 내 예측 (픽) */
+.fc-card { padding: 0; }
+.fc-card-link { display: block; text-decoration: none; color: inherit; padding: 14px 14px 12px; }
+.fc-card:hover { transform: translateY(-2px); }
+.fc-pick { display: flex; align-items: center; gap: 6px; padding: 0 14px 12px; flex-wrap: wrap; }
+.fc-detail-head .fc-pick { justify-content: center; padding: 12px 0 0; }
+.fc-pick .lbl { font-size: 11px; font-weight: 700; color: var(--text-dim); margin-right: 2px; }
+.fc-pick button { flex: 1; min-width: 56px; max-width: 110px; border: 1px solid var(--line); background: var(--bg-panel-hi); color: var(--text-dim); font-size: 12px; font-weight: 700; padding: 7px 6px; border-radius: 8px; cursor: pointer; }
+.fc-pick button:hover:not(:disabled) { color: var(--text); border-color: #3c4a6e; }
+.fc-pick button:disabled { cursor: not-allowed; opacity: .55; }
+.fc-pick button.on { color: #0b1220; border-color: transparent; }
+.fc-pick button.h.on { background: var(--fc-h); } .fc-pick button.d.on { background: #c3c9d6; } .fc-pick button.a.on { background: var(--fc-a); }
+.fc-pick .warn { flex-basis: 100%; font-style: normal; font-size: 11px; color: var(--gold); }
+.fc-pickbar { position: sticky; bottom: 12px; z-index: 40; margin: 24px auto 0; max-width: 560px; display: flex; align-items: center; gap: 8px; padding: 10px 10px 10px 16px; background: rgba(22, 31, 48, .94); backdrop-filter: blur(8px); border: 1px solid var(--teal-dim); border-radius: 14px; box-shadow: 0 12px 30px -10px rgba(0,0,0,.6); }
+.fc-pickbar .n { flex: 1; font-size: 13px; font-weight: 700; }
+.fc-share .row { margin-top: 6px; }
+.fc-share .field span { font-size: 12px; color: var(--text-dim); font-weight: 600; }
+.fc-picks-sum { display: flex; gap: 10px; flex-wrap: wrap; margin: 6px 0 16px; }
+.fc-picks-sum div { flex: 1; min-width: 120px; background: var(--bg-panel-hi); border: 1px solid var(--line); border-radius: 10px; padding: 12px; text-align: center; }
+.fc-picks-sum b { display: block; font-family: "Space Mono", monospace; font-size: 22px; }
+.fc-picks-sum span { font-size: 11px; color: var(--text-dim); }
+.fc-plist { display: flex; flex-direction: column; gap: 10px; }
+.fc-prow { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; text-decoration: none; color: inherit; }
+.fc-prow .teams { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; min-width: 0; flex-wrap: wrap; }
+.fc-prow .meta { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+.fc-prow .chip { display: inline-block; font-size: 12px; font-weight: 800; padding: 6px 10px; border-radius: 8px; color: #0b1220; white-space: nowrap; }
+.fc-prow .chip.H { background: var(--fc-h); } .fc-prow .chip.D { background: #c3c9d6; } .fc-prow .chip.A { background: var(--fc-a); }
+.fc-prow .res { font-size: 12px; text-align: right; margin-top: 4px; }
+.fc-prow .res.ok { color: var(--green); } .fc-prow .res.no { color: var(--text-dim); }

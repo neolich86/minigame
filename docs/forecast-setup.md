@@ -95,3 +95,19 @@ Actions → **forecast-backtest** → Run workflow. 약 5분.
 - 구단 엠블럼 대신 약자(TLA) + 구단 대표색 배지. 대표색이 없으면 팀 id 로 고른 기본색
 - 포털 `/apps` 목록·사이트맵에 노출 (`games.ts` 의 `sports-forecast`, 정적 경로가 `/apps/[slug]` 보다 우선)
 - 출처 표기는 football-data.org 약관 7.1 문구 그대로: "Football data provided by the Football-Data.org API"
+
+## 7. 내 예측 (승·무·패 고르기 + 공유)
+
+- 경기 카드·경기 상세에서 시작 전 경기마다 홈승/무/원정승을 고른다 (최대 20경기, 이 브라우저 localStorage `sf:picks`, 킥오프 3일 지나면 정리)
+- 화면 아래 바 → `/apps/sports-forecast/picks?p=<픽>&n=<이름>` 예측 카드. 픽은 링크에 들어 있어 로그인·DB 없음 (`src/lib/forecast/picks.ts`)
+- 경기가 끝나면 같은 링크에서 적중 수와 모델 적중 수를 비교해 보여준다
+- 공유: 카카오톡 버튼(`NEXT_PUBLIC_KAKAO_JS_KEY` 가 있을 때) · 휴대폰 공유 시트(navigator.share) · 링크 복사
+- 미리보기 이미지: `/api/forecast/picks-og` (1200×630, 구글 폰트 서브셋)
+
+### 카카오톡 공유 버튼 켜기 (선택)
+
+1. developers.kakao.com → 내 애플리케이션 → (로그인에 쓰는 앱) → 앱 키 → **JavaScript 키** 복사
+2. 같은 앱 → 플랫폼 → Web → 사이트 도메인에 `https://minigame-on.vercel.app` 추가
+3. Vercel 환경변수 `NEXT_PUBLIC_KAKAO_JS_KEY` = JavaScript 키 → 재배포
+
+키가 없어도 휴대폰에서는 [공유하기] → 카카오톡을 고를 수 있고, 링크를 붙여 넣으면 미리보기 카드가 뜬다.

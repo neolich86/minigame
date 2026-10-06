@@ -2,6 +2,7 @@
 // 실행: npx tsx scripts/test-forecast.mts
 import assert from "node:assert/strict";
 import { fitPoisson, poissonLambdas, scoreMatrix, summarize, type MatchLite } from "../src/lib/forecast/model";
+import { cleanName, decodePicks, encodePicks, modelPick, outcomeOf, picksUrl } from "../src/lib/forecast/picks";
 import { FdClient, FdError, kstDate, score90, scoreFinal, teamsFrom, toMatchRow, type FdMatch } from "../src/lib/forecast/fd";
 
 let passed = 0;
@@ -147,6 +148,22 @@ await t("포아송 적합: 강팀·약팀 구분, 홈 어드밴티지 추정", (
   assert.ok(f.home > 1.1 && f.home < 1.35, `home ${f.home}`);
   const [l1, l4] = poissonLambdas(f, 1, 4)!;
   assert.ok(l1 > 2 * l4);
+});
+
+await t("내 예측 링크: 인코딩·디코딩·정리", () => {
+  const picks = { 552123: "H", 9: "D", 1000000: "A" } as const;
+  const enc = encodePicks(picks);
+  assert.deepEqual(decodePicks(enc), { 9: "D", 552123: "H", 1000000: "A" });
+  assert.ok(enc.startsWith("9D-"), enc);
+  assert.deepEqual(decodePicks("zzX-<script>-11h-.."), { 37: "H" }, "잘못된 조각은 버림");
+  assert.equal(Object.keys(decodePicks(Array.from({ length: 40 }, (_, i) => `${(i + 1).toString(36)}H`).join("-"))).length, 20, "최대 20경기");
+  assert.equal(cleanName("  <b>제임스</b>  "), "b제임스/b");
+  assert.equal(cleanName("가나다라마바사아자차카타파하"), "가나다라마바사아자차카타");
+  assert.equal(picksUrl({ 9: "D" }, "민수"), "/apps/sports-forecast/picks?p=9D&n=%EB%AF%BC%EC%88%98");
+  assert.equal(outcomeOf(2, 1), "H");
+  assert.equal(outcomeOf(1, 1), "D");
+  assert.equal(outcomeOf(null, 1), null);
+  assert.equal(modelPick({ p_home: 0.3, p_draw: 0.25, p_away: 0.45 }), "A");
 });
 
 console.log(`\n${passed}개 통과`);
