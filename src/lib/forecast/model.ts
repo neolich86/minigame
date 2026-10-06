@@ -37,16 +37,24 @@ export interface Params {
   minGames: number;
 }
 
+/** 운영 예측에 기록하는 모델 버전 — 파라미터를 바꾸면 올린다 */
+export const MODEL_VERSION = "v1.0";
+
+/**
+ * 실제 데이터 백테스트로 고른 값 (2026-10-06, forecast-backtest run 37458205500)
+ * 2023/24 워밍업 · 2024/25 튜닝 · 2025/26~ 홀드아웃 3,597경기:
+ *   로그손실 1.074 → 0.998, 브라이어 0.650 → 0.596, 적중률 43.3% → 50.6% (기준선 → 모델)
+ */
 export const DEFAULT_PARAMS: Params = {
-  halfLife: 180,
+  halfLife: 365,
   prior: 3,
-  rho: -0.06,
-  eloK: 20,
-  eloHome: 60,
-  eloGoal: 500,
+  rho: -0.1,
+  eloK: 10,
+  eloHome: 40,
+  eloGoal: 350,
   eloRegress: 0.2,
   wPois: 0.7,
-  minGames: 6,
+  minGames: 10,
 };
 
 /** 리그 첫 등장 팀의 Elo 시작값 (리그 수준 차이). 챔스 맞대결로 점점 보정된다 */
