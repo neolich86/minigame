@@ -1,4 +1,4 @@
--- 스포츠 승부 예측 (kickoff-forecast) — 축구 경기 데이터·예측 저장
+-- 스포츠 승부 예측 (sports-forecast) — 축구 경기 데이터·예측 저장
 -- SQL Editor에 붙여 넣고 Run (여러 번 실행해도 안전)
 -- 쓰기는 서버(API, service role 키)만 한다. 읽기는 누구나 (로그인 불필요).
 -- 데이터 출처: football-data.org 무료 플랜 (12개 대회)
