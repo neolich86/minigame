@@ -694,28 +694,48 @@ input.addEventListener('keydown', (e)=>{
   }
 });
 
+// ===== 정확도·타수 계산 =====
+// 한글은 입력 중에 'ㅅ → 서 → 설 → 서우…'처럼 글자가 계속 바뀌므로, 글자 단위로 비교하면
+// 오타가 없어도 조합 중인 글자가 틀린 것으로 잡혀 정확도가 50% 근처로 떨어진다.
+// 그래서 입력값과 정답을 모두 '자판 입력 단위(자모)'로 풀어서, 새로 눌린 키만 정답과 비교한다.
+// (영문은 글자 = 키 하나라 그대로)
+const CHO = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const JUNG = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅗㅏ','ㅗㅐ','ㅗㅣ','ㅛ','ㅜ','ㅜㅓ','ㅜㅔ','ㅜㅣ','ㅠ','ㅡ','ㅡㅣ','ㅣ'];
+const JONG = ['','ㄱ','ㄲ','ㄱㅅ','ㄴ','ㄴㅈ','ㄴㅎ','ㄷ','ㄹ','ㄹㄱ','ㄹㅁ','ㄹㅂ','ㄹㅅ','ㄹㅌ','ㄹㅍ','ㄹㅎ','ㅁ','ㅂ','ㅂㅅ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const COMPAT_SPLIT = {'ㄳ':'ㄱㅅ','ㄵ':'ㄴㅈ','ㄶ':'ㄴㅎ','ㄺ':'ㄹㄱ','ㄻ':'ㄹㅁ','ㄼ':'ㄹㅂ','ㄽ':'ㄹㅅ','ㄾ':'ㄹㅌ','ㄿ':'ㄹㅍ','ㅀ':'ㄹㅎ','ㅄ':'ㅂㅅ',
+  'ㅘ':'ㅗㅏ','ㅙ':'ㅗㅐ','ㅚ':'ㅗㅣ','ㅝ':'ㅜㅓ','ㅞ':'ㅜㅔ','ㅟ':'ㅜㅣ','ㅢ':'ㅡㅣ'};
+function keystrokes(str){
+  let out = '';
+  for(const ch of str){
+    const c = ch.charCodeAt(0);
+    if(c >= 0xAC00 && c <= 0xD7A3){
+      const i = c - 0xAC00;
+      out += CHO[Math.floor(i/588)] + JUNG[Math.floor((i%588)/28)] + JONG[i%28];
+    } else {
+      out += COMPAT_SPLIT[ch] || ch;
+    }
+  }
+  return out;
+}
+
 input.addEventListener('input', ()=>{
   if(!currentCity) return;
   noteKeyboardHeight();
   const target = targetName(currentCity);
-  const targetNorm = normCompare(target);
-  const newVal = input.value;
-  const newNorm = normCompare(newVal);
-  const oldLen = prevVal.length;
-  const newLen = newNorm.length;
+  const newNorm = normCompare(input.value);
+  const targetKeys = keystrokes(normCompare(target));
+  const newKeys = keystrokes(newNorm);
+  const oldKeys = prevVal;
 
-  if(newLen > oldLen){
-    const added = newLen - oldLen;
-    totalTyped += added;
-    const expected = targetNorm.slice(oldLen, newLen);
-    const actual = newNorm.slice(oldLen, newLen);
-    if(actual === expected) correctTyped += added;
-  } else if(newLen === oldLen && newNorm !== prevVal){
+  // 이전 입력과 공통인 앞부분 이후에 새로 생긴 키만 센다 (지우기는 세지 않음)
+  let common = 0;
+  while(common < oldKeys.length && common < newKeys.length && oldKeys[common] === newKeys[common]) common++;
+  for(let k = common; k < newKeys.length; k++){
     totalTyped += 1;
-    const idx = newLen - 1;
-    if(idx>=0 && newNorm[idx] === targetNorm[idx]) correctTyped += 1;
+    // 이 키까지 정답과 똑같이 쳤을 때만 정타
+    if(newKeys[k] === targetKeys[k] && newKeys.slice(0, k) === targetKeys.slice(0, k)) correctTyped += 1;
   }
-  prevVal = newNorm;
+  prevVal = newKeys;
 
   renderCity(target, newNorm);
 });
