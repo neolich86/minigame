@@ -1,0 +1,96 @@
+# 킥오프 예측 — football-data.org 동기화
+# 필요한 저장소 Secrets (Settings → Secrets and variables → Actions):
+#   CRON_SECRET          Vercel 환경변수 CRON_SECRET 과 같은 값
+# 선택 Variables:
+#   FORECAST_SITE_URL    기본값 https://minigame-on.vercel.app
+#
+# 무료 플랜은 분당 10회라 호출 사이에 7초씩 쉰다.
+
+name: forecast-sync
+
+on:
+  schedule:
+    - cron: "52 20 * * *"        # 매일 KST 05:52 — 일정·결과·순위 전체
+    - cron: "7 16,19,22 * * *"   # KST 01:07 / 04:07 / 07:07 — 유럽 경기 끝나는 시간대 결과만
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "daily = 최근 경기+순위표 / results = 최근 결과만 / backfill = 과거 시즌 적재(무료 범위 확인 겸)"
+        type: choice
+        options: [daily, results, backfill]
+        default: daily
+      comps:
+        description: "backfill 대상 대회 (공백 구분)"
+        default: "PL PD BL1 SA FL1 PPL DED ELC CL"
+      seasons_back:
+        description: "backfill: 현재 시즌에서 몇 시즌 전까지"
+        default: "5"
+
+concurrency:
+  group: forecast-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SITE: ${{ vars.FORECAST_SITE_URL || 'https://minigame-on.vercel.app' }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      JOB: ${{ github.event_name == 'workflow_dispatch' && inputs.job || (github.event.schedule == '52 20 * * *' && 'daily' || 'results') }}
+      COMPS: ${{ inputs.comps || 'PL PD BL1 SA FL1 PPL DED ELC CL' }}
+      SEASONS_BACK: ${{ inputs.seasons_back || '5' }}
+    steps:
+      - name: Sync
+        shell: bash
+        run: |
+          set -uo pipefail
+          if [ -z "${CRON_SECRET}" ]; then echo "::error::CRON_SECRET secret이 없습니다"; exit 1; fi
+          fails=0
+          echo "## forecast-sync: ${JOB}" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 대상 | 결과 | 경기/행 | 끝난 경기 | 메모 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---:|---:|---|" >> "$GITHUB_STEP_SUMMARY"
+
+          call() {   # $1 = 쿼리스트링
+            local body code
+            for attempt in 1 2; do
+              body=$(curl -sS -m 70 -X POST -H "Authorization: Bearer ${CRON_SECRET}" -w '\n%{http_code}' "${SITE}/api/forecast/sync?$1") || body=$'{"ok":false,"error":"curl"}\n000'
+              code=$(echo "$body" | tail -n1); body=$(echo "$body" | sed '$d')
+              status=$(echo "$body" | jq -r '.status // empty' 2>/dev/null)
+              if [ "$status" = "429" ] && [ $attempt = 1 ]; then echo "429 → 65초 대기 후 재시도"; sleep 65; continue; fi
+              break
+            done
+            echo "$1 → HTTP $code $body"
+            ok=$(echo "$body" | jq -r '.ok // false' 2>/dev/null)
+            target=$(echo "$body" | jq -r '.target // empty' 2>/dev/null); [ -z "$target" ] && target="$1"
+            rows=$(echo "$body" | jq -r '.rows // ""' 2>/dev/null)
+            fin=$(echo "$body" | jq -r '.finished // ""' 2>/dev/null)
+            memo=$(echo "$body" | jq -r '(.status|tostring) + " " + (.message // .error // "")' 2>/dev/null | sed 's/^null //;s/|/\//g')
+            if [ "$ok" = "true" ]; then res="✅"; else res="❌"; fails=$((fails+1)); fi
+            [ "$ok" = "true" ] && memo=""
+            echo "| ${target} | ${res} | ${rows} | ${fin} | ${memo} |" >> "$GITHUB_STEP_SUMMARY"
+            if [ "$code" = "401" ] || [ "$code" = "503" ]; then echo "::error::설정 문제 (HTTP $code): $body"; exit 1; fi
+            sleep 7
+          }
+
+          case "$JOB" in
+            results)
+              call "mode=recent&back=2&ahead=1"
+              ;;
+            daily)
+              call "mode=recent&back=2&ahead=7"
+              for c in PL PD BL1 SA FL1 PPL DED ELC CL; do call "mode=standings&comp=$c"; done
+              ;;
+            backfill)
+              y=$(TZ=Asia/Seoul date +%Y); m=$(TZ=Asia/Seoul date +%-m)
+              cur=$(( m >= 7 ? y : y - 1 ))
+              for c in $COMPS; do
+                for (( s = cur - SEASONS_BACK; s <= cur; s++ )); do call "mode=season&comp=$c&season=$s"; done
+              done
+              ;;
+          esac
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "실패 ${fails}건 (과거 시즌의 403은 무료 플랜 범위 밖이라는 뜻)" >> "$GITHUB_STEP_SUMMARY"
+          # 백필은 403이 정상적으로 섞이므로 실패로 치지 않는다
+          if [ "$JOB" != "backfill" ] && [ $fails -gt 0 ]; then exit 1; fi
