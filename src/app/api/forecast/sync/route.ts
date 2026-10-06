@@ -14,14 +14,18 @@ import { forecastDb, logSync, saveMatches, saveStandings } from "@/lib/forecast/
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-function authorized(req: Request): boolean {
-  const secret = process.env.CRON_SECRET?.trim();
-  if (!secret) return false;
-  const h = req.headers.get("authorization") ?? "";
-  return h === `Bearer ${secret}`;
-}
-
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { "cache-control": "no-store" } });
+
+/** 인증 실패 이유를 구분해서 돌려준다 (값 자체는 절대 노출하지 않음) */
+function authError(req: Request): Response | null {
+  const secret = process.env.CRON_SECRET?.trim();
+  if (!secret) return json({ error: "CRON_SECRET_not_set_on_server" }, 503);
+  const h = (req.headers.get("authorization") ?? "").trim();
+  if (!h) return json({ error: "no_authorization_header" }, 401);
+  const got = h.replace(/^Bearer\s+/i, "").trim();
+  if (got !== secret) return json({ error: "secret_mismatch", got_length: got.length, server_length: secret.length }, 401);
+  return null;
+}
 
 function int(v: string | null, def: number, min: number, max: number): number {
   const n = v === null || v === "" ? def : Number(v);
@@ -29,7 +33,8 @@ function int(v: string | null, def: number, min: number, max: number): number {
 }
 
 export async function POST(req: Request) {
-  if (!authorized(req)) return json({ error: "unauthorized" }, 401);
+  const denied = authError(req);
+  if (denied) return denied;
   const db = forecastDb();
   if (!db) return json({ error: "supabase_not_configured" }, 503);
   const fd = FdClient.fromEnv();
@@ -88,7 +93,8 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-  if (!authorized(req)) return json({ error: "unauthorized" }, 401);
+  const denied = authError(req);
+  if (denied) return denied;
   const db = forecastDb();
   if (!db) return json({ error: "supabase_not_configured" }, 503);
   const mode = new URL(req.url).searchParams.get("mode") ?? "status";

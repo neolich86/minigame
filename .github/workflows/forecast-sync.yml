@@ -45,7 +45,9 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
+          CRON_SECRET=$(printf '%s' "${CRON_SECRET}" | tr -d '[:space:]')
           if [ -z "${CRON_SECRET}" ]; then echo "::error::CRON_SECRET secret이 없습니다"; exit 1; fi
+          echo "보내는 CRON_SECRET 길이: ${#CRON_SECRET}"
           fails=0
           echo "## forecast-sync: ${JOB}" >> "$GITHUB_STEP_SUMMARY"
           echo "| 대상 | 결과 | 경기/행 | 끝난 경기 | 메모 |" >> "$GITHUB_STEP_SUMMARY"
@@ -65,7 +67,7 @@ jobs:
             target=$(echo "$body" | jq -r '.target // empty' 2>/dev/null); [ -z "$target" ] && target="$1"
             rows=$(echo "$body" | jq -r '.rows // ""' 2>/dev/null)
             fin=$(echo "$body" | jq -r '.finished // ""' 2>/dev/null)
-            memo=$(echo "$body" | jq -r '(.status|tostring) + " " + (.message // .error // "")' 2>/dev/null | sed 's/^null //;s/|/\//g')
+            memo=$(echo "$body" | jq -r '(.status|tostring) + " " + (.message // .error // "") + (if .got_length then " (보낸 길이 \(.got_length), 서버 길이 \(.server_length))" else "" end)' 2>/dev/null | sed 's/^null //;s/|/\//g')
             if [ "$ok" = "true" ]; then res="✅"; else res="❌"; fails=$((fails+1)); fi
             [ "$ok" = "true" ] && memo=""
             echo "| ${target} | ${res} | ${rows} | ${fin} | ${memo} |" >> "$GITHUB_STEP_SUMMARY"
