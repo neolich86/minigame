@@ -1,0 +1,11 @@
+{
+  "halfLife": 365,
+  "prior": 3,
+  "rho": -0.1,
+  "eloK": 10,
+  "eloHome": 40,
+  "eloGoal": 350,
+  "eloRegress": 0.2,
+  "wPois": 0.7,
+  "minGames": 10
+}
