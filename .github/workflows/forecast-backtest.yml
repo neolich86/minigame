@@ -1,0 +1,46 @@
+# 킥오프 예측 — 모델 백테스트 (수동 실행)
+# 사이트의 /api/forecast/export 로 끝난 경기를 받아 scripts/backtest.mts 를 돌리고
+# 결과표를 실행 Summary 에, 고른 파라미터를 아티팩트로 남긴다.
+# 필요한 Secrets: CRON_SECRET (forecast-sync 와 같은 값)
+
+name: forecast-backtest
+
+on:
+  workflow_dispatch:
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SITE: ${{ vars.FORECAST_SITE_URL || 'https://minigame-on.vercel.app' }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Export matches
+        shell: bash
+        run: |
+          set -euo pipefail
+          CRON_SECRET=$(printf '%s' "${CRON_SECRET}" | tr -d '[:space:]')
+          code=$(curl -sS -m 90 -o matches.json -w '%{http_code}' -H "Authorization: Bearer ${CRON_SECRET}" "${SITE}/api/forecast/export")
+          if [ "$code" != "200" ]; then echo "::error::export HTTP $code: $(head -c 300 matches.json)"; exit 1; fi
+          echo "경기 수: $(jq '.rows | length' matches.json)"
+          jq -r '.rows | group_by(.[1]) | map("\(.[0][1]): \(length)") | join(", ")' matches.json
+      - name: Backtest
+        run: npx tsx scripts/backtest.mts matches.json --out backtest.md --params best-params.json
+      - name: Summary
+        if: always()
+        run: '[ -f backtest.md ] && cat backtest.md >> "$GITHUB_STEP_SUMMARY" || true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forecast-backtest
+          path: |
+            backtest.md
+            best-params.json
+          if-no-files-found: ignore

@@ -1,6 +1,7 @@
 // 킥오프 예측 M1 — football-data 클라이언트·행 변환 테스트 (네트워크 없이 가짜 fetch 사용)
 // 실행: npx tsx scripts/test-forecast.mts
 import assert from "node:assert/strict";
+import { fitPoisson, poissonLambdas, scoreMatrix, summarize, type MatchLite } from "../src/lib/forecast/model";
 import { FdClient, FdError, kstDate, score90, scoreFinal, teamsFrom, toMatchRow, type FdMatch } from "../src/lib/forecast/fd";
 
 let passed = 0;
@@ -115,6 +116,37 @@ await t("클라이언트: 호출 간격 유지", async () => {
   await c.matchesBetween("a", "b");
   await c.matchesBetween("a", "b");
   assert.ok(times[1] - times[0] >= 115, `gap ${times[1] - times[0]}ms`);
+});
+
+await t("스코어 확률표: 합 1, 무승부 보정(rho<0)이 0:0·1:1을 올림", () => {
+  const a = scoreMatrix(1.4, 1.1, 0), b = scoreMatrix(1.4, 1.1, -0.1);
+  const sa = a.reduce((x, y) => x + y, 0);
+  assert.ok(Math.abs(sa - 1) < 1e-9);
+  assert.ok(b[0] > a[0] && b[12] > a[12]);
+  const f = summarize(a);
+  assert.ok(Math.abs(f.pH + f.pD + f.pA - 1) < 1e-9);
+  assert.ok(Math.abs(f.expH - 1.4) < 0.01 && f.top.length === 5);
+});
+
+await t("포아송 적합: 강팀·약팀 구분, 홈 어드밴티지 추정", () => {
+  // 팀 1이 강하고 팀 4가 약한 리그를 결정적으로 만든다 (기대값 그대로의 득점)
+  const strength: Record<number, number> = { 1: 0.5, 2: 0.1, 3: -0.1, 4: -0.5 };
+  const ms: MatchLite[] = [];
+  let id = 1;
+  const now = Date.UTC(2026, 0, 1);
+  for (let r = 0; r < 20; r++)
+    for (const h of [1, 2, 3, 4])
+      for (const a of [1, 2, 3, 4]) {
+        if (h === a) continue;
+        const lh = Math.exp(0.3 + 0.2 + strength[h] - strength[a]), la = Math.exp(0.3 + strength[a] - strength[h]);
+        ms.push({ id: id++, comp: "PL", season: 2025, date: now - (r + 1) * 86400_000 * 7, home: h, away: a, hg: Math.round(lh * 10) / 10, ag: Math.round(la * 10) / 10 });
+      }
+  const f = fitPoisson(ms, now, 365, 0.5)!;
+  assert.ok(f.att.get(1)! > f.att.get(2)! && f.att.get(2)! > f.att.get(4)!);
+  assert.ok(f.def.get(4)! > f.def.get(1)!);
+  assert.ok(f.home > 1.1 && f.home < 1.35, `home ${f.home}`);
+  const [l1, l4] = poissonLambdas(f, 1, 4)!;
+  assert.ok(l1 > 2 * l4);
 });
 
 console.log(`\n${passed}개 통과`);

@@ -65,3 +65,14 @@ API 오류(403·429 등)는 HTTP 200 + `{ ok:false, status }` 로 돌려준다.
 ## 테스트
 
 `npm run test:forecast` — 가짜 fetch로 클라이언트·스코어 변환(연장·승부차기 90분 스코어 분리) 검증
+
+## 5. 모델 백테스트 (M2)
+
+Actions → **forecast-backtest** → Run workflow. 약 5분.
+
+- 사이트의 `GET /api/forecast/export`(Bearer CRON_SECRET)로 끝난 경기를 받아 `scripts/backtest.mts` 실행
+- 첫 시즌은 워밍업, 두 번째 시즌으로 파라미터를 고르고(튜닝), 그 뒤 시즌은 고른 값으로 채점만 한다(홀드아웃)
+- 실행 Summary: 기준선·Elo·포아송·합친 모델 비교, 대회별 성적, 보정표, 고른 파라미터
+- 아티팩트 `forecast-backtest`: `backtest.md`, `best-params.json`
+
+로컬 확인: `npm run backtest -- --synthetic` (진짜 강도를 알고 있는 합성 리그로 모델 점검)

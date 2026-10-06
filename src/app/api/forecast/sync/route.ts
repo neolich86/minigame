@@ -10,22 +10,10 @@
 // 백필 루프가 끊기지 않고 결과표를 남기기 위해서다.
 import { FdClient, FdError, isComp, kstDate } from "@/lib/forecast/fd";
 import { forecastDb, logSync, saveMatches, saveStandings } from "@/lib/forecast/store";
+import { authError, json } from "@/lib/forecast/auth";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { "cache-control": "no-store" } });
-
-/** 인증 실패 이유를 구분해서 돌려준다 (값 자체는 절대 노출하지 않음) */
-function authError(req: Request): Response | null {
-  const secret = process.env.CRON_SECRET?.trim();
-  if (!secret) return json({ error: "CRON_SECRET_not_set_on_server" }, 503);
-  const h = (req.headers.get("authorization") ?? "").trim();
-  if (!h) return json({ error: "no_authorization_header" }, 401);
-  const got = h.replace(/^Bearer\s+/i, "").trim();
-  if (got !== secret) return json({ error: "secret_mismatch", got_length: got.length, server_length: secret.length }, 401);
-  return null;
-}
 
 function int(v: string | null, def: number, min: number, max: number): number {
   const n = v === null || v === "" ? def : Number(v);
