@@ -5,6 +5,7 @@
 // POST ?mode=season&comp=PL&season=2024 대회 한 시즌 전체 경기 (API 1회) — 과거 시즌 백필용
 // POST ?mode=standings&comp=PL[&season=]  순위표 (API 1회)
 // POST ?mode=teams&comp=PL             팀 목록·대표색 (API 1회)
+// POST ?mode=sims[&n=10000]           리그 최종 순위 시뮬레이션 (API 호출 없음)
 // POST ?mode=predict                   예측 생성·잠금·채점·레이팅 (API 호출 없음)
 // GET  ?mode=status                     DB에 쌓인 경기 수·최근 동기화 기록 (API 호출 없음)
 //
@@ -12,7 +13,7 @@
 // 백필 루프가 끊기지 않고 결과표를 남기기 위해서다.
 import { FdClient, FdError, isComp, kstDate } from "@/lib/forecast/fd";
 import { forecastDb, logSync, saveMatches, saveStandings, saveTeamColors } from "@/lib/forecast/store";
-import { runPredict } from "@/lib/forecast/predict";
+import { runLeagueSims, runPredict } from "@/lib/forecast/predict";
 import { authError, json } from "@/lib/forecast/auth";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
   const q = new URL(req.url).searchParams;
   const mode = q.get("mode") ?? "recent";
   const fd = FdClient.fromEnv();
-  if (!fd && mode !== "predict") return json({ error: "FOOTBALL_DATA_TOKEN_missing" }, 503);
+  if (!fd && mode !== "predict" && mode !== "sims") return json({ error: "FOOTBALL_DATA_TOKEN_missing" }, 503);
   const comp = (q.get("comp") ?? "").toUpperCase();
   let target = "";
 
@@ -85,6 +86,14 @@ export async function POST(req: Request) {
       const r = await runPredict(db);
       await logSync(db, { mode, target, ok: true, rows: r.predicted, detail: JSON.stringify(r) });
       return json({ ok: true, mode, target, rows: r.predicted, ...r });
+    }
+
+    if (mode === "sims") {
+      // API 호출 없음 — 리그 8개 최종 순위 시뮬레이션
+      target = "leagues";
+      const r = await runLeagueSims(db, Date.now(), int(q.get("n"), 10000, 1000, 20000));
+      await logSync(db, { mode, target, ok: true, rows: r.leagues.length, detail: JSON.stringify(r) });
+      return json({ ok: true, mode, target, rows: r.leagues.length, ...r });
     }
 
     return json({ error: "bad_mode" }, 400);

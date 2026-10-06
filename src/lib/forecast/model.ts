@@ -308,8 +308,8 @@ export interface Predictor {
   p: Params;
 }
 
-/** 한 경기 예측. fits 는 그 시점 이전 데이터로 맞춘 리그별 포아송 */
-export function predict(pr: Predictor, m: MatchLite): Forecast & { wPois: number; lamE: [number, number]; lamP: [number, number] | null } {
+/** 한 경기의 스코어 확률표와 포아송 비중 (시뮬레이션에서도 쓴다) */
+export function matchMatrix(pr: Predictor, m: MatchLite): { mat: Float64Array; wPois: number; lamE: [number, number]; lamP: [number, number] | null } {
   const lamE = pr.elo.lambdas(m);
   const mE = scoreMatrix(lamE[0], lamE[1], pr.p.rho);
   let lamP: [number, number] | null = null;
@@ -323,8 +323,16 @@ export function predict(pr: Predictor, m: MatchLite): Forecast & { wPois: number
     }
   }
   const mat = lamP && w > 0 ? mixMatrices(scoreMatrix(lamP[0], lamP[1], pr.p.rho), mE, w) : mE;
-  return { ...summarize(mat), wPois: w, lamE, lamP };
+  return { mat, wPois: w, lamE, lamP };
 }
+
+/** 한 경기 예측. fits 는 그 시점 이전 데이터로 맞춘 리그별 포아송 */
+export function predict(pr: Predictor, m: MatchLite): Forecast & { wPois: number; lamE: [number, number]; lamP: [number, number] | null } {
+  const { mat, wPois, lamE, lamP } = matchMatrix(pr, m);
+  return { ...summarize(mat), wPois, lamE, lamP };
+}
+
+export const SCORE_SIDE = MAXG + 1;
 
 /* ───────────── 채점 ───────────── */
 

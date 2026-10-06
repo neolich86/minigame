@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: "daily = 최근 경기+순위표+예측 / results = 최근 결과+예측 잠금·채점 / predict = 예측만 / teams = 팀 대표색 / backfill = 과거 시즌 적재(무료 범위 확인 겸)"
+        description: "daily = 최근 경기+순위표+예측 / results = 최근 결과+예측 잠금·채점 / predict = 예측+순위 시뮬 / teams = 팀 대표색 / backfill = 과거 시즌 적재(무료 범위 확인 겸)"
         type: choice
         options: [daily, results, predict, teams, backfill]
         default: daily
@@ -85,9 +85,11 @@ jobs:
               for c in PL PD BL1 SA FL1 PPL DED ELC CL; do call "mode=standings&comp=$c"; done
               if [ "$(TZ=Asia/Seoul date +%u)" = "1" ]; then for c in PL PD BL1 SA FL1 PPL DED ELC CL; do call "mode=teams&comp=$c"; done; fi
               call "mode=predict"
+              call "mode=sims"
               ;;
             predict)
               call "mode=predict"
+              call "mode=sims"
               ;;
             teams)
               for c in PL PD BL1 SA FL1 PPL DED ELC CL; do call "mode=teams&comp=$c"; done

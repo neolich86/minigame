@@ -5,7 +5,8 @@
 // 4) 끝난 경기의 잠긴 예측을 채점한다
 // 5) 팀 레이팅 스냅샷을 남긴다 (처음 한 번은 2주 간격 과거 기록까지)
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { DEFAULT_PARAMS, Elo, LEAGUES, MODEL_VERSION, fitPoisson, predict, score, type MatchLite, type PoissonFit } from "./model";
+import { DEFAULT_PARAMS, Elo, LEAGUES, MODEL_VERSION, fitPoisson, matchMatrix, predict, score, type MatchLite, type PoissonFit } from "./model";
+import { ZONES, simulateLeague, type SimFixture, type SimTeam } from "./sim";
 
 const DAY = 86400_000;
 const PAGE = 1000;
@@ -215,4 +216,64 @@ export async function runPredict(db: SupabaseClient, now = Date.now(), aheadDays
     history: history.length,
     ms: Date.now() - t0,
   };
+}
+
+/* ───────────── 리그 최종 순위 시뮬레이션 ───────────── */
+
+interface StandRow {
+  position: number;
+  team: { id: number };
+  playedGames: number;
+  points: number;
+  goalsFor: number;
+  goalDifference: number;
+}
+
+export interface SimsReport {
+  leagues: { comp: string; season: number; teams: number; remaining: number; ms: number }[];
+  ms: number;
+}
+
+/** 리그 8개의 남은 경기를 sims 번 굴려 fc_league_sims 에 저장한다 */
+export async function runLeagueSims(db: SupabaseClient, now = Date.now(), sims = 10000): Promise<SimsReport> {
+  const t0 = Date.now();
+  const p = DEFAULT_PARAMS;
+  const all = await loadMatches(db);
+  const done = all
+    .filter((m) => m.status === "FINISHED" && m.home_id && m.away_id && m.home_score_90 !== null && m.away_score_90 !== null)
+    .map(lite)
+    .sort((a, b) => a.date - b.date || a.id - b.id);
+  const elo = new Elo(p);
+  for (const m of done) elo.update(m);
+  const fits = new Map<string, PoissonFit | null>();
+  for (const c of LEAGUES) fits.set(c, fitPoisson(done.filter((m) => m.comp === c), now, p.halfLife, p.prior));
+
+  const out: SimsReport["leagues"] = [];
+  for (const comp of Object.keys(ZONES)) {
+    const t1 = Date.now();
+    const { data } = await db.from("fc_standings").select("season,data").eq("competition", comp).order("season", { ascending: false }).limit(1);
+    if (!data?.length) continue;
+    const season = data[0].season as number;
+    const groups = (data[0].data ?? []) as { type?: string; table: StandRow[] }[];
+    const table = (groups.find((g) => !g.type || g.type === "TOTAL") ?? groups[0])?.table ?? [];
+    if (table.length < 4) continue;
+    const teams: SimTeam[] = table.map((r) => ({ id: r.team.id, pts: r.points, gd: r.goalDifference, gf: r.goalsFor, played: r.playedGames }));
+    const remaining = all.filter(
+      (m) => m.competition === comp && m.season === season && m.home_id && m.away_id && (OPEN.has(m.status) || m.status === "POSTPONED"),
+    );
+    const fixtures: SimFixture[] = remaining.map((m) => ({ home: m.home_id!, away: m.away_id!, mat: matchMatrix({ elo, fits, p }, lite(m)).mat }));
+    const r = simulateLeague(teams, fixtures, ZONES[comp], sims, season * 100 + comp.length);
+    const r3 = (x: number) => Math.round(x * 1000) / 1000;
+    const payload = {
+      ...r,
+      model_version: MODEL_VERSION,
+      teams: r.teams.map((t) => ({ ...t, expPts: Math.round(t.expPts * 10) / 10, avgPos: Math.round(t.avgPos * 10) / 10, pTitle: r3(t.pTitle), pTop: r3(t.pTop), pBottom: r3(t.pBottom), pos: t.pos.map(r3) })),
+    };
+    const { error } = await db
+      .from("fc_league_sims")
+      .upsert({ competition: comp, season, run_at: new Date(now).toISOString(), data: payload }, { onConflict: "competition,season" });
+    if (error) throw new Error(`fc_league_sims: ${error.message}`);
+    out.push({ comp, season, teams: teams.length, remaining: r.remaining, ms: Date.now() - t1 });
+  }
+  return { leagues: out, ms: Date.now() - t0 };
 }

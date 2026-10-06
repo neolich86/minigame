@@ -443,3 +443,15 @@ header.hero { margin-bottom: 28px; }
   .fc-bycomp em { display: none; }
   .fc-trend { grid-template-columns: 1fr; }
 }
+.fc-sim-sub { margin: 6px 10px 10px; }
+.fc-sim td.fc-odds { position: relative; min-width: 70px; }
+.fc-odds b { position: relative; z-index: 1; font-weight: 700; }
+.fc-odds-bar { position: absolute; left: 4px; top: 50%; transform: translateY(-50%); height: 18px; border-radius: 4px; opacity: .28; max-width: calc(100% - 8px); }
+.fc-odds-bar.gold { background: var(--gold); } .fc-odds-bar.teal { background: var(--teal); } .fc-odds-bar.rose { background: var(--rose); }
+.fc-sim .fc-tname .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+@media (max-width: 560px) {
+  .fc-sim .fc-tname .nm { max-width: 74px; }
+  .fc-sim td.fc-odds { min-width: 44px; font-size: 12px; }
+  .fc-sim th { font-size: 10px; padding: 6px 3px; }
+  .fc-sim td { padding: 7px 3px; }
+}

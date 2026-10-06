@@ -31,9 +31,9 @@ SQL Editor에서 `supabase/migrations/0009_forecast.sql`, `0010_forecast_colors.
 
 | 작업 | 언제 | 내용 |
 |---|---|---|
-| daily | 매일 KST 05:52 | 최근 2일 ~ 앞으로 7일 경기 + 순위표 + 예측 생성 (월요일엔 팀 대표색도) |
+| daily | 매일 KST 05:52 | 최근 2일 ~ 앞으로 7일 경기 + 순위표 + 예측 생성 + 리그 순위 시뮬레이션 (월요일엔 팀 대표색도) |
 | results | KST 01:07 / 04:07 / 07:07 | 최근 경기 결과 + 예측 잠금·채점 |
-| predict | 수동 실행 | 예측만 다시 (API 호출 없음) |
+| predict | 수동 실행 | 예측 + 리그 순위 시뮬레이션 다시 (API 호출 없음) |
 | teams | 수동 실행 | 팀 목록·대표색 (배지 색) |
 | backfill | 수동 실행 | 대회별 과거 시즌 전체 경기 적재 |
 
@@ -62,6 +62,7 @@ curl -H "Authorization: Bearer $CRON_SECRET" "https://minigame-on.vercel.app/api
 - `POST ?mode=standings&comp=PL` — 순위표
 - `POST ?mode=teams&comp=PL` — 팀 대표색
 - `POST ?mode=predict` — 예측 생성(앞으로 8일)·킥오프 지난 예측 잠금·끝난 경기 채점·레이팅 스냅샷 (API 호출 없음)
+- `POST ?mode=sims[&n=10000]` — 리그 8개 남은 경기 몬테카를로 → `fc_league_sims` (API 호출 없음)
 - `GET ?mode=status` — 적재 현황
 
 API 오류(403·429 등)는 HTTP 200 + `{ ok:false, status }` 로 돌려준다.
@@ -92,4 +93,5 @@ Actions → **forecast-backtest** → Run workflow. 약 5분.
 
 - 서버 페이지가 데이터를 읽고(공개 읽기 키), 화면은 클라이언트 컴포넌트가 그린다 → 상단 KO/EN 전환이 바로 반영
 - 구단 엠블럼 대신 약자(TLA) + 구단 대표색 배지. 대표색이 없으면 팀 id 로 고른 기본색
-- 포털 목록에는 아직 노출 안 함 (M4에서 카드 추가)
+- 포털 `/apps` 목록·사이트맵에 노출 (`games.ts` 의 `sports-forecast`, 정적 경로가 `/apps/[slug]` 보다 우선)
+- 출처 표기는 football-data.org 약관 7.1 문구 그대로: "Football data provided by the Football-Data.org API"

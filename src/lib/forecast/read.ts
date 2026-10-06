@@ -1,7 +1,7 @@
 // 스포츠 승부 예측 — 화면용 데이터 읽기 (서버 컴포넌트에서 호출, 공개 읽기 키 사용)
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { TeamInfo } from "./teams";
-import type { MatchRow, Prediction, RatingPoint, StandingGroup } from "./shared";
+import type { LeagueSim, MatchRow, Prediction, RatingPoint, StandingGroup } from "./shared";
 
 let client: SupabaseClient | null = null;
 function db(): SupabaseClient | null {
@@ -150,6 +150,14 @@ export async function gradedPredictions(): Promise<GradedRow[]> {
     if (!data || data.length < 1000) break;
   }
   return out;
+}
+
+export async function leagueSim(comp: string): Promise<{ season: number; run_at: string; data: LeagueSim } | null> {
+  const c = db();
+  if (!c) return null;
+  const { data, error } = await c.from("fc_league_sims").select("season,run_at,data").eq("competition", comp).order("season", { ascending: false }).limit(1);
+  if (error || !data?.length) return null;
+  return data[0] as { season: number; run_at: string; data: LeagueSim };
 }
 
 export const cloudReady = () => db() !== null;

@@ -455,24 +455,26 @@ export const KIND_SEO: Record<"tool" | "app", Record<Lang, { heading: string; ti
     ko: {
       heading: "서비스",
       eyebrow: "MY SERVICES",
-      title: "나만의 기록 서비스 - 여행 지도 만들기 Passport Map",
+      title: "무료 웹 서비스 - 축구 승부 예측 · 여행 지도 만들기 Passport Map",
       description:
-        "다녀온 나라와 도시를 세계지도에 칠하고 사진을 남기는 여행 지도 Passport Map 등, 로그인해 내 기록을 쌓아가는 무료 웹 서비스 모음이에요.",
-      keywords: ["여행 지도", "여행 지도 만들기", "세계지도 색칠", "다녀온 나라", "여행 기록", "Passport Map", "무료 웹 서비스"],
-      subtitle: "로그인하면 내 기록이 계정에 쌓이는 개인 서비스예요. 게임과 같은 계정으로 쓸 수 있어요.",
+        "유럽 축구 경기의 승·무·패 확률을 계산하는 스포츠 승부 예측, 다녀온 나라와 도시를 세계지도에 칠하는 여행 지도 Passport Map 등 무료 웹 서비스 모음이에요.",
+      keywords: ["축구 승부 예측", "축구 경기 예측", "여행 지도", "여행 지도 만들기", "세계지도 색칠", "다녀온 나라", "Passport Map", "무료 웹 서비스"],
+      subtitle: "축구 경기 예측처럼 바로 쓰는 정보 서비스와, 로그인하면 내 기록이 계정에 쌓이는 개인 서비스예요.",
       about: [
+        "스포츠 승부 예측은 프리미어리그·라리가·분데스리가·세리에A·리그1·챔피언스리그 경기의 승·무·패 확률과 예상 스코어, 리그 우승·강등 확률을 통계 모델로 계산해요. 예측은 킥오프 순간 잠기고 적중률을 그대로 공개합니다.",
         "Passport Map은 다녀온 나라와 도시를 원하는 색으로 칠하고, 장소마다 사진 1장을 남기는 여행 지도예요. 로그인하면 계정에 저장되고 SNS 공유 이미지도 만들 수 있어요.",
       ],
     },
     en: {
       heading: "Services",
       eyebrow: "MY SERVICES",
-      title: "Personal Services - Make Your Travel Map with Passport Map",
+      title: "Free Web Services - Football Forecasts · Passport Map Travel Map",
       description:
-        "Free web services that keep your own records — like Passport Map, where you color the countries and cities you've visited on a world map and pin a photo to each.",
-      keywords: ["travel map", "visited countries map", "world map coloring", "travel journal", "Passport Map"],
-      subtitle: "Personal services that save your records to your account — the same account you use for games.",
+        "Free web services: Sports Forecast computes win/draw/loss probabilities for Europe's top football matches, and Passport Map lets you color the countries and cities you've visited.",
+      keywords: ["football predictions", "match forecast", "travel map", "visited countries map", "world map coloring", "Passport Map"],
+      subtitle: "Info services like football forecasts, plus personal services that save your records to your account.",
       about: [
+        "Sports Forecast computes win, draw and loss probabilities, likely scores and title/relegation odds for the Premier League, La Liga, Bundesliga, Serie A, Ligue 1 and Champions League. Forecasts lock at kick-off and the track record is public.",
         "Passport Map lets you color the countries and cities you've visited and pin one photo to each place. Log in to keep it in your account and make a share image for social media.",
       ],
     },

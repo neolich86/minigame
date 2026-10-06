@@ -77,3 +77,10 @@ export interface StandingGroup {
   group?: string | null;
   table: StandingRow[];
 }
+
+export interface LeagueSim {
+  sims: number;
+  remaining: number;
+  zones: { top: number; topKind: "ucl" | "promo"; bottom: number };
+  teams: { id: number; pts: number; played: number; expPts: number; avgPos: number; pTitle: number; pTop: number; pBottom: number; pos: number[] }[];
+}

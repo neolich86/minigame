@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useApp } from "@/components/AppProvider";
 import type { Lang } from "@/lib/i18n";
 import { BACKTEST_V1 } from "@/lib/forecast/backtest-v1";
-import { COMP_NAME, type MatchRow, type RatingPoint, type StandingGroup } from "@/lib/forecast/shared";
+import { COMP_NAME, type LeagueSim, type MatchRow, type RatingPoint, type StandingGroup } from "@/lib/forecast/shared";
 import { badgeColors, teamName, teamTla, type TeamInfo } from "@/lib/forecast/teams";
 
 export const BASE = "/apps/sports-forecast";
@@ -52,7 +52,7 @@ const T = {
     beforeLock: "킥오프 전까지 새 결과가 반영되면 확률이 바뀔 수 있어요.",
     cupNote: "리그가 다른 팀끼리의 경기는 전 대회 공통 레이팅만으로 계산해요.",
     disclaimer: "통계 모델로 계산한 참고용 예측입니다. 베팅을 권유하지 않습니다.",
-    source: "Football data provided by football-data.org",
+    source: "Football data provided by the Football-Data.org API",
     accBannerLive: "최근 30일 적중률",
     accBannerBt: "과거 시즌 검증 적중률",
     accBannerSub: "단순 비율로 찍을 때",
@@ -85,6 +85,16 @@ const T = {
     lowerBetter: "낮을수록 좋음",
     kst: "",
     recent30: "최근 30일",
+    simTitle: "시즌 최종 순위 예측",
+    simSub: "남은 {n}경기를 모델 확률대로 {s}번 시뮬레이션한 결과예요.",
+    expPts: "예상 승점",
+    nowPts: "현재",
+    title_: "우승",
+    ucl: "상위 {n}",
+    promo: "자동 승격 (상위 {n})",
+    uclNote: "상위 {n} = 챔피언스리그 진출권 (대회 규정·국가 배정에 따라 실제 출전권 수는 다를 수 있어요)",
+    relegation: "강등권 (하위 {n})",
+    simEnded: "남은 경기가 없어 시즌 순위가 확정됐어요.",
     smallSample: "아직 채점된 경기가 적어 숫자가 크게 흔들릴 수 있어요. 수백 경기가 쌓이면 과거 시즌 검증 수준으로 수렴합니다.",
     total: "전체",
   },
@@ -128,7 +138,7 @@ const T = {
     beforeLock: "Probabilities may update before kick-off as new results come in.",
     cupNote: "Matches between clubs from different leagues use the cross-competition rating only.",
     disclaimer: "Statistical forecasts for reference only. We do not encourage betting.",
-    source: "Football data provided by football-data.org",
+    source: "Football data provided by the Football-Data.org API",
     accBannerLive: "Last 30 days accuracy",
     accBannerBt: "Back-tested accuracy",
     accBannerSub: "naive baseline",
@@ -161,6 +171,16 @@ const T = {
     lowerBetter: "lower is better",
     kst: " KST",
     recent30: "Last 30 days",
+    simTitle: "Season projection",
+    simSub: "The remaining {n} matches simulated {s} times with the model's probabilities.",
+    expPts: "Proj. pts",
+    nowPts: "Now",
+    title_: "Title",
+    ucl: "Top {n}",
+    promo: "Auto promotion (top {n})",
+    uclNote: "Top {n} = Champions League places (actual places can differ by competition rules and coefficients)",
+    relegation: "Relegation (bottom {n})",
+    simEnded: "No matches left — the final table is settled.",
     smallSample: "Only a few matches graded so far, so these numbers will swing. They settle as hundreds of matches accumulate.",
     total: "All time",
   },
@@ -580,6 +600,62 @@ export function FcMatch({ d }: { d: DetailData }) {
 
 /* ───────────── 대회 ───────────── */
 
+const fill = (str: string, v: Record<string, string | number>) => str.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ""));
+
+function OddsCell({ p, tone }: { p: number; tone: "gold" | "teal" | "rose" }) {
+  const label = p >= 0.995 ? ">99%" : p > 0 && p < 0.005 ? "<1%" : p === 0 ? "–" : `${Math.round(p * 100)}%`;
+  return (
+    <td className="fc-odds">
+      <span className={`fc-odds-bar ${tone}`} style={{ width: `${Math.max(p * 100, p > 0 ? 3 : 0)}%` }} />
+      <b>{label}</b>
+    </td>
+  );
+}
+
+function SimTable({ sim, teams }: { sim: LeagueSim; teams: Record<number, TeamInfo> }) {
+  const { t, lang } = useT();
+  const z = sim.zones;
+  if (!sim.remaining) return <p className="panel muted">{t.simEnded}</p>;
+  return (
+    <div className="panel fc-table-wrap">
+      <p className="muted small fc-sim-sub">{fill(t.simSub, { n: sim.remaining, s: sim.sims.toLocaleString() })}</p>
+      <table className="fc-table fc-sim">
+        <thead>
+          <tr>
+            <th className="l">{lang === "ko" ? "팀" : "Team"}</th>
+            <th className="hide-sm">{t.nowPts}</th>
+            <th>{t.expPts}</th>
+            <th>{t.title_}</th>
+            <th>{fill(z.topKind === "promo" ? t.promo : t.ucl, { n: z.top })}</th>
+            <th>{fill(t.relegation, { n: z.bottom })}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sim.teams.map((r) => {
+            const team = teams[r.id] ?? { id: r.id, name: String(r.id), short_name: null, tla: null };
+            return (
+              <tr key={r.id}>
+                <td className="l">
+                  <span className="fc-tname">
+                    <TeamBadge team={team} size={24} />
+                    <span className="nm">{teamName(team, lang)}</span>
+                  </span>
+                </td>
+                <td className="hide-sm muted">{r.pts}</td>
+                <td><b>{Math.round(r.expPts)}</b></td>
+                <OddsCell p={r.pTitle} tone="gold" />
+                <OddsCell p={r.pTop} tone="teal" />
+                <OddsCell p={r.pBottom} tone="rose" />
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {z.topKind === "ucl" && <p className="muted small fc-sim-sub">{fill(t.uclNote, { n: z.top })}</p>}
+    </div>
+  );
+}
+
 export function FcLeague({
   comp,
   comps,
@@ -587,6 +663,7 @@ export function FcLeague({
   teams,
   ratings,
   upcoming,
+  sim,
 }: {
   comp: string;
   comps: string[];
@@ -594,6 +671,7 @@ export function FcLeague({
   teams: Record<number, TeamInfo>;
   ratings: Record<number, number>;
   upcoming: MatchRow[];
+  sim: LeagueSim | null;
 }) {
   const { t, lang } = useT();
   const groups = table.filter((g) => !g.type || g.type === "TOTAL");
@@ -607,6 +685,12 @@ export function FcLeague({
           </Link>
         ))}
       </div>
+      {sim && (
+        <>
+          <h2 className="fc-h2">{COMP_NAME[comp]?.[lang] ?? comp} · {t.simTitle}</h2>
+          <SimTable sim={sim} teams={teams} />
+        </>
+      )}
       <h2 className="fc-h2">{COMP_NAME[comp]?.[lang] ?? comp} · {t.standings}</h2>
       {groups.length === 0 && <p className="panel muted">{t.noData}</p>}
       {groups.map((g, gi) => (

@@ -164,6 +164,18 @@ const CATALOG: Game[] = [
     hidden: true, // 인스타 프로페셔널 계정 + 메타 앱 심사가 필요해 개인용으로만 둠
   },
   {
+    id: "sports-forecast",
+    kind: "app",
+    title: { ko: "스포츠 승부 예측", en: "Sports Forecast" },
+    desc: {
+      ko: "프리미어리그·라리가·챔스 등 유럽 축구 경기의 승·무·패 확률과 예상 스코어, 리그 우승·강등 확률을 통계 모델로 계산해요. 적중률도 공개합니다",
+      en: "Win, draw and loss probabilities, likely scores and title/relegation odds for Europe's top football leagues, from a statistical model with a public track record",
+    },
+    genre: "casual",
+    thumb: "/thumbs/sports-forecast.jpg",
+    src: "/apps/sports-forecast", // 정적 게임이 아닌 Next 페이지 (app/apps/sports-forecast)
+  },
+  {
     id: "passport-map",
     kind: "app",
     title: { ko: "Passport Map", en: "Passport Map" },
