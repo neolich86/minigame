@@ -44,10 +44,12 @@ export async function POST(req: Request) {
       const to = kstDate(ahead);
       target = `${from}~${to}`;
       const r = await fd!.matchesBetween(from, to);
-      const rows = await saveMatches(db, r.matches);
+      const skipped: Record<string, number> = {};
+      const rows = await saveMatches(db, r.matches, undefined, skipped);
       const finished = r.matches.filter((m) => m.status === "FINISHED").length;
-      await logSync(db, { mode, target, ok: true, http_status: 200, rows });
-      return json({ ok: true, mode, target, rows, finished, remaining: fd!.remaining });
+      const detail = Object.keys(skipped).length ? `skipped ${JSON.stringify(skipped)}` : undefined;
+      await logSync(db, { mode, target, ok: true, http_status: 200, rows, detail });
+      return json({ ok: true, mode, target, rows, finished, skipped, remaining: fd!.remaining });
     }
 
     if (mode === "season") {

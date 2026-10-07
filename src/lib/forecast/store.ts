@@ -18,8 +18,27 @@ async function upsertChunks(db: SupabaseClient, table: string, rows: object[], o
   }
 }
 
-/** 경기 목록 저장 — 팀을 먼저 넣고 경기를 넣는다. 반환값은 저장한 경기 수 */
-export async function saveMatches(db: SupabaseClient, matches: FdMatch[], compCode?: string): Promise<number> {
+/** fc_competitions 에 등록된 대회 코드 */
+async function knownCompetitions(db: SupabaseClient): Promise<Set<string>> {
+  const { data, error } = await db.from("fc_competitions").select("code");
+  if (error) throw new Error(`fc_competitions: ${error.message}`);
+  return new Set((data ?? []).map((r: { code: string }) => r.code));
+}
+
+/**
+ * 경기 목록 저장 — 팀을 먼저 넣고 경기를 넣는다. 반환값은 저장한 경기 수.
+ * 날짜 범위 조회(/v4/matches)는 무료 플랜의 모든 대회를 돌려주므로(예: 브라질 BSA)
+ * 우리가 다루지 않는 대회 경기는 건너뛴다. skipped 에 대회별 건너뛴 수를 담는다.
+ */
+export async function saveMatches(db: SupabaseClient, all: FdMatch[], compCode?: string, skipped?: Record<string, number>): Promise<number> {
+  const known = await knownCompetitions(db);
+  const matches = all.filter((m) => {
+    const c = m.competition?.code ?? compCode ?? "";
+    if (known.has(c)) return true;
+    if (skipped) skipped[c || "?"] = (skipped[c || "?"] ?? 0) + 1;
+    return false;
+  });
+  if (!matches.length) return 0;
   const now = new Date().toISOString();
   const teams = teamsFrom(matches).map((t) => ({ ...t, updated_at: now }));
   // name_ko 는 덮어쓰지 않도록 upsert 대상 열에서 뺀다 (객체에 없으면 건드리지 않음)

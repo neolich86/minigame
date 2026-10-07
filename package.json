@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:forecast": "tsx scripts/test-forecast.mts && tsx scripts/test-predict.mts && tsx scripts/test-sim.mts",
+    "test:forecast": "tsx scripts/test-forecast.mts && tsx scripts/test-predict.mts && tsx scripts/test-sim.mts && tsx scripts/test-store.mts",
     "backtest": "tsx scripts/backtest.mts"
   },
   "dependencies": {

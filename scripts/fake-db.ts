@@ -36,6 +36,8 @@ class Q {
   insert(v: Row[] | Row) { this.op = "insert"; this.payload = Array.isArray(v) ? v : [v]; return this; }
   eq(c: string, v: unknown) { this.filters.push((r) => r[c] === v); return this; }
   in(c: string, vs: unknown[]) { const s = new Set(vs); this.filters.push((r) => s.has(r[c])); return this; }
+  /** 테스트용: or 필터는 무시 (모든 행 통과) */
+  or(_f: string) { void _f; return this; }
   is(c: string, v: null) { this.filters.push((r) => (r[c] ?? null) === v); return this; }
   order(c: string, o?: { ascending?: boolean }) { this.orders.push([c, o?.ascending !== false]); return this; }
   range(a: number, b: number) { this.rng = [a, b]; return this; }
