@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useApp } from "./AppProvider";
 import { Leaderboard } from "./Leaderboard";
 import { useToasts } from "./Toasts";
-import { formatScore, gameById, itemPath } from "@/lib/games";
+import { formatScore, formatVs, gameById, itemPath } from "@/lib/games";
 import { cloudEnabled, displayName, fetchMyRank, fetchMyScores, submitScore, type ScoreRow } from "@/lib/supabase";
 import { deleteFiles, deleteShare, fileUrls, loadSave, publishShare, putFile, shareInfo, storeSave } from "@/lib/saves";
 import { errorKey } from "@/lib/i18n";
@@ -245,7 +245,7 @@ export function GamePlayer({ gameId }: { gameId: string }) {
           <span className="title">{game.title[lang]}</span>
           {target && targetBoard && (
             <span className="chal-chip" title={lang === "ko" ? "도전장" : "Challenge"}>
-              ⚔️ {lang === "ko" ? `${target.nickname}님의 기록 ${formatScore(targetBoard, target.score, lang)}에 도전 중` : `Beat ${target.nickname}'s ${formatScore(targetBoard, target.score, lang)}`}
+              ⚔️ {lang === "ko" ? `${target.nickname}님의 ${targetBoard.vs?.label.ko ?? "기록"} ${formatVs(targetBoard, target.score, lang)}에 도전 중` : `Beat ${target.nickname}'s ${formatVs(targetBoard, target.score, lang)}`}
             </span>
           )}
           {game.online && (

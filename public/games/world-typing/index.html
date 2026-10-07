@@ -11,7 +11,7 @@
   gtag('config', 'G-M518PXWLLW');
 </script>
 <meta charset="UTF-8">
-<script src="/mgh/bridge.js"></script><script src="/mgh/i18n/world-typing.js"></script>
+<script src="/mgh/bridge.js"></script><script src="/mgh/i18n/world-typing.js"></script><script src="/mgh/result.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>세계도시 타이핑 게임 - 타자 연습 | World City Typing</title>
 <meta name="description" content="세계 여러 도시 이름으로 즐기는 타자 연습 게임. 영타(영문)와 한타(한글) 모드를 선택해 실제 지도 위를 이동하며 타이핑 속도와 정확도를 연습하세요.">
@@ -224,6 +224,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
       <div class="stat"><b id="resTime">00:00</b><span>TIME</span></div>
     </div>
     <p id="resScore" style="margin:-8px 0 22px;font-size:13px;line-height:1.6;color:var(--muted);"></p>
+    <button class="playAgainBtn" id="vsBtn" style="margin:0 auto 10px;display:none;">🔥 친구에게 도전하기</button>
     <button class="playAgainBtn" id="playAgainBtn" style="margin:0 auto;">다시하기</button>
   </div>
 </div>
@@ -649,6 +650,25 @@ function showResult(){
   const rankScoreVal = Math.round(speed*acc/100);
   const resScoreEl = document.getElementById('resScore');
   if(resScoreEl) resScoreEl.innerHTML = citiesDone >= 25 ? T.rankScore(rankScoreVal, speed, acc) : T.rankShort(25);
+  const vsBtn = document.getElementById('vsBtn');
+  vsBtn.style.display = 'none';
+  if(window.MGH && MGH.result && citiesDone >= 25 && rankScoreVal > 0){
+    const kr = mode==='kr';
+    const L2 = (ko,en)=> MGH.L ? MGH.L(ko,en) : ko;
+    const vsOpts = {
+      board: kr ? 'world-typing-kr' : 'world-typing-en', score: rankScoreVal,
+      fmt: s => kr ? `${s.toLocaleString()}${L2('타',' CPM')}` : `${s.toLocaleString()} WPM`,
+      game: 'WORLD CITY TYPING', icon: '⌨️', accent: '#f5a623',
+      label: L2('내 기록','MY RECORD'), friend: L2('친구','Friend'), question: L2('누가 더 빠른가?',"Who's faster?"),
+      sub: `${CITIES.length}${L2('개 도시',' cities')} · ${kr ? L2('한국어 모드','Korean') : L2('영어 모드','English')} · ${L2('정확도','acc')} ${acc}%`,
+      meta: {speed:speed, acc:acc, cities:citiesDone},
+      shareText: kr ? L2(`⌨️ 세계도시 타이핑 ${rankScoreVal}타! 누가 더 빠른지 대결하자`, `⌨️ ${rankScoreVal} CPM in World City Typing. Who's faster?`) : L2(`⌨️ 세계도시 타이핑 ${rankScoreVal} WPM! 누가 더 빠른지 대결하자`, `⌨️ ${rankScoreVal} WPM in World City Typing. Who's faster?`)
+    };
+    vsBtn.textContent = L2('🔥 친구에게 도전하기','🔥 Challenge a friend');
+    vsBtn.style.display = '';
+    vsBtn.onclick = ()=> MGH.result.open(vsOpts);
+    setTimeout(()=> MGH.result.open(vsOpts), 700);
+  }
   if(window.MGH && citiesDone >= 25){
     MGH.submitScore(mode==='kr' ? 'world-typing-kr' : 'world-typing-en', Math.round(speed*acc/100), {speed:speed, acc:acc, cities:citiesDone, ms:elapsedMs});
   }

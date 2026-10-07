@@ -19,6 +19,12 @@ export interface Board {
   format?: "number" | "time" | "won" | "level" | "roundtime";
   /** roundtime 에서 이 라운드를 넘으면 '클리어'로 표시 */
   maxRound?: number;
+  /** 친구에게 도전하기 — 경쟁 방식 문구 (도전장 페이지·미리보기 이미지) */
+  vs?: {
+    label: { ko: string; en: string }; // "내 생존" 의 '생존' 처럼 기록 이름
+    question: { ko: string; en: string }; // "누가 오래 버티나?"
+    unit?: { ko: string; en: string }; // 도전장에서는 이 단위로 표시 (예: 타·WPM)
+  };
 }
 
 export interface Game {
@@ -98,8 +104,8 @@ const CATALOG: Game[] = [
     thumb: "/thumbs/world-typing.jpg",
     src: "/games/world-typing/index.html",
     boards: [
-      { id: "world-typing-kr", label: { ko: "한타", en: "Korean" }, unit: { ko: "점", en: "pts" } },
-      { id: "world-typing-en", label: { ko: "영타", en: "English" }, unit: { ko: "점", en: "pts" } },
+      { id: "world-typing-kr", label: { ko: "한타", en: "Korean" }, unit: { ko: "점", en: "pts" }, vs: { label: { ko: "기록", en: "record" }, question: { ko: "누가 더 빠른가?", en: "Who's faster?" }, unit: { ko: "타", en: " CPM" } } },
+      { id: "world-typing-en", label: { ko: "영타", en: "English" }, unit: { ko: "점", en: "pts" }, vs: { label: { ko: "기록", en: "record" }, question: { ko: "누가 더 빠른가?", en: "Who's faster?" }, unit: { ko: " WPM", en: " WPM" } } },
     ],
   },
   {
@@ -112,7 +118,7 @@ const CATALOG: Game[] = [
     genre: "casual",
     thumb: "/thumbs/weapon.jpg",
     src: "/games/weapon/index.html",
-    boards: [{ id: "weapon", label: { ko: "최고 강화", en: "Best level" }, unit: { ko: "", en: "" }, format: "level" }],
+    boards: [{ id: "weapon", label: { ko: "최고 강화", en: "Best level" }, unit: { ko: "", en: "" }, format: "level", vs: { label: { ko: "강화", en: "level" }, question: { ko: "누가 더 높이 강화하나?", en: "Who can enhance higher?" } } }],
   },
   {
     id: "oripa",
@@ -124,7 +130,7 @@ const CATALOG: Game[] = [
     genre: "casual",
     thumb: "/thumbs/oripa.jpg",
     src: "/games/oripa/index.html",
-    boards: [{ id: "oripa", label: { ko: "최고 자금", en: "Peak funds" }, unit: { ko: "", en: "" }, format: "won" }],
+    boards: [{ id: "oripa", label: { ko: "최고 자금", en: "Peak funds" }, unit: { ko: "", en: "" }, format: "won", vs: { label: { ko: "최고 자산", en: "peak funds" }, question: { ko: "누가 더 부자가 되나?", en: "Who gets richer?" } } }],
   },
   {
     id: "lotto",
@@ -198,7 +204,7 @@ const CATALOG: Game[] = [
     genre: "action",
     thumb: "/thumbs/raiden.jpg",
     src: "/games/raiden/index.html",
-    boards: [{ id: "raiden", label: { ko: "점수", en: "Score" }, unit: { ko: "점", en: "pts" } }],
+    boards: [{ id: "raiden", label: { ko: "점수", en: "Score" }, unit: { ko: "점", en: "pts" }, vs: { label: { ko: "점수", en: "score" }, question: { ko: "점수 대결", en: "Score battle" } } }],
   },
   {
     id: "archer",
@@ -210,7 +216,7 @@ const CATALOG: Game[] = [
     genre: "action",
     thumb: "/thumbs/archer.jpg",
     src: "/games/archer/index.html",
-    boards: [{ id: "archer", label: { ko: "생존 시간", en: "Survival" }, unit: { ko: "", en: "" }, format: "time" }],
+    boards: [{ id: "archer", label: { ko: "생존 시간", en: "Survival" }, unit: { ko: "", en: "" }, format: "time", vs: { label: { ko: "생존", en: "survival" }, question: { ko: "누가 오래 버티나?", en: "Who survives longer?" } } }],
   },
   {
     id: "random-td",
@@ -272,6 +278,13 @@ export function boardById(id: string): { game: Game; board: Board } | undefined 
 }
 
 export const ALL_BOARDS = GAMES.flatMap((g) => (g.boards ?? []).map((b) => ({ game: g, board: b })));
+
+/** 도전장에서 보여줄 기록 (vs.unit 이 있으면 그 단위로) */
+export function formatVs(board: Board, score: number, lang: Lang): string {
+  const u = board.vs?.unit?.[lang];
+  if (u !== undefined) return score.toLocaleString(lang === "ko" ? "ko-KR" : "en-US") + u;
+  return formatScore(board, score, lang);
+}
 
 export function formatScore(board: Board, score: number, lang: Lang): string {
   switch (board.format) {

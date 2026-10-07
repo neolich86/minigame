@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <link rel="canonical" href="/play/raiden">
-<script src="/mgh/bridge.js"></script><script src="/mgh/i18n/raiden.js"></script>
+<script src="/mgh/bridge.js"></script><script src="/mgh/i18n/raiden.js"></script><script src="/mgh/result.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>SKY STRIKE — 종스크롤 슈팅</title>
 <style>
@@ -332,7 +332,7 @@ function killPlayer(){
   P.dead=true;P.resp=110;P.lives--;SFX.dead();shake=20;
   burst(P.x,P.y,60,'#ff9a5a',7,5);ring(P.x,P.y,'#ff6a4a',180);
   const t=WP.type;WP.lv[t]=Math.max(1,WP.lv[t]-2);WP.dmg[t]=Math.max(1,WP.dmg[t]-1);
-  if(P.lives<0){state='over';high=Math.max(high,score);saveHigh();if(window.MGH)MGH.submitScore('raiden',score,{stage:stage_});}
+  if(P.lives<0){state='over';high=Math.max(high,score);saveHigh();if(window.MGH)MGH.submitScore('raiden',score,{stage:stage_});openVs();}
 }
 
 /* ---------- 업데이트 ---------- */
@@ -639,6 +639,20 @@ function render(){
     center([{t:'STAGE '+stage_+' CLEAR',f:'bold 30px monospace',c:'#ffd45a'},
       {t:'BONUS  '+(8000*stage_),f:'14px monospace',c:'#cfe6d8'},
       {t:'다음 스테이지 준비…',f:'12px monospace',c:'#7ea592'}]);}
+}
+
+/* ---------- 결과 · 친구에게 도전하기 ---------- */
+function openVs(){
+  if(!(window.MGH && MGH.result) || score<=0) return;
+  const L2=(ko,en)=> MGH.L ? MGH.L(ko,en) : ko;
+  const s=score, st=stage_, ship=SHIPS[P.ship].n;
+  setTimeout(()=>MGH.result.open({
+    board:'raiden', score:s, fmt:v=>v.toLocaleString(),
+    game:'SKY STRIKE', icon:'✈️', accent:'#5ff0a8',
+    label:L2('내 점수','MY SCORE'), friend:L2('친구','Friend'), question:L2('점수 대결','Score battle'),
+    sub:`STAGE ${st} · ${ship}`, meta:{stage:st},
+    shareText:L2(`✈️ 스카이 스트라이크 ${s.toLocaleString()}점! 점수 대결하자`, `✈️ ${s.toLocaleString()} pts in Sky Strike. Score battle?`)
+  }), 900);
 }
 
 /* ---------- 하이스코어 ---------- */

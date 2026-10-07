@@ -1,7 +1,7 @@
 // 도전장 링크 미리보기 이미지 (카톡·DM 1200×630)
 import { ImageResponse } from "next/og";
 import type { Challenge } from "./challenge";
-import { formatScore, type Board, type Game } from "./games";
+import { formatVs, type Board, type Game } from "./games";
 
 async function loadFont(text: string) {
   try {
@@ -16,15 +16,15 @@ async function loadFont(text: string) {
 }
 
 export async function challengeImage(c: Challenge, game: Game, board: Board) {
-  const rec = formatScore(board, c.score, "ko");
+  const rec = formatVs(board, c.score, "ko");
   const lines = {
     top: "CHALLENGE · 도전장",
     who: `${c.nickname}님이 당신에게 도전했습니다`,
-    label: `${c.nickname}의 기록`,
+    label: `${c.nickname}의 ${board.vs?.label.ko ?? "기록"}`,
     rec,
     pct: c.pct != null ? `TOP ${c.pct}%` : "",
     game: `${game.title.ko} · 미니게임천국`,
-    cta: "이 기록을 깨보세요",
+    cta: board.vs ? `${board.vs.question.ko}` : "이 기록을 깨보세요",
   };
   const font = await loadFont(Object.values(lines).join(""));
   if (!font) {
@@ -33,10 +33,10 @@ export async function challengeImage(c: Challenge, game: Game, board: Board) {
     const nick = ascii(c.nickname) || "Your friend";
     lines.top = "CHALLENGE";
     lines.who = `${nick} challenges you`;
-    lines.label = `${nick}'s record`;
-    lines.rec = ascii(formatScore(board, c.score, "en"));
+    lines.label = `${nick}'s ${board.vs?.label.en ?? "record"}`;
+    lines.rec = ascii(formatVs(board, c.score, "en"));
     lines.game = `${ascii(game.title.en)} - Mini Game Heaven`;
-    lines.cta = "Can you beat it?";
+    lines.cta = board.vs ? board.vs.question.en : "Can you beat it?";
   }
   const fonts = font ? [{ name: "BHS", data: font, weight: 400 as const, style: "normal" as const }] : undefined;
   return new ImageResponse(

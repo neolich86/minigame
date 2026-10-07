@@ -9,7 +9,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-KN7C5ZL2');</script>
 <!-- End Google Tag Manager -->
 <meta charset="UTF-8">
-<script src="/mgh/bridge.js"></script>
+<script src="/mgh/bridge.js"></script><script src="/mgh/result.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>오리파 시뮬레이터</title>
 
@@ -496,6 +496,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div class="toolbar">
     <button class="btn btn-ghost" id="btnRules">📜 게임 룰</button>
     <button class="btn btn-ghost" id="btnDex">📖 컬렉션 도감 보기</button>
+    <button class="btn btn-ghost" id="btnVs" style="display:none">🔥 친구에게 도전</button>
   </div>
 
   <div class="booth-panel">
@@ -1197,6 +1198,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   function resolveCard(def, action){
     if(action === "sell"){
       state.cash += def.sellBack;
+      notePeak();
       state.roundEarned += def.sellBack;
       if(window.MGH) MGH.submitScore('oripa', state.cash, {series:activeSeries, difficulty:state.difficulty}, {debounce:2000});
     }
@@ -1221,6 +1223,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
   }
 
+  // ===== 최고 자산 · 친구에게 도전하기 =====
+  // 이번 접속에서 도달한 최고 자금 (포켓몬·원피스 합쳐 한 기록) — 랭킹 'oripa' 보드와 같은 값
+  let peakCash = 0;
+  const btnVs = document.getElementById("btnVs");
+  function notePeak(){
+    if(state.cash > peakCash){ peakCash = state.cash; }
+    if(btnVs && window.MGH && MGH.result && peakCash > START_CASH) btnVs.style.display = "";
+  }
+  function openVs(){
+    if(!(window.MGH && MGH.result) || peakCash <= 0) return;
+    const L2 = (ko,en)=> MGH.L ? MGH.L(ko,en) : ko;
+    MGH.result.open({
+      board:"oripa", score:peakCash, fmt:v=>won(v),
+      game:"ORIPA SIMULATOR", icon:"🃏", accent:"#ffd966",
+      label:L2("내 최고 자산","MY PEAK FUNDS"), friend:L2("친구","Friend"), question:L2("누가 더 부자가 되나?","Who gets richer?"),
+      sub:`${seriesShortLabel(activeSeries)} · ${DIFFICULTIES[state.difficulty].label}`,
+      meta:{series:activeSeries, difficulty:state.difficulty},
+      shareText:L2(`🃏 오리파 시뮬레이터 최고 자산 ${won(peakCash)}! 누가 더 부자가 되나 대결하자`, `🃏 Peak funds ${won(peakCash)} in Oripa Simulator. Who gets richer?`)
+    });
+  }
+  if(btnVs){ btnVs.onclick = openVs; if(window.MGH && MGH.L) btnVs.textContent = MGH.L("🔥 친구에게 도전","🔥 Challenge a friend"); }
+
   function openBankruptModal(){
     el.bankruptStamp.textContent = t("bankruptStamp");
     el.bankruptBody.innerHTML = t("bankruptBody", { amount: won(START_CASH) });
@@ -1228,6 +1252,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     el.bankruptOverlay.classList.remove("hidden");
   }
   el.btnBankruptOk.addEventListener("click", ()=>{
+    if(peakCash > START_CASH) openVs(); // 파산하면 이번 최고 자산으로 결과 카드
     state.difficulty = "easy";
     startNewOripa(); // 도감은 파산해도 유지된다
     el.bankruptOverlay.classList.add("hidden");

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <link rel="canonical" href="/play/archer">
-<script src="/mgh/bridge.js"></script><script src="/mgh/i18n/archer.js"></script>
+<script src="/mgh/bridge.js"></script><script src="/mgh/i18n/archer.js"></script><script src="/mgh/result.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>궁수 서바이버 — Archer Survivor</title>
 <meta name="description" content="사방에서 몰려오는 몬스터를 자동 사격으로 처치하고, 레벨업마다 스킬을 골라 성장하는 뱀서라이크 로그라이트.">
@@ -239,6 +239,7 @@ canvas{display:block;image-rendering:auto}
     <div class="stat"><i>보스 격파</i><b id="oBoss">0</b></div>
   </div>
   <button class="btn" id="btnRetry">다시 도전</button>
+  <button class="btn" id="btnVs" style="display:none;margin-top:10px;background:linear-gradient(90deg,#ff7a3d,#ffb43d);color:#1d0f00">🔥 친구에게 도전하기</button>
 </div>
 
 <script>
@@ -2100,6 +2101,24 @@ function gameOver(){
     ? `보스 ${game.bossKills}체를 쓰러뜨렸다. 다음엔 더 멀리.`
     : '보스의 그림자조차 보지 못했다.';
   setTimeout(()=>overEl.classList.add('show'), 700);
+  const secs = Math.floor(game.t);
+  const vsBtn = $('btnVs');
+  vsBtn.style.display = 'none';
+  if(window.MGH && MGH.result && secs >= 10){
+    const L2 = (ko,en)=> MGH.L ? MGH.L(ko,en) : ko;
+    const vsOpts = {
+      board:'archer', score:secs, fmt:s=>fmtTime(s),
+      game:'ARCHER SURVIVOR', icon:'🏹', accent:'#ff9b4a',
+      label:L2('내 생존','MY SURVIVAL'), friend:L2('친구','Friend'), question:L2('누가 오래 버티나?','Who survives longer?'),
+      sub:`LV ${P.lv} · ${L2('처치','Kills')} ${game.kills}${game.bossKills?` · ${L2('보스','Boss')} ${game.bossKills}`:''}`,
+      meta:{lv:P.lv, kills:game.kills, boss:game.bossKills},
+      shareText:L2(`🏹 궁수 서바이버 ${fmtTime(secs)} 생존! 누가 더 오래 버티나 대결하자`, `🏹 I survived ${fmtTime(secs)} in Archer Survivor. Can you last longer?`)
+    };
+    vsBtn.textContent = L2('🔥 친구에게 도전하기','🔥 Challenge a friend');
+    vsBtn.style.display = '';
+    vsBtn.onclick = ()=> MGH.result.open(vsOpts);
+    setTimeout(()=> MGH.result.open(vsOpts), 1100);
+  }
 }
 function startGame(){
   reset();

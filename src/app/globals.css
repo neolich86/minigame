@@ -499,3 +499,11 @@ header.hero { margin-bottom: 28px; }
 .challenge-pct { font-size: 15px; font-weight: 800; color: var(--gold); margin-top: 4px; }
 .challenge-sub { color: var(--text-dim); margin: 18px 0 20px; }
 .challenge-go { width: 100%; font-size: 17px; padding: 15px 18px; border-radius: 14px; }
+.challenge-vs { margin-top: 24px; border: 1px solid var(--line); border-radius: 16px; background: rgba(0, 0, 0, .22); padding: 6px 16px; text-align: left; }
+.vs-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 12px 0; }
+.vs-who { font-size: 14px; color: var(--text-dim); font-weight: 700; }
+.vs-val { font-family: "Black Han Sans", "Gothic A1", sans-serif; font-size: 30px; font-weight: 900; color: #ffd98a; white-space: nowrap; }
+.vs-row.me .vs-who { color: var(--teal); }
+.vs-val.unknown { color: var(--teal); letter-spacing: .12em; }
+.vs-mid { text-align: center; font-family: "Space Mono", monospace; font-size: 11px; font-weight: 700; color: var(--text-dim); letter-spacing: .3em; border-top: 1px dashed var(--line); border-bottom: 1px dashed var(--line); padding: 3px 0; }
+.challenge-q { font-size: 20px; font-weight: 900; color: var(--text); margin: 18px 0 20px; }
