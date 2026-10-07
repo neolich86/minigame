@@ -16,9 +16,8 @@ type SeoMap = Record<string, Record<Lang, GameSeo>>;
 
 export const HOME_SEO: Record<Lang, { title: string; description: string; keywords: string[] }> = {
   ko: {
-    title: "미니 게임 천국 - 무료 웹게임 모음 | 보드게임 · 방치형 · 뱀서 · 로또 추천 · 핀볼 룰렛",
-    description:
-      "설치 없이 바로 하는 무료 브라우저 게임 모음. 친구와 온라인 보드게임 대전, 방치형 랜덤 타워 디펜스, 뱀서류 서바이벌, 로또 번호 추천, 핀볼 룰렛 추첨기, 무기 강화까지 한곳에서 랭킹 경쟁하세요.",
+    title: "미니 게임 천국 - 무료 웹게임 · 보드게임 · 추첨기 모음",
+    description: "설치 없이 바로 하는 무료 웹게임 모음. 친구와 온라인 보드게임, 방치형·서바이벌 게임, 로또·핀볼 추첨기까지 즐기고 랭킹에 도전하세요.",
     keywords: [
       "게임", "무료 게임", "웹게임", "브라우저 게임", "미니게임", "온라인 게임",
       "보드게임", "온라인 보드게임", "boardgame", "board game",
@@ -28,9 +27,8 @@ export const HOME_SEO: Record<Lang, { title: string; description: string; keywor
     ],
   },
   en: {
-    title: "Mini Game Heaven - Free Browser Games | Board Games, Idle, Survivor, Lotto Picker, Pinball Roulette",
-    description:
-      "Free browser games, no install needed: online multiplayer board games, idle tower defense, survivor-like roguelite, lotto number picker, pinball roulette and more — with leaderboards.",
+    title: "Mini Game Heaven - Free Browser Games & Pickers",
+    description: "Free browser games, no install: online board games, idle and survivor games, lotto and pinball pickers, with leaderboards.",
     keywords: [
       "free games", "browser games", "web games", "mini games", "online games",
       "board game", "boardgame", "online board game", "multiplayer board game",
