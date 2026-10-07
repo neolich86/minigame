@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<link rel="canonical" href="/apps/passport-map">
+<link rel="canonical" href="/play/passport-map">
 <script src="/mgh/bridge.js"></script><script src="/mgh/i18n/passport-map.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Passport Map</title>
@@ -319,7 +319,7 @@ input,button,select,textarea{box-sizing:border-box}
       <div class="row"><button class="sbtn" id="clearSample">예시 지우고 내 지도 시작</button></div>
     </div>
     </div>
-    <div class="viewbar" id="viewBar" hidden><span id="viewTxt">친구의 Passport Map을 보고 있어요</span><a href="/apps/passport-map" target="_top">나도 내 지도 만들기</a></div>
+    <div class="viewbar" id="viewBar" hidden><span id="viewTxt">친구의 Passport Map을 보고 있어요</span><a href="/play/passport-map" target="_top">나도 내 지도 만들기</a></div>
     <div class="deco deco-passport">PASSPORT MAP</div>
     <svg class="deco deco-compass" viewBox="-40 -44 80 84" aria-hidden="true"><circle r="26" fill="none" stroke="currentColor" stroke-width="1"/><g fill="currentColor"><path d="M0-34 5 0-5 0z"/><path d="M0 34 5 0-5 0z" opacity=".55"/><path d="M34 0 0 5 0-5z" opacity=".55"/><path d="M-34 0 0 5 0-5z" opacity=".55"/></g><text y="-37" text-anchor="middle" font-size="10" font-family="Georgia,serif" fill="currentColor">N</text></svg>
     <div class="choice" id="choice" hidden></div>
@@ -592,7 +592,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[\s.'’-]/g,'');
 const PAL=[['#2D5BD0','블루'],['#3BA3E6','하늘'],['#1FA7A0','민트'],['#2E9E5B','초록'],['#E8B517','노랑'],['#F08A24','주황'],['#E0393E','빨강'],['#E0559B','분홍'],['#7A4FD0','보라'],['#8A5A3C','갈색']];
 const DEF_C='#2D5BD0',DEF_P='#E0393E';
-const ARTIFACT_URL=EMB?location.origin+'/apps/passport-map':'https://claude.ai/artifact/PGyVGyFPEBPS4Rr9Xea3jj';
+const ARTIFACT_URL=EMB?location.origin+'/play/passport-map':'https://claude.ai/artifact/PGyVGyFPEBPS4Rr9Xea3jj';
 const DAY=864e5;
 function ymd(s){return s?s.replace(/-/g,'.'):''}
 function periodText(o){if(!o||!o.from)return '';const a=o.from,b=o.to&&o.to!==o.from?o.to:'';const n=Math.round((Date.parse(b||a)-Date.parse(a))/DAY)+1;
@@ -858,7 +858,7 @@ function renderPanel(){
     ids.forEach(id=>{const st=S.countries[id],cs=citiesOf(id);const ph=st.photo||(cs.find(x=>x.photo)||{}).photo;
       h+=`<button class="li" data-country="${id}">${ph?`<img src="${esc(photoURL(ph))}" alt="" style="box-shadow:0 0 0 2px ${st.color||DEF_C}">`:`<span class="noimg" style="border-color:${st.color||DEF_C};color:${st.color||DEF_C}">${esc(id.slice(0,2))}</span>`}<div><b>${esc(nmC(C[id]))}</b><span>${esc(cs.map(x=>nmCt(x)).join(', ')||st.memo||'')}</span></div></button>`});
     const orphan=S.cities.filter(x=>!x.cc);orphan.forEach(ct=>{h+=`<button class="li" data-city="${ct.id}">${ct.photo?`<img src="${esc(photoURL(ct.photo))}" alt="">`:`<span class="noimg">·</span>`}<div><b>${esc(nmCt(ct))}</b><span>바다 위의 핀</span></div></button>`});
-    h+=`</div></div>`}
+    h+=`</div>`+(EMB?`<p class="note" style="margin-top:8px"><a href="/me" target="_top">${EN?'My account':'내 계정'}</a> · <a href="/privacy" target="_top">${EN?'Privacy':'개인정보처리방침'}</a> · <a href="/account/delete" target="_top">${EN?'Delete account':'계정 삭제'}</a></p>`:'')+`</div>`}
   panel.innerHTML=h;
   const dF=$('#dFrom'),dT=$('#dTo');if(dF&&dT){
     // 고른 날짜는 그대로 둔다: 자동 교환·보정 없이, 맞지 않으면 안내만 하고 저장하지 않는다

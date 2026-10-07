@@ -35,7 +35,8 @@ function writePending(p: Pending[]) {
   } catch {}
 }
 
-export function GamePlayer({ gameId }: { gameId: string }) {
+/** app: 앱(구글 플레이) 전용 주소 — 주어지면 상단 바 없이 전체 화면, 로그인 후 이 주소로 돌아온다 */
+export function GamePlayer({ gameId, app }: { gameId: string; app?: string }) {
   const game = gameById(gameId)!;
   const router = useRouter();
   const { t, lang, user, profile, loading } = useApp();
@@ -120,7 +121,7 @@ export function GamePlayer({ gameId }: { gameId: string }) {
   }, [user, game.boards, send]);
 
   const myRow = mine.find((m) => m.game_id === tab);
-  const loginHref = `/login?next=${encodeURIComponent(itemPath(game))}`;
+  const loginHref = `/login?next=${encodeURIComponent(app ?? itemPath(game))}`;
 
   // 게임 저장(MGH.save) — 로그인 상태 전달 + 저장 요청 처리
   const postToGame = useCallback((msg: Record<string, unknown>) => {
@@ -236,9 +237,9 @@ export function GamePlayer({ gameId }: { gameId: string }) {
   const targetBoard = target ? game.boards?.find((b) => b.id === target.game_id) : undefined;
 
   return (
-    <div className="play-shell">
+    <div className={`play-shell${app ? " app-mode" : ""}`}>
       <div className="play-main">
-        <div className="play-bar">
+        {!app && <div className="play-bar">
           <Link className="back" href="/">
             {t("back")}
           </Link>
@@ -258,7 +259,7 @@ export function GamePlayer({ gameId }: { gameId: string }) {
               🏆 {sideOpen ? t("hideRanking") : t("showRanking")}
             </button>
           )}
-        </div>
+        </div>}
         <iframe
           ref={frame}
           data-mgh-game={game.id}
@@ -270,7 +271,7 @@ export function GamePlayer({ gameId }: { gameId: string }) {
         />
       </div>
 
-      {game.boards && board && (
+      {!app && game.boards && board && (
         <aside className={`side${sideOpen ? " open" : ""}`}>
           <div className="side-inner">
             <h3>

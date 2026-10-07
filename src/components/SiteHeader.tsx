@@ -11,6 +11,8 @@ export function SiteHeader() {
   const inGame = ["/play/", "/online/", "/tools/", "/apps/"].some((p) => path?.startsWith(p));
   const section = path?.startsWith("/tools") ? "tool" : path?.startsWith("/apps") ? "app" : path === "/" || path?.startsWith("/play/") || path?.startsWith("/online/") ? "game" : "";
   const loginHref = `/login?next=${encodeURIComponent(path || "/")}`;
+  // 앱(구글 플레이) 전용 화면은 포털 머리글 없이 전체 화면
+  if (path?.startsWith("/passport-map")) return null;
 
   return (
     <header className={`site-header${inGame ? " compact" : ""}`}>

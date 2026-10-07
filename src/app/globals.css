@@ -103,6 +103,14 @@ input, select { font-family: inherit; }
 .btn:hover:not(:disabled) { border-color: #3c4a6e; filter: brightness(1.1); }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .btn.primary { background: var(--gold); color: #1a1406; border-color: var(--gold); }
+.btn.danger { background: transparent; color: #ff8a8a; border-color: #5a2626; }
+.btn.danger:hover { background: rgba(251, 107, 107, .1); }
+.legal { padding-top: 32px; padding-bottom: 64px; line-height: 1.75; }
+.legal h2 { font-size: 16px; margin: 26px 0 8px; }
+.legal ul { padding-left: 20px; margin: 0 0 8px; }
+.legal li { margin: 4px 0; }
+.legal a { color: var(--teal); }
+.legal .panel { display: grid; gap: 12px; justify-items: start; }
 .btn.teal { background: var(--teal); color: #06201c; border-color: var(--teal); }
 .btn.kakao { background: #fee500; color: #191600; border-color: #fee500; }
 .btn.ghost { background: transparent; }
@@ -187,6 +195,7 @@ footer.site-footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid 
 
 /* ---------- play page ---------- */
 .play-shell { display: flex; height: calc(100dvh - 52px); }
+.play-shell.app-mode { height: 100dvh; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); box-sizing: border-box; background: #0e1420; }
 .play-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .play-bar { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--bg-panel); font-size: 13px; min-height: 46px; flex-wrap: wrap; }
 .play-bar .title { font-family: "Gothic A1", sans-serif; font-weight: 600; font-size: 15px; margin-right: auto; }

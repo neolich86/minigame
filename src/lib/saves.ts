@@ -163,3 +163,31 @@ export async function deleteShare(gameId: string): Promise<void> {
   const { data: list } = await c.storage.from(PUB).list(dir, { limit: 1000 });
   if (list?.length) await c.storage.from(PUB).remove(list.map((f) => `${dir}/${f.name}`));
 }
+
+/* ───────── 회원 탈퇴 ───────── */
+/** 내 사진(비공개·공개 버킷)을 모두 지우고 계정을 삭제한다 — delete_my_account() RPC (0012) */
+export async function deleteMyAccount(): Promise<void> {
+  const user = await uid();
+  const c = client();
+  for (const bucket of [BUCKET, PUB]) {
+    const { data: dirs } = await c.storage.from(bucket).list(user, { limit: 1000 });
+    for (const d of dirs ?? []) {
+      // 폴더(게임별)는 id 가 없다
+      if (d.id) {
+        await c.storage.from(bucket).remove([`${user}/${d.name}`]);
+        continue;
+      }
+      const dir = `${user}/${d.name}`;
+      for (;;) {
+        const { data: files } = await c.storage.from(bucket).list(dir, { limit: 1000 });
+        if (!files?.length) break;
+        const { error } = await c.storage.from(bucket).remove(files.map((f) => `${dir}/${f.name}`));
+        if (error) throw error;
+        if (files.length < 1000) break;
+      }
+    }
+  }
+  const { error } = await c.rpc("delete_my_account");
+  if (error) throw error;
+  await c.auth.signOut();
+}

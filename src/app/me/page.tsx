@@ -83,6 +83,10 @@ export default function MePage() {
       <button className="btn ghost" onClick={async () => { await signOut(); router.replace("/"); }}>
         {t("navLogout")}
       </button>
+      <p className="muted small" style={{ marginTop: 18 }}>
+        <Link href="/account/delete">{lang === "en" ? "Delete account" : "계정 삭제"}</Link> ·{" "}
+        <Link href="/privacy">{lang === "en" ? "Privacy Policy" : "개인정보처리방침"}</Link>
+      </p>
     </div>
   );
 }

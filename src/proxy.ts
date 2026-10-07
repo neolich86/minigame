@@ -19,13 +19,17 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  // 안드로이드 앱(구글 플레이) 전용 화면 표시 — 레이아웃이 광고 스크립트를 넣지 않도록
+  const isApp = request.nextUrl.pathname.startsWith("/passport-map");
   // ?lang=ko|en 주소로 들어오면 그 언어로 서버 렌더링 (검색엔진이 영어 페이지를 따로 수집할 수 있게)
   const lang = request.nextUrl.searchParams.get("lang");
-  if (lang !== "ko" && lang !== "en") return NextResponse.next();
+  const hasLang = lang === "ko" || lang === "en";
+  if (!hasLang && !isApp) return NextResponse.next();
   const headers = new Headers(request.headers);
-  headers.set("x-mgh-lang", lang);
+  if (hasLang) headers.set("x-mgh-lang", lang);
+  if (isApp) headers.set("x-mgh-app", "1");
   const res = NextResponse.next({ request: { headers } });
-  res.cookies.set("mgh_lang", lang, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+  if (hasLang) res.cookies.set("mgh_lang", lang, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
   return res;
 }
 

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import Script from "next/script";
 import { AppProvider } from "@/components/AppProvider";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -52,12 +53,14 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, them
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { lang, fixed } = await serverLang();
+  // 안드로이드 앱 화면(/passport-map)에는 애드센스를 넣지 않는다
+  const inApp = (await headers()).get("x-mgh-app") === "1";
   return (
     <html lang={lang}>
       <head>
         {/* Google AdSense — 사이트 소유 확인 겸 자동 광고용. 크롤러가 바로 읽도록 <head>에 일반 script 태그로 둔다 */}
         <meta name="google-adsense-account" content={ADSENSE_CLIENT} />
-        <script async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`} crossOrigin="anonymous" />
+        {!inApp && <script async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`} crossOrigin="anonymous" />}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}

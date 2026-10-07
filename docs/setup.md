@@ -30,6 +30,7 @@ GitHub(`neolich86/minigame`) → Vercel 자동 배포, 계정·랭킹·온라인
    6. `supabase/migrations/0006_mypost.sql` — My Post 2026 공유 리포트 (`mypost_reports` 테이블, `mypost` 이미지 버킷)
    7. `supabase/migrations/0007_game_saves.sql` — 로그인 사용자 게임 저장 (`game_saves` 테이블, 비공개 `game-files` 버킷) — Passport Map의 지도·사진 저장
    8. `supabase/migrations/0008_game_shares.sql` — Passport Map 내 지도 공개 링크 (`game_shares` 테이블, `get_game_share` 함수, 공개 `game-public` 버킷)
+   - `supabase/migrations/0012_delete_account.sql` — 계정 삭제(회원 탈퇴) 기능, 구글 플레이 등록에 필요
    9. `supabase/migrations/0009_forecast.sql`, `0010_forecast_colors.sql` — 스포츠 승부 예측
    10. `supabase/migrations/0011_challenges.sql` — 친구에게 도전하기 도전장 링크 `/challenge/<코드>` (`challenges` 테이블, `create_challenge`·`get_challenge`·`score_top_pct` 함수)
 2. **Project Settings → API (API Keys)** 에서 복사
@@ -143,3 +144,7 @@ Vercel → Settings → Domains에서 도메인 추가 → 안내대로 DNS 설�
 - 방장 브라우저가 기존 규칙 엔진을 그대로 돌리고, Supabase Realtime으로 상태(방장→모두)와 행동(참가자→방장)을 주고받습니다
 - 방장은 2초마다 스냅샷을 `mg_room_states`에 저장 → 새로고침·방장 교체 시 이어서 진행
 - 한계: 방장이 마음먹으면 조작할 수 있고, 모든 참가자의 손패 정보가 상태에 포함됩니다 (친구끼리 플레이 전제)
+
+
+## Passport Map 안드로이드 앱
+구글 플레이 등록 절차와 환경변수(`ANDROID_PACKAGE`, `ANDROID_SHA256`, `NEXT_PUBLIC_CONTACT_EMAIL`)는 `docs/play-store/README.md` 참고.
