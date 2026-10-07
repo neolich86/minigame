@@ -73,6 +73,9 @@ GitHub(`neolich86/minigame`) → Vercel 자동 배포, 계정·랭킹·온라인
 - **Vercel → Settings → Environment Variables**
   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
   - `NEXT_PUBLIC_SITE_URL` = 실제 서비스 주소 (canonical·OG·sitemap에 쓰임)
+  - `GOOGLE_SITE_VERIFICATION` = 구글 서치 콘솔 'HTML 태그' 확인 방식의 content 값 (선택)
+  - `NAVER_SITE_VERIFICATION` = 네이버 서치어드바이저 'HTML 태그' 확인 방식의 content 값 (선택)
+  - 등록 후 두 곳 모두 사이트맵 `/sitemap.xml` 제출, 네이버는 RSS `/rss.xml` 도 제출
   - My Post 2026 (인스타 연말 결산)
     - `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET` = 메타 앱 → Instagram → "Instagram 로그인을 사용한 API 설정" 화면의 Instagram 앱 ID/시크릿
     - `SUPABASE_SERVICE_ROLE_KEY` = Supabase service_role(secret) 키 — 없으면 리포트가 저장되지 않고 그 탭에서만 보임 (공유 링크 없음)

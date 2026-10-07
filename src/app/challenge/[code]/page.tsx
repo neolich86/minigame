@@ -29,6 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
     title: { absolute: title },
     description,
     robots: { index: false, follow: true },
+    alternates: { canonical: `/challenge/${r.c.code}` },
     openGraph: { title, description, images: [image], type: "website" },
     twitter: { card: "summary_large_image", title, description, images: [image.url] },
   };

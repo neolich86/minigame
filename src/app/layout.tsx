@@ -4,15 +4,18 @@ import { AppProvider } from "@/components/AppProvider";
 import { SiteHeader } from "@/components/SiteHeader";
 import { translate } from "@/lib/i18n";
 import { HOME_SEO } from "@/lib/seo";
-import { SITE_URL, langAlternates, serverLang } from "@/lib/serverLang";
+import { SITE_URL, serverLang } from "@/lib/serverLang";
 import "./globals.css";
 
 const GA_ID = "G-9P8L9T8BS6";
 const ADSENSE_CLIENT = "ca-pub-9826307769121956";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { lang, fromParam } = await serverLang();
+  const { lang } = await serverLang();
   const seo = HOME_SEO[lang];
+  // 검색엔진 소유 확인 — Vercel 환경변수에 값만 넣으면 <meta> 가 들어간다
+  const google = process.env.GOOGLE_SITE_VERIFICATION;
+  const naver = process.env.NAVER_SITE_VERIFICATION;
   return {
     metadataBase: new URL(SITE_URL),
     title: { default: seo.title, template: `%s | ${translate(lang, "siteName")}` },
@@ -20,7 +23,12 @@ export async function generateMetadata(): Promise<Metadata> {
     keywords: seo.keywords,
     applicationName: translate(lang, "siteName"),
     authors: [{ name: "제임스웹" }],
-    alternates: langAlternates("/", lang, fromParam),
+    // 대표 주소(canonical)는 페이지마다 따로 지정한다 — 여기서 정하면 지정 안 한 페이지가 모두 홈을 가리키게 됨
+    alternates: { types: { "application/rss+xml": [{ url: "/rss.xml", title: translate(lang, "siteName") }] } },
+    verification: {
+      ...(google ? { google } : {}),
+      ...(naver ? { other: { "naver-site-verification": naver } } : {}),
+    },
     openGraph: {
       type: "website",
       siteName: translate(lang, "siteName"),
@@ -32,9 +40,6 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: { card: "summary_large_image", title: seo.title, description: seo.description, images: ["/og-image.jpg"] },
     robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large" } },
-    icons: {
-      icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230e1420'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle'%3E%F0%9F%95%B9%EF%B8%8F%3C/text%3E%3C/svg%3E",
-    },
   };
 }
 

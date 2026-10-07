@@ -2,7 +2,13 @@ import { GameList } from "@/components/GameList";
 import { HomeAbout, KindStrip } from "@/components/SeoSections";
 import { GAMES, itemPath } from "@/lib/games";
 import { GAME_SEO, HOME_SEO } from "@/lib/seo";
-import { SITE_URL, serverLang } from "@/lib/serverLang";
+import type { Metadata } from "next";
+import { SITE_URL, langAlternates, serverLang } from "@/lib/serverLang";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { lang, fromParam } = await serverLang();
+  return { alternates: { ...langAlternates("/", lang, fromParam), types: { "application/rss+xml": "/rss.xml" } } };
+}
 
 export default async function Home() {
   const { lang } = await serverLang();
@@ -15,6 +21,15 @@ export default async function Home() {
       url: SITE_URL,
       inLanguage: ["ko", "en"],
       description: HOME_SEO[lang].description,
+      publisher: { "@id": `${SITE_URL}/#org` },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#org`,
+      name: lang === "ko" ? "미니 게임 천국" : "Mini Game Heaven",
+      url: SITE_URL,
+      logo: `${SITE_URL}/icons/icon-512.png`,
     },
     {
       "@context": "https://schema.org",
