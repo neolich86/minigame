@@ -10,6 +10,7 @@ import { formatScore, gameById, itemPath } from "@/lib/games";
 import { cloudEnabled, displayName, fetchMyRank, fetchMyScores, submitScore, type ScoreRow } from "@/lib/supabase";
 import { deleteFiles, deleteShare, fileUrls, loadSave, publishShare, putFile, shareInfo, storeSave } from "@/lib/saves";
 import { errorKey } from "@/lib/i18n";
+import { createChallenge, fetchChallenge, fetchTopPct, type Challenge } from "@/lib/challenge";
 
 const PENDING_KEY = "mgh:pending-scores";
 
@@ -37,7 +38,7 @@ function writePending(p: Pending[]) {
 export function GamePlayer({ gameId }: { gameId: string }) {
   const game = gameById(gameId)!;
   const router = useRouter();
-  const { t, lang, user, loading } = useApp();
+  const { t, lang, user, profile, loading } = useApp();
   const frame = useRef<HTMLIFrameElement>(null);
   const [tab, setTab] = useState(game.boards?.[0]?.id ?? "");
   const [refresh, setRefresh] = useState(0);
@@ -181,6 +182,59 @@ export function GamePlayer({ gameId }: { gameId: string }) {
     return () => window.removeEventListener("message", onMsg);
   }, [game.saves, game.id, loading, sendAuth, postToGame, loginHref, router]);
 
+  // 친구에게 도전하기 — 도전장 링크(?challenge=CODE)로 들어오면 목표 기록을 게임에 알리고, 게임의 도전장 만들기 요청을 처리
+  const [target, setTarget] = useState<Challenge | null>(null);
+  useEffect(() => {
+    if (!game.boards || !cloudEnabled) return;
+    const code = new URLSearchParams(window.location.search).get("challenge");
+    if (!code) return;
+    fetchChallenge(code)
+      .then((c) => {
+        if (c && game.boards!.some((b) => b.id === c.game_id)) setTarget(c);
+      })
+      .catch(() => {});
+  }, [game.boards]);
+  const sendTarget = useCallback(() => {
+    if (target)
+      postToGame({ type: "chal:target", target: { code: target.code, nickname: target.nickname, score: target.score, board: target.game_id, pct: target.pct } });
+  }, [target, postToGame]);
+  useEffect(sendTarget, [sendTarget]);
+  useEffect(() => {
+    if (!game.boards) return;
+    const boards = game.boards;
+    const myName = user ? profile?.nickname ?? displayName(user) : null;
+    async function run(op: string, a: Record<string, unknown>): Promise<unknown> {
+      const b = String(a.board ?? "");
+      const score = Number(a.score);
+      if (!boards.some((x) => x.id === b) || !Number.isFinite(score)) throw new Error("invalid_score");
+      if (op === "info") {
+        const pct = cloudEnabled ? await fetchTopPct(b, score).catch(() => null) : null;
+        return { pct, user: myName, cloud: cloudEnabled };
+      }
+      if (op === "create") {
+        const name = typeof a.name === "string" ? a.name.trim().slice(0, 12) : null;
+        const r = await createChallenge(b, score, user ? null : name, a.meta ?? {});
+        return { ...r, url: `${window.location.origin}/challenge/${r.code}` };
+      }
+      throw new Error("bad_op");
+    }
+    function onMsg(ev: MessageEvent) {
+      if (ev.origin !== window.location.origin || ev.source !== frame.current?.contentWindow) return;
+      const d = ev.data;
+      if (!d || d.mgh !== 1) return;
+      if (d.type === "ready") sendTarget();
+      else if (d.type === "chal:req") {
+        run(String(d.op), (d.args ?? {}) as Record<string, unknown>).then(
+          (result) => postToGame({ type: "chal:res", id: d.id, ok: true, result }),
+          (e: unknown) => postToGame({ type: "chal:res", id: d.id, ok: false, error: e instanceof Error ? e.message : String((e as { message?: string })?.message ?? e) }),
+        );
+      }
+    }
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, [game.boards, user, profile, postToGame, sendTarget]);
+  const targetBoard = target ? game.boards?.find((b) => b.id === target.game_id) : undefined;
+
   return (
     <div className="play-shell">
       <div className="play-main">
@@ -189,6 +243,11 @@ export function GamePlayer({ gameId }: { gameId: string }) {
             {t("back")}
           </Link>
           <span className="title">{game.title[lang]}</span>
+          {target && targetBoard && (
+            <span className="chal-chip" title={lang === "ko" ? "도전장" : "Challenge"}>
+              ⚔️ {lang === "ko" ? `${target.nickname}님의 기록 ${formatScore(targetBoard, target.score, lang)}에 도전 중` : `Beat ${target.nickname}'s ${formatScore(targetBoard, target.score, lang)}`}
+            </span>
+          )}
           {game.online && (
             <Link className="btn sm teal" href={`/online/${game.id}`}>
               {t("onlinePlay")}

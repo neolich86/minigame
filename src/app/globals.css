@@ -484,3 +484,18 @@ header.hero { margin-bottom: 28px; }
 .fc-prow .chip.H { background: var(--fc-h); } .fc-prow .chip.D { background: #c3c9d6; } .fc-prow .chip.A { background: var(--fc-a); }
 .fc-prow .res { font-size: 12px; text-align: right; margin-top: 4px; }
 .fc-prow .res.ok { color: var(--green); } .fc-prow .res.no { color: var(--text-dim); }
+
+/* ===== 도전장 ===== */
+.chal-chip { font-size: 12px; font-weight: 700; color: var(--gold); background: rgba(255, 184, 77, .1); border: 1px solid var(--gold-dim); padding: 4px 10px; border-radius: 999px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; }
+.challenge-page { display: flex; justify-content: center; padding-top: 40px; }
+.challenge-card { width: 100%; max-width: 440px; text-align: center; background: linear-gradient(170deg, #1d1530, var(--bg-panel) 55%); border: 1px solid var(--gold-dim); border-radius: 20px; padding: 34px 26px 30px; box-shadow: 0 24px 60px -30px rgba(255, 184, 77, .45); }
+.challenge-icon { font-size: 46px; line-height: 1; }
+.challenge-lead { font-size: 17px; margin: 14px 0 18px; }
+.challenge-lead b { color: var(--gold); }
+.challenge-game { display: inline-flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; border: 1px solid var(--line); border-radius: 999px; background: rgba(0, 0, 0, .2); font-size: 13px; font-weight: 700; }
+.challenge-game img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+.challenge-rec-label { margin-top: 26px; font-size: 13px; color: var(--text-dim); letter-spacing: .04em; }
+.challenge-rec { font-family: "Black Han Sans", "Gothic A1", sans-serif; font-size: 64px; font-weight: 900; color: #ffd98a; line-height: 1.1; text-shadow: 0 0 30px rgba(255, 184, 77, .35); }
+.challenge-pct { font-size: 15px; font-weight: 800; color: var(--gold); margin-top: 4px; }
+.challenge-sub { color: var(--text-dim); margin: 18px 0 20px; }
+.challenge-go { width: 100%; font-size: 17px; padding: 15px 18px; border-radius: 14px; }

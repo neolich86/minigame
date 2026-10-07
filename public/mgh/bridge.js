@@ -168,6 +168,7 @@
   /* ───────────── 포털 통신 ───────────── */
   var netHandlers = [];
   var saveReqs = {}, saveSeq = 0, authFns = [], authState; // authState: undefined = 아직 모름
+  var chalTargetFns = [], chalTarget = null;
   function toParent(msg) {
     if (!embedded) return false;
     msg.mgh = 1;
@@ -184,7 +185,14 @@
       location.replace(u.toString());
       return;
     }
-    if (d.type === "save:res" && saveReqs[d.id]) {
+    if (d.type === "chal:target") {
+      chalTarget = d.target || null;
+      for (var ct = 0; ct < chalTargetFns.length; ct++) {
+        try { chalTargetFns[ct](chalTarget); } catch (e) { console.error(e); }
+      }
+      return;
+    }
+    if ((d.type === "save:res" || d.type === "chal:res") && saveReqs[d.id]) {
       var rq = saveReqs[d.id];
       delete saveReqs[d.id];
       if (d.ok) rq.res(d.result);
@@ -205,12 +213,12 @@
     }
   });
 
-  function saveCall(op, args) {
+  function saveCall(op, args, type) {
     return new Promise(function (res, rej) {
       if (!embedded) { rej(new Error("standalone")); return; }
       var id = ++saveSeq;
       saveReqs[id] = { res: res, rej: rej };
-      if (!toParent({ type: "save:req", id: id, op: op, args: args || {} })) {
+      if (!toParent({ type: type || "save:req", id: id, op: op, args: args || {} })) {
         delete saveReqs[id];
         rej(new Error("no_portal"));
         return;
@@ -271,6 +279,17 @@
       shareDelete: function () { return saveCall("shareDelete"); },
       /** 포털 로그인 화면으로 이동 (로그인 후 이 게임으로 돌아온다) */
       login: function () { toParent({ type: "save:login" }); },
+    },
+    /** 친구에게 도전하기 — 포털 안에서만 동작 (단독 실행이면 reject)
+     *  info(board, score) → {pct, user, cloud}   pct: 랭킹 상위 % (기록 없으면 null), user: 로그인 닉네임|null
+     *  create(board, score, meta, name) → {code, url, nickname, pct}
+     *  onTarget(fn): 도전장 링크로 들어왔을 때 fn({code, nickname, score, board, pct}) */
+    challenge: {
+      available: function () { return embedded; },
+      info: function (board, score) { return saveCall("info", { board: board, score: score }, "chal:req"); },
+      create: function (board, score, meta, name) { return saveCall("create", { board: board, score: score, meta: meta || {}, name: name || null }, "chal:req"); },
+      onTarget: function (fn) { chalTargetFns.push(fn); if (chalTarget) fn(chalTarget); },
+      target: function () { return chalTarget; },
     },
     net: {
       send: function (msg) { return toParent(msg); },

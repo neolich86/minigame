@@ -30,6 +30,8 @@ GitHub(`neolich86/minigame`) → Vercel 자동 배포, 계정·랭킹·온라인
    6. `supabase/migrations/0006_mypost.sql` — My Post 2026 공유 리포트 (`mypost_reports` 테이블, `mypost` 이미지 버킷)
    7. `supabase/migrations/0007_game_saves.sql` — 로그인 사용자 게임 저장 (`game_saves` 테이블, 비공개 `game-files` 버킷) — Passport Map의 지도·사진 저장
    8. `supabase/migrations/0008_game_shares.sql` — Passport Map 내 지도 공개 링크 (`game_shares` 테이블, `get_game_share` 함수, 공개 `game-public` 버킷)
+   9. `supabase/migrations/0009_forecast.sql`, `0010_forecast_colors.sql` — 스포츠 승부 예측
+   10. `supabase/migrations/0011_challenges.sql` — 친구에게 도전하기 도전장 링크 `/challenge/<코드>` (`challenges` 테이블, `create_challenge`·`get_challenge`·`score_top_pct` 함수)
 2. **Project Settings → API (API Keys)** 에서 복사
    - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
    - anon(또는 publishable) 키 → `NEXT_PUBLIC_SUPABASE_ANON_KEY`

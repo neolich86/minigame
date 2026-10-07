@@ -298,6 +298,32 @@ body::before{
 .drop.over{border-color:var(--accent);background:rgba(90,169,255,.12);color:#fff}
 .mfoot{display:flex;gap:8px;margin-top:16px;justify-content:flex-end;flex-wrap:wrap}
 
+/* ================= 결과 · 친구에게 도전하기 ================= */
+.resbox{max-width:380px;text-align:center;padding:22px 22px 18px;border-color:rgba(255,180,61,.35);
+  background:radial-gradient(120% 70% at 50% 0%,rgba(255,180,61,.14),transparent 60%),linear-gradient(180deg,#0f1628,#080c16)}
+.res-line{height:1px;background:linear-gradient(90deg,transparent,rgba(255,200,120,.55),transparent);margin:14px 0}
+.res-title{font-weight:900;letter-spacing:.18em;font-size:14px;color:#ffd98a}
+.res-sub{margin-top:14px;font-size:11px;letter-spacing:.3em;color:#8fa0bd;font-weight:800}
+.res-lv{font-size:64px;font-weight:900;line-height:1.05;margin-top:2px;text-shadow:0 0 28px rgba(255,180,61,.35)}
+.res-lv small{font-size:28px;margin-right:2px}
+.res-wn{font-size:12.5px;color:#9fb3c8;margin-top:2px}
+.res-pct{margin-top:8px;font-size:15px;font-weight:900;color:#ffb43d;min-height:20px}
+.res-vs{margin-top:10px;font-size:13px;font-weight:800;line-height:1.5;padding:8px 10px;border-radius:10px;display:none}
+.res-vs.win{display:block;background:rgba(57,217,138,.12);color:#5ff0a8;border:1px solid rgba(57,217,138,.35)}
+.res-vs.lose{display:block;background:rgba(255,77,94,.1);color:#ff9aa5;border:1px solid rgba(255,77,94,.3)}
+.res-name{margin:0 0 10px;display:none}
+.res-name input{width:100%;background:#0b1120;border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:#fff;font:inherit;font-size:13px;text-align:center;outline:none}
+.res-name input:focus{border-color:#ffb43d}
+.res-btn{display:block;width:100%;margin:0 0 8px;padding:13px 14px;border-radius:12px;border:1px solid var(--line);
+  background:rgba(255,255,255,.04);color:#e8eefa;font:inherit;font-size:15px;font-weight:800;cursor:pointer;transition:.15s}
+.res-btn:hover{border-color:#ffb43d;background:rgba(255,180,61,.08)}
+.res-btn.fire{background:linear-gradient(90deg,#ff7a3d,#ffb43d);color:#1d0f00;border-color:transparent}
+.res-btn.fire:hover{filter:brightness(1.08)}
+.res-btn:disabled{opacity:.6;cursor:wait}
+.res-link{font-size:11.5px;color:#8fd0ff;word-break:break-all;min-height:0;margin-top:2px}
+.res-close{background:none;border:0;color:#8fa0bd;font:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:6px 12px}
+.res-close:hover{color:#fff}
+
 @media(max-width:900px){
   .board{grid-template-columns:1fr}
   .picks{grid-template-columns:repeat(2,1fr)}
@@ -438,6 +464,26 @@ body::before{
       <button class="tbtn" id="bragShare" style="display:none">공유하기</button>
       <button class="tbtn" id="bragClose">닫기</button>
     </div>
+  </div>
+</div>
+
+<div class="modal" id="resultModal">
+  <div class="mbox resbox">
+    <div class="res-line" style="margin-top:0"></div>
+    <div class="res-title">⚔️ WEAPON ENHANCE</div>
+    <div class="res-sub">MY RECORD</div>
+    <div class="res-lv" id="resLv"><small>Lv.</small>1</div>
+    <div class="res-wn" id="resWn"></div>
+    <div class="res-pct" id="resPct"></div>
+    <div class="res-vs" id="resVs"></div>
+    <div class="res-line"></div>
+    <div class="res-name" id="resNameWrap"><input id="resName" maxlength="12" placeholder="내 이름 (친구에게 보여져요)"></div>
+    <button class="res-btn fire" id="resChallenge">🔥 친구에게 도전하기</button>
+    <button class="res-btn" id="resShare">📸 결과 공유하기</button>
+    <button class="res-btn" id="resCopy">🔗 링크 복사</button>
+    <div class="res-link" id="resLink"></div>
+    <div class="res-line"></div>
+    <button class="res-close" id="resClose">계속하기</button>
   </div>
 </div>
 
@@ -1002,10 +1048,12 @@ function enhance(){
     renderAll(); fxSuccess(S.lv); SFX.ok(S.lv);
     addLog('s', `Lv.${from} → <b style="color:#39d98a">Lv.${S.lv}</b> 강화 성공`);
     if(S.lv%25===0 && S.lv<100) toast(`Lv.${S.lv} 돌파!`, '#ffd98a');
+    checkTargetPass(S.lv);
     if(S.lv>=100){
       stopAuto(); SFX.max();
       toast('★ Lv.100 달성 ★', '#fff0b0');
       addLog('s', `<b style="color:#ffd98a">최대 강화 Lv.100 달성!</b>`);
+      setTimeout(()=>openResult(100), 900);
     }
     setTimeout(()=>S.busy=false, 320);
   }
@@ -1023,7 +1071,7 @@ function enhance(){
     fxBoom(); SFX.boom();
     addLog('d', `Lv.${from} 에서 <b style="color:#ff4d5e">무기 파괴!</b> Lv.1로 초기화`);
     toast('무기 파괴!', '#ff4d5e');
-    setTimeout(()=>{ S.lv=1; renderAll(); S.busy=false; }, 620);
+    setTimeout(()=>{ S.lv=1; renderAll(); S.busy=false; if(from>=RESULT_MIN) openResult(from); }, 620);
   }
 }
 
@@ -1205,6 +1253,160 @@ $('#shareGo').onclick=()=>{
   $('#select').style.display='block';
   buildPicks();
 };
+
+
+/* ================= 결과 화면 · 친구에게 도전하기 =================
+   Lv.50 이상에서 파괴되거나 Lv.100 을 찍으면 기록 카드를 띄운다.
+   포털 안에서는 MGH.challenge 로 도전장 링크(/challenge/<code>)를 만들고,
+   단독 실행이면 기존 자랑하기 링크(#f=...)로 대신한다. */
+const RESULT_MIN = 50;
+const L = (ko,en)=> (window.MGH && MGH.L) ? MGH.L(ko,en) : ko;
+const CHAL = (window.MGH && MGH.challenge && MGH.challenge.available()) ? MGH.challenge : null;
+const NAME_KEY = 'weapon:chalName';
+let RES = null;          // {lv, key, link, info}
+let TARGET = null;       // 도전장으로 들어왔을 때 {nickname, score}
+let targetPassed = false;
+
+if(CHAL){
+  CHAL.onTarget(t=>{
+    if(!t || t.board!=='weapon') return;
+    TARGET = t; targetPassed = false;
+    toast(L(`⚔️ ${t.nickname}님의 Lv.${t.score} 기록에 도전!`, `⚔️ Beat ${t.nickname}'s Lv.${t.score}!`), '#ffd98a');
+  });
+}
+function checkTargetPass(lv){
+  if(TARGET && !targetPassed && lv>TARGET.score){
+    targetPassed = true;
+    toast(L(`🎉 ${TARGET.nickname}님 기록 돌파!`, `🎉 You beat ${TARGET.nickname}!`), '#5ff0a8');
+  }
+}
+
+function openResult(lv){
+  stopAuto();
+  RES = { lv, key:S.key, link:null, info:null, st:{k:S.key, lv, best:S.best, tries:S.tries, ok:S.ok, no:S.no, boom:S.boom, ts:Math.floor(Date.now()/1000)} };
+  const gr = gradeOf(lv);
+  $('#resLv').innerHTML = `<small>Lv.</small>${lv}`;
+  $('#resLv').style.color = gr.c;
+  $('#resWn').textContent = `${L(WEAPONS[S.key].name, WEAPONS[S.key].eng)} · ${gr.n.replace(/ /g,'')}`;
+  $('#resPct').textContent = '';
+  $('#resLink').textContent = '';
+  const vs = $('#resVs'); vs.className = 'res-vs'; vs.textContent = '';
+  if(TARGET){
+    const d = lv - TARGET.score;
+    if(d>0){ vs.className='res-vs win'; vs.textContent = L(`🎉 ${TARGET.nickname}님의 Lv.${TARGET.score} 기록을 ${d}레벨 차이로 이겼어요!`, `🎉 You beat ${TARGET.nickname}'s Lv.${TARGET.score} by ${d}!`); }
+    else if(d===0){ vs.className='res-vs lose'; vs.textContent = L(`🤝 ${TARGET.nickname}님과 Lv.${lv} 동점! 한 번만 더!`, `🤝 Tied with ${TARGET.nickname} at Lv.${lv}!`); }
+    else { vs.className='res-vs lose'; vs.textContent = L(`😭 ${TARGET.nickname}님 Lv.${TARGET.score}까지 ${-d}레벨 모자라요`, `😭 ${-d} short of ${TARGET.nickname}'s Lv.${TARGET.score}`); }
+  }
+  $('#resNameWrap').style.display = 'none';
+  try{ $('#resName').value = localStorage.getItem(NAME_KEY) || ''; }catch(e){}
+  $('#resultModal').classList.add('open');
+  if(CHAL){
+    const mine = RES;
+    CHAL.info('weapon', lv).then(info=>{
+      if(RES!==mine) return;
+      RES.info = info;
+      if(info && info.pct!=null) $('#resPct').textContent = `🏆 TOP ${info.pct}%`;
+      if(info && info.cloud && !info.user) $('#resNameWrap').style.display = 'block';
+    }).catch(()=>{});
+  }
+}
+function closeResult(){ $('#resultModal').classList.remove('open'); }
+$('#resClose').onclick = closeResult;
+$('#resultModal').onclick = e=>{ if(e.target.id==='resultModal') closeResult(); };
+
+async function resultLink(){
+  if(RES.link) return RES.link;
+  if(!CHAL){ RES.link = location.href.split('#')[0] + '#f=' + encodeStateOf(RES.st); return RES.link; }
+  let name = null;
+  if($('#resNameWrap').style.display!=='none'){
+    name = $('#resName').value.trim();
+    if(!name){ $('#resName').focus(); toast(L('친구에게 보여줄 이름을 적어주세요','Enter a name to show your friend'), '#ff9b34'); throw new Error('need_name'); }
+    try{ localStorage.setItem(NAME_KEY, name); }catch(e){}
+  }
+  const r = await CHAL.create('weapon', RES.lv, {weapon:RES.key}, name);
+  RES.link = r.url;
+  if(r.pct!=null) $('#resPct').textContent = `🏆 TOP ${r.pct}%`;
+  return RES.link;
+}
+function encodeStateOf(st){
+  const p=[st.k,st.lv,st.best,st.tries,st.ok,st.no,st.boom,st.ts].join('.');
+  return p+'.'+chk(p);
+}
+async function withBusy(btn, fn){
+  if(btn.disabled) return;
+  btn.disabled = true;
+  try{ await fn(); }
+  catch(e){ if(e && e.message!=='need_name') toast(L('잠시 후 다시 시도해 주세요','Please try again shortly'), '#ff9b34'); }
+  finally{ btn.disabled = false; }
+}
+function challengeText(lv){
+  return L(`⚔️ 무기 강화 Lv.${lv} 찍었다! 이 기록 깰 수 있어?`, `⚔️ I hit Lv.${lv} in Weapon Enhance. Can you beat it?`);
+}
+async function copyLink(url){
+  let ok = false;
+  try{ if(navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(url); ok = true; } }catch(e){}
+  if(!ok){ $('#bragLink').value = url; ok = legacyCopy($('#bragLink')); }
+  $('#resLink').textContent = url;
+  toast(ok ? L('링크 복사 완료!','Link copied!') : L('아래 링크를 길게 눌러 복사하세요','Long-press the link below to copy'), ok?'#8fd0ff':'#ff9b34');
+}
+$('#resChallenge').onclick = ()=> withBusy($('#resChallenge'), async ()=>{
+  const url = await resultLink();
+  if(navigator.share){
+    try{ await navigator.share({ title:L('무기 강화 도전장','Weapon Enhance challenge'), text:challengeText(RES.lv), url }); $('#resLink').textContent = url; return; }
+    catch(e){ if(e && e.name==='AbortError') return; }
+  }
+  await copyLink(url);
+});
+$('#resCopy').onclick = ()=> withBusy($('#resCopy'), async ()=>{ await copyLink(await resultLink()); });
+$('#resShare').onclick = ()=> withBusy($('#resShare'), async ()=>{
+  const blob = await resultImage(RES);
+  const file = new File([blob], `weapon-lv${RES.lv}.png`, {type:'image/png'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({ files:[file], title:L('무기 강화','Weapon Enhance'), text:challengeText(RES.lv) }); return; }
+    catch(e){ if(e && e.name==='AbortError') return; }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = file.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  toast(L('이미지를 저장했어요','Image saved'), '#8fd0ff');
+});
+
+/* 공유용 기록 이미지 (1080×1350) */
+function loadImg(src){ return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=src; }); }
+async function resultImage(R){
+  const W=1080, H=1350, c=document.createElement('canvas'); c.width=W; c.height=H;
+  const g=c.getContext('2d'), t=tierOf(R.lv), p=PAL[t], gr=gradeOf(R.lv), w=WEAPONS[R.key];
+  const bg=g.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#141d33'); bg.addColorStop(1,'#05070d');
+  g.fillStyle=bg; g.fillRect(0,0,W,H);
+  const glow=g.createRadialGradient(W/2,560,40,W/2,560,520); glow.addColorStop(0,hexA(p.en,.45)); glow.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=glow; g.fillRect(0,0,W,H);
+  const F="'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif";
+  const line=(y)=>{ const lg=g.createLinearGradient(140,0,W-140,0); lg.addColorStop(0,'rgba(255,200,120,0)'); lg.addColorStop(.5,'rgba(255,200,120,.7)'); lg.addColorStop(1,'rgba(255,200,120,0)'); g.fillStyle=lg; g.fillRect(140,y,W-280,3); };
+  g.textAlign='center';
+  line(110);
+  g.fillStyle='#ffd98a'; g.font=`900 46px ${F}`; g.fillText('⚔️ WEAPON ENHANCE', W/2, 190);
+  g.fillStyle='#8fa0bd'; g.font=`800 30px ${F}`; g.fillText('M Y   R E C O R D', W/2, 250);
+  // 무기 그림
+  let src = S.img[R.key] && S.img[R.key][t];
+  try{
+    if(!src) src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgWeapon(R.key,t));
+    const im = await loadImg(src);
+    const box=420, sc=Math.min(box/im.width, box/im.height);
+    const iw=im.width*sc, ih=im.height*sc;
+    g.drawImage(im, (W-iw)/2, 300+(box-ih)/2, iw, ih);
+  }catch(e){}
+  g.fillStyle=gr.c; g.shadowColor=hexA(p.en,.8); g.shadowBlur=40;
+  g.font=`900 210px ${F}`; g.fillText(`Lv.${R.lv}`, W/2, 960);
+  g.shadowBlur=0;
+  g.fillStyle='#c7d4e8'; g.font=`800 40px ${F}`; g.fillText(`${L(w.name,w.eng)} · ${gr.n.replace(/ /g,'')}`, W/2, 1030);
+  const pct = R.info && R.info.pct!=null ? `🏆 TOP ${R.info.pct}%` : '';
+  if(pct){ g.fillStyle='#ffb43d'; g.font=`900 46px ${F}`; g.fillText(pct, W/2, 1105); }
+  line(1160);
+  g.fillStyle='#e8eefa'; g.font=`800 34px ${F}`; g.fillText(L('이 기록, 깰 수 있어?','Can you beat this?'), W/2, 1225);
+  g.fillStyle='#6f7f9b'; g.font=`700 26px ${F}`; g.fillText(location.host || 'minigame-on.vercel.app', W/2, 1280);
+  return await new Promise(res=>c.toBlob(res,'image/png'));
+}
 
 /* ================= 시작 ================= */
 function routeHash(){

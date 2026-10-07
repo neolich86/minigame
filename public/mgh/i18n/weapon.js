@@ -6,6 +6,11 @@
     exact: {
       "무기 강화 - 미니게임천국": "Weapon Enhance - Mini Game Heaven",
       "무기 강화": "Weapon Enhance",
+      "🔥 친구에게 도전하기": "🔥 Challenge a friend",
+      "📸 결과 공유하기": "📸 Share result",
+      "🔗 링크 복사": "🔗 Copy link",
+      "계속하기": "Continue",
+      "내 이름 (친구에게 보여져요)": "Your name (shown to your friend)",
       "🖼 이미지 등록": "🖼 Custom images",
       "🔊 소리": "🔊 Sound",
       "🔇 소리": "🔇 Sound",
