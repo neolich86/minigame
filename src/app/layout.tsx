@@ -14,8 +14,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const { lang } = await serverLang();
   const seo = HOME_SEO[lang];
   // 검색엔진 소유 확인 — Vercel 환경변수에 값만 넣으면 <meta> 가 들어간다
-  const google = process.env.GOOGLE_SITE_VERIFICATION;
-  const naver = process.env.NAVER_SITE_VERIFICATION;
+  // 값만 넣어도, <meta ... content="값" /> 태그를 통째로 넣어도 content 값만 꺼내 쓴다
+  const code = (v?: string) => {
+    const t = (v ?? "").trim();
+    return (t.match(/content\s*=\s*["']([^"']+)["']/)?.[1] ?? t).trim() || undefined;
+  };
+  const google = code(process.env.GOOGLE_SITE_VERIFICATION);
+  const naver = code(process.env.NAVER_SITE_VERIFICATION);
   return {
     metadataBase: new URL(SITE_URL),
     title: { default: seo.title, template: `%s | ${translate(lang, "siteName")}` },
