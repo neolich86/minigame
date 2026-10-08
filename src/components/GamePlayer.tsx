@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useApp } from "./AppProvider";
 import { Leaderboard } from "./Leaderboard";
+import { LikeButton } from "./LikeButton";
 import { useToasts } from "./Toasts";
 import { formatScore, formatVs, gameById, itemPath } from "@/lib/games";
 import { cloudEnabled, displayName, fetchMyRank, fetchMyScores, submitScore, type ScoreRow } from "@/lib/supabase";
@@ -244,6 +245,7 @@ export function GamePlayer({ gameId, app }: { gameId: string; app?: string }) {
             {t("back")}
           </Link>
           <span className="title">{game.title[lang]}</span>
+          <LikeButton id={game.id} variant="bar" />
           {target && targetBoard && (
             <span className="chal-chip" title={lang === "ko" ? "도전장" : "Challenge"}>
               ⚔️ {lang === "ko" ? `${target.nickname}님의 ${targetBoard.vs?.label.ko ?? "기록"} ${formatVs(targetBoard, target.score, lang)}에 도전 중` : `Beat ${target.nickname}'s ${formatVs(targetBoard, target.score, lang)}`}

@@ -33,6 +33,7 @@ GitHub(`neolich86/minigame`) → Vercel 자동 배포, 계정·랭킹·온라인
    - `supabase/migrations/0012_delete_account.sql` — 계정 삭제(회원 탈퇴) 기능, 구글 플레이 등록에 필요
    9. `supabase/migrations/0009_forecast.sql`, `0010_forecast_colors.sql` — 스포츠 승부 예측
    10. `supabase/migrations/0011_challenges.sql` — 친구에게 도전하기 도전장 링크 `/challenge/<코드>` (`challenges` 테이블, `create_challenge`·`get_challenge`·`score_top_pct` 함수)
+   11. `supabase/migrations/0013_likes.sql` — 콘텐츠 좋아요(하트) (`item_likes`·`item_like_counts` 테이블, `toggle_like`·`like_counts`·`my_likes` 함수, 로그인 없이 기기당 1회)
 2. **Project Settings → API (API Keys)** 에서 복사
    - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
    - anon(또는 publishable) 키 → `NEXT_PUBLIC_SUPABASE_ANON_KEY`

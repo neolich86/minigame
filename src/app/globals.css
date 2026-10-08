@@ -516,3 +516,19 @@ header.hero { margin-bottom: 28px; }
 .vs-val.unknown { color: var(--teal); letter-spacing: .12em; }
 .vs-mid { text-align: center; font-family: "Space Mono", monospace; font-size: 11px; font-weight: 700; color: var(--text-dim); letter-spacing: .3em; border-top: 1px dashed var(--line); border-bottom: 1px dashed var(--line); padding: 3px 0; }
 .challenge-q { font-size: 20px; font-weight: 900; color: var(--text); margin: 18px 0 20px; }
+
+/* ===== 좋아요(하트) ===== */
+.like-btn { display: inline-flex; align-items: center; gap: 5px; border: 1px solid rgba(255, 255, 255, .14); background: rgba(8, 12, 22, .72); color: #e8ecf4; border-radius: 999px; padding: 5px 10px 5px 8px; font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); transition: border-color .15s, background .15s, transform .1s; line-height: 1; }
+.like-btn:hover { border-color: #ff5c8a; }
+.like-btn:active { transform: scale(.94); }
+.like-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+.like-btn.on { color: #ff5c8a; border-color: rgba(255, 92, 138, .55); background: rgba(255, 92, 138, .14); }
+.like-btn.on svg { fill: #ff5c8a; stroke: #ff5c8a; }
+.like-btn svg.pop { animation: like-pop .45s ease; }
+@keyframes like-pop { 0% { transform: scale(1); } 35% { transform: scale(1.45); } 100% { transform: scale(1); } }
+.like-btn span:empty { display: none; }
+.like-btn.card { position: absolute; right: 10px; top: 10px; z-index: 3; }
+.games.list .like-btn.card { position: static; }
+.like-btn.bar { padding: 6px 12px 6px 10px; font-size: 13px; }
+.games.list .thumb .like-btn { display: none; }
+.games.grid .right .like-btn { display: none; }

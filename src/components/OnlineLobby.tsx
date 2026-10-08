@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+import { LikeButton } from "./LikeButton";
 import { useApp } from "./AppProvider";
 import { gameById } from "@/lib/games";
 import { errorKey, type MsgKey } from "@/lib/i18n";
@@ -113,6 +114,9 @@ export function OnlineLobby({ gameId }: { gameId: string }) {
           <p className="muted" style={{ margin: "6px 0 0", fontSize: 14 }}>
             {game.desc[lang]}
           </p>
+          <div style={{ marginTop: 10 }}>
+            <LikeButton id={game.id} variant="bar" />
+          </div>
         </div>
       </div>
 

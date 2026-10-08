@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useApp } from "./AppProvider";
+import { LikeButton } from "./LikeButton";
 import { GENRES, KINDS, KIND_INDEX, entryPath, formatScore, itemsOf, type Genre, type Kind } from "@/lib/games";
 import { KIND_SEO } from "@/lib/seo";
 import { fetchMyScores, type ScoreRow } from "@/lib/supabase";
@@ -146,6 +147,7 @@ export function GameList({ children, kind = "game" }: { children?: ReactNode; ki
                   {g.online && <span className="badge online">● {t("badgeOnline")}</span>}
                   {g.boards && <span className="badge rank">🏆 {t("badgeRanking")}</span>}
                 </div>
+                <LikeButton id={g.id} />
                 <div className="notch" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={g.thumb} alt={title} loading="lazy" />
@@ -168,6 +170,7 @@ export function GameList({ children, kind = "game" }: { children?: ReactNode; ki
                   </div>
                 </div>
                 <div className="right">
+                  <LikeButton id={g.id} />
                   {g.online && <span className="badge online">{t("badgeOnline")}</span>}
                   {g.boards && <span className="badge rank">🏆</span>}
                   {chip}
