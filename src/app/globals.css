@@ -532,3 +532,12 @@ header.hero { margin-bottom: 28px; }
 .like-btn.bar { padding: 6px 12px 6px 10px; font-size: 13px; }
 .games.list .thumb .like-btn { display: none; }
 .games.grid .right .like-btn { display: none; }
+.fc-pick button small { display: block; font-size: 10px; font-weight: 600; opacity: .8; margin-top: 1px; font-family: "Space Mono", monospace; }
+.fc-pickbar .n em { display: block; font-style: normal; font-size: 11px; font-weight: 600; color: var(--teal); margin-top: 2px; }
+.fc-prow .chip small { font-size: 11px; font-weight: 700; opacity: .75; font-family: "Space Mono", monospace; }
+.fc-indep { margin: -8px 0 12px; }
+@media (max-width: 560px) {
+  .fc-pickbar { flex-wrap: wrap; padding: 10px 12px; }
+  .fc-pickbar .n { flex-basis: 100%; }
+  .fc-pickbar .btn.primary { flex: 1; }
+}

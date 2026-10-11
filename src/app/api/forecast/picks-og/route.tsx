@@ -2,7 +2,7 @@
 // GET /api/forecast/picks-og?p=<픽>&n=<이름>&lang=ko|en
 import { ImageResponse } from "next/og";
 import { matchesByIds } from "@/lib/forecast/read";
-import { cleanName, decodePicks, outcomeOf, type Pick } from "@/lib/forecast/picks";
+import { cleanName, comboStats, decodePicks, fmtProb, outcomeOf, pickProb, type Pick } from "@/lib/forecast/picks";
 import { badgeColors, teamName, teamTla } from "@/lib/forecast/teams";
 
 const BG = "#0e1420";
@@ -45,10 +45,15 @@ export async function GET(req: Request) {
   }
   const who = name || (lang === "ko" ? "친구" : "A friend");
   const title = lang === "ko" ? `${who}의 승부 예측` : `${who}'s picks`;
+  const combo = comboStats(matches.map((m) => pickProb(m.pred, picks[m.id]) ?? NaN));
+  const allHit =
+    combo.n === matches.length && combo.n > 1
+      ? lang === "ko" ? ` · 다 맞힐 확률 ${fmtProb(combo.all)}` : ` · all correct ${fmtProb(combo.all)}`
+      : "";
   const sub =
     done > 0
-      ? lang === "ko" ? `${done}경기 중 ${hit}경기 적중` : `${hit} of ${done} correct`
-      : lang === "ko" ? `${matches.length}경기 · 누가 더 많이 맞힐까?` : `${matches.length} matches · who'll get more right?`;
+      ? (lang === "ko" ? `${done}경기 중 ${hit}경기 적중` : `${hit} of ${done} correct`) + allHit
+      : (lang === "ko" ? `${matches.length}경기 · 누가 더 많이 맞힐까?` : `${matches.length} matches · who'll get more right?`) + allHit;
   const rows = shown.map((m) => {
     const o = m.status === "FINISHED" ? outcomeOf(m.home_score_90, m.away_score_90) : null;
     return {
@@ -58,13 +63,14 @@ export async function GET(req: Request) {
       hb: m.home ? { t: teamTla(m.home), ...badgeColors(m.home) } : null,
       ab: m.away ? { t: teamTla(m.away), ...badgeColors(m.away) } : null,
       pick: picks[m.id],
+      q: pickProb(m.pred, picks[m.id]),
       res: o ? (o === picks[m.id] ? "✓" : "✗") : null,
       score: o ? `${m.home_score_90}-${m.away_score_90}` : "vs",
     };
   });
   const brand = lang === "ko" ? "스포츠 승부 예측" : "Sports Forecast";
   const more_ = more > 0 ? (lang === "ko" ? `외 ${more}경기` : `+${more} more`) : "";
-  const allText = [title, sub, brand, more_, ...rows.flatMap((r) => [r.h, r.a, LABEL[lang][r.pick], r.score]), "✓✗vs0123456789-+ABCDEFGHIJKLMNOPQRSTUVWXYZ"].join("");
+  const allText = [title, sub, brand, more_, ...rows.flatMap((r) => [r.h, r.a, LABEL[lang][r.pick], r.score]), "✓✗vs0123456789-+.%·ABCDEFGHIJKLMNOPQRSTUVWXYZ"].join("");
   const [bold, reg] = await Promise.all([loadFont(allText, 800), loadFont(allText, 500)]);
   const fonts = [
     ...(bold ? [{ name: "NotoKR", data: bold, weight: 800 as const, style: "normal" as const }] : []),
@@ -102,6 +108,7 @@ export async function GET(req: Request) {
               <div style={{ display: "flex", flex: 1 }} />
               <div style={{ display: "flex", background: PICK_BG[r.pick], color: "#0b1220", fontSize: 26, fontWeight: 800, padding: "8px 18px", borderRadius: 12 }}>
                 {LABEL[lang][r.pick]}
+                {r.q != null && <span style={{ fontSize: 20, marginLeft: 8, opacity: 0.75 }}>{fmtProb(r.q)}</span>}
               </div>
               {r.res && <div style={{ display: "flex", fontSize: 32, fontWeight: 800, width: 34, color: r.res === "✓" ? "#6ee7b7" : "#ff7a8a" }}>{r.res}</div>}
             </div>

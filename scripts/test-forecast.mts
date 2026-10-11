@@ -2,7 +2,7 @@
 // 실행: npx tsx scripts/test-forecast.mts
 import assert from "node:assert/strict";
 import { fitPoisson, poissonLambdas, scoreMatrix, summarize, type MatchLite } from "../src/lib/forecast/model";
-import { cleanName, decodePicks, encodePicks, modelPick, outcomeOf, picksUrl } from "../src/lib/forecast/picks";
+import { cleanName, comboStats, decodePicks, encodePicks, fmtProb, modelPick, outcomeOf, pickProb, picksUrl } from "../src/lib/forecast/picks";
 import { FdClient, FdError, kstDate, score90, scoreFinal, teamsFrom, toMatchRow, type FdMatch } from "../src/lib/forecast/fd";
 
 let passed = 0;
@@ -164,6 +164,20 @@ await t("내 예측 링크: 인코딩·디코딩·정리", () => {
   assert.equal(outcomeOf(1, 1), "D");
   assert.equal(outcomeOf(null, 1), null);
   assert.equal(modelPick({ p_home: 0.3, p_draw: 0.25, p_away: 0.45 }), "A");
+});
+
+await t("다 맞힐 확률·예상 적중·확률 표시", () => {
+  const c = comboStats([0.5, 0.4, 0.25]);
+  assert.ok(Math.abs(c.all - 0.05) < 1e-12);
+  assert.ok(Math.abs(c.expected - 1.15) < 1e-12);
+  assert.equal(c.oneIn, 20);
+  assert.equal(comboStats([0.5, NaN]).n, 1, "확률 없는 픽은 빼고 계산");
+  assert.equal(comboStats([]).n, 0);
+  assert.equal(fmtProb(0.537), "54%");
+  assert.equal(fmtProb(0.0537), "5.4%");
+  assert.equal(fmtProb(0.00123), "0.12%");
+  assert.equal(pickProb({ p_home: 0.5, p_draw: 0.3, p_away: 0.2 }, "D"), 0.3);
+  assert.equal(pickProb(null, "D"), null);
 });
 
 console.log(`\n${passed}개 통과`);

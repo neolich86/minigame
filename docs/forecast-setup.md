@@ -100,6 +100,7 @@ Actions → **forecast-backtest** → Run workflow. 약 5분.
 
 - 경기 카드·경기 상세에서 시작 전 경기마다 홈승/무/원정승을 고른다 (최대 20경기, 이 브라우저 localStorage `sf:picks`, 킥오프 3일 지나면 정리)
 - 화면 아래 바 → `/apps/sports-forecast/picks?p=<픽>&n=<이름>` 예측 카드. 픽은 링크에 들어 있어 로그인·DB 없음 (`src/lib/forecast/picks.ts`)
+- 버튼마다 모델 확률, 바·카드·미리보기 이미지에 "다 맞힐 확률"(경기별 확률의 곱, 독립 가정)과 예상 적중 수(합)
 - 경기가 끝나면 같은 링크에서 적중 수와 모델 적중 수를 비교해 보여준다
 - 공유: 카카오톡 버튼(`NEXT_PUBLIC_KAKAO_JS_KEY` 가 있을 때) · 휴대폰 공유 시트(navigator.share) · 링크 복사
 - 미리보기 이미지: `/api/forecast/picks-og` (1200×630, 구글 폰트 서브셋)

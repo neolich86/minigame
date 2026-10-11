@@ -4,14 +4,15 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useApp } from "@/components/AppProvider";
 import type { Lang } from "@/lib/i18n";
-import { MAX_PICKS, cleanName, picksUrl, type Pick } from "@/lib/forecast/picks";
+import { MAX_PICKS, cleanName, comboStats, fmtProb, picksUrl, type Pick } from "@/lib/forecast/picks";
 
 /* ───────────── 저장 (이 브라우저에만) ───────────── */
 
 const KEY = "sf:picks";
 const NAME_KEY = "sf:pickName";
 const KEEP_MS = 3 * 86400_000; // 킥오프 후 3일 지난 픽은 정리
-type Stored = Record<string, { p: Pick; t: number }>;
+/** p = 고른 결과, t = 킥오프 시각, q = 고를 때 모델이 본 그 결과의 확률 */
+type Stored = Record<string, { p: Pick; t: number; q?: number }>;
 
 let cache: Stored | null = null;
 const subs = new Set<() => void>();
@@ -52,12 +53,12 @@ function subscribe(f: () => void) {
 
 export function useMyPicks() {
   const stored = useSyncExternalStore(subscribe, read, () => EMPTY);
-  const setPick = useCallback((id: number, p: Pick | null, kickoff: number) => {
+  const setPick = useCallback((id: number, p: Pick | null, kickoff: number, q?: number) => {
     const v = { ...read() };
     if (!p || v[id]?.p === p) delete v[id];
     else {
       if (!v[id] && Object.keys(v).length >= MAX_PICKS) return false;
-      v[id] = { p, t: kickoff };
+      v[id] = { p, t: kickoff, ...(q ? { q } : {}) };
     }
     write(v);
     return true;
@@ -68,7 +69,8 @@ export function useMyPicks() {
     for (const [k, x] of Object.entries(stored)) o[Number(k)] = x.p;
     return o;
   }, [stored]);
-  return { picks, count: Object.keys(picks).length, setPick, clear };
+  const probs = useMemo(() => Object.values(stored).map((x) => x.q ?? NaN), [stored]);
+  return { picks, probs, count: Object.keys(picks).length, setPick, clear };
 }
 
 /* ───────────── 문구 ───────────── */
@@ -83,6 +85,8 @@ const T = {
     bar: "{n}경기 예측 완료",
     view: "내 예측 카드 · 공유",
     reset: "초기화",
+    allHit: "다 맞힐 확률 {p} (약 {n}번에 1번)",
+    expected: "예상 적중 {e}경기",
   },
   en: {
     myPick: "My pick",
@@ -93,6 +97,8 @@ const T = {
     bar: "{n} picks made",
     view: "My pick card · Share",
     reset: "Reset",
+    allHit: "All correct: {p} (about 1 in {n})",
+    expected: "Expected hits: {e}",
   },
 };
 
@@ -102,7 +108,18 @@ export function pickLabel(p: Pick, lang: Lang) {
 
 /* ───────────── 경기 카드 안 선택 버튼 ───────────── */
 
-export function PickRow({ matchId, kickoff, open }: { matchId: number; kickoff: number; open: boolean }) {
+export function PickRow({
+  matchId,
+  kickoff,
+  open,
+  probs,
+}: {
+  matchId: number;
+  kickoff: number;
+  open: boolean;
+  /** 모델 확률 [홈승, 무, 원정승] — 버튼에 함께 표시 */
+  probs?: [number, number, number] | null;
+}) {
   const { lang } = useApp();
   const t = T[lang];
   const { picks, setPick } = useMyPicks();
@@ -122,11 +139,12 @@ export function PickRow({ matchId, kickoff, open }: { matchId: number; kickoff: 
           onClick={(e) => {
             e.preventDefault();
             if (Date.now() >= kickoff) return; // 킥오프 지난 경기는 못 고침
-            const ok = setPick(matchId, p, kickoff);
+            const ok = setPick(matchId, p, kickoff, probs ? probs["HDA".indexOf(p)] : undefined);
             setWarn(!ok);
           }}
         >
           {t[p]}
+          {probs && <small>{fmtProb(probs["HDA".indexOf(p)])}</small>}
         </button>
       ))}
       {warn && <em className="warn">{t.full}</em>}
@@ -139,7 +157,8 @@ export function PickRow({ matchId, kickoff, open }: { matchId: number; kickoff: 
 export function PickBar() {
   const { lang } = useApp();
   const t = T[lang];
-  const { picks, count, clear } = useMyPicks();
+  const { picks, probs, count, clear } = useMyPicks();
+  const combo = comboStats(probs);
   const [name, setName] = useState("");
   useEffect(() => {
     try {
@@ -149,7 +168,14 @@ export function PickBar() {
   if (!count) return null;
   return (
     <div className="fc-pickbar" role="region" aria-label={t.view}>
-      <span className="n">{t.bar.replace("{n}", String(count))}</span>
+      <span className="n">
+        {t.bar.replace("{n}", String(count))}
+        {combo.n === count && combo.n > 0 && (
+          <em>
+            {t.allHit.replace("{p}", fmtProb(combo.all)).replace("{n}", combo.oneIn.toLocaleString())} · {t.expected.replace("{e}", combo.expected.toFixed(1))}
+          </em>
+        )}
+      </span>
       <button type="button" className="btn sm ghost" onClick={clear}>
         {t.reset}
       </button>

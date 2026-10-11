@@ -7,7 +7,7 @@ import { BACKTEST_V1 } from "@/lib/forecast/backtest-v1";
 import { COMP_NAME, type LeagueSim, type MatchRow, type RatingPoint, type StandingGroup } from "@/lib/forecast/shared";
 import { badgeColors, teamName, teamTla, type TeamInfo } from "@/lib/forecast/teams";
 import { PickBar, PickRow, ShareBox, pickLabel } from "./PicksUI";
-import { cleanName, modelPick, outcomeOf, type Pick } from "@/lib/forecast/picks";
+import { cleanName, comboStats, fmtProb, modelPick, outcomeOf, pickProb, type Pick } from "@/lib/forecast/picks";
 import { useState } from "react";
 
 /** 아직 시작 전이라 내 예측을 고를 수 있는 경기 */
@@ -101,6 +101,9 @@ const T = {
     pkMake: "나도 예측하기",
     pkModelSaid: "모델 {p}",
     pkHow: "경기 목록에서 경기마다 홈승·무·원정승을 고르면 예측 카드가 만들어져요.",
+    pkAll: "다 맞힐 확률 · 약 {n}번에 1번",
+    pkExp: "예상 적중 ({n}경기 중)",
+    pkIndep: "다 맞힐 확률은 경기마다 모델 확률을 곱한 값이에요 (경기끼리 서로 영향이 없다고 가정).",
     simTitle: "시즌 최종 순위 예측",
     simSub: "남은 {n}경기를 모델 확률대로 {s}번 시뮬레이션한 결과예요.",
     expPts: "예상 승점",
@@ -197,6 +200,9 @@ const T = {
     pkMake: "Make my picks",
     pkModelSaid: "Model: {p}",
     pkHow: "Pick home, draw or away on each match in the list to build your card.",
+    pkAll: "all correct · about 1 in {n}",
+    pkExp: "expected hits (of {n})",
+    pkIndep: "All-correct chance multiplies the model's probability for each pick (matches assumed independent).",
     simTitle: "Season projection",
     simSub: "The remaining {n} matches simulated {s} times with the model's probabilities.",
     expPts: "Proj. pts",
@@ -326,7 +332,7 @@ export function MatchCard({ m }: { m: MatchRow }) {
         </div>
       )}
     </Link>
-    <PickRow matchId={m.id} kickoff={Date.parse(m.utc_date)} open={pickable(m)} />
+    <PickRow matchId={m.id} kickoff={Date.parse(m.utc_date)} open={pickable(m)} probs={p ? [p.p_home, p.p_draw, p.p_away] : null} />
     </div>
   );
 }
@@ -542,7 +548,7 @@ export function FcMatch({ d }: { d: DetailData }) {
           </div>
         </div>
         <ProbBar m={m} big />
-        <PickRow matchId={m.id} kickoff={Date.parse(m.utc_date)} open={pickable(m)} />
+        <PickRow matchId={m.id} kickoff={Date.parse(m.utc_date)} open={pickable(m)} probs={p ? [p.p_home, p.p_draw, p.p_away] : null} />
         {p && p.exp_home != null && (
           <div className="fc-xg">
             {t.expGoals} <b>{p.exp_home.toFixed(2)}</b> : <b>{p.exp_away!.toFixed(2)}</b>
@@ -905,6 +911,8 @@ export function FcPicks({
   const [nm, setNm] = useState(name);
   const rows = matches.filter((m) => picks[m.id]);
   const who = cleanName(nm) || t.pkFriend;
+  // 다 맞힐 확률 = 경기별 내 픽 확률의 곱 (경기끼리 독립 가정), 예상 적중 = 합
+  const combo = comboStats(rows.map((m) => pickProb(m.pred, picks[m.id]) ?? NaN));
   let done = 0, mine = 0, model = 0;
   for (const m of rows) {
     const o = m.status === "FINISHED" ? outcomeOf(m.home_score_90, m.away_score_90) : null;
@@ -926,6 +934,18 @@ export function FcPicks({
               <b>{done ? `${mine}/${done}` : rows.length}</b>
               <span>{done ? `${who} · ${t.pkHits}` : `${t.pkMine} · ${t.games}`}</span>
             </div>
+            {combo.n > 0 && (
+              <div title={t.pkIndep}>
+                <b>{fmtProb(combo.all)}</b>
+                <span>{fill(t.pkAll, { n: combo.oneIn.toLocaleString() })}</span>
+              </div>
+            )}
+            {combo.n > 0 && (
+              <div>
+                <b>{combo.expected.toFixed(1)}</b>
+                <span>{fill(t.pkExp, { n: combo.n })}</span>
+              </div>
+            )}
             {done > 0 && (
               <div>
                 <b>{model}/{done}</b>
@@ -933,6 +953,7 @@ export function FcPicks({
               </div>
             )}
           </div>
+          {combo.n > 1 && <p className="muted small fc-indep">{t.pkIndep}</p>}
           <ShareBox picks={picks} name={nm} setName={setNm} ogPath={ogPath} siteUrl={siteUrl} editHref={`${BASE}?d=week`} />
           <div className="fc-plist">
             {rows.map((m) => {
@@ -956,7 +977,10 @@ export function FcPicks({
                     </div>
                   </div>
                   <div>
-                    <span className={`chip ${pk}`}>{pickLabel(pk, lang)}</span>
+                    <span className={`chip ${pk}`}>
+                      {pickLabel(pk, lang)}
+                      {pickProb(m.pred, pk) != null && <small> {fmtProb(pickProb(m.pred, pk)!)}</small>}
+                    </span>
                     <div className={`res ${o ? (o === pk ? "ok" : "no") : ""}`}>{o ? (o === pk ? `✅ ${t.hit}` : `❌ ${t.miss}`) : t.pkPending}</div>
                   </div>
                 </Link>

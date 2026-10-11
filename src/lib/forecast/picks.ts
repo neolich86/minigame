@@ -54,3 +54,30 @@ export function modelPick(p: { p_home: number; p_draw: number; p_away: number } 
   const m = Math.max(p.p_home, p.p_draw, p.p_away);
   return m === p.p_home ? "H" : m === p.p_draw ? "D" : "A";
 }
+
+/** 내 픽이 맞을 모델 확률 */
+export function pickProb(p: { p_home: number; p_draw: number; p_away: number } | null, pick: Pick): number | null {
+  if (!p) return null;
+  return pick === "H" ? p.p_home : pick === "D" ? p.p_draw : p.p_away;
+}
+
+/**
+ * 여러 경기 픽의 조합 통계 (경기끼리 독립이라고 가정)
+ * all = 전부 맞힐 확률(곱), expected = 예상 적중 수(합), oneIn = 약 N번에 1번
+ */
+export function comboStats(probs: number[]): { n: number; all: number; expected: number; oneIn: number } {
+  const ps = probs.filter((x) => Number.isFinite(x) && x > 0);
+  if (!ps.length) return { n: 0, all: 0, expected: 0, oneIn: 0 };
+  const all = ps.reduce((a, b) => a * b, 1);
+  const expected = ps.reduce((a, b) => a + b, 0);
+  return { n: ps.length, all, expected, oneIn: Math.max(1, Math.round(1 / all)) };
+}
+
+/** 확률 표시: 10% 이상 정수, 1% 이상 소수 1자리, 그보다 작으면 유효숫자 2자리 */
+export function fmtProb(x: number): string {
+  if (!(x > 0)) return "0%";
+  const pc = x * 100;
+  if (pc >= 10) return `${Math.round(pc)}%`;
+  if (pc >= 1) return `${pc.toFixed(1)}%`;
+  return `${Number(pc.toPrecision(2))}%`;
+}
