@@ -265,7 +265,9 @@ export function ShareBox({
 
   const n = Object.keys(picks).length;
   const who = cleanName(name) || (lang === "ko" ? "친구" : "A friend");
-  const url = `${siteUrl}${picksUrl(picks, name)}`;
+  // 공유 링크는 지금 열려 있는 주소의 도메인으로 만든다 (카카오에 등록한 도메인과 어긋나지 않게)
+  const origin = () => (typeof window !== "undefined" ? window.location.origin : siteUrl);
+  const shareUrl = () => `${origin()}${picksUrl(picks, name)}`;
   const title = t.kakaoTitle.replace("{who}", who).replace("{n}", String(n));
 
   // 이름을 바꾸면 주소창도 맞춘다 (새로고침해도 유지)
@@ -284,26 +286,27 @@ export function ShareBox({
   };
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(shareUrl());
       flash(t.copied);
     } catch {
-      window.prompt(t.copy, url);
+      window.prompt(t.copy, shareUrl());
     }
   };
   const kakao = () => {
-    const img = `${siteUrl}${ogPath}${ogPath.includes("?") ? "&" : "?"}n=${encodeURIComponent(cleanName(name))}`;
+    const url = shareUrl();
+    const img = `${origin()}${ogPath}${ogPath.includes("?") ? "&" : "?"}n=${encodeURIComponent(cleanName(name))}`;
     window.Kakao?.Share.sendDefault({
       objectType: "feed",
       content: { title, description: t.kakaoDesc, imageUrl: img, imageWidth: 1200, imageHeight: 630, link: { mobileWebUrl: url, webUrl: url } },
       buttons: [
         { title: t.btnView, link: { mobileWebUrl: url, webUrl: url } },
-        { title: t.btnMake, link: { mobileWebUrl: `${siteUrl}/apps/sports-forecast`, webUrl: `${siteUrl}/apps/sports-forecast` } },
+        { title: t.btnMake, link: { mobileWebUrl: `${origin()}/apps/sports-forecast`, webUrl: `${origin()}/apps/sports-forecast` } },
       ],
     });
   };
   const native = async () => {
     try {
-      await navigator.share({ title, text: t.kakaoDesc, url });
+      await navigator.share({ title, text: t.kakaoDesc, url: shareUrl() });
     } catch {}
   };
 

@@ -107,7 +107,9 @@ Actions → **forecast-backtest** → Run workflow. 약 5분.
 ### 카카오톡 공유 버튼 켜기 (선택)
 
 1. developers.kakao.com → 내 애플리케이션 → (로그인에 쓰는 앱) → 앱 키 → **JavaScript 키** 복사
-2. 같은 앱 → 플랫폼 → Web → 사이트 도메인에 `https://minigame-on.vercel.app` 추가
-3. Vercel 환경변수 `NEXT_PUBLIC_KAKAO_JS_KEY` = JavaScript 키 → 재배포
+2. 같은 앱 → 플랫폼 → Web → 사이트 도메인에 `https://minigame-on.vercel.app` 추가 (SDK 사용 허용)
+3. 같은 앱 → **앱 → 제품 링크 관리 → 웹 도메인**에도 `https://minigame-on.vercel.app` 추가
+   — 여기에 없으면 카톡 카드는 도착하지만 눌러도 이동하지 않는다(카카오가 등록 안 된 도메인 링크를 기본값으로 바꿈)
+4. Vercel 환경변수 `NEXT_PUBLIC_KAKAO_JS_KEY` = JavaScript 키 → 재배포
 
 키가 없어도 휴대폰에서는 [공유하기] → 카카오톡을 고를 수 있고, 링크를 붙여 넣으면 미리보기 카드가 뜬다.
