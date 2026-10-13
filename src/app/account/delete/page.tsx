@@ -33,7 +33,7 @@ export default function DeleteAccountPage() {
       <p className="page-sub">
         {en
           ? "Deleting your account permanently removes your profile, game records, Passport Map data and photos, and any public map links. This cannot be undone."
-          : "계정을 삭제하면 프로필, 게임 기록, Passport Map 지도와 사진, 공개 지도 링크가 모두 영구히 지워지고 되돌릴 수 없어요."}
+          : "계정을 삭제하면 프로필, 게임 기록, 여행도장 지도와 사진, 공개 지도 링크가 모두 영구히 지워지고 되돌릴 수 없어요."}
       </p>
       <div className="panel">
         {state === "done" ? (

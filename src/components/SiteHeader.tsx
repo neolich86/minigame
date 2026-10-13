@@ -2,17 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useApp } from "./AppProvider";
 import { cloudEnabled } from "@/lib/supabase";
 
 export function SiteHeader() {
   const { t, lang, setLang, user, profile, loading } = useApp();
   const path = usePathname();
+  const [appLogin, setAppLogin] = useState(false);
+  useEffect(() => {
+    const n = path === "/login" ? new URLSearchParams(window.location.search).get("next") : null;
+    setAppLogin(!!n && n.startsWith("/passport-map"));
+  }, [path]);
   const inGame = ["/play/", "/online/", "/tools/", "/apps/"].some((p) => path?.startsWith(p));
   const section = path?.startsWith("/tools") ? "tool" : path?.startsWith("/apps") ? "app" : path === "/" || path?.startsWith("/play/") || path?.startsWith("/online/") ? "game" : "";
   const loginHref = `/login?next=${encodeURIComponent(path || "/")}`;
-  // 앱(구글 플레이) 전용 화면은 포털 머리글 없이 전체 화면
-  if (path?.startsWith("/passport-map")) return null;
+  // 앱(구글 플레이) 전용 화면과, 앱에서 들어온 로그인 화면은 포털 머리글 없이
+  if (path?.startsWith("/passport-map") || appLogin) return null;
 
   return (
     <header className={`site-header${inGame ? " compact" : ""}`}>

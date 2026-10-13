@@ -8,7 +8,7 @@ import { Leaderboard } from "./Leaderboard";
 import { LikeButton } from "./LikeButton";
 import { useToasts } from "./Toasts";
 import { formatScore, formatVs, gameById, itemPath } from "@/lib/games";
-import { cloudEnabled, displayName, fetchMyRank, fetchMyScores, submitScore, type ScoreRow } from "@/lib/supabase";
+import { cloudEnabled, displayName, fetchMyRank, fetchMyScores, signInKakao, submitScore, type ScoreRow } from "@/lib/supabase";
 import { deleteFiles, deleteShare, fileUrls, loadSave, publishShare, putFile, shareInfo, storeSave } from "@/lib/saves";
 import { errorKey } from "@/lib/i18n";
 import { createChallenge, fetchChallenge, fetchTopPct, type Challenge } from "@/lib/challenge";
@@ -172,7 +172,10 @@ export function GamePlayer({ gameId, app }: { gameId: string; app?: string }) {
       const d = ev.data;
       if (!d || d.mgh !== 1) return;
       if (d.type === "ready" && !loading) sendAuth();
-      else if (d.type === "save:login") router.push(loginHref);
+      else if (d.type === "save:login") {
+        if (d.method === "kakao") signInKakao(app ?? itemPath(game)).catch(() => router.push(loginHref));
+        else router.push(loginHref);
+      }
       else if (d.type === "save:req") {
         run(String(d.op), (d.args ?? {}) as Record<string, unknown>).then(
           (result) => postToGame({ type: "save:res", id: d.id, ok: true, result }),
@@ -182,7 +185,7 @@ export function GamePlayer({ gameId, app }: { gameId: string; app?: string }) {
     }
     window.addEventListener("message", onMsg);
     return () => window.removeEventListener("message", onMsg);
-  }, [game.saves, game.id, loading, sendAuth, postToGame, loginHref, router]);
+  }, [game, game.saves, game.id, loading, sendAuth, postToGame, loginHref, router, app]);
 
   // 친구에게 도전하기 — 도전장 링크(?challenge=CODE)로 들어오면 목표 기록을 게임에 알리고, 게임의 도전장 만들기 요청을 처리
   const [target, setTarget] = useState<Challenge | null>(null);

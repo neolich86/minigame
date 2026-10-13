@@ -3,11 +3,11 @@ import { GamePlayer } from "@/components/GamePlayer";
 
 // 구글 플레이 앱(TWA)이 여는 시작 화면 — 포털 머리글·설명 없이 Passport Map 만 전체 화면
 export const metadata: Metadata = {
-  title: { absolute: "Passport Map" },
+  title: { absolute: "여행도장" },
   description: "다녀온 나라와 도시를 세계지도에 칠하고 사진을 남기는 여행 지도",
   manifest: "/passport-map.webmanifest",
   robots: { index: false, follow: false },
-  appleWebApp: { capable: true, title: "Passport Map", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "여행도장", statusBarStyle: "black-translucent" },
   icons: { apple: "/icons/pm-192.png" },
 };
 

@@ -278,7 +278,8 @@
       sharePublish: function (data, files, keep) { return saveCall("sharePublish", { data: data, files: files || {}, keep: keep || [] }); },
       shareDelete: function () { return saveCall("shareDelete"); },
       /** 포털 로그인 화면으로 이동 (로그인 후 이 게임으로 돌아온다) */
-      login: function () { toParent({ type: "save:login" }); },
+      /** method: "kakao" 면 바로 카카오 로그인, 아니면 로그인 화면(이메일·카카오) */
+      login: function (method) { toParent({ type: "save:login", method: method === "kakao" ? "kakao" : "page" }); },
     },
     /** 친구에게 도전하기 — 포털 안에서만 동작 (단독 실행이면 reject)
      *  info(board, score) → {pct, user, cloud}   pct: 랭킹 상위 % (기록 없으면 null), user: 로그인 닉네임|null
