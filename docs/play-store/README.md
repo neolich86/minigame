@@ -18,6 +18,8 @@
    - 저장 후 Redeploy
 
 ## 2. 앱 파일(AAB) 만들기 — PWABuilder
+> 2026-10-13 생성 완료: 패키지 ID `kr.minigame.passportmap`, 업로드 키 지문 `AE:60:77:C7:…:BE:F8` (assetlinks 기본값으로 코드에 반영됨). zip 은 사용자 PC 다운로드 폴더 `Passport Map - Google Play package.zip`.
+
 1. https://www.pwabuilder.com 에 `https://minigame-on.vercel.app/passport-map` 입력 → Start
 2. **Package For Stores → Android → Google Play → Options**
    - Package ID: 예) `kr.minigame.passportmap` (**한 번 정하면 못 바꿈**)
