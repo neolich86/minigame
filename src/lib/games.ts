@@ -190,7 +190,7 @@ const CATALOG: Game[] = [
       en: "Color the countries and cities you've visited on a world map and pin one photo to each place. Log in to keep it in your account and make a share image for social media",
     },
     genre: "casual",
-    thumb: "/thumbs/passport-map.jpg?v=4",
+    thumb: "/thumbs/passport-map.jpg?v=5",
     src: "/games/passport-map/index.html",
     saves: true,
   },

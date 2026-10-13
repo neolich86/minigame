@@ -9,7 +9,8 @@
 <meta name="description" content="Passport Map — 다녀온 나라와 도시를 세계지도에 색칠하고 사진을 남기는 여행 지도">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
 /* Layout: full-bleed map app — airmail-striped top bar, map fills the rest, detail panel slides in from the right (bottom sheet on phones) */
 :root{
@@ -17,8 +18,8 @@
   --visited:#2D5BD0; --visited-hover:#2149AE; --pin:#E0393E; --pin-ring:#FFFFFF;
   --ink:#1A2330; --muted:#5D6A78; --panel:#FFFFFF; --line:#DCE1E6; --chip:#EEF2F7;
   --bar:#FFFFFF; --shadow:0 10px 30px rgba(20,35,60,.16); --lab:#3A4654; --labh:rgba(248,247,243,.92);
-  --f-display:"Hahmlet","Noto Serif KR",Georgia,serif;
-  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-display:"Cinzel","Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-body:"Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
@@ -45,7 +46,7 @@ button{cursor:pointer}
 .bar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;
   background:repeating-linear-gradient(-45deg,var(--pin) 0 12px,transparent 12px 18px,var(--visited) 18px 30px,transparent 30px 36px)}
 .brand{display:flex;align-items:baseline;gap:10px;min-width:0}
-.brand h1{font-family:var(--f-display);font-size:20px;margin:0;letter-spacing:-.01em;white-space:nowrap}
+.brand h1{font-family:var(--f-display);font-weight:700;font-size:19px;margin:0;letter-spacing:.04em;white-space:nowrap}
 .stats{display:flex;gap:12px;font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
 .stats b{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
 .tools{display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap}
@@ -253,7 +254,7 @@ input,button,select,textarea{box-sizing:border-box}
 .gate{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:color-mix(in srgb,#0B1630 55%,transparent);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
 .gate-card{width:min(380px,100%);background:#13213F;color:#F3ECDC;border:1px solid rgba(221,183,102,.55);border-radius:20px;padding:28px 22px 20px;display:grid;gap:14px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.45);box-sizing:border-box}
 .gate-stamp{width:92px;height:92px;margin:0 auto;color:#E0485A;transform:rotate(-10deg)}
-.gate-card h2{margin:0;font-family:var(--f-display);font-size:30px;letter-spacing:.02em;color:#F2D38A}
+.gate-card h2{margin:0;font-family:var(--f-display);font-weight:700;font-size:28px;letter-spacing:.05em;color:#F2D38A}
 .gate-card p{margin:0;word-break:keep-all;color:rgba(243,236,220,.8);line-height:1.6;font-size:14px}
 .gate-btns{display:grid;gap:10px;margin-top:4px}
 .gate-btns button{height:50px;border-radius:12px;border:0;font-size:15.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
@@ -271,7 +272,7 @@ input,button,select,textarea{box-sizing:border-box}
 @media (max-width:720px){.dlg{grid-template-columns:1fr}.dlg .pv{min-height:0;padding:14px}.dlg .pv canvas{max-height:42vh}}
 
 @media (max-width:720px){
-  .brand h1{font-size:18px}
+  .brand h1{font-size:16px}
   .tools{margin-left:0;width:100%}
   .search{flex:1}.search input{width:100%;max-width:none}
   .btn .tx{display:none}
@@ -1143,7 +1144,7 @@ function stripePattern(x){const c=document.createElement('canvas');c.width=c.hei
   g.lineWidth=11;[['#E0393E',0],['#2D5BD0',24]].forEach(([col,o])=>{g.strokeStyle=col;for(let k=-2;k<3;k++){g.beginPath();g.moveTo(o+k*48-10,58);g.lineTo(o+k*48+58,-10);g.stroke()}});return x.createPattern(c,'repeat')}
 async function renderCard(cv,F,P,seq){
   const [W,H]=FMT[F];
-  try{await Promise.all([document.fonts.load('700 40px Hahmlet'),document.fonts.load('600 30px "IBM Plex Sans KR"'),document.fonts.load('400 30px "IBM Plex Sans KR"'),document.fonts.load('500 20px "IBM Plex Mono"')])}catch(e){}
+  try{await Promise.all([document.fonts.load('700 40px Cinzel'),document.fonts.load('600 30px "Pretendard Variable"','나라도시'),document.fonts.load('400 30px "Pretendard Variable"','나라도시'),document.fonts.load('500 20px "IBM Plex Mono"')])}catch(e){}
   const items=[];for(const id in S.countries){const st=S.countries[id];if(st.photo)items.push({p:st.photo,name:nmC(C[id]),color:st.color||DEF_C})}
   S.cities.forEach(ct=>{if(ct.photo)items.push({p:ct.photo,name:nmCt(ct),color:ct.color||DEF_P})});
   const maxPh=P?({sq:4,pt:6,ls:0})[F]:0;const use=items.slice(0,maxPh);
@@ -1151,7 +1152,7 @@ async function renderCard(cv,F,P,seq){
   if(seq&&seq!==shSeq)return false;
   cv.width=W;cv.height=H;const x=cv.getContext('2d');
   const TC=CARD[TH]||CARD.basic;const BG=TC.bg,BORDER=TC.line,INK=TC.ink,MUTED=TC.muted;
-  const DISP='Hahmlet,"Noto Serif KR",serif',BODY='"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif',MONO='"IBM Plex Mono",Menlo,monospace';
+  const DISP='Cinzel,"Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif',BODY='"Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif',MONO='"IBM Plex Mono",Menlo,monospace';
   x.fillStyle=stripePattern(x);x.fillRect(0,0,W,H);const B=16;x.fillStyle=BG;rrect(x,B,B,W-2*B,H-2*B,10);x.fill();
   const n=Object.keys(S.countries).length,m=S.cities.length,pc=Math.round(n/195*100);
   const pad=F==='ls'?48:60;
