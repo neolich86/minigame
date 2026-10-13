@@ -1,7 +1,7 @@
 {
   "id": "/passport-map",
-  "name": "여행도장 - 다녀온 나라 색칠하는 여행지도",
-  "short_name": "여행도장",
+  "name": "Passport Map - 나의 여행 지도",
+  "short_name": "Passport Map",
   "description": "다녀온 나라와 도시를 세계지도에 칠하고, 장소마다 사진과 방문 기간을 남기는 여행 지도",
   "start_url": "/passport-map",
   "scope": "/",

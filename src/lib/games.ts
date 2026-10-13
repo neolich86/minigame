@@ -184,13 +184,13 @@ const CATALOG: Game[] = [
   {
     id: "passport-map",
     kind: "app",
-    title: { ko: "여행도장", en: "Passport Map" },
+    title: { ko: "Passport Map", en: "Passport Map" },
     desc: {
-      ko: "다녀온 나라와 도시에 도장을 찍듯 세계지도에 색칠하고, 장소마다 사진과 방문 날짜를 남기는 여행 기록. 카카오·이메일 로그인으로 어디서든 이어 보고 SNS 공유 이미지도 만들어요",
+      ko: "다녀온 나라와 도시를 세계지도에 원하는 색으로 칠하고, 장소마다 사진과 방문 날짜를 남기는 여행 기록. 카카오·이메일 로그인으로 어디서든 이어 보고 SNS 공유 이미지도 만들어요",
       en: "Color the countries and cities you've visited on a world map and pin one photo to each place. Log in to keep it in your account and make a share image for social media",
     },
     genre: "casual",
-    thumb: "/thumbs/passport-map.jpg?v=3",
+    thumb: "/thumbs/passport-map.jpg?v=4",
     src: "/games/passport-map/index.html",
     saves: true,
   },

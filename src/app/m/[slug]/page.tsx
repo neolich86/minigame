@@ -11,14 +11,14 @@ const load = cache(async (slug: string) => {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const r = await load((await params).slug);
-  if (!r) return { title: "여행도장" };
+  if (!r) return { title: "Passport Map" };
   const { lang } = await serverLang();
   const s = passportSummary(r.data);
-  const title = s.name ? `${s.name} · ${lang === "en" ? "Passport Map" : "여행도장"}` : lang === "en" ? "My Passport Map" : "나의 여행도장";
+  const title = s.name ? `${s.name} · Passport Map` : lang === "en" ? "My Passport Map" : "나의 Passport Map";
   const description =
     lang === "en"
       ? `${s.countries} countries and ${s.cities} cities visited. Make your own travel map on Passport Map!`
-      : `나라 ${s.countries}곳, 도시 ${s.cities}곳에 여행도장을 찍었어요. 나도 내 여행 지도를 만들어 보세요!`;
+      : `나라 ${s.countries}곳, 도시 ${s.cities}곳을 다녀왔어요. 나도 내 여행 지도를 만들어 보세요!`;
   const images = s.og ? [{ url: s.og, width: 1200, height: 630 }] : undefined;
   return {
     title,
@@ -39,7 +39,7 @@ export default async function SharedPassport({ params }: { params: Promise<{ slu
     <div style={{ height: "calc(100dvh - 52px)", display: "flex" }}>
       <iframe
         src={`/games/passport-map/index.html?view=${cleanShareSlug(r.slug)}&lang=${lang}`}
-        title={s.name ?? (lang === "en" ? "Passport Map" : "여행도장")}
+        title={s.name ?? "Passport Map"}
         allow="clipboard-write; web-share"
         style={{ flex: 1, width: "100%", border: 0, display: "block" }}
       />

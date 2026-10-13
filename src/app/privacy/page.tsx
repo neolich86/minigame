@@ -4,7 +4,7 @@ import { serverLang } from "@/lib/serverLang";
 
 export const metadata: Metadata = {
   title: "개인정보처리방침 · Privacy Policy",
-  description: "미니게임천국과 여행도장(Passport Map) 앱의 개인정보처리방침",
+  description: "미니게임천국과 Passport Map 앱의 개인정보처리방침",
   alternates: { canonical: "/privacy" },
 };
 
@@ -21,8 +21,8 @@ export default async function PrivacyPage() {
       <h1 className="page-title">{en ? "Privacy Policy" : "개인정보처리방침"}</h1>
       <p className="page-sub">
         {en
-          ? `Applies to the Mini Game Heaven website and the 여행도장 (Passport Map) Android app. Last updated ${UPDATED}.`
-          : `미니게임천국 웹사이트와 여행도장(Passport Map) 안드로이드 앱에 적용됩니다. 최종 수정일 ${UPDATED}.`}
+          ? `Applies to the Mini Game Heaven website and the Passport Map Android app. Last updated ${UPDATED}.`
+          : `미니게임천국 웹사이트와 Passport Map 안드로이드 앱에 적용됩니다. 최종 수정일 ${UPDATED}.`}
       </p>
       {en ? (
         <>
@@ -59,11 +59,11 @@ export default async function PrivacyPage() {
           <h2>1. 수집하는 정보</h2>
           <ul>
             <li><b>계정</b>: 이메일 가입 시 이메일 주소, 카카오 로그인 시 카카오 계정 식별자, 직접 정한 닉네임</li>
-            <li><b>여행도장 데이터</b>: 표시한 나라·도시, 핀 색, 방문 기간, 메모, 지도 테마, 올린 사진</li>
+            <li><b>Passport Map 데이터</b>: 표시한 나라·도시, 핀 색, 방문 기간, 메모, 지도 테마, 올린 사진</li>
             <li><b>게임 기록</b>: 점수·랭킹, 온라인 방 참여 기록</li>
             <li><b>이용 기록</b>: 구글 애널리틱스가 수집하는 방문 페이지·기기·브라우저 정보, 웹사이트의 구글 애드센스 쿠키</li>
           </ul>
-          <p>여행도장은 지도를 계정에 보관하기 위해 카카오 또는 이메일 로그인 후 이용할 수 있습니다.</p>
+          <p>Passport Map은 지도를 계정에 보관하기 위해 카카오 또는 이메일 로그인 후 이용할 수 있습니다.</p>
           <h2>2. 이용 목적</h2>
           <ul>
             <li>지도·사진·기록을 계정에 보관하고 로그인한 모든 기기에서 보여 주기 위해</li>
@@ -76,7 +76,7 @@ export default async function PrivacyPage() {
           <h2>4. 처리 위탁 (보관 장소)</h2>
           <p>Supabase(데이터베이스·로그인·파일 저장)와 Vercel(웹사이트 호스팅)에 보관·처리를 맡기며, 이들은 서비스 운영 목적으로만 데이터를 처리합니다.</p>
           <h2>5. 보유 기간</h2>
-          <p>이용자가 직접 지우거나 회원 탈퇴할 때까지 보관합니다. 탈퇴하면 프로필, 기록, 여행도장 데이터, 사진, 공개 링크가 모두 삭제됩니다.</p>
+          <p>이용자가 직접 지우거나 회원 탈퇴할 때까지 보관합니다. 탈퇴하면 프로필, 기록, Passport Map 데이터, 사진, 공개 링크가 모두 삭제됩니다.</p>
           <h2>6. 계정 삭제(회원 탈퇴)</h2>
           <p><Link href="/account/delete">계정 삭제</Link> 페이지에서 직접 삭제할 수 있습니다(로그인 필요). 또는 {contact}로 요청해 주세요.</p>
           <h2>7. 아동</h2>
