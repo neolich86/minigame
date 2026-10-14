@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import Script from "next/script";
 import { AppProvider } from "@/components/AppProvider";
+import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { translate } from "@/lib/i18n";
 import { HOME_SEO } from "@/lib/seo";
@@ -81,6 +82,7 @@ gtag('config', '${GA_ID}');`}
         <AppProvider initialLang={lang} langFromCookie={fixed}>
           <SiteHeader />
           {children}
+          <SiteFooter />
         </AppProvider>
       </body>
     </html>

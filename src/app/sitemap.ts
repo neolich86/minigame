@@ -17,5 +17,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...GAMES.map((g) => entry(itemPath(g), 0.8, "monthly")),
     ...GAMES.filter((g) => g.online).map((g) => entry(`/online/${g.id}`, 0.8, "monthly")),
     entry("/ranking", 0.6, "daily"),
+    entry("/about", 0.5, "monthly"),
+    entry("/contact", 0.3, "monthly"),
+    entry("/privacy", 0.3, "monthly"),
+    entry("/terms", 0.3, "monthly"),
   ];
 }

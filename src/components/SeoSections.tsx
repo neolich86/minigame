@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GAMES, KIND_INDEX, entryPath, gameById, itemsOf, kindOf, type Kind } from "@/lib/games";
 import type { Lang } from "@/lib/i18n";
+import { GUIDES } from "@/lib/guides";
 import { GAME_SEO, HOME_SECTIONS, KIND_SEO } from "@/lib/seo";
 
 /** 게임 페이지 아래 소개 글 — 검색엔진이 읽을 수 있는 본문 + 같은 장르 게임 링크 */
@@ -17,16 +18,12 @@ export function GameAbout({ gameId, lang, subHeading }: { gameId: string; lang: 
     .concat(same.filter((x) => x.genre !== g.genre))
     .concat(isGame ? [] : itemsOf("game"))
     .slice(0, 4);
+  const guide = GUIDES[gameId]?.[lang];
+  const ko = lang === "ko";
   return (
-    // 게임 화면을 가리지 않도록 기본은 접힌 상태 — 눌러서 펼친다 (내용은 HTML에 그대로 있어 검색엔진이 읽는다)
-    <details className="wrap mid game-about">
-      <summary>
-        {subHeading ? <h2 className="about-title">{seo.h1}</h2> : <h1>{seo.h1}</h1>}
-        <span className="about-toggle" aria-hidden="true">
-          <span className="when-closed">{lang === "ko" ? (isGame ? "게임 소개 펼치기" : "소개 펼치기") : "Show details"}</span>
-          <span className="when-open">{lang === "ko" ? "접기" : "Hide"}</span>
-        </span>
-      </summary>
+    // 소개 글은 항상 보이게 두고, 플레이 방법·공략 팁·자주 묻는 질문은 펼쳐서 본다 (접혀 있어도 HTML에 그대로 있어 검색엔진이 읽는다)
+    <section className="wrap mid game-about">
+      {subHeading ? <h2 className="about-title">{seo.h1}</h2> : <h1>{seo.h1}</h1>}
       <div className="tag-row">
         {seo.tags.map((t) => (
           <span key={t} className="seo-tag">#{t}</span>
@@ -35,13 +32,46 @@ export function GameAbout({ gameId, lang, subHeading }: { gameId: string; lang: 
       {seo.about.map((p, i) => (
         <p key={i}>{p}</p>
       ))}
-      <h2>{lang === "ko" ? (isGame ? "플레이 방법" : "사용 방법") : isGame ? "How to play" : "How to use"}</h2>
-      <ol>
-        {seo.howTo.map((s, i) => (
-          <li key={i}>{s}</li>
-        ))}
-      </ol>
-      <h2>{lang === "ko" ? (isGame ? "다른 게임도 해보세요" : "이것도 둘러보세요") : isGame ? "More games" : "More to explore"}</h2>
+      <details className="about-more">
+        <summary>
+          <span className="about-toggle">
+            <span className="when-closed">
+              {ko ? (isGame ? "플레이 방법 · 공략 팁 · 자주 묻는 질문" : "사용 방법 · 팁 · 자주 묻는 질문") : "How to · tips · FAQ"}
+            </span>
+            <span className="when-open">{ko ? "접기" : "Hide"}</span>
+          </span>
+        </summary>
+        <h2>{ko ? (isGame ? "플레이 방법" : "사용 방법") : isGame ? "How to play" : "How to use"}</h2>
+        <ol>
+          {seo.howTo.map((s, i) => (
+            <li key={i}>{s}</li>
+          ))}
+        </ol>
+        {guide && guide.tips.length > 0 && (
+          <>
+            <h2>{ko ? (isGame ? "공략 팁" : "알아두면 좋은 팁") : "Tips"}</h2>
+            <ul>
+              {guide.tips.map((s, i) => (
+                <li key={i}>{s}</li>
+              ))}
+            </ul>
+          </>
+        )}
+        {guide && guide.faq.length > 0 && (
+          <>
+            <h2>{ko ? "자주 묻는 질문" : "FAQ"}</h2>
+            <dl className="faq">
+              {guide.faq.map((f, i) => (
+                <div key={i}>
+                  <dt>{f.q}</dt>
+                  <dd>{f.a}</dd>
+                </div>
+              ))}
+            </dl>
+          </>
+        )}
+      </details>
+      <h2>{ko ? (isGame ? "다른 게임도 해보세요" : "이것도 둘러보세요") : isGame ? "More games" : "More to explore"}</h2>
       <div className="related">
         {related.map((r) => (
           <Link key={r.id} href={entryPath(r)} className="related-item">
@@ -51,7 +81,7 @@ export function GameAbout({ gameId, lang, subHeading }: { gameId: string; lang: 
           </Link>
         ))}
       </div>
-    </details>
+    </section>
   );
 }
 

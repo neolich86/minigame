@@ -185,7 +185,6 @@ export function GameList({ children, kind = "game" }: { children?: ReactNode; ki
       {children}
 
       <footer className="site-footer">
-        <span>{t("footer")}</span>
         <span>
           {visible.length} / {ITEMS.length} {isGame ? t("gamesUnit") : t(kind === "tool" ? "itemsUnit_tool" : "itemsUnit_app")}
         </span>

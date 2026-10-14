@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { GamePlayer } from "@/components/GamePlayer";
 import { GameAbout } from "@/components/SeoSections";
 import { KIND_INDEX, gameById, itemPath, kindOf, type Kind } from "@/lib/games";
+import { GUIDES } from "@/lib/guides";
 import { GAME_SEO, KIND_SEO } from "@/lib/seo";
 import { SITE_URL, langAlternates, serverLang } from "@/lib/serverLang";
 
@@ -69,7 +70,8 @@ export async function ItemPage({ slug, kind }: { slug: string; kind: Kind }) {
   const crumbs: { name: string; item: string }[] = [{ name: lang === "ko" ? "미니 게임 천국" : "Mini Game Heaven", item: SITE_URL }];
   if (kind !== "game") crumbs.push({ name: KIND_SEO[kind][lang].heading, item: `${SITE_URL}${KIND_INDEX[kind]}` });
   crumbs.push({ name: g.title[lang], item: url });
-  const jsonLd = [
+  const faq = GUIDES[g.id]?.[lang]?.faq ?? [];
+  const jsonLd: object[] = [
     main,
     {
       "@context": "https://schema.org",
@@ -77,6 +79,12 @@ export async function ItemPage({ slug, kind }: { slug: string; kind: Kind }) {
       itemListElement: crumbs.map((c, i) => ({ "@type": "ListItem", position: i + 1, ...c })),
     },
   ];
+  if (faq.length)
+    jsonLd.push({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
+    });
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
