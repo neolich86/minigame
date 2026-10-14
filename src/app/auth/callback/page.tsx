@@ -4,7 +4,7 @@
 // supabase-js(PKCE, detectSessionInUrl)가 ?code= 를 세션으로 교환하면 next 로 이동한다.
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { sb } from "@/lib/supabase";
+import { sb, takeAuthNext } from "@/lib/supabase";
 import { useApp } from "@/components/AppProvider";
 
 export default function AuthCallback() {
@@ -29,6 +29,7 @@ export default function AuthCallback() {
     const finish = () => {
       if (done) return;
       done = true;
+      takeAuthNext();
       router.replace(next);
     };
     const { data: sub } = c.auth.onAuthStateChange((event, session) => {

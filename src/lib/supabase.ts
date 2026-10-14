@@ -38,9 +38,28 @@ function callbackUrl(next = "/"): string {
   return `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
 }
 
+/** 소셜 로그인 후 돌아갈 곳 — 인증 서버가 콜백 주소를 무시하고 홈으로 보내도 여기 적어 둔 곳으로 다시 보낸다 */
+export const AUTH_NEXT_KEY = "mgh:authNext";
+
+export function takeAuthNext(): string | null {
+  try {
+    const raw = localStorage.getItem(AUTH_NEXT_KEY);
+    localStorage.removeItem(AUTH_NEXT_KEY);
+    if (!raw) return null;
+    const { next, at } = JSON.parse(raw) as { next?: string; at?: number };
+    if (!next || !next.startsWith("/") || next.startsWith("//") || !at || Date.now() - at > 10 * 60 * 1000) return null;
+    return next;
+  } catch {
+    return null;
+  }
+}
+
 export async function signInKakao(next = "/"): Promise<void> {
   const c = sb();
   if (!c) return;
+  try {
+    localStorage.setItem(AUTH_NEXT_KEY, JSON.stringify({ next, at: Date.now() }));
+  } catch {}
   const { error } = await c.auth.signInWithOAuth({ provider: "kakao", options: { redirectTo: callbackUrl(next) } });
   if (error) throw error;
 }

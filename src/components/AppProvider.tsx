@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
 import { LANG_COOKIE, LANG_STORAGE, normLang, pickLang, translate, type Lang, type MsgKey } from "@/lib/i18n";
-import { cloudEnabled, displayName, ensureProfile, sb, type Profile } from "@/lib/supabase";
+import { cloudEnabled, displayName, ensureProfile, sb, takeAuthNext, type Profile } from "@/lib/supabase";
 
 interface AppState {
   lang: Lang;
@@ -85,6 +85,14 @@ export function AppProvider({ initialLang, langFromCookie, children }: { initial
     c.auth.getSession().then(({ data }) => sync(data.session?.user ?? null));
     const { data: sub } = c.auth.onAuthStateChange((event, session) => {
       if (event === "TOKEN_REFRESHED") return;
+      // 카카오 로그인 직후 콜백 페이지가 아닌 곳(예: 홈)에 떨어졌다면 로그인을 시작한 페이지로 돌려보낸다
+      if (event === "SIGNED_IN" && session && !window.location.pathname.startsWith("/auth/")) {
+        const next = takeAuthNext();
+        if (next && next.split("?")[0] !== window.location.pathname) {
+          window.location.replace(next);
+          return;
+        }
+      }
       // onAuthStateChange 콜백 안에서 바로 supabase 호출을 await 하면 교착될 수 있어 다음 틱으로 미룬다
       setTimeout(() => sync(session?.user ?? null), 0);
     });
