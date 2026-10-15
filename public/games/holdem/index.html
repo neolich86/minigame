@@ -88,8 +88,15 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 .btn.call{background:#1f4d33;border-color:#3f8f5f;flex:1}
 .btn.raise{background:linear-gradient(180deg,var(--gold2),var(--gold) 60%,#a7822d);color:#2a1a05;border:0;flex:1}
 .btn.sm{height:30px;padding:0 10px;font-size:12px;border-radius:9px}
-.slider{flex:1;min-width:120px;accent-color:var(--gold)}
-.amt{width:96px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.35);color:var(--ink);font-weight:800;padding:0 8px;font-size:13px;text-align:right}
+.chiprow{gap:6px;flex-wrap:nowrap;overflow-x:auto;padding:4px 2px 2px;scrollbar-width:none}
+.chiprow::-webkit-scrollbar{display:none}
+.bchip{flex:0 0 auto;width:48px;height:48px;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,.6);background:var(--c);box-shadow:0 3px 0 rgba(0,0,0,.45),inset 0 0 0 4px var(--c),inset 0 0 0 6px rgba(255,255,255,.85);transition:transform .1s}
+.bchip::before{content:'';position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(rgba(255,255,255,.9) 0 12deg,transparent 12deg 45deg);
+  -webkit-mask:radial-gradient(circle,transparent 61%,#000 62%);mask:radial-gradient(circle,transparent 61%,#000 62%)}
+.bchip:active:not(:disabled){transform:translateY(2px) scale(.96)}
+.bchip:disabled{opacity:.35;cursor:not-allowed}
+.btn.sm.allin{background:#5a1a1a;border-color:#a33}
 .wait{font-size:14px;font-weight:700;color:var(--dim);text-align:center;padding:8px}
 .wait b{color:var(--ink)}
 
@@ -123,6 +130,9 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
   .mine .card{--w:44px}
   .btn{height:46px;font-size:14px;padding:0 10px}
   .pill{font-size:11.5px;height:24px}
+  .chiprow{gap:4px;justify-content:space-between}
+  .bchip{width:42px;height:42px;font-size:11px}
+  .chiprow .btn.sm{padding:0 8px;height:34px}
 }
 </style>
 </head>
@@ -309,43 +319,45 @@ function renderActs(){
   const callLbl = Lg.canCheck ? L("체크","Check") : (Lg.toCall >= me.stack ? L(`올인 ${fmt(Lg.toCall)}`,`All-in ${fmt(Lg.toCall)}`) : L(`콜 ${fmt(Lg.toCall)}`,`Call ${fmt(Lg.toCall)}`));
   const opened = S.curBet > 0;
   const rLbl = raiseTo >= Lg.maxTo ? L(`올인 ${fmt(Lg.maxTo)}`,`All-in ${fmt(Lg.maxTo)}`) : opened ? L(`레이즈 ${fmt(raiseTo)}`,`Raise to ${fmt(raiseTo)}`) : L(`벳 ${fmt(raiseTo)}`,`Bet ${fmt(raiseTo)}`);
-  const presets = [["min", L("최소","Min")], ["half", L("½팟","½ pot")], ["3q", L("¾팟","¾ pot")], ["pot", L("팟","Pot")], ["max", L("올인","All-in")]];
+  const steps = chipSteps();
   box.innerHTML = `
     <div class="row">
-      <button class="btn fold" data-a="fold" ${Lg.canCheck?"":""}>${L("폴드","Fold")}</button>
+      <button class="btn fold" data-a="fold">${L("폴드","Fold")}</button>
       <button class="btn call" data-a="call">${callLbl}</button>
       ${Lg.canRaise ? `<button class="btn raise" data-a="raise">${rLbl}</button>` : ""}
     </div>
-    ${Lg.canRaise ? `<div class="row">
-      ${presets.map(([k,t])=>`<button class="btn sm" data-p="${k}">${t}</button>`).join("")}
-      <input class="slider" type="range" id="rs" min="${Lg.minTo}" max="${Lg.maxTo}" step="${S.bb >= 100 ? Math.round(S.bb/10)*1 : 1}" value="${raiseTo}">
-      <input class="amt" id="ra" inputmode="numeric" value="${raiseTo}">
+    ${Lg.canRaise ? `<div class="row chiprow">
+      <button class="btn sm" data-p="min" ${raiseTo <= Lg.minTo ? "disabled" : ""}>${L("최소","Min")}</button>
+      ${steps.map(v=>`<button class="bchip" data-add="${v}" style="--c:${chipCol(v)}" ${raiseTo >= Lg.maxTo ? "disabled" : ""}>+${shortN(v)}</button>`).join("")}
+      <button class="btn sm allin" data-p="max" ${raiseTo >= Lg.maxTo ? "disabled" : ""}>${L("올인","All-in")}</button>
     </div>` : ""}`;
 }
+/** 금액 칩 5개 — 블라인드가 오르면 단위도 함께 커진다 (10·50·100·500·1000 → 100·500·1000·5000·10000 …) */
+const CHIP_STEPS = [10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000];
+function chipSteps(){
+  const base = Math.max(10, S.bb / 2);
+  let k = 0; for(let i=0;i<CHIP_STEPS.length;i++) if(CHIP_STEPS[i] <= base) k = i;
+  return CHIP_STEPS.slice(Math.min(k, CHIP_STEPS.length - 5), Math.min(k, CHIP_STEPS.length - 5) + 5);
+}
+const CHIP_COL = { 10:"#2557b8", 50:"#c0262f", 100:"#1d1d1d", 500:"#7b3fb8", 1000:"#c8a038", 5000:"#e07a1f", 10000:"#0e6f7a", 50000:"#1f8a4c", 100000:"#8a1c22" };
+const chipCol = v => CHIP_COL[v] || "#444";
+const shortN = v => v >= 10000 ? (EN ? (v / 1000) + "K" : (v / 10000) + "만") : String(v);
 const turnKey = () => S ? `${S.handNo}:${S.street}:${S.toAct}:${S.curBet}` : "";
 function presetTo(k){
   const Lg = H.legal(S, ME); if(!Lg) return 0;
-  const me = S.players[ME], potAfter = Lg.pot + Lg.toCall;
-  const frac = { half:.5, "3q":.75, pot:1 }[k];
-  let to = k === "min" ? Lg.minTo : k === "max" ? Lg.maxTo : (S.curBet > 0 ? S.curBet + frac * potAfter : me.bet + frac * Lg.pot);
-  return Math.max(Lg.minTo, Math.min(Lg.maxTo, Math.round(to)));
+  return k === "max" ? Lg.maxTo : Lg.minTo;
 }
 $("acts").addEventListener("click", ev => {
   const b = ev.target.closest("button"); if(!b) return;
   ac();
-  if(b.dataset.p){ raiseTo = presetTo(b.dataset.p); renderActs(); return; }
+  if(b.dataset.p){ raiseTo = presetTo(b.dataset.p); sfx.chip(); renderActs(); return; }
+  if(b.dataset.add){ const Lg = H.legal(S, ME); if(!Lg) return; raiseTo = Math.min(Lg.maxTo, raiseTo + Number(b.dataset.add)); sfx.chip(); renderActs(); return; }
   const a = b.dataset.a;
   if(a === "fold") act({ t:"fold" });
   else if(a === "call"){ const Lg = H.legal(S, ME); act(Lg && Lg.canCheck ? { t:"check" } : { t:"call" }); }
   else if(a === "raise") act({ t:"raise", to: raiseTo });
   else if(a === "next") hostNext();
   else if(a === "new") openSetup();
-});
-$("acts").addEventListener("input", ev => {
-  if(ev.target.id === "rs"){ raiseTo = +ev.target.value; const Lg = H.legal(S, ME); const a = $("ra"); if(a) a.value = raiseTo; const rb = document.querySelector('[data-a="raise"]'); if(rb && Lg) rb.textContent = raiseTo >= Lg.maxTo ? L(`올인 ${fmt(Lg.maxTo)}`,`All-in ${fmt(Lg.maxTo)}`) : S.curBet > 0 ? L(`레이즈 ${fmt(raiseTo)}`,`Raise to ${fmt(raiseTo)}`) : L(`벳 ${fmt(raiseTo)}`,`Bet ${fmt(raiseTo)}`); }
-});
-$("acts").addEventListener("change", ev => {
-  if(ev.target.id === "ra"){ const Lg = H.legal(S, ME); if(!Lg) return; raiseTo = Math.max(Lg.minTo, Math.min(Lg.maxTo, Math.round(+String(ev.target.value).replace(/[^0-9]/g,"") || 0))); renderActs(); }
 });
 document.addEventListener("keydown", ev => {
   if(!S || /input/i.test(ev.target.tagName) || $("ov").classList.contains("open")) return;
