@@ -257,7 +257,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
       <button class="spot pl big" data-k="pl"><span id="sPL">PLAYER</span><small>1 : 1</small><div class="stake"></div></button>
       <button class="spot bk big" data-k="bk"><span id="sBK">BANKER</span><small id="sBKo">0.95 : 1</small><div class="stake"></div></button>
     </div>
-    <div class="hint"><span id="lMin">칩 최소 ₩50,000 · 베팅 상한 없음</span><span id="lHint">길게 누르거나 우클릭하면 그 칸 칩 회수 · Space = 딜 · F = 빠르게</span></div>
+    <div class="hint"><span id="lMin">칩 최소 ₩100,000 · 베팅 상한 없음</span><span id="lHint">길게 누르거나 우클릭하면 그 칸 칩 회수 · Space = 딜 · F = 빠르게</span></div>
   </section>
 
   <div class="dock">
@@ -286,7 +286,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 (function(){
 "use strict";
 /* ================= 규칙 (펀토 반코, 8덱) ================= */
-const START = 1000000, MIN_CHIP = 50000, MAX_SCORE = 1e15, DECKS = 8, CUT = 52;
+const START = 1000000, MIN_CHIP = 100000, MAX_SCORE = 1e15, DECKS = 8, CUT = 52;
 const PAY = { pl:{P:2, T:1}, bk:{B:1.95, T:1}, ti:{T:9}, pp:{}, bp:{} }; // 돌려받는 배수(원금 포함)
 const val = r => r >= 10 ? 0 : r;
 const tot = cs => cs.reduce((s,c)=>s+val(c.r),0) % 10;
@@ -548,8 +548,8 @@ async function showCard(side, card, third, total, natural){
 }
 
 /* ================= 베팅 ================= */
-const CHIP_COLORS = [[1e10,"#1d1d1d"],[1e9,"#0e6f7a"],[1e8,"#c8a038"],[1e7,"#e07a1f"],[5e6,"#7b3fb8"],[1e6,"#202226"],[5e5,"#1f8a4c"],[1e5,"#2557b8"],[5e4,"#c0262f"]];
-function chipColor(v){ for(const c of CHIP_COLORS) if(v >= c[0]) return c[1]; return "#c0262f"; }
+const CHIP_COLORS = [[1e10,"#1d1d1d"],[1e9,"#0e6f7a"],[1e8,"#c8a038"],[1e7,"#e07a1f"],[5e6,"#7b3fb8"],[1e6,"#202226"],[5e5,"#1f8a4c"],[2e5,"#0d8f8f"],[1e5,"#c0262f"]];
+function chipColor(v){ for(const c of CHIP_COLORS) if(v >= c[0]) return c[1]; return "#8a8f96"; }
 function drawStakes(){
   for(const sp of document.querySelectorAll(".spot")){
     const k = sp.dataset.k, a = bets[k] || 0, st = sp.querySelector(".stake");
@@ -569,7 +569,7 @@ function removeSpot(k){ if(busy || !bets[k]) return; const ops = [{k, a:-bets[k]
 function undo(){ if(busy) return; const ops = undoStack.pop(); if(!ops) return; addOps(ops.map(o=>({k:o.k, a:-o.a}))); drawStakes(); refresh(); }
 function clearAll(){ if(busy || !tableTotal()) return; const ops = KEYS.filter(k=>bets[k]).map(k=>({k, a:-bets[k]})); addOps(ops); undoStack.push(ops); drawStakes(); refresh(); }
 function addMany(ops){ const need = ops.reduce((s,o)=>s+o.a,0); if(!need) return; if(need > cash()){ sfx.err(); toast(L("잔액이 부족해요","Not enough balance")); return; } addOps(ops); undoStack.push(ops); sfx.chip(); drawStakes(); refresh(); }
-function rebet(){ if(busy || !S.last) return; addMany(KEYS.filter(k=>S.last[k]).map(k=>({k, a:S.last[k]}))); }
+function rebet(){ if(busy || !S.last) return; addMany(KEYS.filter(k=>S.last[k] >= MIN_CHIP).map(k=>({k, a:S.last[k]}))); }
 function double(){ if(busy || !tableTotal()) return; addMany(KEYS.filter(k=>bets[k]).map(k=>({k, a:bets[k]}))); }
 
 for(const sp of document.querySelectorAll(".spot")){
@@ -652,7 +652,7 @@ $("bkOk").onclick = ()=>{ $("ovBroke").classList.remove("open"); S.bal = START; 
 $("btnVs").onclick = openVs;
 
 /* ================= 화면 갱신 ================= */
-const CHIP_VALUES = [5e4,1e5,5e5,1e6,5e6,1e7,1e8,1e9,1e10,1e11];
+const CHIP_VALUES = [1e5,2e5,5e5,1e6,5e6,1e7,1e8,1e9,1e10,1e11];
 let chipKey = "";
 function renderChips(){
   const c = cash();
@@ -713,12 +713,12 @@ function texts(){
   $("askBL").textContent = L("뱅?","B?"); $("askPL").textContent = L("플?","P?");
   $("nP").textContent = L("플레이어","PLAYER"); $("nB").textContent = L("뱅커","BANKER");
   $("sPP").textContent = L("P 페어","P PAIR"); $("sBP").textContent = L("B 페어","B PAIR"); $("sTI").textContent = L("타이","TIE"); $("sPL").textContent = L("플레이어","PLAYER"); $("sBK").textContent = L("뱅커","BANKER");
-  $("lMin").textContent = L("칩 최소 ₩50,000 · 베팅 상한 없음 · 뱅커 승 5% 커미션","Min chip ₩50,000 · no table max · 5% commission on Banker wins");
+  $("lMin").textContent = L("칩 최소 ₩100,000 · 베팅 상한 없음 · 뱅커 승 5% 커미션","Min chip ₩100,000 · no table max · 5% commission on Banker wins");
   $("lHint").textContent = L("길게 누르거나 우클릭하면 그 칸 칩 회수 · Space = 딜 · F = 빠르게","Long-press or right-click to remove · Space = deal · F = fast");
   $("tUndo").textContent = L("취소","Undo"); $("tClear").textContent = L("지우기","Clear"); $("tRebet").textContent = L("다시","Rebet");
   $("btnHelp").textContent = L("📖 규칙","📖 Rules"); $("btnVs").textContent = L("🔥 친구에게 도전","🔥 Challenge");
   $("bkTitle").textContent = L("칩이 모두 떨어졌어요","Out of chips");
-  $("bkBody").textContent = L("최소 베팅 5만 원을 걸 수 없어요. 100만 원으로 다시 시작합니다. 최고 잔액 기록은 그대로 남아요.","You can't cover the ₩50,000 minimum. Start again with ₩1,000,000 — your peak record stays.");
+  $("bkBody").textContent = L("최소 베팅 10만 원을 걸 수 없어요. 100만 원으로 다시 시작합니다. 최고 잔액 기록은 그대로 남아요.","You can't cover the ₩100,000 minimum. Start again with ₩1,000,000 — your peak record stays.");
   $("bkOk").textContent = L("다시 시작","Start again");
   $("btnSound").textContent = S.sound ? "🔊" : "🔇";
   $("helpBody").innerHTML = helpHtml();
