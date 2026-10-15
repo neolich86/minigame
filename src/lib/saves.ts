@@ -42,6 +42,10 @@ export async function storeSave(
   prevAt?: string,
 ): Promise<{ updatedAt: string; conflict?: false } | { conflict: true; data: unknown; updatedAt: string }> {
   const user = await uid();
+  // 게임이 데이터에 주인 계정(owner)을 적어 보냈으면, 지금 로그인한 계정과 같을 때만 저장한다.
+  // (계정을 바꾸는 사이에 이전 계정의 저장 요청이 새 계정에 덮어쓰이지 않게 — 룰렛·바카라 지갑)
+  const owner = value && typeof value === "object" ? (value as { owner?: unknown }).owner : undefined;
+  if (typeof owner === "string" && owner !== user) throw new Error("owner_mismatch");
   const c = client();
   if (prevAt) {
     const { data: cur, error: selErr } = await c

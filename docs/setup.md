@@ -36,6 +36,7 @@ GitHub(`neolich86/minigame`) → Vercel 자동 배포, 계정·랭킹·온라인
    11. `supabase/migrations/0013_likes.sql` — 콘텐츠 좋아요(하트) (`item_likes`·`item_like_counts` 테이블, `toggle_like`·`like_counts`·`my_likes` 함수, 로그인 없이 기기당 1회)
    12. `supabase/migrations/0014_roulette.sql` — 룰렛 최고 잔액 랭킹 보드 (`ranked_boards` 에 `roulette` 추가)
    13. `supabase/migrations/0015_baccarat.sql` — 바카라 최고 잔액 랭킹 보드 (`ranked_boards` 에 `baccarat` 추가)
+   14. `supabase/migrations/0016_challenge_bigint.sql` — 도전장 점수를 bigint 로 (21억 원이 넘는 카지노 잔액도 도전장 가능)
 2. **Project Settings → API (API Keys)** 에서 복사
    - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
    - anon(또는 publishable) 키 → `NEXT_PUBLIC_SUPABASE_ANON_KEY`

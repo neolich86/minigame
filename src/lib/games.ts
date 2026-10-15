@@ -142,6 +142,7 @@ const CATALOG: Game[] = [
     genre: "casual",
     thumb: "/thumbs/roulette.jpg",
     src: "/games/roulette/index.html",
+    saves: true, // 지갑(잔액)을 계정에 저장 — 계정끼리 잔액이 섞이지 않게
     boards: [{ id: "roulette", label: { ko: "최고 잔액", en: "Peak balance" }, unit: { ko: "", en: "" }, format: "won", vs: { label: { ko: "최고 잔액", en: "peak balance" }, question: { ko: "누가 더 크게 따나?", en: "Who wins bigger?" } } }],
   },
   {
@@ -154,6 +155,7 @@ const CATALOG: Game[] = [
     genre: "casual",
     thumb: "/thumbs/baccarat.jpg",
     src: "/games/baccarat/index.html",
+    saves: true, // 지갑(잔액)을 계정에 저장 — 계정끼리 잔액이 섞이지 않게
     boards: [{ id: "baccarat", label: { ko: "최고 잔액", en: "Peak balance" }, unit: { ko: "", en: "" }, format: "won", vs: { label: { ko: "최고 잔액", en: "peak balance" }, question: { ko: "누가 더 크게 따나?", en: "Who wins bigger?" } } }],
   },
   {

@@ -202,6 +202,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
   <div class="top">
     <div class="logo">BACCARAT<small id="tSub">8덱 · 정통 펀토 반코</small></div>
     <div class="sp"></div>
+    <button class="ibtn" id="btnLogin" style="display:none">🔑 <span id="tLogin">로그인하고 랭킹 등록</span></button>
     <button class="ibtn" id="btnVs" style="display:none">🔥 친구에게 도전</button>
     <button class="ibtn" id="btnHelp">📖 규칙</button>
     <button class="ibtn" id="btnSound">🔊</button>
@@ -379,11 +380,74 @@ const WSHORT = { P: L("플","P"), B: L("뱅","B"), T: L("타","T") };
 const SUITS = ["♠","♥","♦","♣"], RNAME = [null,"A","2","3","4","5","6","7","8","9","10","J","Q","K"];
 
 /* ================= 상태 ================= */
-const KEY = "mgh:baccarat:v1";
-let S = { bal: START, peak: START, shoe: newShoe(), hist: [], hands: 0, shoes: 1, last: null, restarts: 0, sound: true };
-try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if(s && typeof s.bal === "number" && isFinite(s.bal) && s.bal >= 0 && Array.isArray(s.shoe) && s.shoe.length === 14) S = Object.assign(S, s); } catch(e){}
-if(!Array.isArray(S.hist)) S.hist = [];
-function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
+/* ===== 지갑 — 게스트는 이 브라우저에만, 로그인하면 계정(game_saves)에 저장 =====
+   계정마다 지갑이 따로라서, 같은 브라우저에서 다른 계정으로 로그인해도 잔액이 넘어가지 않는다.
+   랭킹은 계정 지갑을 서버에서 불러온 뒤에만 등록한다 (게스트 잔액은 등록하지 않음). */
+const LKEY = "mgh:baccarat:v2:";
+const fresh = () => ({ bal: START, peak: START, shoe: newShoe(), hist: [], hands: 0, shoes: 1, last: null, restarts: 0, sound: true });
+const validS = s => !!s && typeof s.bal === "number" && isFinite(s.bal) && s.bal >= 0 && Array.isArray(s.shoe) && s.shoe.length === 14;
+const normS = s => { s = Object.assign(fresh(), s); delete s.owner; if(!Array.isArray(s.hist)) s.hist = []; return s; };
+let owner = null, ready = true, cloudAt = null, walletLoading = false, pendingAuth = null, authKnown = false;
+function readLocal(o){ try { const s = JSON.parse(localStorage.getItem(LKEY + (o || "guest")) || "null"); return validS(s) ? normS(s) : null; } catch(e){ return null; } }
+// 예전(v1) 브라우저 지갑은 게스트 지갑으로만 옮긴다 — 어느 계정에도 붙이지 않음
+try { const old = localStorage.getItem("mgh:baccarat:v1"); if(old){ if(validS(JSON.parse(old)) && !localStorage.getItem(LKEY + "guest")) localStorage.setItem(LKEY + "guest", old); localStorage.removeItem("mgh:baccarat:v1"); } } catch(e){}
+let S = readLocal(null) || fresh();
+function save(){ try { localStorage.setItem(LKEY + (owner || "guest"), JSON.stringify(S)); } catch(e){} if(owner && ready) queueCloud(); }
+let cloudTimer = null, cloudBusy = false, cloudAgain = false;
+function queueCloud(){ clearTimeout(cloudTimer); cloudTimer = setTimeout(flushCloud, 50); }
+async function flushCloud(){
+  clearTimeout(cloudTimer);
+  if(!owner || !ready || !(MG && MG.save)) return;
+  if(cloudBusy){ cloudAgain = true; return; }
+  cloudBusy = true;
+  const who = owner, data = JSON.parse(JSON.stringify(S));
+  data.owner = who; // 포털이 지금 로그인한 계정과 다르면 저장을 거부한다
+  try {
+    const r = await MG.save.store(data, cloudAt || undefined);
+    if(who === owner && r && !r.error){
+      cloudAt = r.updatedAt;
+      if(r.conflict){
+        // 다른 기기(탭)에서 더 나중에 저장한 지갑이 있으면 그쪽으로 맞춘다
+        if(validS(r.data) && r.data.owner === owner && !busy){ const snd = S.sound; S = normS(r.data); S.sound = snd; try { localStorage.setItem(LKEY + owner, JSON.stringify(S)); } catch(e){} afterSwitch(); toast(L("다른 기기에서 플레이한 잔액으로 맞췄어요","Synced with your balance from another device"), 2400); }
+        else cloudAgain = true;
+      }
+    }
+  } catch(e){} finally { cloudBusy = false; if(cloudAgain){ cloudAgain = false; queueCloud(); } }
+}
+async function useOwner(user, info){
+  authKnown = true;
+  const id = user && user.id && !(info && info.cloud === false) ? String(user.id) : null;
+  if(busy){ pendingAuth = [user, info]; return; }
+  if(id === owner){ refresh(); return; }
+  // 계정이 바뀌면 이전 계정의 대기 중인 저장은 버린다 (새 계정에 잘못 저장되지 않게)
+  clearTimeout(cloudTimer); cloudAgain = false;
+  const snd = S.sound;
+  owner = id; cloudAt = null; ready = !id;
+  S = readLocal(id) || fresh(); S.sound = snd;
+  if(id){ walletLoading = true; }
+  afterSwitch();
+  if(!id) return;
+  try {
+    const r = await MG.save.load();
+    if(owner !== id) return;
+    // 처음 들어온 계정은 100만 원부터. 다른 계정 표시가 붙은 데이터는 쓰지 않는다
+    S = r && validS(r.data) && (!r.data.owner || r.data.owner === id) ? normS(r.data) : fresh();
+    delete S.owner;
+    if(r) cloudAt = r.updatedAt;
+    S.sound = snd; ready = true; save();
+  } catch(e){
+    if(owner === id) toast(L("계정 잔액을 불러오지 못했어요. 새로고침해 주세요","Couldn't load your balance — please reload"), 3200);
+  } finally {
+    if(owner === id){ walletLoading = false; afterSwitch(); }
+  }
+}
+function walletIdle(){ if(pendingAuth){ const a = pendingAuth; pendingAuth = null; useOwner(a[0], a[1]); } }
+const walletBlocked = () => walletLoading || (!!owner && !ready);
+function loginNote(){
+  const b = $("btnLogin"); if(!b) return;
+  b.style.display = (MG && MG.save && authKnown && !owner) ? "" : "none";
+}
+
 
 const KEYS = ["pp","ti","bp","pl","bk"];
 let bets = {}, undoStack = [], chip = MIN_CHIP, busy = false, fast = false;
@@ -560,7 +624,7 @@ function drawStakes(){
 }
 function addOps(ops){ for(const o of ops){ bets[o.k] = (bets[o.k]||0) + o.a; if(bets[o.k] <= 0) delete bets[o.k]; } }
 function placeBet(k){
-  if(busy) return;
+  if(busy || walletBlocked()) return;
   $("banner").classList.remove("show");
   if(chip > cash()){ sfx.err(); toast(L("잔액이 부족해요","Not enough balance")); return; }
   const ops = [{k, a:chip}]; addOps(ops); undoStack.push(ops); sfx.chip(); drawStakes(); refresh();
@@ -582,7 +646,7 @@ for(const sp of document.querySelectorAll(".spot")){
 
 /* ================= 딜 ================= */
 async function deal(){
-  if(busy) return;
+  if(busy || walletBlocked()) return;
   const total = tableTotal();
   if(!total){ sfx.err(); toast(L("먼저 칩을 올려주세요","Place a chip first")); return; }
   ac(); busy = true;
@@ -632,11 +696,12 @@ function reveal(h, total, back, before, newPeak){
     bets = {}; undoStack = []; busy = false; hudBal = hudBet = null;
     drawStakes(); refresh();
     if(S.bal < MIN_CHIP) openBroke();
+    walletIdle();
   }, fast ? 700 : 1400);
 }
 
 /* ================= 랭킹 · 도전 · 파산 ================= */
-function submit(){ if(MG && MG.submitScore && S.bal >= START) MG.submitScore("baccarat", Math.min(MAX_SCORE, Math.floor(S.bal)), {hands:S.hands}, {debounce:2000}); }
+function submit(){ if(MG && MG.submitScore && owner && ready && !walletLoading && S.bal >= START) MG.submitScore("baccarat", Math.min(MAX_SCORE, Math.floor(S.bal)), {hands:S.hands}, {debounce:2000}); }
 function openVs(){
   if(!(MG && MG.result) || S.peak <= START) return;
   MG.result.open({
@@ -676,11 +741,12 @@ function refresh(){
     + (x ? `${lastNet !== null && !pending ? `<span style="font-weight:800;color:${lastNet>=0?"var(--ok)":"var(--bad)"}">${lastNet>0?"+":lastNet<0?"−":"±"}${shortAny(Math.abs(lastNet))}</span>` : ""}<i style="font-style:normal;padding:2px 8px;border-radius:6px;color:#fff;font-weight:800;background:var(--${x.w})">${WSHORT[x.w]}</i>` : "");
   renderChips();
   const has = tableTotal() > 0;
-  $("bDeal").disabled = busy || !has; $("bUndo").disabled = busy || !undoStack.length; $("bClear").disabled = busy || !has;
+  $("bDeal").disabled = busy || !has || walletBlocked(); $("bUndo").disabled = busy || !undoStack.length; $("bClear").disabled = busy || !has;
   $("bDouble").disabled = busy || !has || tableTotal() > cash(); $("bRebet").disabled = busy || !S.last || has;
-  for(const sp of document.querySelectorAll(".spot")) sp.disabled = busy;
+  for(const sp of document.querySelectorAll(".spot")) sp.disabled = busy || walletBlocked();
+  loginNote();
   $("btnVs").style.display = (MG && MG.result && S.peak > START) ? "" : "none";
-  if(!busy) $("shoe").innerHTML = shoeText();
+  if(!busy) $("shoe").innerHTML = walletLoading ? L("계정 잔액 불러오는 중…","Loading your balance…") : shoeText();
 }
 
 /* ================= 규칙 창 ================= */
@@ -716,7 +782,7 @@ function texts(){
   $("lMin").textContent = L("칩 최소 ₩100,000 · 베팅 상한 없음 · 뱅커 승 5% 커미션","Min chip ₩100,000 · no table max · 5% commission on Banker wins");
   $("lHint").textContent = L("길게 누르거나 우클릭하면 그 칸 칩 회수 · Space = 딜 · F = 빠르게","Long-press or right-click to remove · Space = deal · F = fast");
   $("tUndo").textContent = L("취소","Undo"); $("tClear").textContent = L("지우기","Clear"); $("tRebet").textContent = L("다시","Rebet");
-  $("btnHelp").textContent = L("📖 규칙","📖 Rules"); $("btnVs").textContent = L("🔥 친구에게 도전","🔥 Challenge");
+  $("btnHelp").textContent = L("📖 규칙","📖 Rules"); $("tLogin").textContent = L("로그인하고 랭킹 등록","Log in to rank"); $("btnVs").textContent = L("🔥 친구에게 도전","🔥 Challenge");
   $("bkTitle").textContent = L("칩이 모두 떨어졌어요","Out of chips");
   $("bkBody").textContent = L("최소 베팅 10만 원을 걸 수 없어요. 100만 원으로 다시 시작합니다. 최고 잔액 기록은 그대로 남아요.","You can't cover the ₩100,000 minimum. Start again with ₩1,000,000 — your peak record stays.");
   $("bkOk").textContent = L("다시 시작","Start again");
@@ -738,8 +804,15 @@ if(window.ResizeObserver) new ResizeObserver(onResize).observe($("monitor"));
 
 /* ================= 시작 ================= */
 texts(); sizeMonitor(); renderMonitor(); drawStakes(); refresh();
+function afterSwitch(){
+  bets = {}; undoStack = []; lastNet = null; chipKey = ""; hudBal = hudBet = null; pending = false;
+  $("ovBroke").classList.remove("open");
+  clearCards(); drawStakes(); renderMonitor(); refresh();
+  if(!walletBlocked() && S.bal < MIN_CHIP) openBroke();
+}
+$("btnLogin").onclick = ()=>{ if(MG && MG.save) MG.save.login(); };
 if(S.bal < MIN_CHIP) openBroke();
-submit();
+if(MG && MG.save && MG.save.onAuth) MG.save.onAuth(useOwner);
 
 // 테스트용
 window.__bac = { playHand, settle, bigCols, derived, place, group, newShoe, drawFrom, state:()=>S,
