@@ -167,4 +167,16 @@ export async function leagueSim(comp: string): Promise<{ season: number; run_at:
   return data[0] as { season: number; run_at: string; data: LeagueSim };
 }
 
+/** 마지막으로 데이터가 갱신된 시각 — 경기 결과 동기화와 예측 생성 중 더 늦은 쪽 */
+export async function lastUpdated(): Promise<string | null> {
+  const c = db();
+  if (!c) return null;
+  const [m, p] = await Promise.all([
+    c.from("fc_matches").select("updated_at").order("updated_at", { ascending: false }).limit(1),
+    c.from("fc_predictions").select("updated_at").order("updated_at", { ascending: false }).limit(1),
+  ]);
+  const xs = [m.data?.[0]?.updated_at, p.data?.[0]?.updated_at].filter((x): x is string => typeof x === "string");
+  return xs.length ? xs.sort().at(-1)! : null;
+}
+
 export const cloudReady = () => db() !== null;

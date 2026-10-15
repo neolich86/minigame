@@ -8,7 +8,7 @@ import { COMP_NAME, type LeagueSim, type MatchRow, type RatingPoint, type Standi
 import { badgeColors, teamName, teamTla, type TeamInfo } from "@/lib/forecast/teams";
 import { PickBar, PickRow, ShareBox, pickLabel } from "./PicksUI";
 import { cleanName, comboStats, fmtProb, modelPick, outcomeOf, pickProb, type Pick } from "@/lib/forecast/picks";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /** 아직 시작 전이라 내 예측을 고를 수 있는 경기 */
 const pickable = (m: MatchRow) => (m.status === "SCHEDULED" || m.status === "TIMED") && !!m.home && !!m.away;
@@ -91,6 +91,8 @@ const T = {
     lowerBetter: "낮을수록 좋음",
     kst: "",
     recent30: "최근 30일",
+    updated: "{d} 업데이트",
+    updateEvery: "하루 4번 (새벽 1·4·6·7시) 갱신",
     pkTitle: "{who}의 승부 예측",
     pkFriend: "친구",
     pkMine: "나",
@@ -190,6 +192,8 @@ const T = {
     lowerBetter: "lower is better",
     kst: " KST",
     recent30: "Last 30 days",
+    updated: "Updated {d}",
+    updateEvery: "refreshed 4× a day (01, 04, 06, 07 KST)",
     pkTitle: "{who}'s picks",
     pkFriend: "A friend",
     pkMine: "Picks",
@@ -348,10 +352,47 @@ export function SubNav({ active }: { active: "matches" | "leagues" | "accuracy" 
   );
 }
 
+/* ───────────── 마지막 업데이트 시각 ───────────── */
+
+let updatedPromise: Promise<string | null> | null = null;
+function fetchUpdated(): Promise<string | null> {
+  updatedPromise ??= fetch("/api/forecast/updated")
+    .then((r) => (r.ok ? r.json() : { at: null }))
+    .then((j: { at: string | null }) => j.at)
+    .catch(() => null);
+  return updatedPromise;
+}
+
+function useLastUpdated(): string | null {
+  const [at, setAt] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetchUpdated().then((x) => alive && setAt(x));
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return at;
+}
+
+/** "10월 15일 (수) 07:12 KST 업데이트 · 하루 4번 갱신" */
+export function UpdatedAt({ className = "" }: { className?: string }) {
+  const { t, lang } = useT();
+  const at = useLastUpdated();
+  if (!at) return null;
+  const { date, time } = kstParts(at, lang);
+  return (
+    <p className={`fc-updated ${className}`}>
+      🔄 {fill(t.updated, { d: `${date} ${time}${t.kst}` })} · <span className="muted">{t.updateEvery}</span>
+    </p>
+  );
+}
+
 export function Footer() {
   const { t } = useT();
   return (
     <footer className="fc-foot">
+      <UpdatedAt />
       <p>{t.disclaimer}</p>
       <p className="muted small">{t.source}</p>
     </footer>
@@ -365,6 +406,7 @@ function Head({ active }: { active: "matches" | "leagues" | "accuracy" }) {
       <div>
         <h1 className="page-title">⚽ {t.title}</h1>
         <p className="page-sub">{t.sub}</p>
+        <UpdatedAt className="top" />
       </div>
       <SubNav active={active} />
     </header>
