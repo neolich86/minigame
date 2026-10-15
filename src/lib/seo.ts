@@ -373,6 +373,32 @@ export const GAME_SEO: SeoMap = {
       tags: ["Card pull", "Gacha", "Simulator", "Leaderboard", "Free"],
     },
   },
+  roulette: {
+    ko: {
+      title: "룰렛 게임 - 무료 유럽식 싱글 제로 룰렛 (카지노 게임)",
+      h1: "룰렛 — 무료 카지노 룰렛 게임",
+      description: "0이 하나뿐인 유럽식 룰렛을 설치 없이 무료로. 100만 원으로 시작해 스트레이트·스플릿·코너·레드/블랙에 칩을 걸고 최고 잔액 랭킹에 도전하세요. 실제 돈은 쓰지 않아요.",
+      keywords: ["룰렛", "룰렛 게임", "카지노 룰렛", "유럽식 룰렛", "싱글 제로 룰렛", "카지노 게임", "무료 카지노", "룰렛 시뮬레이터", "무료 게임"],
+      about: [
+        "유럽식 룰렛은 0부터 36까지 37칸으로 이뤄져 있어요. 0이 두 개인 미국식보다 하우스 엣지가 2.7%로 낮습니다.",
+        "100만 원이 주어지고 칩은 5만 원부터 걸 수 있어요. 잔액이 100만 원 이상이면 로그인한 계정의 최고 잔액이 랭킹에 기록됩니다. 칩을 다 잃으면 100만 원으로 다시 시작할 수 있어요. 실제 돈은 오가지 않는 무료 게임입니다.",
+      ],
+      howTo: ["칩 금액을 고릅니다.", "숫자·선·교차점이나 레드/블랙·홀짝 같은 칸을 눌러 칩을 올립니다.", "SPIN을 눌러 휠을 돌리고 결과를 확인하세요."],
+      tags: ["카지노", "룰렛", "확률", "랭킹", "무료"],
+    },
+    en: {
+      title: "Roulette - Free Single-Zero European Roulette Game",
+      h1: "Roulette — Free Casino Roulette",
+      description: "Play single-zero European roulette free in your browser. Start with ₩1,000,000, bet straight, split, corner or red/black and climb the peak-balance leaderboard. No real money.",
+      keywords: ["roulette", "free roulette", "European roulette", "single zero roulette", "casino game", "roulette simulator", "free game"],
+      about: [
+        "European roulette has 37 pockets, 0 through 36. With a single zero the house edge is 2.7%, lower than double-zero American roulette.",
+        "You start with ₩1,000,000 and chips start at ₩50,000. While your balance is ₩1,000,000 or more, signed-in players are ranked by peak balance. Go broke and you can start again. No real money is involved.",
+      ],
+      howTo: ["Pick a chip value.", "Tap a number, a line, an intersection or an outside bet like red/black.", "Press SPIN and watch where the ball lands."],
+      tags: ["Casino", "Roulette", "Odds", "Leaderboard", "Free"],
+    },
+  },
   "world-typing": {
     ko: {
       title: "세계도시 타이핑 - 무료 타자 연습 게임 (한타·영타)",
@@ -405,6 +431,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
       { title: "뱀서 · 서바이벌", text: "몰려오는 몬스터 속에서 스킬을 골라 성장하는 뱀서류 서바이벌 로그라이크. 생존 시간 랭킹에 도전하세요.", games: ["archer"] },
       { title: "슈팅 · 타워디펜스", text: "아케이드 종스크롤 비행기 슈팅과 원소 조합 전략 타워디펜스.", games: ["raiden", "element-td"] },
       { title: "카드 뽑기 · 타자 연습", text: "포켓몬·원피스 카드 오리파 시뮬레이터와 세계 지도 타자 연습 게임.", games: ["oripa", "world-typing"] },
+      { title: "카지노", text: "0이 하나뿐인 유럽식 룰렛. 100만 원으로 시작해 최고 잔액 랭킹에 도전하세요. 실제 돈은 쓰지 않아요.", games: ["roulette"] },
     ],
   },
   en: {
@@ -415,6 +442,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
       { title: "Survivor-like · Survival", text: "A survivor-like roguelite — grow your skills amid endless hordes and chase the survival-time leaderboard.", games: ["archer"] },
       { title: "Shooter · Tower defense", text: "An arcade vertical shooter and an elemental strategy tower defense.", games: ["raiden", "element-td"] },
       { title: "Card pulls · Typing", text: "A Pokémon / One Piece oripa card-pull simulator and a world-map typing practice game.", games: ["oripa", "world-typing"] },
+      { title: "Casino", text: "Single-zero European roulette — start with ₩1,000,000 and chase the peak-balance leaderboard. No real money.", games: ["roulette"] },
     ],
   },
 };

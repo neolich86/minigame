@@ -332,6 +332,36 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       ],
     },
   },
+  roulette: {
+    ko: {
+      tips: [
+        "모든 베팅의 기대값은 같아요. 싱글 제로 룰렛은 어떤 칸에 걸어도 하우스 엣지가 2.7%(37분의 1)입니다. 고르는 건 '얼마나 자주, 얼마나 크게 이길지'의 차이예요.",
+        "레드/블랙·홀짝처럼 1:1 베팅은 이길 확률이 48.6%로 잔액이 천천히 움직이고, 스트레이트(35:1)는 2.7% 확률로 한 번에 크게 움직입니다.",
+        "최고 잔액이 랭킹 기록이라, 크게 불렸다면 그 순간 기록이 남아요. 다 잃어도 100만 원으로 다시 시작할 수 있습니다.",
+        "숫자 사이 선을 누르면 스플릿(17:1), 네 칸이 만나는 점은 코너(8:1), 숫자판 가장자리는 스트리트(11:1)·식스 라인(5:1)이에요.",
+      ],
+      faq: [
+        { q: "실제 돈이 드나요?", a: "아니요. 게임 안의 가상 금액만 쓰는 무료 게임이에요. 현금으로 바꾸거나 충전할 수 없습니다." },
+        { q: "0이 나오면 어떻게 되나요?", a: "0을 포함한 베팅(0 스트레이트·0 스플릿·트리오·퍼스트 포)만 이기고 나머지는 모두 집니다. 레드/블랙 같은 바깥 베팅도 집니다." },
+        { q: "랭킹은 어떻게 등록되나요?", a: "로그인한 상태에서 잔액이 100만 원 이상이면 스핀할 때마다 최고 잔액이 자동으로 기록돼요." },
+        { q: "결과는 조작되지 않나요?", a: "브라우저의 암호학적 난수로 37칸 중 하나를 같은 확률로 뽑습니다. 이전 결과는 다음 결과에 영향을 주지 않아요." },
+      ],
+    },
+    en: {
+      tips: [
+        "Every bet has the same expected value. In single-zero roulette the house edge is 2.7% (1 in 37) wherever you bet — you only choose how often and how big you win.",
+        "Even-money bets like red/black win 48.6% of the time and move your balance slowly; a straight-up bet (35:1) hits 2.7% of the time and moves it a lot.",
+        "The leaderboard keeps your peak balance, so a big run is recorded the moment it happens. Lose everything and you can start again with ₩1,000,000.",
+        "Tap a line between numbers for a split (17:1), an intersection for a corner (8:1), and the outer edge of the grid for streets (11:1) and six lines (5:1).",
+      ],
+      faq: [
+        { q: "Does it use real money?", a: "No. It's a free game with play money only — nothing can be bought or cashed out." },
+        { q: "What happens when 0 hits?", a: "Only bets covering 0 win (0 straight, 0 splits, trios, first four). Everything else loses, including red/black." },
+        { q: "How does the leaderboard work?", a: "When signed in, your peak balance is recorded on every spin while your balance is ₩1,000,000 or more." },
+        { q: "Is it fair?", a: "Each spin draws one of 37 pockets with equal probability using the browser's cryptographic random generator. Past spins don't affect the next one." },
+      ],
+    },
+  },
   "world-typing": {
     ko: {
       tips: [

@@ -133,6 +133,18 @@ const CATALOG: Game[] = [
     boards: [{ id: "oripa", label: { ko: "최고 자금", en: "Peak funds" }, unit: { ko: "", en: "" }, format: "won", vs: { label: { ko: "최고 자산", en: "peak funds" }, question: { ko: "누가 더 부자가 되나?", en: "Who gets richer?" } } }],
   },
   {
+    id: "roulette",
+    title: { ko: "룰렛", en: "Roulette" },
+    desc: {
+      ko: "0이 하나뿐인 유럽식 룰렛. 100만 원으로 시작해 숫자·색·홀짝에 칩을 걸고 휠을 돌려 최고 잔액 랭킹에 도전",
+      en: "Single-zero European roulette — start with ₩1,000,000, bet on numbers, colors or odd/even and chase the peak-balance leaderboard",
+    },
+    genre: "casual",
+    thumb: "/thumbs/roulette.jpg",
+    src: "/games/roulette/index.html",
+    boards: [{ id: "roulette", label: { ko: "최고 잔액", en: "Peak balance" }, unit: { ko: "", en: "" }, format: "won", vs: { label: { ko: "최고 잔액", en: "peak balance" }, question: { ko: "누가 더 크게 따나?", en: "Who wins bigger?" } } }],
+  },
+  {
     id: "lotto",
     kind: "tool",
     title: { ko: "로또 번호 추첨기", en: "Lotto Number Picker" },
