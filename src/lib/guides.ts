@@ -362,6 +362,36 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       ],
     },
   },
+  baccarat: {
+    ko: {
+      tips: [
+        "기대값만 보면 뱅커가 가장 유리해요. 하우스 엣지는 뱅커 1.06%, 플레이어 1.24%, 타이 14.4%, 페어 10.4%입니다.",
+        "뱅커가 이기는 확률(45.9%)이 플레이어(44.6%)보다 높아서 뱅커 승에는 5% 커미션을 뗍니다. 타이(9.5%)가 나오면 플레이어·뱅커 베팅은 돌려받아요.",
+        "출목표는 지난 결과의 기록입니다. 흐름을 보는 재미는 있지만 카드는 매번 남은 슈에서 새로 뽑히므로 다음 결과를 정해 주지는 않아요.",
+        "빅로드에서 같은 쪽이 아래로 길게 이어지면 '줄', 한 칸씩 번갈아 나오면 '퐁당'이라고 불러요. 중국점은 이런 모양이 반복되는지(빨강) 깨지는지(파랑)를 보여 줍니다.",
+      ],
+      faq: [
+        { q: "실제 돈이 드나요?", a: "아니요. 게임 안의 가상 금액만 쓰는 무료 게임이에요. 현금으로 바꾸거나 충전할 수 없습니다." },
+        { q: "세 번째 카드는 왜 받거나 안 받나요?", a: "바카라는 세 번째 카드 규칙이 정해져 있어 자동으로 진행돼요. 규칙 버튼에서 표를 확인할 수 있습니다." },
+        { q: "출목표는 언제 초기화되나요?", a: "8덱 슈에서 남은 카드가 52장 이하가 되면 새 슈로 바뀌고 출목표도 새로 시작해요." },
+        { q: "B?·P? 표시는 무엇인가요?", a: "다음 판에 뱅커나 플레이어가 이기면 빅아이보이·스몰로드·바퀴벌레에 어떤 표시가 찍힐지 미리 보여 주는 칸이에요." },
+      ],
+    },
+    en: {
+      tips: [
+        "By expected value Banker is the best bet: the house edge is 1.06% on Banker, 1.24% on Player, 14.4% on Tie and 10.4% on Pairs.",
+        "Banker wins more often (45.9% vs 44.6%), which is why Banker wins pay a 5% commission. On a tie (9.5%) Player and Banker bets are returned.",
+        "The roads are a record of the past. They're fun to follow, but every card is drawn from what's left in the shoe, so they don't decide the next hand.",
+        "A long column on the big road is a streak; single cells alternating is a 'ping-pong'. The derived roads show whether such shapes keep repeating (red) or break (blue).",
+      ],
+      faq: [
+        { q: "Does it use real money?", a: "No. It's a free game with play money only — nothing can be bought or cashed out." },
+        { q: "Why does a side draw a third card?", a: "Baccarat has a fixed third-card tableau, so draws happen automatically. The Rules button lists it." },
+        { q: "When do the roads reset?", a: "When 52 or fewer cards are left in the 8-deck shoe, a new shoe comes in and the roads start over." },
+        { q: "What are B? and P?", a: "They preview the mark each derived road would get if Banker or Player wins the next hand." },
+      ],
+    },
+  },
   "world-typing": {
     ko: {
       tips: [

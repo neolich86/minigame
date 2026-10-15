@@ -399,6 +399,32 @@ export const GAME_SEO: SeoMap = {
       tags: ["Casino", "Roulette", "Odds", "Leaderboard", "Free"],
     },
   },
+  baccarat: {
+    ko: {
+      title: "바카라 게임 - 무료 8덱 정통 바카라 (출목표·중국점)",
+      h1: "바카라 — 무료 카지노 바카라 게임",
+      description: "8덱 슈로 진행하는 정통 바카라를 무료로. 플레이어·뱅커·타이·페어에 베팅하고 빅로드·본매·빅아이보이·스몰로드·바퀴벌레 출목표로 흐름을 확인하세요. 100만 원으로 시작해 최고 잔액 랭킹에 도전. 실제 돈은 쓰지 않아요.",
+      keywords: ["바카라", "바카라 게임", "무료 바카라", "바카라 출목표", "빅로드", "중국점", "카지노 게임", "바카라 시뮬레이터", "무료 게임"],
+      about: [
+        "바카라는 플레이어와 뱅커 중 카드 합의 일의 자리가 9에 가까운 쪽을 맞히는 카지노 게임입니다. 세 번째 카드는 정해진 규칙에 따라 자동으로 받아요.",
+        "실제 카지노처럼 빅로드·본매·중국점(빅아이보이·스몰로드·바퀴벌레) 출목표를 보여 주고, 다음에 뱅커나 플레이어가 나오면 어떻게 찍힐지도 미리 볼 수 있어요. 100만 원으로 시작하고 잔액이 100만 원 이상이면 로그인한 계정의 최고 잔액이 랭킹에 기록됩니다. 실제 돈은 오가지 않는 무료 게임이에요.",
+      ],
+      howTo: ["칩 금액을 고릅니다.", "플레이어·뱅커·타이·페어 칸을 눌러 칩을 올립니다.", "DEAL을 누르면 카드가 펼쳐지고 결과가 출목표에 기록됩니다."],
+      tags: ["카지노", "바카라", "출목표", "랭킹", "무료"],
+    },
+    en: {
+      title: "Baccarat - Free 8-Deck Baccarat with Big Road & Derived Roads",
+      h1: "Baccarat — Free Casino Baccarat",
+      description: "Play classic 8-deck punto banco free. Bet Player, Banker, Tie or Pairs and follow the big road, bead plate, big eye boy, small road and cockroach pig scoreboards. Start with ₩1,000,000 and chase the peak-balance leaderboard. No real money.",
+      keywords: ["baccarat", "free baccarat", "baccarat big road", "baccarat roads", "punto banco", "casino game", "free game"],
+      about: [
+        "Baccarat asks you to pick the hand — Player or Banker — whose total ends closer to 9. Third cards are drawn automatically by the standard tableau.",
+        "Like a real casino scoreboard it shows the big road, bead plate and the three derived roads, plus a preview of what a Banker or Player win would add. You start with ₩1,000,000; while your balance is ₩1,000,000 or more, signed-in players are ranked by peak balance. No real money is involved.",
+      ],
+      howTo: ["Pick a chip value.", "Tap Player, Banker, Tie or a Pair bet.", "Press DEAL — the cards are revealed and the result is added to the roads."],
+      tags: ["Casino", "Baccarat", "Roads", "Leaderboard", "Free"],
+    },
+  },
   "world-typing": {
     ko: {
       title: "세계도시 타이핑 - 무료 타자 연습 게임 (한타·영타)",
@@ -431,7 +457,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
       { title: "뱀서 · 서바이벌", text: "몰려오는 몬스터 속에서 스킬을 골라 성장하는 뱀서류 서바이벌 로그라이크. 생존 시간 랭킹에 도전하세요.", games: ["archer"] },
       { title: "슈팅 · 타워디펜스", text: "아케이드 종스크롤 비행기 슈팅과 원소 조합 전략 타워디펜스.", games: ["raiden", "element-td"] },
       { title: "카드 뽑기 · 타자 연습", text: "포켓몬·원피스 카드 오리파 시뮬레이터와 세계 지도 타자 연습 게임.", games: ["oripa", "world-typing"] },
-      { title: "카지노", text: "0이 하나뿐인 유럽식 룰렛. 100만 원으로 시작해 최고 잔액 랭킹에 도전하세요. 실제 돈은 쓰지 않아요.", games: ["roulette"] },
+      { title: "카지노", text: "0이 하나뿐인 유럽식 룰렛과 출목표가 있는 8덱 바카라. 100만 원으로 시작해 최고 잔액 랭킹에 도전하세요. 실제 돈은 쓰지 않아요.", games: ["roulette", "baccarat"] },
     ],
   },
   en: {
@@ -442,7 +468,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
       { title: "Survivor-like · Survival", text: "A survivor-like roguelite — grow your skills amid endless hordes and chase the survival-time leaderboard.", games: ["archer"] },
       { title: "Shooter · Tower defense", text: "An arcade vertical shooter and an elemental strategy tower defense.", games: ["raiden", "element-td"] },
       { title: "Card pulls · Typing", text: "A Pokémon / One Piece oripa card-pull simulator and a world-map typing practice game.", games: ["oripa", "world-typing"] },
-      { title: "Casino", text: "Single-zero European roulette — start with ₩1,000,000 and chase the peak-balance leaderboard. No real money.", games: ["roulette"] },
+      { title: "Casino", text: "Single-zero European roulette and 8-deck baccarat with full scoreboards — start with ₩1,000,000 and chase the peak-balance leaderboard. No real money.", games: ["roulette", "baccarat"] },
     ],
   },
 };

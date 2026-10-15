@@ -145,6 +145,18 @@ const CATALOG: Game[] = [
     boards: [{ id: "roulette", label: { ko: "최고 잔액", en: "Peak balance" }, unit: { ko: "", en: "" }, format: "won", vs: { label: { ko: "최고 잔액", en: "peak balance" }, question: { ko: "누가 더 크게 따나?", en: "Who wins bigger?" } } }],
   },
   {
+    id: "baccarat",
+    title: { ko: "바카라", en: "Baccarat" },
+    desc: {
+      ko: "8덱 정통 바카라. 플레이어·뱅커·타이·페어에 베팅하고 빅로드·본매·중국점 출목표로 흐름을 읽으며 최고 잔액 랭킹에 도전",
+      en: "Classic 8-deck baccarat — bet Player, Banker, Tie or Pairs, read the big road, bead plate and derived roads, and chase the peak-balance leaderboard",
+    },
+    genre: "casual",
+    thumb: "/thumbs/baccarat.jpg",
+    src: "/games/baccarat/index.html",
+    boards: [{ id: "baccarat", label: { ko: "최고 잔액", en: "Peak balance" }, unit: { ko: "", en: "" }, format: "won", vs: { label: { ko: "최고 잔액", en: "peak balance" }, question: { ko: "누가 더 크게 따나?", en: "Who wins bigger?" } } }],
+  },
+  {
     id: "lotto",
     kind: "tool",
     title: { ko: "로또 번호 추첨기", en: "Lotto Number Picker" },
