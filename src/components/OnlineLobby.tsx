@@ -10,7 +10,7 @@ import { errorKey, type MsgKey } from "@/lib/i18n";
 import { createRoom, deleteRoom, fetchMyRooms, joinRoom } from "@/lib/rooms";
 import { lxCreateRoom, lxDeleteRoom, lxErrorText, lxJoinRoom, lxMyRooms } from "@/lib/lexio";
 
-// 게임별 방 방식: 카탄·드래곤 콜 = 방장 브라우저 진행(mg_* 테이블), 렉시오 = 서버 판정(rooms 테이블)
+// 게임별 방 방식: 카탄·드래곤 콜·홀덤 = 방장 브라우저 진행(mg_* 테이블), 렉시오 = 서버 판정(rooms 테이블)
 interface RoomLite {
   id: string;
   code: string;
@@ -40,6 +40,14 @@ const ONLINE: Record<string, {
     create: () => createRoom("dragon-call", 4),
     join: (c) => joinRoom(c),
     mine: () => fetchMyRooms("dragon-call"),
+    del: (id) => deleteRoom(id),
+  },
+  holdem: {
+    players: [2, 3, 4, 5, 6],
+    def: 6,
+    create: (n) => createRoom("holdem", n),
+    join: (c) => joinRoom(c),
+    mine: () => fetchMyRooms("holdem"),
     del: (id) => deleteRoom(id),
   },
   lexio: {

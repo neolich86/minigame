@@ -85,4 +85,4 @@ export async function fetchMyRooms(game: string): Promise<Room[]> {
 }
 
 // 카탄 좌석 색 (게임 안 PCOLORS 와 동일 순서)
-export const SEAT_COLORS = ["#c8433d", "#2f79c4", "#e08a2b", "#e6e0d0"];
+export const SEAT_COLORS = ["#c8433d", "#2f79c4", "#e08a2b", "#e6e0d0", "#3fa05a", "#8e5bc9"];

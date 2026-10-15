@@ -160,6 +160,32 @@ export const GAME_SEO: SeoMap = {
       tags: ["Card game", "Team play", "Online multiplayer", "vs AI", "Free"],
     },
   },
+  holdem: {
+    ko: {
+      title: "텍사스 홀덤 - 무료 온라인 홀덤 포커 토너먼트 (친구 대전·AI)",
+      h1: "텍사스 홀덤 — 무료 온라인 포커 토너먼트",
+      description: "설치 없이 바로 하는 무료 텍사스 홀덤. 친구와 2~6명 온라인 대전을 하거나 AI와 토너먼트를 즐기세요. 온라인에서는 내 카드가 암호화되어 나만 볼 수 있어요. 실제 돈은 쓰지 않아요.",
+      keywords: ["홀덤", "텍사스 홀덤", "무료 홀덤", "온라인 홀덤", "포커", "홀덤 게임", "친구랑 홀덤", "홀덤 토너먼트", "보드게임", "무료 게임"],
+      about: [
+        "텍사스 홀덤은 각자 받은 카드 2장과 가운데 공용 카드 5장으로 가장 좋은 5장을 만드는 포커 게임입니다. 모두 같은 칩으로 시작해 블라인드가 점점 오르고, 칩을 모두 잃으면 탈락해 마지막 한 명이 우승하는 토너먼트 방식이에요.",
+        "로그인하면 방을 만들어 친구와 2~6명이 온라인으로 대결할 수 있고, 빈 자리는 AI가 채웁니다. 온라인에서는 각자의 카드를 그 사람 브라우저만 풀 수 있게 암호화해서 보내요. 혼자 할 때는 AI 1~5명과 바로 플레이할 수 있습니다. 실제 돈은 오가지 않는 무료 게임이에요.",
+      ],
+      howTo: ["혼자 하기에서 AI 수·시작 칩·블라인드 속도를 고르거나, 온라인 대전에서 방을 만들어 코드를 공유합니다.", "차례가 오면 폴드·체크/콜·레이즈 중 하나를 고르세요. 레이즈 금액은 버튼(½팟·팟·올인)이나 슬라이더로 정해요.", "마지막까지 칩을 지키면 우승!"],
+      tags: ["포커", "홀덤", "온라인 대전", "AI 대전", "무료"],
+    },
+    en: {
+      title: "Texas Hold'em - Free Online Poker Tournament (Friends & AI)",
+      h1: "Texas Hold'em — Free Online Poker Tournament",
+      description: "Free Texas Hold'em in your browser. Play a 2–6 player tournament online with friends or against AI. Online, your hole cards are encrypted so only you can see them. No real money.",
+      keywords: ["texas holdem", "holdem", "free poker", "online poker with friends", "poker tournament", "board game", "free game"],
+      about: [
+        "Texas Hold'em is the poker game where you make the best five-card hand from your two hole cards and five community cards. Everyone starts with the same stack, the blinds rise, and the last player with chips wins the tournament.",
+        "Sign in to open a room and play 2–6 players online with friends — AI fills empty seats. Online, each player's cards are encrypted so only their own browser can read them. Or play solo against 1–5 AI opponents right away. No real money is involved.",
+      ],
+      howTo: ["Solo: pick the number of AI, starting stack and blind speed. Online: create a room and share the code.", "On your turn choose fold, check/call or raise — size raises with the ½ pot, pot and all-in buttons or the slider.", "Keep your chips to the end to win!"],
+      tags: ["Poker", "Hold'em", "Online", "Vs AI", "Free"],
+    },
+  },
   "random-td": {
     ko: {
       title: "랜덤 타워 디펜스 - 무료 방치형 타워디펜스 게임 (랜타디)",
@@ -452,7 +478,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
   ko: {
     heading: "어떤 게임이 있나요?",
     items: [
-      { title: "온라인 보드게임", text: "친구와 방을 만들어 실시간으로 즐기는 무료 온라인 보드게임. 빈 자리는 AI가 채워 주고, 혼자서도 AI와 바로 대결할 수 있어요.", games: ["catan", "lexio", "dragon-call"] },
+      { title: "온라인 보드게임", text: "친구와 방을 만들어 실시간으로 즐기는 무료 온라인 보드게임. 빈 자리는 AI가 채워 주고, 혼자서도 AI와 바로 대결할 수 있어요.", games: ["catan", "lexio", "dragon-call", "holdem"] },
       { title: "방치형 게임", text: "틀어두기만 해도 진행되는 방치형 타워디펜스와 자동 강화. 도달 라운드와 최고 레벨로 랭킹을 겨뤄보세요.", games: ["random-td", "weapon"] },
       { title: "뱀서 · 서바이벌", text: "몰려오는 몬스터 속에서 스킬을 골라 성장하는 뱀서류 서바이벌 로그라이크. 생존 시간 랭킹에 도전하세요.", games: ["archer"] },
       { title: "슈팅 · 타워디펜스", text: "아케이드 종스크롤 비행기 슈팅과 원소 조합 전략 타워디펜스.", games: ["raiden", "element-td"] },
@@ -463,7 +489,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
   en: {
     heading: "What can you play?",
     items: [
-      { title: "Online board games", text: "Free online board games to play live with friends. AI fills empty seats, and you can always play solo against AI.", games: ["catan", "lexio", "dragon-call"] },
+      { title: "Online board games", text: "Free online board games to play live with friends. AI fills empty seats, and you can always play solo against AI.", games: ["catan", "lexio", "dragon-call", "holdem"] },
       { title: "Idle games", text: "Idle tower defense and auto-enhance games that keep going on their own. Compete on round and level leaderboards.", games: ["random-td", "weapon"] },
       { title: "Survivor-like · Survival", text: "A survivor-like roguelite — grow your skills amid endless hordes and chase the survival-time leaderboard.", games: ["archer"] },
       { title: "Shooter · Tower defense", text: "An arcade vertical shooter and an elemental strategy tower defense.", games: ["raiden", "element-td"] },

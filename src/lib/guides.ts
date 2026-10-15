@@ -90,6 +90,36 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       ],
     },
   },
+  holdem: {
+    ko: {
+      tips: [
+        "처음 두 장이 강할 때(높은 페어, A-K 같은 높은 카드)만 적극적으로 들어가고, 약한 패는 일찍 버리는 게 토너먼트에서 오래 살아남는 기본이에요.",
+        "콜할지 고민될 때는 팟 오즈를 보세요. 콜 금액 ÷ (팟 + 콜 금액)보다 내가 이길 확률이 높으면 장기적으로 이득입니다.",
+        "블라인드가 오를수록 칩이 줄어드는 속도가 빨라져요. 칩이 빅 블라인드의 10배 이하로 줄면 기다리기보다 좋은 패에서 올인으로 승부를 거는 편이 낫습니다.",
+        "딜러 버튼에 가까운 자리(늦게 행동하는 자리)일수록 상대 행동을 보고 결정할 수 있어 더 많은 패로 참여할 수 있어요.",
+      ],
+      faq: [
+        { q: "실제 돈이 드나요?", a: "아니요. 게임 안의 칩만 쓰는 무료 게임이에요. 칩은 현금으로 바꾸거나 충전할 수 없습니다." },
+        { q: "친구와 하려면 어떻게 하나요?", a: "로그인 후 온라인 대전에서 방을 만들고 방 코드를 친구에게 보내면 돼요. 2~6명까지 가능하고 빈 자리는 AI로 채울 수 있어요." },
+        { q: "다른 사람이 내 카드를 볼 수 없나요?", a: "온라인에서는 내 카드를 내 브라우저만 풀 수 있는 키로 암호화해서 보내기 때문에 다른 참가자는 볼 수 없어요. 다만 카드를 나눠 주는 방장 브라우저는 기술적으로 모든 카드를 알고 있으니 믿을 수 있는 친구끼리 즐겨 주세요." },
+        { q: "차례에 아무것도 안 하면 어떻게 되나요?", a: "온라인에서는 30초가 지나면 자동으로 체크(체크할 수 없으면 폴드)돼요. 접속이 끊긴 사람은 더 빨리 넘어갑니다." },
+      ],
+    },
+    en: {
+      tips: [
+        "Play strong starting hands (big pairs, A-K and other high cards) aggressively and let weak ones go early — that's how you last in a tournament.",
+        "When unsure about a call, check the pot odds: if your chance to win beats call ÷ (pot + call), the call pays off in the long run.",
+        "Rising blinds eat your stack faster and faster. Once you're under about 10 big blinds, look for a good hand to go all-in rather than waiting.",
+        "Seats closer to the button act later and see what others do first, so you can play more hands there.",
+      ],
+      faq: [
+        { q: "Does it use real money?", a: "No. Chips are play money only — they can't be bought or cashed out." },
+        { q: "How do I play with friends?", a: "Sign in, create a room in Online and send the room code. 2–6 players; empty seats can be filled with AI." },
+        { q: "Can others see my cards?", a: "Online, your cards are encrypted with a key only your browser holds, so other players can't see them. The host's browser deals the cards, so it technically knows every card — play with people you trust." },
+        { q: "What if I don't act?", a: "Online, after 30 seconds you automatically check (or fold if you can't check). Disconnected players are skipped faster." },
+      ],
+    },
+  },
   "random-td": {
     ko: {
       tips: [

@@ -37,6 +37,7 @@ GitHub(`neolich86/minigame`) → Vercel 자동 배포, 계정·랭킹·온라인
    12. `supabase/migrations/0014_roulette.sql` — 룰렛 최고 잔액 랭킹 보드 (`ranked_boards` 에 `roulette` 추가)
    13. `supabase/migrations/0015_baccarat.sql` — 바카라 최고 잔액 랭킹 보드 (`ranked_boards` 에 `baccarat` 추가)
    14. `supabase/migrations/0016_challenge_bigint.sql` — 도전장 점수를 bigint 로 (21억 원이 넘는 카지노 잔액도 도전장 가능)
+   15. `supabase/migrations/0017_holdem.sql` — 텍사스 홀덤 온라인 방 (방 인원·좌석을 6명까지, `mg_create_room` 에 holdem 허용)
 2. **Project Settings → API (API Keys)** 에서 복사
    - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
    - anon(또는 publishable) 키 → `NEXT_PUBLIC_SUPABASE_ANON_KEY`

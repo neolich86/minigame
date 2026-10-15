@@ -94,6 +94,19 @@ const CATALOG: Game[] = [
     teams: true,
   },
   {
+    id: "holdem",
+    title: { ko: "텍사스 홀덤", en: "Texas Hold'em" },
+    desc: {
+      ko: "2~6명이 겨루는 텍사스 홀덤 토너먼트. 친구와 온라인 대전(내 카드는 암호화되어 나만 보여요) 또는 AI와 대결, 블라인드가 오르고 마지막 1명이 우승",
+      en: "A 2–6 player Texas Hold'em tournament — play friends online (your cards are encrypted so only you can see them) or take on AI. Blinds rise; last player standing wins",
+    },
+    genre: "board",
+    thumb: "/thumbs/holdem.jpg",
+    src: "/games/holdem/index.html",
+    online: true,
+    onlinePlayers: [2, 3, 4, 5, 6],
+  },
+  {
     id: "world-typing",
     title: { ko: "세계도시 타이핑", en: "World City Typing" },
     desc: {
