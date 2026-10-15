@@ -719,9 +719,12 @@ $("btnVs").onclick = openVs;
 /* ================= 화면 갱신 ================= */
 const CHIP_VALUES = [1e5,2e5,5e5,1e6,5e6,1e7,1e8,1e9,1e10,1e11];
 let chipKey = "";
+/** 결과 공개 전에는 결과가 반영되기 전 잔액을 기준으로 — 칩 종류가 바뀌어 승패가 미리 드러나지 않게 */
+function shownCash(){ return pending && hudBal !== null ? hudBal : cash(); }
+function shownTotal(){ return pending && hudBal !== null ? hudBal + (hudBet || 0) : S.bal; }
 function renderChips(){
-  const c = cash();
-  let list = CHIP_VALUES.filter(v => v <= Math.max(S.bal, MIN_CHIP)); if(list.length > 7) list = list.slice(-7);
+  const c = shownCash();
+  let list = CHIP_VALUES.filter(v => v <= Math.max(shownTotal(), MIN_CHIP)); if(list.length > 7) list = list.slice(-7);
   const key = list.join(",");
   if(key !== chipKey){ chipKey = key; if(!list.includes(chip)) chip = list.filter(v=>v<=c).pop() || list[0];
     $("chips").innerHTML = list.map(v=>`<button class="chip" data-v="${v}" style="--c:${chipColor(v)}"><span>${short(v)}</span></button>`).join(""); }
@@ -742,7 +745,7 @@ function refresh(){
   renderChips();
   const has = tableTotal() > 0;
   $("bDeal").disabled = busy || !has || walletBlocked(); $("bUndo").disabled = busy || !undoStack.length; $("bClear").disabled = busy || !has;
-  $("bDouble").disabled = busy || !has || tableTotal() > cash(); $("bRebet").disabled = busy || !S.last || has;
+  $("bDouble").disabled = busy || !has || tableTotal() > shownCash(); $("bRebet").disabled = busy || !S.last || has;
   for(const sp of document.querySelectorAll(".spot")) sp.disabled = busy || walletBlocked();
   loginNote();
   $("btnVs").style.display = (MG && MG.result && S.peak > START) ? "" : "none";

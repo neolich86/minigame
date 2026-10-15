@@ -774,9 +774,12 @@ $("btnVs").onclick = openVs;
 /* ================= 화면 갱신 ================= */
 const CHIP_VALUES = [5e4,1e5,5e5,1e6,5e6,1e7,1e8,1e9,1e10,1e11];
 let chipKey = "";
+/** 결과 공개 전에는 결과가 반영되기 전 잔액을 기준으로 — 칩 종류가 바뀌어 승패가 미리 드러나지 않게 */
+function shownCash(){ return pending && hudBal !== null ? hudBal : cash(); }
+function shownTotal(){ return pending && hudBal !== null ? hudBal + (hudBet || 0) : S.bal; }
 function renderChips(){
-  const c = cash();
-  let list = CHIP_VALUES.filter(v => v <= Math.max(S.bal, MIN_CHIP));
+  const c = shownCash();
+  let list = CHIP_VALUES.filter(v => v <= Math.max(shownTotal(), MIN_CHIP));
   if(list.length > 7) list = list.slice(-7);
   const key = list.join(",");
   if(key !== chipKey){
@@ -808,7 +811,7 @@ function refresh(){
   if(walletLoading) $("msg").innerHTML = `<span style="color:var(--dim)">${L("계정 잔액 불러오는 중…","Loading your balance…")}</span>`;
   $("bUndo").disabled = spinning || !undoStack.length;
   $("bClear").disabled = spinning || !has;
-  $("bDouble").disabled = spinning || !has || tableTotal() > cash();
+  $("bDouble").disabled = spinning || !has || tableTotal() > shownCash();
   $("bRebet").disabled = spinning || !S.last || !S.last.length || has;
   $("btnVs").style.display = (MG && MG.result && S.peak > START) ? "" : "none";
 }
