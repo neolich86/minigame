@@ -422,6 +422,36 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       ],
     },
   },
+  blackjack: {
+    ko: {
+      tips: [
+        "기본 전략대로만 해도 하우스 엣지가 약 0.4%까지 내려가요. 💡 힌트를 켜면 지금 상황에서 기본 전략이 추천하는 버튼이 빛나요.",
+        "딜러 업카드가 2~6이면 딜러가 버스트할 확률이 높아요. 이때는 12~16에서도 멈추고(딜러 2·3 상대 12는 히트), 더블 기회를 노리세요.",
+        "A·A와 8·8은 항상 스플릿, 10·10과 5·5는 스플릿하지 않는 게 기본이에요. 5·5는 합 10으로 보고 더블을 노리세요.",
+        "보험은 딜러가 블랙잭일 확률(약 31%)보다 배당이 불리해서 기본 전략에서는 받지 않아요.",
+      ],
+      faq: [
+        { q: "실제 돈이 드나요?", a: "아니요. 게임 안의 가상 금액만 쓰는 무료 게임이에요. 현금으로 바꾸거나 충전할 수 없습니다." },
+        { q: "딜러는 언제 카드를 더 받나요?", a: "16 이하면 반드시 받고, 소프트 17(A가 11로 세어진 17)을 포함해 17 이상이면 멈춰요." },
+        { q: "게임 도중에 새로고침하면요?", a: "진행 중인 핸드가 그대로 저장돼 있어서 같은 카드로 이어서 할 수 있어요. 결과도 카드가 펼쳐지기 전에 정해지므로 새로고침으로 바뀌지 않아요." },
+        { q: "랭킹은 어떻게 등록되나요?", a: "로그인한 상태에서 잔액이 100만 원 이상이면 핸드가 끝날 때마다 최고 잔액이 자동으로 기록돼요." },
+      ],
+    },
+    en: {
+      tips: [
+        "Following basic strategy brings the house edge down to about 0.4%. Turn on 💡 Hint and the recommended button lights up.",
+        "When the dealer shows 2–6 they bust often — stand on 12–16 (hit 12 against a 2 or 3) and look for doubles.",
+        "Always split aces and eights; never split tens or fives — treat 5-5 as a 10 and double.",
+        "Insurance pays less than the dealer's real chance of blackjack (about 31%), so basic strategy never takes it.",
+      ],
+      faq: [
+        { q: "Does it use real money?", a: "No. It's a free game with play money only — nothing can be bought or cashed out." },
+        { q: "When does the dealer draw?", a: "The dealer must hit 16 or less and stands on all 17s, including soft 17." },
+        { q: "What if I reload mid-hand?", a: "The hand in progress is saved, so you continue with the same cards. Results are fixed before the cards are revealed, so reloading can't change them." },
+        { q: "How does the leaderboard work?", a: "When signed in, your peak balance is recorded after each hand while your balance is ₩1,000,000 or more." },
+      ],
+    },
+  },
   "world-typing": {
     ko: {
       tips: [

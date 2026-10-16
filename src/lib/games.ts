@@ -172,6 +172,19 @@ const CATALOG: Game[] = [
     boards: [{ id: "baccarat", label: { ko: "최고 잔액", en: "Peak balance" }, unit: { ko: "", en: "" }, format: "won", vs: { label: { ko: "최고 잔액", en: "peak balance" }, question: { ko: "누가 더 크게 따나?", en: "Who wins bigger?" } } }],
   },
   {
+    id: "blackjack",
+    title: { ko: "블랙잭", en: "Blackjack" },
+    desc: {
+      ko: "6덱 정통 블랙잭. 히트·스탠드·더블·스플릿·서렌더·보험, 블랙잭은 3:2. 기본 전략 힌트를 켜고 100만 원으로 최고 잔액 랭킹에 도전",
+      en: "Classic 6-deck blackjack — hit, stand, double, split, surrender and insurance, blackjack pays 3:2. Turn on basic-strategy hints and chase the peak-balance leaderboard",
+    },
+    genre: "casual",
+    thumb: "/thumbs/blackjack.jpg",
+    src: "/games/blackjack/index.html",
+    saves: true, // 지갑(잔액)·진행 중인 핸드를 계정에 저장
+    boards: [{ id: "blackjack", label: { ko: "최고 잔액", en: "Peak balance" }, unit: { ko: "", en: "" }, format: "won", vs: { label: { ko: "최고 잔액", en: "peak balance" }, question: { ko: "누가 더 크게 따나?", en: "Who wins bigger?" } } }],
+  },
+  {
     id: "lotto",
     kind: "tool",
     title: { ko: "로또 번호 추첨기", en: "Lotto Number Picker" },

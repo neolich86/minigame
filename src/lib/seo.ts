@@ -451,6 +451,32 @@ export const GAME_SEO: SeoMap = {
       tags: ["Casino", "Baccarat", "Roads", "Leaderboard", "Free"],
     },
   },
+  blackjack: {
+    ko: {
+      title: "블랙잭 게임 - 무료 6덱 정통 블랙잭 (기본 전략 힌트)",
+      h1: "블랙잭 — 무료 카지노 블랙잭 게임",
+      description: "설치 없이 바로 하는 무료 블랙잭. 히트·스탠드·더블·스플릿·서렌더·보험까지 정통 규칙, 블랙잭은 3:2. 기본 전략 힌트를 켜고 100만 원으로 최고 잔액 랭킹에 도전하세요. 실제 돈은 쓰지 않아요.",
+      keywords: ["블랙잭", "블랙잭 게임", "무료 블랙잭", "블랙잭 기본 전략", "카지노 게임", "21", "블랙잭 연습", "무료 게임"],
+      about: [
+        "블랙잭은 카드 합이 21을 넘지 않으면서 딜러보다 21에 가깝게 만드는 카지노 게임입니다. 6덱 슈를 쓰고, 딜러는 소프트 17을 포함해 17 이상에서 멈추며, 처음 두 장이 A와 10이면 3:2를 받아요.",
+        "더블, 최대 4핸드 스플릿, 서렌더, 보험을 모두 지원하고, 💡 힌트를 켜면 기본 전략이 추천하는 행동을 표시해 줘서 연습하기 좋아요. 100만 원으로 시작하고 잔액이 100만 원 이상이면 로그인한 계정의 최고 잔액이 랭킹에 기록됩니다. 실제 돈은 오가지 않는 무료 게임이에요.",
+      ],
+      howTo: ["칩을 눌러 베팅하고 DEAL을 누릅니다.", "히트·스탠드·더블·스플릿·서렌더 중 하나를 고르세요. 💡 힌트를 켜면 추천 행동이 표시돼요.", "딜러보다 21에 가까우면 승리, 처음 두 장이 블랙잭이면 3:2!"],
+      tags: ["카지노", "블랙잭", "기본 전략", "랭킹", "무료"],
+    },
+    en: {
+      title: "Blackjack - Free 6-Deck Blackjack with Basic Strategy Hints",
+      h1: "Blackjack — Free Casino Blackjack",
+      description: "Play classic blackjack free in your browser: hit, stand, double, split, surrender and insurance, blackjack pays 3:2. Turn on basic-strategy hints and chase the peak-balance leaderboard from ₩1,000,000. No real money.",
+      keywords: ["blackjack", "free blackjack", "blackjack basic strategy", "21", "casino game", "free game"],
+      about: [
+        "Blackjack is the casino game where you try to beat the dealer by getting closer to 21 without going over. A six-deck shoe, the dealer stands on all 17s, and a natural pays 3:2.",
+        "Double, split up to four hands, surrender and insurance are all in, and the 💡 hint shows the basic-strategy move so you can practise. Start with ₩1,000,000; while your balance is ₩1,000,000 or more, signed-in players are ranked by peak balance. No real money is involved.",
+      ],
+      howTo: ["Tap chips to bet and press DEAL.", "Hit, stand, double, split or surrender — turn on 💡 Hint to see the recommended move.", "Beat the dealer's total without busting; a two-card 21 pays 3:2!"],
+      tags: ["Casino", "Blackjack", "Basic strategy", "Leaderboard", "Free"],
+    },
+  },
   "world-typing": {
     ko: {
       title: "세계도시 타이핑 - 무료 타자 연습 게임 (한타·영타)",
@@ -483,7 +509,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
       { title: "뱀서 · 서바이벌", text: "몰려오는 몬스터 속에서 스킬을 골라 성장하는 뱀서류 서바이벌 로그라이크. 생존 시간 랭킹에 도전하세요.", games: ["archer"] },
       { title: "슈팅 · 타워디펜스", text: "아케이드 종스크롤 비행기 슈팅과 원소 조합 전략 타워디펜스.", games: ["raiden", "element-td"] },
       { title: "카드 뽑기 · 타자 연습", text: "포켓몬·원피스 카드 오리파 시뮬레이터와 세계 지도 타자 연습 게임.", games: ["oripa", "world-typing"] },
-      { title: "카지노", text: "0이 하나뿐인 유럽식 룰렛과 출목표가 있는 8덱 바카라. 100만 원으로 시작해 최고 잔액 랭킹에 도전하세요. 실제 돈은 쓰지 않아요.", games: ["roulette", "baccarat"] },
+      { title: "카지노", text: "0이 하나뿐인 유럽식 룰렛, 출목표가 있는 8덱 바카라, 기본 전략 힌트가 있는 6덱 블랙잭. 100만 원으로 시작해 최고 잔액 랭킹에 도전하세요. 실제 돈은 쓰지 않아요.", games: ["roulette", "baccarat", "blackjack"] },
     ],
   },
   en: {
@@ -494,7 +520,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
       { title: "Survivor-like · Survival", text: "A survivor-like roguelite — grow your skills amid endless hordes and chase the survival-time leaderboard.", games: ["archer"] },
       { title: "Shooter · Tower defense", text: "An arcade vertical shooter and an elemental strategy tower defense.", games: ["raiden", "element-td"] },
       { title: "Card pulls · Typing", text: "A Pokémon / One Piece oripa card-pull simulator and a world-map typing practice game.", games: ["oripa", "world-typing"] },
-      { title: "Casino", text: "Single-zero European roulette and 8-deck baccarat with full scoreboards — start with ₩1,000,000 and chase the peak-balance leaderboard. No real money.", games: ["roulette", "baccarat"] },
+      { title: "Casino", text: "Single-zero European roulette, 8-deck baccarat with full scoreboards and 6-deck blackjack with basic-strategy hints — start with ₩1,000,000 and chase the peak-balance leaderboard. No real money.", games: ["roulette", "baccarat", "blackjack"] },
     ],
   },
 };
