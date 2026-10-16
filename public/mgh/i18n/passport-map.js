@@ -62,10 +62,13 @@
       "이 브라우저에서는 이미지 복사가 막혀 있어요. ‘이미지 저장’을 이용해 주세요.": "This browser blocks copying images. Try “Save image”.",
       "링크를 복사했어요.": "Link copied.",
       "인스타그램·카카오톡에는 이미지를 저장한 뒤 앱에서 올려 주세요. 링크를 받은 친구는 바로 자기 Passport Map을 만들 수 있어요.": "For Instagram or KakaoTalk, save the image and post it from the app. Friends who open the link can start their own Passport Map.",
+      "+ 방문 기간 추가": "+ Add another visit", "이 기간 지우기": "Remove this visit",
       "개 나라를 다녀왔어요": "countries visited", "개 나라": "countries", "곳의 도시": "cities", "세계 나라 중": "of the world",
     },
     patterns: [
       [/^도시 (\d+)곳$/, "$1 cities"],
+      [/^(\d+)번째 방문$/, "Visit $1"],
+      [/^(\d+)번 방문$/, "$1 visits"],
       [/^(.+)에 핀을 찍었어요$/, "Pinned $1"],
       [/^([\s\S]+) · 도시 (\d+)곳$/, "$1 · $2 cities"],
       [/^나라 (\d+) · 도시 (\d+)$/, "$1 countries · $2 cities"],

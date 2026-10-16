@@ -207,6 +207,11 @@ input,button,select,textarea{box-sizing:border-box}
 .dates{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:6px}
 .dates input{width:100%;min-width:0;height:40px;border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:0 8px;font:inherit;display:block;-webkit-appearance:none;appearance:none;text-align:left}
 .dates input::-webkit-date-and-time-value{text-align:left}
+.visits{display:grid;gap:8px}
+.vrow{display:grid;gap:4px}
+.vrow .vh{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted)}
+.vrow .vx{border:0;background:none;color:var(--muted);font-size:12px;padding:2px 4px;text-decoration:underline}
+.vadd{justify-self:start}
 @media (max-width:720px){.dates input,.field{font-size:16px}}
 .choice{position:absolute;z-index:11;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px;width:250px;display:grid;gap:8px}
 .choice h4{margin:0;font-family:var(--f-display);font-size:19px;display:flex;align-items:center;gap:8px}
@@ -618,8 +623,13 @@ const DAY=864e5;
 function ymd(s){return s?s.replace(/-/g,'.'):''}
 function periodText(o){if(!o||!o.from)return '';const a=o.from,b=o.to&&o.to!==o.from?o.to:'';const n=Math.round((Date.parse(b||a)-Date.parse(a))/DAY)+1;
   const bt=b?(b.slice(0,4)===a.slice(0,4)?b.slice(5).replace('-','.'):ymd(b)):'';return ymd(a)+(bt?' – '+bt:'')+' · '+n+(EN?(n>1?' days':' day'):'일')}
+// 방문 기간: 첫 번째는 o.from/o.to (예전 데이터 그대로), 두 번째부터는 o.more=[{from,to},…]
+function visitsOf(o){if(!o)return [];return [{from:o.from,to:o.to},...(Array.isArray(o.more)?o.more:[])]}
+function datedVisits(o){return visitsOf(o).filter(v=>v&&v.from).sort((p,q)=>p.from<q.from?-1:p.from>q.from?1:0)}
+function periodsText(o){const v=datedVisits(o);if(!v.length)return '';if(v.length===1)return periodText(v[0]);
+  return v.map(x=>periodText(x)).join(' / ')+(EN?` (${v.length} visits)`:` (${v.length}번 방문)`)}
 function travelDays(){const iv=[];const add=o=>{if(!o||!o.from)return;let a=Date.parse(o.from),b=Date.parse(o.to||o.from);if(isNaN(a))return;if(isNaN(b)||b<a)b=a;iv.push([a,b])};
-  Object.values(S.countries).forEach(add);S.cities.forEach(add);iv.sort((p,q)=>p[0]-q[0]);let tot=0,cs=null,ce=null;
+  const addAll=o=>datedVisits(o).forEach(add);Object.values(S.countries).forEach(addAll);S.cities.forEach(addAll);iv.sort((p,q)=>p[0]-q[0]);let tot=0,cs=null,ce=null;
   for(const [a,b] of iv){if(cs===null){cs=a;ce=b}else if(a<=ce+DAY){ce=Math.max(ce,b)}else{tot+=Math.round((ce-cs)/DAY)+1;cs=a;ce=b}}if(cs!==null)tot+=Math.round((ce-cs)/DAY)+1;return tot}
 const FINE=matchMedia('(pointer:fine)').matches; // 휴대폰에서는 자동 포커스로 키보드·달력이 뜨지 않게
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -781,9 +791,9 @@ function hover(e){const t=document.elementFromPoint(e.clientX,e.clientY);if(!t){
   if(lg&&lg.dataset.key){const x=CITY_LIST.find(c=>c.key===lg.dataset.key);const ct=S.cities.find(c=>c.key===lg.dataset.key);
     if(ct){key='ci'+ct.id+ct.photo;html=tipHTML(ct.photo,nmCt(ct),[nmC(C[ct.cc]),ct.memo].filter(Boolean).join(' · '))}
     else if(x){key='pc'+x.key;html=tipHTML(null,EN?x.en:x.ko,canEdit()?'눌러서 다녀온 도시로 추가':nmC(C[x.cc]))}}
-  else if(t.dataset&&t.dataset.city){const ct=S.cities.find(c=>c.id===t.dataset.city);if(ct){key='ci'+ct.id+ct.photo+ct.from+ct.to;html=tipHTML(ct.photo,nmCt(ct),[nmC(C[ct.cc]),ct.memo].filter(Boolean).join(' · '),periodText(ct))}}
+  else if(t.dataset&&t.dataset.city){const ct=S.cities.find(c=>c.id===t.dataset.city);if(ct){key='ci'+ct.id+ct.photo+periodsText(ct);html=tipHTML(ct.photo,nmCt(ct),[nmC(C[ct.cc]),ct.memo].filter(Boolean).join(' · '),periodsText(ct))}}
   else if(t.dataset&&t.dataset.id){const c=C[t.dataset.id],st=S.countries[t.dataset.id];
-    if(st){const n=S.cities.filter(x=>x.cc===c.id).length;key='co'+c.id+st.photo+n+st.from+st.to;html=tipHTML(st.photo,nmC(c),[st.memo,n?`도시 ${n}곳`:''].filter(Boolean).join(' · ')||'다녀온 나라',periodText(st))}
+    if(st){const n=S.cities.filter(x=>x.cc===c.id).length;key='co'+c.id+st.photo+n+periodsText(st);html=tipHTML(st.photo,nmC(c),[st.memo,n?`도시 ${n}곳`:''].filter(Boolean).join(' · ')||'다녀온 나라',periodsText(st))}
     else{key='co'+c.id;html=tipHTML(null,nmC(c),EN?c.ko:c.en)}}
   if(!key){hideTip();return}
   if(key!==tipKey){tip.innerHTML=html;tipKey=key}
@@ -811,7 +821,8 @@ function mapClick(e){const t=document.elementFromPoint(e.clientX,e.clientY);cons
 
 /* ---------- panel ---------- */
 const panel=$('#panel');
-function open(s,focusName){sel=s;hideTip();renderPanel();renderMap();if(focusName&&FINE){const i=$('#cname');i&&i.focus()}}
+function pruneVisits(o){if(o&&Array.isArray(o.more)){o.more=o.more.filter(v=>v&&v.from);if(!o.more.length)delete o.more}}
+function open(s,focusName){if(sel&&(sel.type!==s.type||sel.id!==s.id))pruneVisits(selObj());sel=s;pruneVisits(selObj());hideTip();renderPanel();renderMap();if(focusName&&FINE){const i=$('#cname');i&&i.focus()}}
 function openCityKey(key,cx,cy){const ct=S.cities.find(c=>c.key===key);if(ct){open({type:'city',id:ct.id});return}
   if(canEdit()&&cx!=null){showChoice(key,cx,cy);return}open({type:'pcity',key})}
 let choiceKey=null;
@@ -828,7 +839,7 @@ $('#choice').addEventListener('click',e=>{const b=e.target.closest('[data-c]');i
   if(c==='pin'){flash(EN?`Pinned ${x.en}`:`${x.ko}에 핀을 찍었어요`);return}
   open({type:'city',id:ct.id})});
 document.addEventListener('pointerdown',e=>{if(!$('#choice').hidden&&!e.target.closest('#choice'))closeChoice()});
-function closePanel(){sel=null;panel.hidden=true;renderMap()}
+function closePanel(){pruneVisits(selObj());sel=null;panel.hidden=true;renderMap()}
 function canEdit(){return mode==='artifact'||mode==='cloud'||mode==='local'}
 function citiesOf(cc){return S.cities.filter(c=>c.cc===cc)}
 function photoBlock(photo){
@@ -837,8 +848,12 @@ function photoBlock(photo){
   return `<div><div class="lbl">사진</div><div class="drop" data-a="pick" tabindex="0" role="button" id="drop"><div><b>사진 1장 올리기</b><br>눌러서 고르거나, 여기로 끌어 놓거나,<br>복사한 사진을 붙여넣으세요</div></div><div class="err" id="perr"></div></div>`}
 function palBlock(cur,label,hint){if(!canEdit())return cur?`<div><div class="lbl">${label}</div><span class="sw" style="background:${cur};display:inline-grid"></span></div>`:'';
   return `<div><div class="lbl">${label}</div><div class="pal">`+PAL.map(([c,n])=>`<button class="sw" data-color="${c}" style="background:${c}" aria-pressed="${cur===c}" aria-label="${n}" title="${n}">${cur===c?'✓':''}</button>`).join('')+`</div><div class="swl">${cur?esc((PAL.find(p=>p[0]===cur)||['','다른'])[1])+' 색이에요':hint}</div></div>`}
-function dateBlock(o){if(!canEdit())return o&&o.from?`<div><div class="lbl">방문 기간</div><div>${esc(periodText(o))}</div></div>`:'';
-  return `<div><div class="lbl">방문 기간</div><div class="dates"><input type="date" id="dFrom" aria-label="방문 시작일" value="${esc(o.from||'')}"><span>~</span><input type="date" id="dTo" aria-label="방문 마지막 날" value="${esc(o.to||'')}"></div><div class="swl" id="dLen">${o.from?esc(periodText(o)):'달력에서 시작일과 마지막 날을 고르세요 (마지막 날은 비워도 돼요)'}</div></div>`}
+const DHINT='달력에서 시작일과 마지막 날을 고르세요 (마지막 날은 비워도 돼요)';
+function dateBlock(o){
+  if(!canEdit()){const v=datedVisits(o);return v.length?`<div><div class="lbl">방문 기간</div>${v.length>1?`<div class="swl">${EN?v.length+' visits':v.length+'번 방문'}</div>`:''}${v.map(x=>`<div>${esc(periodText(x))}</div>`).join('')}</div>`:''}
+  const vs=visitsOf(o),many=vs.length>1;
+  return `<div><div class="lbl">방문 기간</div><div class="visits">`+vs.map((v,i)=>`<div class="vrow" data-vi="${i}">${many?`<div class="vh"><span>${EN?'Visit '+(i+1):(i+1)+'번째 방문'}</span>${i?`<button class="vx" data-a="rmvisit" data-vi="${i}">이 기간 지우기</button>`:''}</div>`:''}<div class="dates"><input type="date" class="dFrom" aria-label="방문 시작일" value="${esc(v.from||'')}"><span>~</span><input type="date" class="dTo" aria-label="방문 마지막 날" value="${esc(v.to||'')}"></div><div class="swl dLen">${v.from?esc(periodText(v)):DHINT}</div></div>`).join('')+
+    `<button class="sbtn vadd" data-a="addvisit">+ 방문 기간 추가</button></div></div>`}
 function renderPanel(){
   if(!sel){panel.hidden=true;return}
   panel.hidden=false;let h='';const ed=canEdit();
@@ -881,28 +896,34 @@ function renderPanel(){
     const orphan=S.cities.filter(x=>!x.cc);orphan.forEach(ct=>{h+=`<button class="li" data-city="${ct.id}">${ct.photo?`<img src="${esc(photoURL(ct.photo))}" alt="">`:`<span class="noimg">·</span>`}<div><b>${esc(nmCt(ct))}</b><span>바다 위의 핀</span></div></button>`});
     h+=`</div>`+(EMB?`<p class="note" style="margin-top:8px"><a href="/me" target="_top">${EN?'My account':'내 계정'}</a> · <a href="/privacy" target="_top">${EN?'Privacy':'개인정보처리방침'}</a> · <a href="/account/delete" target="_top">${EN?'Delete account':'계정 삭제'}</a></p>`:'')+`</div>`}
   panel.innerHTML=h;
-  const dF=$('#dFrom'),dT=$('#dTo');if(dF&&dT){
+  panel.querySelectorAll('.vrow').forEach(row=>{const dF=row.querySelector('.dFrom'),dT=row.querySelector('.dTo'),i=+row.dataset.vi;
     // 고른 날짜는 그대로 둔다: 자동 교환·보정 없이, 맞지 않으면 안내만 하고 저장하지 않는다
-    const HINT='달력에서 시작일과 마지막 날을 고르세요 (마지막 날은 비워도 돼요)';const msg=t=>{$('#dLen').textContent=t};
-    const commit=()=>{const o=sel&&(sel.type==='country'?S.countries[sel.id]:S.cities.find(c=>c.id===sel.id));if(!o)return;
+    const msg=t=>{row.querySelector('.dLen').textContent=t};
+    const commit=()=>{const o=selObj();if(!o)return;
       const a=dF.value||'',b=dT.value||'';
       if(!a&&b){msg('시작일도 골라 주세요');return}
       if(a&&b&&b<a){msg('마지막 날이 시작일보다 빨라요. 날짜를 다시 골라 주세요');return}
       const nf=a||undefined,nt=b&&b!==a?b:undefined;
-      if(o.from!==nf||o.to!==nt){o.from=nf;o.to=nt;renderStats();changed(true)}
-      msg(o.from?periodText(o):HINT)};
-    [dF,dT].forEach(inp=>{inp.addEventListener('change',commit);inp.addEventListener('blur',commit)})}
+      if(i===0){if(o.from!==nf||o.to!==nt){o.from=nf;o.to=nt;renderStats();changed(true)}}
+      else{o.more=Array.isArray(o.more)?o.more:[];const v=o.more[i-1]||(o.more[i-1]={});if(v.from!==nf||v.to!==nt){v.from=nf;v.to=nt;if(!nt)delete v.to;if(!nf)delete v.from;renderStats();changed(true)}}
+      msg(nf?periodText({from:nf,to:nt}):DHINT)};
+    [dF,dT].forEach(inp=>{inp.addEventListener('change',commit);inp.addEventListener('blur',commit)})});
   const memo=$('#memo');if(memo)memo.oninput=()=>{const o=sel.type==='country'?S.countries[sel.id]:S.cities.find(c=>c.id===sel.id);if(o){o.memo=memo.value.trim()||undefined;changed(true)}};
   const cn=$('#cname');if(cn)cn.oninput=()=>{const o=S.cities.find(c=>c.id===sel.id);if(o){o.name=cn.value.trim();panel.querySelector('h2').textContent=o.name||'이름 없는 곳';changed(true)}};
   const dr=$('#drop');if(dr){dr.ondragover=e=>{e.preventDefault();dr.classList.add('over')};dr.ondragleave=()=>dr.classList.remove('over');
     dr.ondrop=e=>{e.preventDefault();dr.classList.remove('over');const f=e.dataTransfer.files[0];if(f)takePhoto(f)};dr.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#file').click()}}}
 }
+function selObj(){return sel&&(sel.type==='country'?S.countries[sel.id]:sel.type==='city'?S.cities.find(c=>c.id===sel.id):null)}
 let armed=null;
 panel.addEventListener('click',e=>{const b=e.target.closest('button,[data-a]');if(!b)return;const a=b.dataset.a;
   if(b.dataset.city){open({type:'city',id:b.dataset.city});zoomToCity(b.dataset.city);return}
   if(b.dataset.country){open({type:'country',id:b.dataset.country});zoomToCountry(b.dataset.country);return}
   if(b.dataset.add){const x=CITY_LIST.find(c=>c.key===b.dataset.add);addCity(x,false);renderPanel();return}
   if(a==='close')return closePanel();
+  if(a==='addvisit'){const o=selObj();if(!o)return;o.more=Array.isArray(o.more)?o.more:[];o.more.push({});renderPanel();
+    const rows=panel.querySelectorAll('.vrow');const r=rows[rows.length-1];if(r){r.scrollIntoView({block:'nearest'});if(FINE)r.querySelector('.dFrom').focus()}return}
+  if(a==='rmvisit'){const o=selObj(),i=+b.dataset.vi;if(!o||!Array.isArray(o.more)||i<1)return;const had=o.more[i-1]&&o.more[i-1].from;o.more.splice(i-1,1);if(!o.more.length)delete o.more;
+    renderPanel();if(had){renderStats();changed(true)}return}
   if(b.dataset.color){const col=b.dataset.color;S.prefs=S.prefs||{};
     if(sel.type==='country'){if(!S.countries[sel.id])S.countries[sel.id]={};S.countries[sel.id].color=col;S.prefs.country=col}
     else{const ct=S.cities.find(c=>c.id===sel.id);if(ct){ct.color=col;S.prefs.city=col}}
