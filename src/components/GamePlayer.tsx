@@ -269,7 +269,7 @@ export function GamePlayer({ gameId, app }: { gameId: string; app?: string }) {
           ref={frame}
           data-mgh-game={game.id}
           className="game-frame"
-          src={`${game.src}?lang=${frameLang}`}
+          src={`${game.src}?lang=${frameLang}&v=${process.env.NEXT_PUBLIC_BUILD_ID}`}
           title={game.title[lang]}
           allow="autoplay; fullscreen; clipboard-write; web-share; geolocation"
           allowFullScreen

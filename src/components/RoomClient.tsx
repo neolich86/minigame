@@ -364,7 +364,7 @@ export function RoomClient({ gameId, code }: { gameId: string; code: string }) {
             ref={frameRef}
             data-mgh-game={game.id}
             className="game-frame"
-            src={`${game.src}?online=1&lang=${frameLang}`}
+            src={`${game.src}?online=1&lang=${frameLang}&v=${process.env.NEXT_PUBLIC_BUILD_ID}`}
             title={game.title[lang]}
           />
         </div>

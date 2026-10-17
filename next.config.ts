@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // 배포마다 바뀌는 값 — 게임 iframe 주소에 붙여, 브라우저(특히 사파리)가 예전 게임 파일을 캐시에서 쓰지 않게 한다
+  env: { NEXT_PUBLIC_BUILD_ID: (process.env.VERCEL_GIT_COMMIT_SHA || String(Date.now())).slice(0, 8) },
   async rewrites() {
     // 안드로이드 앱(TWA) 도메인 확인
     return [{ source: "/.well-known/assetlinks.json", destination: "/api/assetlinks" }];
