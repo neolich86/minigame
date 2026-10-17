@@ -547,9 +547,11 @@ function checkIn(s) {
   map.closePopup();
   const old = state.stops[s.id];
   if (old) {
+    const before = earnedBadges();
     old.visits = (old.visits || 1) + 1; old.last = today(); old.at = Date.now();
     persist(); renderStops(); renderSheet();
-    toast(L_(`${s.n} 다시 방문!`, `Back at ${s.n}!`), L_(`방문 ${old.visits}회`, `${old.visits} visits`));
+    const nb = earnedBadges().filter((b) => !before.includes(b));
+    toast(L_(`${s.n} 다시 방문!`, `Back at ${s.n}!`), L_(`방문 ${old.visits}회`, `${old.visits} visits`) + (nb.length ? ' · 🏅 ' + BADGES.find((b) => b.id === nb[0]).name : ''));
     return;
   }
   const firstToday = !Object.values(state.stops).some((x) => x.last === today());
@@ -626,6 +628,7 @@ function stats() {
     cells: cells.size,
     rail: list.filter((s) => s.k !== 'b').length,
     trans: list.filter((s) => s.k === 't').length,
+    checks: list.reduce((a, s) => a + (s.visits || 1), 0), // 총 체크인 (재방문 포함, 정류장마다 하루 1번)
     bus: list.filter((s) => s.k === 'b').length,
     visitedD: new Set(list.map((s) => distArea[s.d] || s.d).filter(Boolean)),
     byDist, sido, all,
@@ -635,6 +638,9 @@ const pct = (a, b) => (b ? (a / b) * 100 : 0);
 const fmtPct = (p) => (p >= 10 ? p.toFixed(1) : p >= 0.01 ? p.toFixed(2) : p > 0 ? '<0.01' : '0') + '%';
 const BADGES = [
   { id: 'first', e: '👣', name: L_('첫 걸음', 'First step'), d: L_('첫 체크인', 'First check-in'), ok: (s) => s.rail + s.bus >= 1 },
+  ...[[10, '🎫', '체크인 입문', 'Getting started'], [50, '🎟️', '꾸준한 탐험가', 'Regular explorer'], [100, '🏅', '체크인 100', 'Century'],
+    [300, '🥈', '체크인 300', '300 check-ins'], [500, '🥇', '체크인 500', '500 check-ins'], [1000, '🏆', '체크인 레전드', 'Check-in legend']]
+    .map(([n, e, ko, en]) => ({ id: 'ck' + n, e, name: L_(ko, en), d: L_(`체크인 ${n}회`, `${n} check-ins`), ok: (s) => s.checks >= n })),
   { id: 'rail10', e: '🚇', name: L_('역 수집가', 'Station collector'), d: L_('지하철역 10곳', '10 stations'), ok: (s) => s.rail >= 10 },
   { id: 'rail50', e: '🚄', name: L_('지하철 마스터', 'Metro master'), d: L_('지하철역 50곳', '50 stations'), ok: (s) => s.rail >= 50 },
   { id: 'trans5', e: '🔁', name: L_('환승의 달인', 'Transfer pro'), d: L_('환승역 5곳', '5 transfer stations'), ok: (s) => s.trans >= 5 },
@@ -705,7 +711,8 @@ function renderSheet() {
     body.innerHTML = h;
   } else {
     const s = stats();
-    body.innerHTML = `<div class="badges">${BADGES.map((b) => `<div class="bd ${b.ok(s) ? 'on' : ''}"><div class="e">${b.e}</div><b>${b.name}</b><small>${b.d}</small></div>`).join('')}</div>`;
+    const next = [10, 50, 100, 300, 500, 1000].find((n) => s.checks < n);
+    body.innerHTML = `<div class="empty" style="padding-top:0">${L_(`총 체크인 ${fmtN(s.checks)}회`, `${fmtN(s.checks)} check-ins`)}${next ? L_(` · 다음 뱃지까지 ${next - s.checks}회`, ` · ${next - s.checks} to next badge`) : ''} · ${L_(`뱃지 ${earnedBadges().length}/${BADGES.length}`, `badges ${earnedBadges().length}/${BADGES.length}`)}</div><div class="badges">${BADGES.map((b) => `<div class="bd ${b.ok(s) ? 'on' : ''}"><div class="e">${b.e}</div><b>${b.name}</b><small>${b.d}</small></div>`).join('')}</div>`;
   }
 }
 document.querySelectorAll('.tab').forEach((t) => {
