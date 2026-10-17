@@ -132,6 +132,7 @@ const CATALOG: Game[] = [
     thumb: "/thumbs/explore-map.jpg",
     src: "/games/explore-map/index.html",
     saves: true, // 체크인한 정류장 목록을 계정에 저장
+    hidden: true, // 정류장 데이터(공공데이터) 적용 전까지 목록에서 숨김
     boards: [{ id: "explore-map", label: { ko: "밝힌 칸", en: "Cells revealed" }, unit: { ko: "칸", en: " cells" }, vs: { label: { ko: "탐험", en: "exploration" }, question: { ko: "누가 더 넓게 탐험하나?", en: "Who explores more?" } } }],
   },
   {
