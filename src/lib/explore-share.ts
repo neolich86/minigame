@@ -11,6 +11,8 @@ export interface ExploreShare {
   r: number; // 지하철역 수
   b: number; // 버스정류장 수
   v: number; // 가 본 시·군·구 수
+  a: string; // 벌집 지도로 그릴 곳 (11 서울 · 23 인천 · 경기 시·군 코드)
+  m: string; // 벌집 칸별 밝힌 정도 (decodeHoney)
 }
 
 const txt = (v: string | null | undefined, max: number) => (v ?? "").replace(/[<>\n\r\t]/g, "").trim().slice(0, max);
@@ -34,6 +36,8 @@ export function parseExploreShare(get: (k: string) => string | null | undefined)
     r: Math.round(num(get("r"), 1e5)),
     b: Math.round(num(get("b"), 1e6)),
     v: Math.round(num(get("v"), 1000)),
+    a: /^\d{2,5}$/.test(get("a") ?? "") ? (get("a") as string) : "",
+    m: /^[A-Za-z0-9_-]{1,4000}$/.test(get("m") ?? "") ? (get("m") as string) : "",
   };
 }
 
@@ -44,7 +48,7 @@ export function exploreLeaders(x: ExploreShare): { ko: string; en: string; p: nu
   const all = [
     { ko: "서울", en: "Seoul", p: x.s },
     { ko: "인천", en: "Incheon", p: x.i },
-    { ko: x.gc || "경기", en: x.gc || "Gyeonggi", p: x.g },
+    { ko: x.gc || "경기", en: "Gyeonggi", p: x.g },
   ].filter((r) => r.p > 0);
   if (!all.length) return [];
   const top = fmtPct(Math.max(...all.map((r) => r.p)));
@@ -71,4 +75,32 @@ export function exploreShareQuery(x: ExploreShare) {
   const p = new URLSearchParams();
   for (const [k, v] of Object.entries(x)) if (v !== "" && v !== 0) p.set(k, String(v));
   return p.toString();
+}
+
+/* 공유 카드 벌집 지도 — area(서울·인천·경기 시·군)의 H3 해상도 8 칸마다 밝힌 정도(1~3)를
+   희소하게 인코딩: (이전 칸과의 순번 차이 × 4 + 단계)를 가변 길이 정수로 이어 붙여 base64url */
+export function decodeHoney(m: string): Map<number, number> {
+  const out = new Map<number, number>();
+  let bytes: Uint8Array;
+  try {
+    const b64 = m.replace(/-/g, "+").replace(/_/g, "/");
+    bytes = Uint8Array.from(atob(b64 + "===".slice((b64.length + 3) % 4)), (ch) => ch.charCodeAt(0));
+  } catch {
+    return out;
+  }
+  let idx = -1, v = 0, shift = 0;
+  for (const b of bytes) {
+    v |= (b & 0x7f) << shift;
+    if (b & 0x80) {
+      shift += 7;
+      if (shift > 28) return out;
+      continue;
+    }
+    const level = v & 3, delta = v >>> 2;
+    idx += delta;
+    if (level) out.set(idx, level);
+    v = 0;
+    shift = 0;
+  }
+  return out;
 }

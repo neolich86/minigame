@@ -1,6 +1,7 @@
 // 탐험 지도 자랑하기 카드 이미지 (카톡·링크 미리보기 1200×630)
 import { ImageResponse } from "next/og";
 import { loadFont } from "@/lib/challenge-image";
+import { honeySvg } from "@/lib/explore-honey";
 import { exploreLeaders, fmtPct, parseExploreShare } from "@/lib/explore-share";
 
 export async function GET(req: Request) {
@@ -40,10 +41,17 @@ export async function GET(req: Request) {
       const wobble = ((row * 7 + col * 13) % 5) * 9;
       hexes.push({ x: hx, y: hy, on: d < 50 + wobble + Math.min(1, (lead[0]?.p ?? 0) / 25) * 130 });
     }
+  // 벌집 지도: 공유한 사람이 실제로 밝힌 칸 (없으면 장식 무늬)
+  const svg = x.a && x.m ? honeySvg(x.a, x.m, 520, 550) : null;
+  const honey = svg ? `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}` : null;
   const img = new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", position: "relative", background: "linear-gradient(150deg,#101a30 0%,#0b1222 60%,#1c1a0e 100%)", color: "#fff", ...ff }}>
-        {hexes.map((h, k) => (
+        {honey ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={honey} width={520} height={550} alt="" style={{ position: "absolute", left: 650, top: 40 }} />
+        ) : null}
+        {honey ? null : hexes.map((h, k) => (
           <div
             key={k}
             style={{

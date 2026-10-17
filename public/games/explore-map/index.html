@@ -795,6 +795,33 @@ function loadKakao() {
   })).catch(() => false);
   return kakaoReady;
 }
+/* 공유 카드 벌집 지도 — areas8.json(서버와 같은 칸 순서)에 밝힌 정도를 담아 보낸다 */
+let areas8 = null, areas8P = null;
+const areaIdx = {};
+function loadAreas8() {
+  if (!areas8P) areas8P = fetch('areas8.json?v=' + (new URLSearchParams(location.search).get('v') || ''))
+    .then((r) => r.json()).then((j) => { areas8 = j; }).catch(() => { areas8P = null; });
+  return areas8P;
+}
+function honeyCode(key) {
+  if (!areas8 || !areas8[key]) return '';
+  if (!areaIdx[key]) { const m = new Map(); areas8[key].cells.forEach((c, i) => m.set(c, i)); areaIdx[key] = m; }
+  const idx = areaIdx[key], cnt = new Map();
+  for (const c of cells.keys()) {
+    const i = idx.get(h3.cellToParent(c, 8));
+    if (i != null) cnt.set(i, (cnt.get(i) || 0) + 1);
+  }
+  const bytes = [];
+  let prev = -1;
+  for (const i of [...cnt.keys()].sort((a, b) => a - b)) {
+    const n = cnt.get(i), level = n >= 33 ? 3 : n >= 17 ? 2 : 1;
+    let v = (i - prev) * 4 + level; prev = i;
+    while (v >= 0x80) { bytes.push((v & 0x7f) | 0x80); v = Math.floor(v / 128); }
+    bytes.push(v);
+  }
+  let bin = ''; for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
 function shareData() {
   const s = stats();
   const top = s.areaPct[0];
@@ -807,13 +834,23 @@ function shareData() {
     s: r1(pct(s.sido['11'][0], s.sido['11'][1])),
     i: r1(pct(s.sido['23'][0], s.sido['23'][1])),
     gc: gg ? gg.a.n : '',
+    gk: gg ? gg.a.k : '',
     g: gg ? r1(gg.p) : 0,
     c: s.cells, r: s.rail, b: s.bus, v: s.visitedD.size,
   };
 }
+function withHoney(x) {
+  // 큰 숫자로 나오는 곳(서울·인천·경기 시·군 중 1위)을 벌집으로 그린다
+  const cand = [['11', x.s], ['23', x.i], [x.gk, x.g]].filter((c) => c[0] && c[1] > 0);
+  if (!cand.length) return x;
+  const best = fmtP(Math.max(...cand.map((c) => c[1])));
+  const key = cand.find((c) => fmtP(c[1]) === best)[0];
+  const m = honeyCode(key);
+  return m ? { ...x, a: key, m } : x;
+}
 function shareQuery(x) {
   const q = new URLSearchParams();
-  for (const k in x) if (x[k] !== '' && x[k] !== 0) q.set(k, String(x[k]));
+  for (const k in x) if (k !== 'gk' && x[k] !== '' && x[k] !== 0) q.set(k, String(x[k]));
   return q.toString();
 }
 const fmtP = (p) => (p >= 10 ? p.toFixed(1) : p >= 0.01 ? p.toFixed(2) : p > 0 ? '<0.01' : '0') + '%';
@@ -846,7 +883,7 @@ const cardUrl = (x) => `${location.origin}/api/explore/card?${shareQuery(x)}`;
 let prevT = null;
 function refreshPreview() {
   clearTimeout(prevT);
-  prevT = setTimeout(() => { $('shImg').src = cardUrl(shareData()); }, 350);
+  prevT = setTimeout(() => { $('shImg').src = cardUrl(withHoney(shareData())); }, 350);
   try { localStorage.setItem(NAME_KEY, $('shName').value.trim()); } catch (e) {}
 }
 function openShare() {
@@ -855,8 +892,9 @@ function openShare() {
   try { nm = localStorage.getItem(NAME_KEY) || ''; } catch (e) {}
   if (!nm && MG && MG.save && MG.save.user && MG.save.user()) nm = MG.save.user().name || '';
   $('shName').value = nm.slice(0, 12);
-  $('shImg').src = cardUrl(shareData());
+  $('shImg').removeAttribute('src');
   $('shareModal').hidden = false;
+  loadAreas8().then(() => { $('shImg').src = cardUrl(withHoney(shareData())); });
   loadKakao().then((ok) => { $('shKakao').hidden = !ok; });
 }
 $('shareBtn').title = L_('탐험 기록 자랑하기', 'Share my progress');
@@ -873,7 +911,7 @@ $('shName').oninput = refreshPreview;
 $('shClose').onclick = () => { $('shareModal').hidden = true; };
 $('shareModal').onclick = (e) => { if (e.target.id === 'shareModal') $('shareModal').hidden = true; };
 $('shKakao').onclick = () => {
-  const x = shareData(), t = shareTexts(x), url = shareUrl(x);
+  const x = withHoney(shareData()), t = shareTexts(x), url = shareUrl(x);
   try {
     window.Kakao.Share.sendDefault({
       objectType: 'feed',
@@ -883,11 +921,11 @@ $('shKakao').onclick = () => {
   } catch (e) { toast(L_('카카오톡 공유를 열지 못했어요', 'Could not open KakaoTalk')); }
 };
 $('shNative').onclick = async () => {
-  const x = shareData(), t = shareTexts(x);
+  const x = withHoney(shareData()), t = shareTexts(x);
   try { await navigator.share({ title: t.title, text: t.desc, url: shareUrl(x) }); } catch (e) {}
 };
 $('shCopy').onclick = async () => {
-  const x = shareData(), t = shareTexts(x), text = `${t.title}\n${shareUrl(x)}`;
+  const x = withHoney(shareData()), t = shareTexts(x), text = `${t.title}\n${shareUrl(x)}`;
   try { await navigator.clipboard.writeText(text); toast(L_('링크를 복사했어요', 'Link copied')); }
   catch (e) { window.prompt(L_('아래 링크를 복사하세요', 'Copy this link'), shareUrl(x)); }
 };
