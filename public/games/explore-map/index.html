@@ -274,9 +274,10 @@ function trailStep(pos) {
 /* ---------- 지도 ---------- */
 const map = L.map('map', { zoomControl: false, attributionControl: true, preferCanvas: true, minZoom: 8, maxZoom: 18 })
   .setView([37.5547, 126.9707], 12);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-  subdomains: 'abcd', maxZoom: 19,
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+// OpenStreetMap 기본 타일 — 키 없이 무료 (출처 표시 필수, 대량 트래픽이면 다른 타일 서버로 옮길 것)
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 }).addTo(map);
 map.setMaxBounds([[REGION.s - 1.5, REGION.w - 1], [REGION.n + 1.5, REGION.e + 1.5]]);
 const stopLayer = L.layerGroup().addTo(map);
