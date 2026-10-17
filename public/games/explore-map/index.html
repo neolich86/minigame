@@ -793,12 +793,28 @@ function shareQuery(x) {
   return q.toString();
 }
 const fmtP = (p) => (p >= 10 ? p.toFixed(1) : p >= 0.01 ? p.toFixed(2) : p > 0 ? '<0.01' : '0') + '%';
+// 서울·인천·경기 중 탐험률이 가장 높은 곳 (표시 값이 같으면 함께)
+function leaders(x) {
+  const all = [{ ko: '서울', en: 'Seoul', p: x.s }, { ko: '인천', en: 'Incheon', p: x.i }, { ko: '경기', en: 'Gyeonggi', p: x.g }].filter((r) => r.p > 0);
+  if (!all.length) return [];
+  const top = fmtP(Math.max(...all.map((r) => r.p)));
+  return all.filter((r) => fmtP(r.p) === top);
+}
+function leadTitle(who, x) {
+  const lead = leaders(x);
+  if (!lead.length) return L_(`${who}님은 ${fmtN(x.c)}칸을 밝혔어요`, `${who} revealed ${fmtN(x.c)} cells`);
+  if (lead.length === 1) return L_(`${who}님은 ${lead[0].ko}의 ${fmtP(lead[0].p)}를 밝혔어요`, `${who} explored ${fmtP(lead[0].p)} of ${lead[0].en}`);
+  const last = lead[lead.length - 1].ko, code = last.charCodeAt(last.length - 1) - 0xac00;
+  const josa = code >= 0 && code % 28 !== 0 ? '을' : '를';
+  return L_(`${who}님은 ${lead.map((r) => r.ko).join('·')}${josa} 각각 ${fmtP(lead[0].p)}씩 밝혔어요`, `${who} explored ${fmtP(lead[0].p)} each of ${lead.map((r) => r.en).join(' & ')}`);
+}
 function shareTexts(x) {
   const who = x.n || L_('친구', 'A friend');
+  const best = x.d ? L_(` · 가장 많이 밝힌 동네 ${x.d} ${fmtP(x.dp)}`, ` · top district ${x.d} ${fmtP(x.dp)}`) : '';
   return {
-    title: x.d ? L_(`${who}님은 ${x.d}의 ${fmtP(x.dp)}를 밝혔어요`, `${who} explored ${fmtP(x.dp)} of ${x.d}`) : L_(`${who}님은 ${fmtN(x.c)}칸을 밝혔어요`, `${who} revealed ${fmtN(x.c)} cells`),
-    desc: L_(`서울 ${fmtP(x.s)} · 인천 ${fmtP(x.i)} · 경기 ${fmtP(x.g)} — 지하철역 ${x.r}곳 · 정류장 ${x.b}곳 체크인. 나도 탐험 지도 시작하기!`,
-      `Seoul ${fmtP(x.s)} · Incheon ${fmtP(x.i)} · Gyeonggi ${fmtP(x.g)} — ${x.r} stations, ${x.b} bus stops. Start your own Explore Map!`),
+    title: leadTitle(who, x),
+    desc: L_(`서울 ${fmtP(x.s)} · 인천 ${fmtP(x.i)} · 경기 ${fmtP(x.g)}${best} — 지하철역 ${x.r}곳 · 정류장 ${x.b}곳 체크인. 나도 탐험 지도 시작하기!`,
+      `Seoul ${fmtP(x.s)} · Incheon ${fmtP(x.i)} · Gyeonggi ${fmtP(x.g)}${best} — ${x.r} stations, ${x.b} bus stops. Start your own Explore Map!`),
   };
 }
 const shareUrl = (x) => `${location.origin}/apps/explore-map?${shareQuery(x)}`;
@@ -859,9 +875,8 @@ function inviteInfo() {
   const p = new URLSearchParams(q);
   if (!Number(p.get('c'))) return null;
   const n = (p.get('n') || '').slice(0, 12) || L_('친구', 'A friend');
-  const d = (p.get('d') || '').slice(0, 12), dp = Number(p.get('dp')) || 0, c = Number(p.get('c')) || 0;
-  return d ? L_(`🧭 ${n}님은 ${d}의 ${fmtP(dp)}를 밝혔어요. 나도 탐험해서 이겨 보세요!`, `🧭 ${n} explored ${fmtP(dp)} of ${d}. Can you beat that?`)
-    : L_(`🧭 ${n}님은 ${fmtN(c)}칸을 밝혔어요. 나도 탐험해 보세요!`, `🧭 ${n} revealed ${fmtN(c)} cells. Start exploring!`);
+  const x = { s: Number(p.get('s')) || 0, i: Number(p.get('i')) || 0, g: Number(p.get('g')) || 0, c: Number(p.get('c')) || 0 };
+  return `🧭 ${leadTitle(n, x)}. ` + L_('나도 탐험해서 이겨 보세요!', 'Can you beat that?');
 }
 
 /* ---------- 시작 ---------- */

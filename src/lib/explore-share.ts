@@ -37,13 +37,32 @@ export function parseExploreShare(get: (k: string) => string | null | undefined)
 
 export const fmtPct = (p: number) => (p >= 10 ? p.toFixed(1) : p >= 0.01 ? p.toFixed(2) : p > 0 ? "<0.01" : "0") + "%";
 
+/** 서울·인천·경기 중 탐험률이 가장 높은 곳 — 표시 값이 같으면(예: 서울 50%·인천 50%) 함께 */
+export function exploreLeaders(x: ExploreShare): { ko: string; en: string; p: number }[] {
+  const all = [
+    { ko: "서울", en: "Seoul", p: x.s },
+    { ko: "인천", en: "Incheon", p: x.i },
+    { ko: "경기", en: "Gyeonggi", p: x.g },
+  ].filter((r) => r.p > 0);
+  if (!all.length) return [];
+  const top = fmtPct(Math.max(...all.map((r) => r.p)));
+  return all.filter((r) => fmtPct(r.p) === top);
+}
+
 export function exploreShareTitle(x: ExploreShare) {
   const who = x.n || "친구";
-  return x.d ? `${who}님은 ${x.d}의 ${fmtPct(x.dp)}를 밝혔어요` : `${who}님은 ${x.c.toLocaleString("ko-KR")}칸을 밝혔어요`;
+  const lead = exploreLeaders(x);
+  if (!lead.length) return `${who}님은 ${x.c.toLocaleString("ko-KR")}칸을 밝혔어요`;
+  if (lead.length === 1) return `${who}님은 ${lead[0].ko}의 ${fmtPct(lead[0].p)}를 밝혔어요`;
+  const last = lead[lead.length - 1].ko;
+  const code = last.charCodeAt(last.length - 1) - 0xac00;
+  const josa = code >= 0 && code % 28 !== 0 ? "을" : "를"; // 받침 있으면 '을'
+  return `${who}님은 ${lead.map((r) => r.ko).join("·")}${josa} 각각 ${fmtPct(lead[0].p)}씩 밝혔어요`;
 }
 
 export function exploreShareDesc(x: ExploreShare) {
-  return `서울 ${fmtPct(x.s)} · 인천 ${fmtPct(x.i)} · 경기 ${fmtPct(x.g)} — 지하철역 ${x.r}곳 · 정류장 ${x.b}곳 체크인. 나도 탐험 지도 시작하기!`;
+  const best = x.d ? ` · 가장 많이 밝힌 동네 ${x.d} ${fmtPct(x.dp)}` : "";
+  return `서울 ${fmtPct(x.s)} · 인천 ${fmtPct(x.i)} · 경기 ${fmtPct(x.g)}${best} — 지하철역 ${x.r}곳 · 정류장 ${x.b}곳 체크인. 나도 탐험 지도 시작하기!`;
 }
 
 export function exploreShareQuery(x: ExploreShare) {
