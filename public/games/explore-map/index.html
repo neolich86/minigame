@@ -5,8 +5,8 @@
 <link rel="canonical" href="/apps/explore-map">
 <script src="/mgh/bridge.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>탐험 지도 - 미니게임천국</title>
-<meta name="description" content="지하철역·버스정류장에서 체크인하면 안개가 걷히며 실제 지도가 밝혀지는 탐험 게임. 서울·인천·경기 탐험률에 도전하세요.">
+<title>동네 정복 - 미니게임천국</title>
+<meta name="description" content="동네 정복 — 지하철역·버스정류장에서 체크인하면 안개가 걷히며 실제 지도가 밝혀지는 땅따먹기. 서울·인천·경기 탐험률에 도전하세요.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23101a2e'/%3E%3Cpath d='M32 10c-9 0-16 7-16 16 0 12 16 28 16 28s16-16 16-28c0-9-7-16-16-16z' fill='%23f2c14e'/%3E%3Ccircle cx='32' cy='26' r='6' fill='%23101a2e'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="vendor/leaflet-1.9.4.css">
 <script src="vendor/leaflet-1.9.4.js"></script>
@@ -117,7 +117,7 @@ h4{margin:12px 0 4px;font-size:13px;color:var(--dim);font-weight:700}
 
 <div class="top">
   <div class="brand">
-    <b id="title">🧭 탐험 지도</b>
+    <b id="title">🚩 동네 정복</b>
     <small><span id="hdCells">0</span> · <span id="hdPct" class="pct">0%</span></small>
   </div>
   <div class="sp"></div>
@@ -140,7 +140,7 @@ h4{margin:12px 0 4px;font-size:13px;color:var(--dim);font-weight:700}
 
 <div id="intro">
   <div class="card">
-    <div style="font-size:42px">🧭</div>
+    <div style="font-size:42px">🚩</div>
     <h1 id="inTitle"></h1>
     <p id="inDesc"></p>
     <ul id="inList"></ul>
@@ -881,8 +881,8 @@ function shareTexts(x) {
   const best = x.d && x.d !== x.gc ? L_(` · 가장 많이 밝힌 동네 ${x.d} ${fmtP(x.dp)}`, ` · top district ${x.d} ${fmtP(x.dp)}`) : '';
   return {
     title: leadTitle(who, x),
-    desc: L_(`서울 ${fmtP(x.s)} · 인천 ${fmtP(x.i)} · ${x.gc || '경기'} ${fmtP(x.g)}${best} — 지하철역 ${x.r}곳 · 정류장 ${x.b}곳 체크인. 나도 탐험 지도 시작하기!`,
-      `Seoul ${fmtP(x.s)} · Incheon ${fmtP(x.i)} · ${x.gc || 'Gyeonggi'} ${fmtP(x.g)}${best} — ${x.r} stations, ${x.b} bus stops. Start your own Explore Map!`),
+    desc: L_(`서울 ${fmtP(x.s)} · 인천 ${fmtP(x.i)} · ${x.gc || '경기'} ${fmtP(x.g)}${best} — 지하철역 ${x.r}곳 · 정류장 ${x.b}곳 체크인. 나도 동네 정복 시작하기!`,
+      `Seoul ${fmtP(x.s)} · Incheon ${fmtP(x.i)} · ${x.gc || 'Gyeonggi'} ${fmtP(x.g)}${best} — ${x.r} stations, ${x.b} bus stops. Start your own Town Conquest!`),
   };
 }
 const shareUrl = (x) => `${location.origin}/apps/explore-map?${shareQuery(x)}`;
@@ -949,7 +949,7 @@ function inviteInfo() {
 }
 
 /* ---------- 시작 ---------- */
-$('inTitle').textContent = L_('탐험 지도', 'Explore Map');
+$('inTitle').textContent = L_('동네 정복', 'Town Conquest');
 $('inDesc').textContent = L_('지하철역과 버스정류장에서 체크인하면 안개가 걷히며 지도가 밝혀져요.', 'Check in at subway stations and bus stops to clear the fog and reveal the map.');
 $('inList').innerHTML = [
   L_('🚇 지하철역 반경 1km · 환승역 1.5km', '🚇 Station: 1km · transfer: 1.5km'),

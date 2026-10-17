@@ -7,7 +7,7 @@ type Props = { params: Promise<{ slug: string }>; searchParams: Promise<Record<s
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const slug = (await params).slug;
   const base = await itemMetadata(slug, "app");
-  // 탐험 지도 자랑하기 링크 — 카톡·메신저 미리보기에 친구의 탐험률 카드가 뜨도록
+  // 동네 정복 자랑하기 링크 — 카톡·메신저 미리보기에 친구의 탐험률 카드가 뜨도록
   if (slug === "explore-map") {
     const sp = await searchParams;
     const x = parseExploreShare((k) => {

@@ -1,4 +1,4 @@
-// 탐험 지도 자랑하기 — 공유 링크 주소에 담는 기록 (이름·지역·탐험률)
+// 동네 정복 자랑하기 — 공유 링크 주소에 담는 기록 (이름·지역·탐험률)
 export interface ExploreShare {
   n: string; // 이름
   d: string; // 가장 많이 밝힌 시·군·구
@@ -68,7 +68,7 @@ export function exploreShareTitle(x: ExploreShare) {
 
 export function exploreShareDesc(x: ExploreShare) {
   const best = x.d && x.d !== x.gc ? ` · 가장 많이 밝힌 동네 ${x.d} ${fmtPct(x.dp)}` : "";
-  return `서울 ${fmtPct(x.s)} · 인천 ${fmtPct(x.i)} · ${x.gc || "경기"} ${fmtPct(x.g)}${best} — 지하철역 ${x.r}곳 · 정류장 ${x.b}곳 체크인. 나도 탐험 지도 시작하기!`;
+  return `서울 ${fmtPct(x.s)} · 인천 ${fmtPct(x.i)} · ${x.gc || "경기"} ${fmtPct(x.g)}${best} — 지하철역 ${x.r}곳 · 정류장 ${x.b}곳 체크인. 나도 동네 정복 시작하기!`;
 }
 
 export function exploreShareQuery(x: ExploreShare) {

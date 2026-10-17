@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""탐험 지도 정류장 데이터 만들기 (공공데이터포털 파일 → 지도 타일별 JSON)
+"""동네 정복(구 탐험 지도) 정류장 데이터 만들기 (공공데이터포털 파일 → 지도 타일별 JSON)
 
 사용법:
   python3 scripts/build-explore-stops.py <전국도시철도역사정보표준데이터.xlsx|csv> <국토교통부_전국 버스정류장 위치정보.csv>

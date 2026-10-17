@@ -1,4 +1,4 @@
-// 탐험 지도 자랑하기 카드 이미지 (카톡·링크 미리보기 1200×630)
+// 동네 정복 자랑하기 카드 이미지 (카톡·링크 미리보기 1200×630)
 import { ImageResponse } from "next/og";
 import { loadFont } from "@/lib/challenge-image";
 import { honeySvg } from "@/lib/explore-honey";
@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   // 큰 숫자 = 서울·인천·경기 중 가장 높은 탐험률 (같으면 나란히)
   const lead = exploreLeaders(x);
   const lines = {
-    top: "EXPLORE MAP · 탐험 지도",
+    top: "TOWN CONQUEST · 동네 정복",
     who: `${who}님의 탐험 기록`,
     place: lead.length ? `${lead.map((r) => r.ko).join(" · ")} 탐험률` : "밝힌 칸",
     big: lead.length ? fmtPct(lead[0].p) : x.c.toLocaleString("ko-KR"),
@@ -68,7 +68,7 @@ export async function GET(req: Request) {
           />
         ))}
         <div style={{ display: "flex", flexDirection: "column", padding: "50px 64px 40px", width: 760, height: "100%" }}>
-          <div style={{ display: "flex", fontSize: 26, letterSpacing: 6, color: "#f2c14e" }}>{ascii(lines.top) || "EXPLORE MAP"}</div>
+          <div style={{ display: "flex", fontSize: 26, letterSpacing: 6, color: "#f2c14e" }}>{ascii(lines.top) || "TOWN CONQUEST"}</div>
           <div style={{ display: "flex", fontSize: 40, marginTop: 26, color: "#e8ecf4" }}>{ascii(lines.who) || "My exploration"}</div>
           {lead.length > 1 ? (
             <div style={{ display: "flex", marginTop: 26 }}>
