@@ -5,7 +5,8 @@ export interface ExploreShare {
   dp: number; // 그 시·군·구 탐험률 %
   s: number; // 서울 %
   i: number; // 인천 %
-  g: number; // 경기 %
+  g: number; // 경기에서 가장 많이 밝힌 시·군의 %
+  gc: string; // 그 시·군 이름 (예: 수원시)
   c: number; // 밝힌 칸
   r: number; // 지하철역 수
   b: number; // 버스정류장 수
@@ -28,6 +29,7 @@ export function parseExploreShare(get: (k: string) => string | null | undefined)
     s: num(get("s"), 100),
     i: num(get("i"), 100),
     g: num(get("g"), 100),
+    gc: txt(get("gc"), 12),
     c: Math.round(c),
     r: Math.round(num(get("r"), 1e5)),
     b: Math.round(num(get("b"), 1e6)),
@@ -42,7 +44,7 @@ export function exploreLeaders(x: ExploreShare): { ko: string; en: string; p: nu
   const all = [
     { ko: "서울", en: "Seoul", p: x.s },
     { ko: "인천", en: "Incheon", p: x.i },
-    { ko: "경기", en: "Gyeonggi", p: x.g },
+    { ko: x.gc || "경기", en: x.gc || "Gyeonggi", p: x.g },
   ].filter((r) => r.p > 0);
   if (!all.length) return [];
   const top = fmtPct(Math.max(...all.map((r) => r.p)));
@@ -61,8 +63,8 @@ export function exploreShareTitle(x: ExploreShare) {
 }
 
 export function exploreShareDesc(x: ExploreShare) {
-  const best = x.d ? ` · 가장 많이 밝힌 동네 ${x.d} ${fmtPct(x.dp)}` : "";
-  return `서울 ${fmtPct(x.s)} · 인천 ${fmtPct(x.i)} · 경기 ${fmtPct(x.g)}${best} — 지하철역 ${x.r}곳 · 정류장 ${x.b}곳 체크인. 나도 탐험 지도 시작하기!`;
+  const best = x.d && x.d !== x.gc ? ` · 가장 많이 밝힌 동네 ${x.d} ${fmtPct(x.dp)}` : "";
+  return `서울 ${fmtPct(x.s)} · 인천 ${fmtPct(x.i)} · ${x.gc || "경기"} ${fmtPct(x.g)}${best} — 지하철역 ${x.r}곳 · 정류장 ${x.b}곳 체크인. 나도 탐험 지도 시작하기!`;
 }
 
 export function exploreShareQuery(x: ExploreShare) {

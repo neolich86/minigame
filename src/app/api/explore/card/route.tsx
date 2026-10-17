@@ -15,14 +15,15 @@ export async function GET(req: Request) {
     who: `${who}님의 탐험 기록`,
     place: lead.length ? `${lead.map((r) => r.ko).join(" · ")} 탐험률` : "밝힌 칸",
     big: lead.length ? fmtPct(lead[0].p) : x.c.toLocaleString("ko-KR"),
-    best: x.d ? `가장 많이 밝힌 동네 · ${x.d} ${fmtPct(x.dp)}` : "",
+    // 큰 숫자와 같은 곳이면(예: 경기 수원시) 다시 쓰지 않는다
+    best: x.d && !lead.some((r) => r.ko === x.d) ? `가장 많이 밝힌 동네 · ${x.d} ${fmtPct(x.dp)}` : "",
     stats: `${x.c.toLocaleString("ko-KR")}칸 · 지하철역 ${x.r}곳 · 정류장 ${x.b}곳 · ${x.v}개 시·군·구`,
     brand: "playwithme.kr · 나도 탐험하기",
   };
   const regions: [string, string, number][] = [
     ["서울", "Seoul", x.s],
     ["인천", "Incheon", x.i],
-    ["경기", "Gyeonggi", x.g],
+    [x.gc || "경기", x.gc ? "Gyeonggi city" : "Gyeonggi", x.g],
   ];
   const statsEn = `${x.c.toLocaleString("en-US")} cells · ${x.r} stations · ${x.b} bus stops · ${x.v} districts`;
   const font = await loadFont(Object.values(lines).join("") + "서울인천경기0123456789.%<");
