@@ -15,9 +15,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ z: strin
   if (!tileIsOpen(x, y)) {
     return Response.json({ stops: [], open: false }, { headers: { "cache-control": "public, max-age=86400, s-maxage=604800" } });
   }
-  const debug = new URL(req.url).searchParams.has("debug");
+  const sp = new URL(req.url).searchParams;
+  const debug = sp.has("debug");
+  const ep = sp.get("ep");
   try {
-    const stops = await stopsForTile(x, y, debug ? 8000 : undefined);
+    const stops = await stopsForTile(x, y, debug ? 20000 : undefined, debug && ep ? Number(ep) : undefined);
     return Response.json(
       { stops, open: true },
       { headers: { "cache-control": "public, max-age=86400, s-maxage=2592000, stale-while-revalidate=604800" } },
