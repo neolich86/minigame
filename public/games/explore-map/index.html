@@ -392,15 +392,23 @@ function tileOf(lat, lng) {
   return [Math.floor(((lng + 180) / 360) * n), Math.floor(((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2) * n)];
 }
 const inRegion = (lat, lng) => lat >= REGION.s && lat <= REGION.n && lng >= REGION.w && lng <= REGION.e;
+/* 정류장 데이터: 공공데이터포털(국토교통부 버스정류장 · 전국도시철도역사정보)을
+   scripts/build-explore-stops.py 로 z14 타일 파일(stops/x_y.json)로 만들어 둔 것 */
+let tileIndex = null;
+const tileIndexReady = fetch('stops/index.json?v=' + (new URLSearchParams(location.search).get('v') || ''))
+  .then((r) => r.json()).then((a) => { tileIndex = new Set(a); }).catch(() => { tileIndex = null; });
 async function loadTile(x, y) {
   const key = x + '/' + y;
   if (tilesLoaded.get(key) === 'ok' || tilesLoaded.get(key) === 'loading') return;
   tilesLoaded.set(key, 'loading');
   try {
-    const res = await fetch(`/api/explore/stops/${STOP_Z}/${x}/${y}`);
+    await tileIndexReady;
+    if (tileIndex && !tileIndex.has(x + '_' + y)) { tilesLoaded.set(key, 'ok'); renderSheet(); return; }
+    const res = await fetch(`stops/${x}_${y}.json?v=${new URLSearchParams(location.search).get('v') || ''}`);
+    if (res.status === 404) { tilesLoaded.set(key, 'ok'); renderSheet(); return; }
     if (!res.ok) throw new Error(String(res.status));
-    const j = await res.json();
-    for (const [id, k, n, lat, lng, rural] of j.stops || []) stopsById.set(id, { id, k, n, lat, lng, rural: !!rural });
+    const rows = await res.json();
+    for (const [id, k, n, lat, lng, rural, lines] of rows) stopsById.set(id, { id, k, n, lat, lng, rural: !!rural, lines: lines || [] });
     tilesLoaded.set(key, 'ok');
     renderStops(); renderSheet();
   } catch (e) {
@@ -456,7 +464,7 @@ function openStop(s, marker) {
   const done = state.stops[s.id];
   const d = me ? dist(me.lat, me.lng, s.lat, s.lng) : null;
   const can = checkState(s);
-  const html = `<div class="pop"><b>${kindIcon(s.k)} ${esc(s.n)}</b><br><small>${kindName(s.k)} · ${L_('반경', 'radius')} ${fmtM(radiusOf(s))}${d != null ? ' · ' + L_('여기서', 'from you') + ' ' + fmtM(d) : ''}</small>
+  const html = `<div class="pop"><b>${kindIcon(s.k)} ${esc(s.n)}</b><br><small>${kindName(s.k)} · ${L_('반경', 'radius')} ${fmtM(radiusOf(s))}${d != null ? ' · ' + L_('여기서', 'from you') + ' ' + fmtM(d) : ''}</small>${s.lines && s.lines.length ? `<br><small>🚆 ${esc(s.lines.join(' · '))}</small>` : ''}
   ${done ? `<br><small>✅ ${L_('방문', 'Visited')} ${done.visits}${L_('회', 'x')} · ${done.last}</small>` : ''}
   <button class="cbtn" data-ck="${s.id}" ${can.ok ? '' : 'disabled'}>${can.ok ? L_('체크인', 'Check in') : esc(can.why)}</button></div>`;
   L.popup({ offset: [0, -4], maxWidth: 260 }).setLatLng([s.lat, s.lng]).setContent(html).openOn(map);
