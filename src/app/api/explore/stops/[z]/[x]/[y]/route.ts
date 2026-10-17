@@ -15,8 +15,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ z: strin
   if (!tileIsOpen(x, y)) {
     return Response.json({ stops: [], open: false }, { headers: { "cache-control": "public, max-age=86400, s-maxage=604800" } });
   }
+  const debug = new URL(req.url).searchParams.has("debug");
   try {
-    const stops = await stopsForTile(x, y);
+    const stops = await stopsForTile(x, y, debug ? 8000 : undefined);
     return Response.json(
       { stops, open: true },
       { headers: { "cache-control": "public, max-age=86400, s-maxage=2592000, stale-while-revalidate=604800" } },
@@ -25,7 +26,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ z: strin
     console.error("[explore/stops]", e instanceof Error ? e.message : e);
     // 원인 파악용으로 짧은 오류 내용을 함께 돌려준다 (외부 서버 응답 코드·메시지)
     const detail = (e instanceof Error ? e.message : String(e)).slice(0, 400);
-    const debug = new URL(req.url).searchParams.has("debug");
     return Response.json({ error: "upstream", detail }, { status: debug ? 200 : 503, headers: { "cache-control": "no-store" } });
   }
 }

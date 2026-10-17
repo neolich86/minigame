@@ -51,9 +51,10 @@ node["public_transport"="station"]["train"="yes"](${bb});
 );out body;`;
 }
 
-async function overpass(q: string): Promise<OsmNode[]> {
+async function overpass(q: string, budgetMs = 24000): Promise<OsmNode[]> {
   const errs: string[] = [];
-  const deadline = Date.now() + 24000;
+  const deadline = Date.now() + budgetMs;
+  const t0 = Date.now();
   for (const url of ENDPOINTS) {
     if (Date.now() > deadline - 1500) break;
     try {
@@ -68,7 +69,7 @@ async function overpass(q: string): Promise<OsmNode[]> {
       const j = (await res.json()) as { elements?: OsmNode[] };
       return (j.elements ?? []).filter((e) => e.type === "node");
     } catch (e) {
-      errs.push(`${new URL(url).host}: ${e instanceof Error ? e.message : String(e)}`);
+      errs.push(`${new URL(url).host} @${Date.now() - t0}ms: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
   throw new Error(errs.join(" | ") || "overpass_failed");
@@ -132,7 +133,7 @@ export function toStops(nodes: OsmNode[], b: { s: number; w: number; n: number; 
   return out;
 }
 
-export async function stopsForTile(x: number, y: number): Promise<StopRow[]> {
+export async function stopsForTile(x: number, y: number, budgetMs?: number): Promise<StopRow[]> {
   const b = tileBounds(x, y);
-  return toStops(await overpass(query(b)), b);
+  return toStops(await overpass(query(b), budgetMs), b);
 }
