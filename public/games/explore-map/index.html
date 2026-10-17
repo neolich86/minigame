@@ -92,6 +92,18 @@ h4{margin:12px 0 4px;font-size:13px;color:var(--dim);font-weight:700}
 .pop .cbtn{margin-top:8px;width:100%}
 .leaflet-container a.leaflet-popup-close-button{color:var(--dim)}
 .leaflet-control-attribution{font-size:10px}
+#shareModal{position:absolute;inset:0;z-index:2050;background:rgba(6,10,20,.78);display:flex;align-items:center;justify-content:center;padding:16px}
+#shareModal[hidden]{display:none}
+#shareModal .card{width:100%;max-width:420px;background:#121c33;border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.5);max-height:100%;overflow:auto}
+#shareModal h3{margin:0 0 10px;font-size:17px}
+#shareModal .prev{width:100%;aspect-ratio:1200/630;border-radius:12px;background:#0b1222;object-fit:cover;display:block}
+#shareModal label{display:block;font-size:12.5px;color:var(--dim);margin:12px 0 6px}
+#shareModal input{width:100%;height:42px;border-radius:10px;border:1px solid var(--line);background:#0b1222;color:var(--ink);padding:0 12px;font:inherit;font-size:15px}
+.sbtn{width:100%;height:46px;border-radius:12px;font-weight:800;font-size:15px;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px}
+.sbtn.kakao{background:#fee500;color:#191600}
+.sbtn.alt{background:rgba(255,255,255,.08)}
+.sbtn.close{background:none;color:var(--dim);font-weight:600;font-size:13.5px;height:36px}
+.invite{background:rgba(242,193,78,.12);border:1px solid rgba(242,193,78,.4);border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.55;margin:0 0 14px;text-align:left}
 @media (min-width:900px){
   #sheet{left:12px;right:auto;bottom:12px;width:380px;border-radius:18px;max-height:calc(100% - 90px);border:1px solid var(--line)}
   #sheet.min{max-height:118px}
@@ -110,6 +122,7 @@ h4{margin:12px 0 4px;font-size:13px;color:var(--dim);font-weight:700}
   </div>
   <div class="sp"></div>
   <span class="save" id="save"></span>
+  <button class="ibtn gold" id="shareBtn">📣</button>
   <button class="ibtn" id="loginBtn" hidden></button>
 </div>
 
@@ -136,6 +149,18 @@ h4{margin:12px 0 4px;font-size:13px;color:var(--dim);font-weight:700}
   </div>
 </div>
 <div id="toast"></div>
+<div id="shareModal" hidden>
+  <div class="card">
+    <h3 id="shTitle"></h3>
+    <img class="prev" id="shImg" alt="">
+    <label for="shName" id="shNameLbl"></label>
+    <input id="shName" maxlength="12" autocomplete="nickname">
+    <button class="sbtn kakao" id="shKakao" hidden></button>
+    <button class="sbtn alt" id="shNative" hidden></button>
+    <button class="sbtn alt" id="shCopy"></button>
+    <button class="sbtn close" id="shClose"></button>
+  </div>
+</div>
 
 <script>
 'use strict';
@@ -730,6 +755,115 @@ function setupAuth() {
   btn.onclick = () => MG.save.login();
 }
 
+/* ---------- 자랑하기 (카카오톡·링크 공유) ---------- */
+const NAME_KEY = 'mgh:explore:name';
+const KAKAO_SDK = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js';
+let kakaoReady = null;
+function loadKakao() {
+  if (kakaoReady) return kakaoReady;
+  kakaoReady = fetch('/api/public-config').then((r) => r.json()).then((cfg) => new Promise((res) => {
+    if (!cfg || !cfg.kakaoJsKey) return res(false);
+    const init = () => { try { if (!window.Kakao.isInitialized()) window.Kakao.init(cfg.kakaoJsKey); res(true); } catch (e) { res(false); } };
+    if (window.Kakao) return init();
+    const sc = document.createElement('script');
+    sc.src = KAKAO_SDK; sc.async = true; sc.crossOrigin = 'anonymous';
+    sc.onload = init; sc.onerror = () => res(false);
+    document.head.appendChild(sc);
+  })).catch(() => false);
+  return kakaoReady;
+}
+function shareData() {
+  const s = stats();
+  const ds = districts.map((d) => ({ d, p: pct(s.byDist[d.c] || 0, d.t) })).filter((x) => x.p > 0).sort((a, b) => b.p - a.p);
+  const top = ds[0];
+  const r1 = (v) => Math.round(v * 100) / 100;
+  return {
+    n: ($('shName').value || '').trim().slice(0, 12),
+    d: top ? top.d.n : '',
+    dp: top ? r1(top.p) : 0,
+    s: r1(pct(s.sido['11'][0], s.sido['11'][1])),
+    i: r1(pct(s.sido['23'][0], s.sido['23'][1])),
+    g: r1(pct(s.sido['31'][0], s.sido['31'][1])),
+    c: s.cells, r: s.rail, b: s.bus, v: s.visitedD.size,
+  };
+}
+function shareQuery(x) {
+  const q = new URLSearchParams();
+  for (const k in x) if (x[k] !== '' && x[k] !== 0) q.set(k, String(x[k]));
+  return q.toString();
+}
+const fmtP = (p) => (p >= 10 ? p.toFixed(1) : p >= 0.01 ? p.toFixed(2) : p > 0 ? '<0.01' : '0') + '%';
+function shareTexts(x) {
+  const who = x.n || L_('친구', 'A friend');
+  return {
+    title: x.d ? L_(`${who}님은 ${x.d}의 ${fmtP(x.dp)}를 밝혔어요`, `${who} explored ${fmtP(x.dp)} of ${x.d}`) : L_(`${who}님은 ${fmtN(x.c)}칸을 밝혔어요`, `${who} revealed ${fmtN(x.c)} cells`),
+    desc: L_(`서울 ${fmtP(x.s)} · 인천 ${fmtP(x.i)} · 경기 ${fmtP(x.g)} — 지하철역 ${x.r}곳 · 정류장 ${x.b}곳 체크인. 나도 탐험 지도 시작하기!`,
+      `Seoul ${fmtP(x.s)} · Incheon ${fmtP(x.i)} · Gyeonggi ${fmtP(x.g)} — ${x.r} stations, ${x.b} bus stops. Start your own Explore Map!`),
+  };
+}
+const shareUrl = (x) => `${location.origin}/apps/explore-map?${shareQuery(x)}`;
+const cardUrl = (x) => `${location.origin}/api/explore/card?${shareQuery(x)}`;
+let prevT = null;
+function refreshPreview() {
+  clearTimeout(prevT);
+  prevT = setTimeout(() => { $('shImg').src = cardUrl(shareData()); }, 350);
+  try { localStorage.setItem(NAME_KEY, $('shName').value.trim()); } catch (e) {}
+}
+function openShare() {
+  if (!cells.size) { toast(L_('먼저 한 곳이라도 밝혀 보세요!', 'Reveal somewhere first!')); return; }
+  let nm = '';
+  try { nm = localStorage.getItem(NAME_KEY) || ''; } catch (e) {}
+  if (!nm && MG && MG.save && MG.save.user && MG.save.user()) nm = MG.save.user().name || '';
+  $('shName').value = nm.slice(0, 12);
+  $('shImg').src = cardUrl(shareData());
+  $('shareModal').hidden = false;
+  loadKakao().then((ok) => { $('shKakao').hidden = !ok; });
+}
+$('shareBtn').title = L_('탐험 기록 자랑하기', 'Share my progress');
+$('shTitle').textContent = L_('📣 탐험 기록 자랑하기', '📣 Share my exploration');
+$('shNameLbl').textContent = L_('친구에게 보일 이름', 'Name shown to friends');
+$('shName').placeholder = L_('예: 제임스', 'e.g. James');
+$('shKakao').textContent = L_('💬 카카오톡으로 공유', '💬 Share on KakaoTalk');
+$('shNative').textContent = L_('📤 다른 앱으로 공유', '📤 Share to other apps');
+$('shCopy').textContent = L_('🔗 링크 복사', '🔗 Copy link');
+$('shClose').textContent = L_('닫기', 'Close');
+$('shNative').hidden = typeof navigator.share !== 'function';
+$('shareBtn').onclick = openShare;
+$('shName').oninput = refreshPreview;
+$('shClose').onclick = () => { $('shareModal').hidden = true; };
+$('shareModal').onclick = (e) => { if (e.target.id === 'shareModal') $('shareModal').hidden = true; };
+$('shKakao').onclick = () => {
+  const x = shareData(), t = shareTexts(x), url = shareUrl(x);
+  try {
+    window.Kakao.Share.sendDefault({
+      objectType: 'feed',
+      content: { title: t.title, description: t.desc, imageUrl: cardUrl(x), imageWidth: 1200, imageHeight: 630, link: { mobileWebUrl: url, webUrl: url } },
+      buttons: [{ title: L_('나도 탐험하기', 'Start exploring'), link: { mobileWebUrl: url, webUrl: url } }],
+    });
+  } catch (e) { toast(L_('카카오톡 공유를 열지 못했어요', 'Could not open KakaoTalk')); }
+};
+$('shNative').onclick = async () => {
+  const x = shareData(), t = shareTexts(x);
+  try { await navigator.share({ title: t.title, text: t.desc, url: shareUrl(x) }); } catch (e) {}
+};
+$('shCopy').onclick = async () => {
+  const x = shareData(), t = shareTexts(x), text = `${t.title}\n${shareUrl(x)}`;
+  try { await navigator.clipboard.writeText(text); toast(L_('링크를 복사했어요', 'Link copied')); }
+  catch (e) { window.prompt(L_('아래 링크를 복사하세요', 'Copy this link'), shareUrl(x)); }
+};
+
+/* 친구가 보낸 자랑하기 링크로 들어온 경우 */
+function inviteInfo() {
+  let q = '';
+  try { q = window.parent.location.search; } catch (e) {}
+  const p = new URLSearchParams(q);
+  if (!Number(p.get('c'))) return null;
+  const n = (p.get('n') || '').slice(0, 12) || L_('친구', 'A friend');
+  const d = (p.get('d') || '').slice(0, 12), dp = Number(p.get('dp')) || 0, c = Number(p.get('c')) || 0;
+  return d ? L_(`🧭 ${n}님은 ${d}의 ${fmtP(dp)}를 밝혔어요. 나도 탐험해서 이겨 보세요!`, `🧭 ${n} explored ${fmtP(dp)} of ${d}. Can you beat that?`)
+    : L_(`🧭 ${n}님은 ${fmtN(c)}칸을 밝혔어요. 나도 탐험해 보세요!`, `🧭 ${n} revealed ${fmtN(c)} cells. Start exploring!`);
+}
+
 /* ---------- 시작 ---------- */
 $('inTitle').textContent = L_('탐험 지도', 'Explore Map');
 $('inDesc').textContent = L_('지하철역과 버스정류장에서 체크인하면 안개가 걷히며 지도가 밝혀져요.', 'Check in at subway stations and bus stops to clear the fog and reveal the map.');
@@ -742,6 +876,8 @@ $('inList').innerHTML = [
   L_('🗺️ 1단계: 서울·인천·경기', '🗺️ Stage 1: Seoul, Incheon, Gyeonggi'),
 ].map((x) => `<li>${x}</li>`).join('');
 $('startBtn').textContent = L_('📍 위치 켜고 탐험 시작', '📍 Start with my location');
+const invite = inviteInfo();
+if (invite) { const el = document.createElement('div'); el.className = 'invite'; el.textContent = invite; $('inDesc').before(el); }
 $('browseBtn').textContent = L_('지도만 둘러보기', 'Just browse the map');
 $('startBtn').onclick = () => { $('intro').remove(); startGps(); };
 $('browseBtn').onclick = () => { $('intro').remove(); };
@@ -757,11 +893,12 @@ $('browseBtn').onclick = () => { $('intro').remove(); };
   if (Object.keys(state.stops).length) {
     const l = lastCheckin(); focus(l.lat, l.lng, 14);
     $('intro').remove(); submit();
+    if (invite) setTimeout(() => toast(invite), 600);
   }
   // 전에 위치를 허용했다면 바로 켠다
   try {
     const st = await navigator.permissions.query({ name: 'geolocation' });
-    if (st.state === 'granted') { const i = $('intro'); if (i) i.remove(); startGps(); }
+    if (st.state === 'granted') { const i = $('intro'); if (i) { i.remove(); if (invite) setTimeout(() => toast(invite), 600); } startGps(); }
   } catch (e) {}
   setupAuth();
 })();

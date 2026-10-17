@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 import type { Challenge } from "./challenge";
 import { formatVs, type Board, type Game } from "./games";
 
-async function loadFont(text: string) {
+export async function loadFont(text: string) {
   try {
     const css = await (await fetch(`https://fonts.googleapis.com/css2?family=Black+Han+Sans&text=${encodeURIComponent(text)}`)).text();
     const m = css.match(/src: url\((.+?)\) format\('(opentype|truetype)'\)/);
