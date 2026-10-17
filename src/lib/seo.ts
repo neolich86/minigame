@@ -545,7 +545,6 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
       { title: "뱀서 · 서바이벌", text: "몰려오는 몬스터 속에서 스킬을 골라 성장하는 뱀서류 서바이벌 로그라이크. 생존 시간 랭킹에 도전하세요.", games: ["archer"] },
       { title: "슈팅 · 타워디펜스", text: "아케이드 종스크롤 비행기 슈팅과 원소 조합 전략 타워디펜스.", games: ["raiden", "element-td"] },
       { title: "카드 뽑기 · 타자 연습", text: "포켓몬·원피스 카드 오리파 시뮬레이터와 세계 지도 타자 연습 게임.", games: ["oripa", "world-typing"] },
-      { title: "위치 기반 탐험", text: "실제 지하철역·버스정류장에서 체크인해 안개 덮인 지도를 밝히는 탐험 게임. 서울·인천·경기 탐험률과 뱃지를 모아 보세요.", games: ["explore-map"] },
       { title: "카지노", text: "0이 하나뿐인 유럽식 룰렛, 출목표가 있는 8덱 바카라, 기본 전략 힌트가 있는 6덱 블랙잭. 100만 원으로 시작해 최고 잔액 랭킹에 도전하세요. 실제 돈은 쓰지 않아요.", games: ["roulette", "baccarat", "blackjack"] },
     ],
   },
@@ -557,7 +556,6 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
       { title: "Survivor-like · Survival", text: "A survivor-like roguelite — grow your skills amid endless hordes and chase the survival-time leaderboard.", games: ["archer"] },
       { title: "Shooter · Tower defense", text: "An arcade vertical shooter and an elemental strategy tower defense.", games: ["raiden", "element-td"] },
       { title: "Card pulls · Typing", text: "A Pokémon / One Piece oripa card-pull simulator and a world-map typing practice game.", games: ["oripa", "world-typing"] },
-      { title: "Location exploration", text: "Check in at real subway stations and bus stops to clear a fog-covered map. Collect exploration rates and badges across the Seoul metro area.", games: ["explore-map"] },
       { title: "Casino", text: "Single-zero European roulette, 8-deck baccarat with full scoreboards and 6-deck blackjack with basic-strategy hints — start with ₩1,000,000 and chase the peak-balance leaderboard. No real money.", games: ["roulette", "baccarat", "blackjack"] },
     ],
   },
@@ -605,6 +603,7 @@ export const KIND_SEO: Record<"tool" | "app", Record<Lang, { heading: string; ti
       about: [
         "스포츠 승부 예측은 프리미어리그·라리가·분데스리가·세리에A·리그1·챔피언스리그 경기의 승·무·패 확률과 예상 스코어, 리그 우승·강등 확률을 통계 모델로 계산해요. 예측은 킥오프 순간 잠기고 적중률을 그대로 공개합니다.",
         "Passport Map은 다녀온 나라와 도시를 원하는 색으로 칠하고, 장소마다 사진 1장을 남기는 여행 지도예요. 로그인하면 계정에 저장되고 SNS 공유 이미지도 만들 수 있어요.",
+        "탐험 지도는 서울·인천·경기 지도가 안개로 덮여 있고, 지하철역·버스정류장에서 체크인하거나 화면을 켜고 걸으면 그 주변이 밝혀지는 위치 기반 탐험 서비스예요. 동네별 탐험률과 뱃지를 모아 보세요.",
       ],
     },
     en: {
@@ -618,6 +617,7 @@ export const KIND_SEO: Record<"tool" | "app", Record<Lang, { heading: string; ti
       about: [
         "Sports Forecast computes win, draw and loss probabilities, likely scores and title/relegation odds for the Premier League, La Liga, Bundesliga, Serie A, Ligue 1 and Champions League. Forecasts lock at kick-off and the track record is public.",
         "Passport Map lets you color the countries and cities you've visited and pin one photo to each place. Log in to keep it in your account and make a share image for social media.",
+        "Explore Map covers the Seoul metro area in fog; check in at subway stations and bus stops, or walk with the page open, to reveal it. Collect district exploration rates and badges.",
       ],
     },
   },
