@@ -1,7 +1,7 @@
 import { STOP_ZOOM, stopsForTile, tileIsOpen } from "@/lib/explore";
 
 // GET /api/explore/stops/14/{x}/{y} → { stops: StopRow[], open }
-export async function GET(_req: Request, { params }: { params: Promise<{ z: string; x: string; y: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ z: string; x: string; y: string }> }) {
   const p = await params;
   const z = Number(p.z);
   const x = Number(p.x);
@@ -23,6 +23,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ z: stri
     console.error("[explore/stops]", e instanceof Error ? e.message : e);
     // 원인 파악용으로 짧은 오류 내용을 함께 돌려준다 (외부 서버 응답 코드·메시지)
     const detail = (e instanceof Error ? e.message : String(e)).slice(0, 400);
-    return Response.json({ error: "upstream", detail }, { status: 503, headers: { "cache-control": "no-store" } });
+    const debug = new URL(req.url).searchParams.has("debug");
+    return Response.json({ error: "upstream", detail }, { status: debug ? 200 : 503, headers: { "cache-control": "no-store" } });
   }
 }
