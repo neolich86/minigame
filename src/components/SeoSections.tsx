@@ -92,12 +92,12 @@ export function HomeAbout({ lang }: { lang: Lang }) {
     <section className="wrap home-about">
       <h2>{s.heading}</h2>
       <div className="about-grid">
-        {s.items.map((it) => (
+        {s.items.filter((it) => it.games.some((id) => !gameById(id)?.hidden)).map((it) => (
           <div key={it.title} className="panel">
             <h3>{it.title}</h3>
             <p>{it.text}</p>
             <div className="about-links">
-              {it.games.map((id) => {
+              {it.games.filter((id) => !gameById(id)?.hidden).map((id) => {
                 const g = gameById(id)!;
                 return (
                   <Link key={id} href={entryPath(g)}>
