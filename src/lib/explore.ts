@@ -42,7 +42,7 @@ function query(b: { s: number; w: number; n: number; e: number }) {
   const p = 0.006;
   const bb = `${b.s.toFixed(5)},${b.w.toFixed(5)},${b.n.toFixed(5)},${b.e.toFixed(5)}`;
   const wide = `${(b.s - p).toFixed(5)},${(b.w - p).toFixed(5)},${(b.n + p).toFixed(5)},${(b.e + p).toFixed(5)}`;
-  return `[out:json][timeout:25];(
+  return `[out:json][timeout:15];(
 node["highway"="bus_stop"](${wide});
 node["public_transport"="platform"]["bus"="yes"](${wide});
 node["railway"~"^(station|halt)$"](${bb});
@@ -53,13 +53,15 @@ node["public_transport"="station"]["train"="yes"](${bb});
 
 async function overpass(q: string): Promise<OsmNode[]> {
   const errs: string[] = [];
+  const deadline = Date.now() + 24000;
   for (const url of ENDPOINTS) {
+    if (Date.now() > deadline - 1500) break;
     try {
       const res = await fetch(url, {
         method: "POST",
         headers: { "content-type": "application/x-www-form-urlencoded", "user-agent": "playwithme.kr explore-map (contact via site)" },
         body: "data=" + encodeURIComponent(q),
-        signal: AbortSignal.timeout(20000),
+        signal: AbortSignal.timeout(Math.max(1000, Math.min(12000, deadline - Date.now()))),
         cache: "no-store",
       });
       if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 120).replace(/\s+/g, " ")}`);

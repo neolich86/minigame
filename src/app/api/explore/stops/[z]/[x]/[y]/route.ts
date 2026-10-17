@@ -1,5 +1,7 @@
 import { STOP_ZOOM, stopsForTile, tileIsOpen } from "@/lib/explore";
 
+export const maxDuration = 30;
+
 // GET /api/explore/stops/14/{x}/{y} → { stops: StopRow[], open }
 export async function GET(req: Request, { params }: { params: Promise<{ z: string; x: string; y: string }> }) {
   const p = await params;
