@@ -367,7 +367,7 @@ export const GAME_SEO: SeoMap = {
       keywords: ["탐험 지도", "위치 기반 게임", "체크인 게임", "땅따먹기", "지하철역", "버스정류장", "서울 탐험", "동네 탐험", "산책 게임", "무료 게임"],
       about: [
         "탐험 지도는 실제로 가 본 곳만 밝혀지는 위치 기반 탐험 게임입니다. 처음에는 서울·인천·경기 지도 전체가 안개로 덮여 있고, 지하철역이나 버스정류장 근처에서 체크인하면 그 주변이 육각형 칸 단위로 밝혀져요.",
-        "지하철역은 반경 550m, 환승역은 1km, 버스정류장은 280m(외곽은 500m)가 한 번에 열립니다. 출퇴근길, 산책, 여행에서 체크인을 모아 시·군·구별 탐험률을 올리고 뱃지를 모아 보세요.",
+        "지하철역은 반경 1km, 환승역은 1.5km, 버스정류장은 500m(외곽은 800m)가 한 번에 열리고, 그날 첫 체크인은 1.5배로 열립니다. 화면을 켜고 걸으면 지나간 길 주변도 밝혀져요. 출퇴근길, 산책, 여행에서 체크인을 모아 시·군·구별 탐험률을 올리고 뱃지를 모아 보세요.",
       ],
       howTo: [
         "[위치 켜고 탐험 시작]을 눌러 위치 사용을 허용합니다.",
@@ -384,7 +384,7 @@ export const GAME_SEO: SeoMap = {
       keywords: ["explore map", "location game", "check-in game", "fog of war map", "Seoul subway", "bus stops", "walking game", "free game"],
       about: [
         "Explore Map only reveals places you have actually been. The Seoul metro area starts covered in fog; check in near a subway station or bus stop and the area around it is revealed in hexagon cells.",
-        "A station reveals 550m, a transfer station 1km and a bus stop 280m (500m in the outskirts). Collect check-ins on your commute, walks and trips to raise district exploration rates and earn badges.",
+        "A station reveals 1km, a transfer station 1.5km and a bus stop 500m (800m in the outskirts); the first check-in of the day reveals 1.5×, and walking with the page open reveals your path. Collect check-ins on your commute, walks and trips to raise district exploration rates and earn badges.",
       ],
       howTo: [
         "Tap Start and allow location access.",

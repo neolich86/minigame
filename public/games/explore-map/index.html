@@ -145,7 +145,10 @@ const $ = (id) => document.getElementById(id);
 const RES = 10;               // H3 해상도 — 한 칸 약 0.01km²
 const CELL_KM2 = 0.0104;      // 수도권 위도에서 res10 한 칸 넓이
 const STOP_Z = 14;
-const RADIUS = { s: 550, t: 1000, b: 280, bRural: 500 };
+const RADIUS = { s: 1000, t: 1500, b: 500, bRural: 800 };
+const DAY_BONUS = 1.5;        // 그날 첫 체크인은 반경 1.5배
+const TRAIL_MAX_ACC = 60;     // 걸으며 밝히기: 이 정확도 이하일 때만
+const TRAIL_MAX_KMH = 30;     // 차·지하철로 이동할 땐 경로를 밝히지 않음
 const RANGE = { s: 300, t: 300, b: 150 };   // 체크인 가능 거리
 const MAX_ACC = 200;          // 위치 정확도가 이보다 나쁘면 체크인 불가
 const MAX_KMH = 350;
@@ -154,7 +157,7 @@ const REGION = { s: 36.85, w: 124.5, n: 38.35, e: 127.9 };
 const SIDO = { '11': L_('서울', 'Seoul'), '23': L_('인천', 'Incheon'), '31': L_('경기', 'Gyeonggi') };
 
 /* ---------- 상태 ---------- */
-let state = { v: 1, stops: {} };   // stops[id] = {k,n,lat,lng,r,d,t,last,visits}
+let state = { v: 1, stops: {}, trail: [] };   // stops[id] = {k,n,lat,lng,r,rr,d,t,last,visits} · trail = 걸으며 밝힌 칸
 let owner = null;                  // 로그인 사용자 id
 let cloudAt = null;
 const cells = new Map();           // cell → [lat,lng]
@@ -176,6 +179,8 @@ const today = () => new Date().toLocaleDateString('sv-SE');
 const kindIcon = (k) => (k === 'b' ? '🚌' : k === 't' ? '🔁' : '🚇');
 const kindName = (k) => (k === 'b' ? L_('버스정류장', 'Bus stop') : k === 't' ? L_('환승역', 'Transfer station') : L_('지하철역', 'Station'));
 const radiusOf = (s) => (s.k === 'b' ? (s.rural ? RADIUS.bRural : RADIUS.b) : RADIUS[s.k]);
+// 저장된 기록의 반경 — 반경 기준이 커지면 예전 체크인도 새 기준만큼 밝혀진다
+const recRadius = (r) => Math.max(r.r || 0, r.k === 'b' ? (r.rr ? RADIUS.bRural : RADIUS.b) : RADIUS[r.k] || 0);
 
 /* ---------- 행정구역 ---------- */
 function pip(lng, lat, ring) {
@@ -220,7 +225,7 @@ function revealCells(lat, lng, r) {
 }
 function addStopCells(s) {
   let added = 0;
-  for (const [c, p] of revealCells(s.lat, s.lng, s.r)) {
+  for (const [c, p] of revealCells(s.lat, s.lng, recRadius(s))) {
     if (cells.has(c)) continue;
     cells.set(c, p);
     cellDist.set(c, districtAt(p[0], p[1]));
@@ -228,9 +233,42 @@ function addStopCells(s) {
   }
   return added;
 }
+function addCell(c) {
+  if (cells.has(c)) return false;
+  const p = h3.cellToLatLng(c);
+  cells.set(c, p);
+  cellDist.set(c, districtAt(p[0], p[1]));
+  return true;
+}
 function rebuildCells() {
   cells.clear(); cellDist.clear();
   for (const id in state.stops) addStopCells(state.stops[id]);
+  for (const c of state.trail || []) addCell(c);
+  trailSet.clear(); for (const c of state.trail || []) trailSet.add(c);
+}
+
+/* 걸으며 밝히기 — 페이지를 켜고 걸으면 지나간 길 주변(약 100m)이 열린다 */
+let trailPrev = null, trailAdded = 0, trailSaveT = null;
+const trailSet = new Set();
+function trailStep(pos) {
+  if (pos.acc > TRAIL_MAX_ACC || !inRegion(pos.lat, pos.lng)) return;
+  if (trailPrev) {
+    const dt = (pos.at - trailPrev.at) / 1000;
+    const dm = dist(trailPrev.lat, trailPrev.lng, pos.lat, pos.lng);
+    if (dt > 0 && dt < 600 && (dm / dt) * 3.6 > TRAIL_MAX_KMH) { trailPrev = pos; return; }
+  }
+  trailPrev = pos;
+  let n = 0;
+  for (const c of h3.gridDisk(h3.latLngToCell(pos.lat, pos.lng, RES), 1)) {
+    if (cells.has(c)) continue;
+    addCell(c);
+    if (!trailSet.has(c)) { trailSet.add(c); state.trail.push(c); }
+    n++;
+  }
+  if (!n) return;
+  trailAdded += n;
+  updateHeader(); queueFog();
+  if (!trailSaveT) trailSaveT = setTimeout(() => { trailSaveT = null; persist(); submit(); }, 30000);
 }
 
 /* ---------- 지도 ---------- */
@@ -311,10 +349,23 @@ function drawFog() {
     for (const id in state.stops) {
       const st = state.stops[id];
       if (anim && animR < 1 && anim.id === id) continue;
+      const rr = recRadius(st);
       const c = map.latLngToContainerPoint([st.lat, st.lng]);
-      const e = map.latLngToContainerPoint([st.lat, st.lng + st.r / (111320 * Math.cos(st.lat * Math.PI / 180))]);
+      const e = map.latLngToContainerPoint([st.lat, st.lng + rr / (111320 * Math.cos(st.lat * Math.PI / 180))]);
       const r = Math.max(1.5, e.x - c.x);
       fctx.moveTo(c.x + r, c.y); fctx.arc(c.x, c.y, r, 0, Math.PI * 2);
+    }
+    // 걸으며 밝힌 칸
+    const tr = (state.trail || []);
+    if (tr.length) {
+      const p0 = map.latLngToContainerPoint([37.5, 127]), p1 = map.latLngToContainerPoint([37.5, 127.0007]);
+      const r = Math.max(1, p1.x - p0.x);
+      for (const c of tr) {
+        const p = cells.get(c); if (!p) continue;
+        if (p[0] < b.getSouth() || p[0] > b.getNorth() || p[1] < b.getWest() || p[1] > b.getEast()) continue;
+        const q = map.latLngToContainerPoint(p);
+        fctx.moveTo(q.x + r, q.y); fctx.arc(q.x, q.y, r, 0, Math.PI * 2);
+      }
     }
     fctx.fill();
   }
@@ -451,7 +502,8 @@ function checkIn(s) {
     toast(L_(`${s.n} 다시 방문!`, `Back at ${s.n}!`), L_(`방문 ${old.visits}회`, `${old.visits} visits`));
     return;
   }
-  const rec = { k: s.k, n: s.n, lat: s.lat, lng: s.lng, r: radiusOf(s), d: districtAt(s.lat, s.lng), t: today(), last: today(), at: Date.now(), visits: 1 };
+  const firstToday = !Object.values(state.stops).some((x) => x.last === today());
+  const rec = { k: s.k, n: s.n, lat: s.lat, lng: s.lng, r: Math.round(radiusOf(s) * (firstToday ? DAY_BONUS : 1)), rr: s.rural ? 1 : 0, d: districtAt(s.lat, s.lng), t: today(), last: today(), at: Date.now(), visits: 1 };
   const prevBadges = earnedBadges();
   const prevDistricts = new Set(Object.values(state.stops).map((x) => x.d));
   state.stops[s.id] = rec;
@@ -461,6 +513,7 @@ function checkIn(s) {
   focus(s.lat, s.lng, Math.max(map.getZoom(), 15), true);
   persist(); submit(); renderStops(); renderSheet(); updateHeader(); queueFog();
   let sub = added ? L_(`+${fmtN(added)}칸 발견`, `+${fmtN(added)} cells`) : L_('체크인 완료 · 이미 밝힌 지역이에요', 'Checked in · area already revealed');
+  if (firstToday) sub += ' · ' + L_('☀️ 오늘 첫 체크인 1.5배', '☀️ first of the day ×1.5');
   if (rec.d && !prevDistricts.has(rec.d)) sub += ' · ' + L_(`${dName(rec.d)} 첫 발견!`, `first time in ${dName(rec.d)}!`);
   const nb = earnedBadges().filter((b) => !prevBadges.includes(b));
   if (nb.length) sub += ' · 🏅 ' + BADGES.find((b) => b.id === nb[0]).name;
@@ -481,21 +534,27 @@ function startGps() {
       ? { cls: 'warn', t: L_('지금 위치는 아직 열리지 않은 지역이에요 (1단계: 서울·인천·경기)', 'Your area is not open yet (stage 1: Seoul metro area)') }
       : me.acc > MAX_ACC
         ? { cls: 'warn', t: L_(`위치 정확도 ±${Math.round(me.acc)}m — 밖으로 나오면 더 정확해져요`, `Accuracy ±${Math.round(me.acc)}m — move outdoors`) }
-        : { cls: 'ok', t: L_(`내 위치 ±${Math.round(me.acc)}m`, `Location ±${Math.round(me.acc)}m`) };
+        : { cls: 'ok', t: L_(`내 위치 ±${Math.round(me.acc)}m · 🚶 걸으면 지나간 길도 밝혀져요${trailAdded ? ` (+${fmtN(trailAdded)}칸)` : ''}`, `Location ±${Math.round(me.acc)}m · 🚶 walking reveals your path${trailAdded ? ` (+${fmtN(trailAdded)})` : ''}`) };
     if (!meMarker) {
       meMarker = L.marker([me.lat, me.lng], { icon: L.divIcon({ className: '', html: '<div class="me"></div>', iconSize: [18, 18] }), interactive: false, zIndexOffset: 1000 }).addTo(map);
       meCircle = L.circle([me.lat, me.lng], { radius: me.acc, color: '#2f80ff', weight: 1, fillOpacity: 0.08, interactive: false }).addTo(map);
     } else { meMarker.setLatLng([me.lat, me.lng]); meCircle.setLatLng([me.lat, me.lng]).setRadius(me.acc); }
     if (first && !out) { focus(me.lat, me.lng, 16); first = false; }
     $('locBtn').classList.add('on');
+    trailStep(me);
     loadAround(me.lat, me.lng);
     renderSheet();
   }, (err) => {
+    // 권한 거부가 아니면(신호 약함·시간 초과 — 지하·실내에서 흔함) 계속 지켜본다
+    if (err.code !== 1) {
+      if (!me) { gpsMsg = { cls: 'warn', t: L_('위치 신호를 찾는 중… 실내라면 밖으로 나와 주세요', 'Searching for signal… try going outside') }; renderSheet(); }
+      return;
+    }
     gpsMsg = { cls: 'bad', t: err.code === 1 ? L_('위치 권한이 꺼져 있어요. 브라우저 설정에서 이 사이트의 위치를 허용해 주세요.', 'Location permission is off. Allow it in your browser settings.') : L_('위치를 찾지 못했어요. 잠시 후 다시 시도해 주세요.', 'Could not get your location. Try again.') };
     if (watchId != null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
     $('locBtn').classList.remove('on');
     renderSheet();
-  }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 });
+  }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 30000 });
 }
 let gpsMsg = { cls: '', t: '' };
 // 체크인 가능 시간이 지나면 화면을 갱신
@@ -539,7 +598,11 @@ let tab = 'near';
 function updateHeader() {
   const s = stats();
   $('hdCells').textContent = L_(`${fmtN(s.cells)}칸`, `${fmtN(s.cells)} cells`);
-  $('hdPct').textContent = L_('수도권 ', 'Metro ') + fmtPct(pct(s.all[0], s.all[1]));
+  // 수도권 전체 %는 너무 작아 보이니, 지금 있는 (또는 마지막으로 간) 시·군·구 탐험률을 보여준다
+  const l = lastCheckin();
+  const code = (me && inRegion(me.lat, me.lng) && districtAt(me.lat, me.lng)) || (l && l.d);
+  const d = code && districts.find((x) => x.c === code);
+  $('hdPct').textContent = d ? `${d.n} ${fmtPct(pct(s.byDist[code] || 0, d.t))}` : L_('수도권 ', 'Metro ') + fmtPct(pct(s.all[0], s.all[1]));
 }
 function nearbyList() {
   if (!me) return [];
@@ -608,13 +671,14 @@ function toast(t, sub) {
 function readLocal() { try { return JSON.parse(localStorage.getItem(LS) || 'null'); } catch (e) { return null; } }
 function writeLocal() { try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {} }
 function merge(a, b) {
-  const out = { v: 1, stops: {} };
+  const out = { v: 1, stops: {}, trail: [...new Set([...((a && a.trail) || []), ...((b && b.trail) || [])])] };
   for (const src of [a, b]) for (const id in (src && src.stops) || {}) {
     const s = src.stops[id], o = out.stops[id];
     if (!o) { out.stops[id] = { ...s }; continue; }
     o.t = o.t < s.t ? o.t : s.t;
     if ((s.at || 0) > (o.at || 0)) { o.at = s.at; o.last = s.last; }
     o.visits = Math.max(o.visits || 1, s.visits || 1);
+    o.r = Math.max(o.r || 0, s.r || 0);
   }
   return out;
 }
@@ -661,8 +725,10 @@ function setupAuth() {
 $('inTitle').textContent = L_('탐험 지도', 'Explore Map');
 $('inDesc').textContent = L_('지하철역과 버스정류장에서 체크인하면 안개가 걷히며 지도가 밝혀져요.', 'Check in at subway stations and bus stops to clear the fog and reveal the map.');
 $('inList').innerHTML = [
-  L_('🚇 지하철역 반경 550m · 환승역 1km', '🚇 Station: 550m · transfer: 1km'),
-  L_('🚌 버스정류장 반경 280m (외곽은 500m)', '🚌 Bus stop: 280m (500m in outskirts)'),
+  L_('🚇 지하철역 반경 1km · 환승역 1.5km', '🚇 Station: 1km · transfer: 1.5km'),
+  L_('🚌 버스정류장 반경 500m (외곽은 800m)', '🚌 Bus stop: 500m (800m in outskirts)'),
+  L_('☀️ 그날 첫 체크인은 1.5배로 밝혀져요', '☀️ First check-in of the day reveals 1.5×'),
+  L_('🚶 화면을 켜고 걸으면 지나간 길도 밝혀져요', '🚶 Walk with the page open to reveal your path'),
   L_('📍 실제로 근처에 있어야 체크인돼요', '📍 You must actually be nearby'),
   L_('🗺️ 1단계: 서울·인천·경기', '🗺️ Stage 1: Seoul, Incheon, Gyeonggi'),
 ].map((x) => `<li>${x}</li>`).join('');
@@ -676,6 +742,7 @@ $('browseBtn').onclick = () => { $('intro').remove(); };
   await loadDistricts();
   const local = readLocal();
   if (local && local.stops) state = merge(state, local);
+  if (!state.trail) state.trail = [];
   rebuildCells();
   updateHeader(); renderSheet(); placeFab(); drawFog();
   if (Object.keys(state.stops).length) {
