@@ -52,7 +52,7 @@ node["public_transport"="station"]["train"="yes"](${bb});
 }
 
 async function overpass(q: string): Promise<OsmNode[]> {
-  let last: unknown;
+  const errs: string[] = [];
   for (const url of ENDPOINTS) {
     try {
       const res = await fetch(url, {
@@ -62,14 +62,14 @@ async function overpass(q: string): Promise<OsmNode[]> {
         signal: AbortSignal.timeout(20000),
         cache: "no-store",
       });
-      if (!res.ok) throw new Error(`overpass ${res.status}`);
+      if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 120).replace(/\s+/g, " ")}`);
       const j = (await res.json()) as { elements?: OsmNode[] };
       return (j.elements ?? []).filter((e) => e.type === "node");
     } catch (e) {
-      last = e;
+      errs.push(`${new URL(url).host}: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
-  throw last instanceof Error ? last : new Error("overpass_failed");
+  throw new Error(errs.join(" | ") || "overpass_failed");
 }
 
 const R = 6371000;

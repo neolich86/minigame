@@ -21,6 +21,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ z: stri
     );
   } catch (e) {
     console.error("[explore/stops]", e instanceof Error ? e.message : e);
-    return Response.json({ error: "upstream" }, { status: 503, headers: { "cache-control": "no-store" } });
+    // 원인 파악용으로 짧은 오류 내용을 함께 돌려준다 (외부 서버 응답 코드·메시지)
+    const detail = (e instanceof Error ? e.message : String(e)).slice(0, 400);
+    return Response.json({ error: "upstream", detail }, { status: 503, headers: { "cache-control": "no-store" } });
   }
 }
