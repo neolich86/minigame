@@ -306,6 +306,34 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       ],
     },
   },
+  "explore-map": {
+    ko: {
+      tips: [
+        "환승역은 반경 1km가 한 번에 열려요. 같은 시간이면 일반역보다 환승역을 먼저 들르는 게 이득이에요.",
+        "지하에서는 GPS가 잘 안 잡혀요. 역 출구로 나와서 체크인하면 훨씬 정확해요.",
+        "버스로 이동할 때는 내린 정류장에서 체크인하세요. 정류장은 하나하나가 작은 대신 개수가 많아서 길을 따라 띠처럼 이어져요.",
+        "외곽 정류장(주변 600m 안에 정류장이 3개 이하)은 반경 500m가 열려서 탐험률 올리기에 좋아요.",
+      ],
+      faq: [
+        { q: "집에서도 체크인할 수 있나요?", a: "아니요. 실제로 지하철역 300m, 버스정류장 150m 안에 있어야 체크인 버튼이 켜져요." },
+        { q: "앱을 닫아도 기록되나요?", a: "웹 게임이라 페이지가 열려 있을 때만 위치를 사용해요. 이동 경로는 저장하지 않고 체크인한 정류장만 저장합니다." },
+        { q: "어느 지역에서 할 수 있나요?", a: "1단계로 서울·인천·경기에서 할 수 있고, 광역시와 전국으로 넓혀 갈 예정이에요." },
+        { q: "정류장이 안 보이거나 위치가 틀려요.", a: "정류장 정보는 OpenStreetMap 데이터를 사용해요. 빠진 곳이 있으면 문의하기로 알려 주세요." },
+      ],
+    },
+    en: {
+      tips: [
+        "Transfer stations reveal 1km at once — visit them first.",
+        "GPS is weak underground; check in after leaving the station exit.",
+        "Outskirts bus stops reveal 500m, great for raising your rate.",
+      ],
+      faq: [
+        { q: "Can I check in from home?", a: "No. You must be within 300m of a station or 150m of a bus stop." },
+        { q: "Does it record with the page closed?", a: "No, location is only used while the page is open. Only checked-in stops are saved, never your route." },
+        { q: "Where can I play?", a: "Stage 1 covers Seoul, Incheon and Gyeonggi; more regions will follow." },
+      ],
+    },
+  },
   weapon: {
     ko: {
       tips: [

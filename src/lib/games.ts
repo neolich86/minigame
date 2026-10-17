@@ -122,6 +122,19 @@ const CATALOG: Game[] = [
     ],
   },
   {
+    id: "explore-map",
+    title: { ko: "탐험 지도", en: "Explore Map" },
+    desc: {
+      ko: "지하철역·버스정류장에서 체크인하면 안개가 걷히며 실제 지도가 밝혀지는 탐험 게임 (서울·인천·경기)",
+      en: "Check in at real subway stations and bus stops to clear the fog and reveal the map (Seoul metro area)",
+    },
+    genre: "casual",
+    thumb: "/thumbs/explore-map.jpg",
+    src: "/games/explore-map/index.html",
+    saves: true, // 체크인한 정류장 목록을 계정에 저장
+    boards: [{ id: "explore-map", label: { ko: "밝힌 칸", en: "Cells revealed" }, unit: { ko: "칸", en: " cells" }, vs: { label: { ko: "탐험", en: "exploration" }, question: { ko: "누가 더 넓게 탐험하나?", en: "Who explores more?" } } }],
+  },
+  {
     id: "weapon",
     title: { ko: "무기 강화", en: "Weapon Enhance" },
     desc: {

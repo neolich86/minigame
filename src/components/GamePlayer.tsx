@@ -271,7 +271,7 @@ export function GamePlayer({ gameId, app }: { gameId: string; app?: string }) {
           className="game-frame"
           src={`${game.src}?lang=${frameLang}`}
           title={game.title[lang]}
-          allow="autoplay; fullscreen; clipboard-write; web-share"
+          allow="autoplay; fullscreen; clipboard-write; web-share; geolocation"
           allowFullScreen
         />
       </div>

@@ -359,6 +359,42 @@ export const GAME_SEO: SeoMap = {
       tags: ["Best Nine", "Year in review", "Feed analytics", "Free"],
     },
   },
+  "explore-map": {
+    ko: {
+      title: "탐험 지도 - 지하철역·버스정류장 체크인 땅따먹기 게임",
+      h1: "탐험 지도 — 체크인으로 실제 지도를 밝히는 게임",
+      description: "지하철역과 버스정류장에서 체크인하면 안개가 걷히며 실제 지도가 밝혀지는 무료 탐험 게임. 서울·인천·경기 탐험률과 뱃지를 모아 보세요.",
+      keywords: ["탐험 지도", "위치 기반 게임", "체크인 게임", "땅따먹기", "지하철역", "버스정류장", "서울 탐험", "동네 탐험", "산책 게임", "무료 게임"],
+      about: [
+        "탐험 지도는 실제로 가 본 곳만 밝혀지는 위치 기반 탐험 게임입니다. 처음에는 서울·인천·경기 지도 전체가 안개로 덮여 있고, 지하철역이나 버스정류장 근처에서 체크인하면 그 주변이 육각형 칸 단위로 밝혀져요.",
+        "지하철역은 반경 550m, 환승역은 1km, 버스정류장은 280m(외곽은 500m)가 한 번에 열립니다. 출퇴근길, 산책, 여행에서 체크인을 모아 시·군·구별 탐험률을 올리고 뱃지를 모아 보세요.",
+      ],
+      howTo: [
+        "[위치 켜고 탐험 시작]을 눌러 위치 사용을 허용합니다.",
+        "지하철역 300m, 버스정류장 150m 안으로 가면 [주변 체크인] 목록에 체크인 버튼이 켜집니다.",
+        "체크인하면 주변 안개가 걷히고, [탐험 기록]에서 지역별 탐험률을 볼 수 있어요.",
+        "로그인하면 기록이 계정에 저장되고 밝힌 칸 수로 랭킹에 올라갑니다.",
+      ],
+      tags: ["위치기반", "탐험", "지하철", "버스", "수도권", "무료"],
+    },
+    en: {
+      title: "Explore Map - Check In at Real Stations to Reveal the Map",
+      h1: "Explore Map — Reveal a Real Map by Checking In",
+      description: "A free location game: check in at real subway stations and bus stops to clear the fog. Raise your exploration rate across Seoul, Incheon and Gyeonggi.",
+      keywords: ["explore map", "location game", "check-in game", "fog of war map", "Seoul subway", "bus stops", "walking game", "free game"],
+      about: [
+        "Explore Map only reveals places you have actually been. The Seoul metro area starts covered in fog; check in near a subway station or bus stop and the area around it is revealed in hexagon cells.",
+        "A station reveals 550m, a transfer station 1km and a bus stop 280m (500m in the outskirts). Collect check-ins on your commute, walks and trips to raise district exploration rates and earn badges.",
+      ],
+      howTo: [
+        "Tap Start and allow location access.",
+        "Within 300m of a station or 150m of a bus stop, the Check in button lights up in the Nearby list.",
+        "Checking in clears the fog; see per-district progress in the Progress tab.",
+        "Sign in to save to your account and rank by cells revealed.",
+      ],
+      tags: ["Location", "Exploration", "Subway", "Bus", "Seoul", "Free"],
+    },
+  },
   weapon: {
     ko: {
       title: "무기 강화 - 무료 강화 시뮬레이터 게임 (Lv.100 도전)",
@@ -509,6 +545,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
       { title: "뱀서 · 서바이벌", text: "몰려오는 몬스터 속에서 스킬을 골라 성장하는 뱀서류 서바이벌 로그라이크. 생존 시간 랭킹에 도전하세요.", games: ["archer"] },
       { title: "슈팅 · 타워디펜스", text: "아케이드 종스크롤 비행기 슈팅과 원소 조합 전략 타워디펜스.", games: ["raiden", "element-td"] },
       { title: "카드 뽑기 · 타자 연습", text: "포켓몬·원피스 카드 오리파 시뮬레이터와 세계 지도 타자 연습 게임.", games: ["oripa", "world-typing"] },
+      { title: "위치 기반 탐험", text: "실제 지하철역·버스정류장에서 체크인해 안개 덮인 지도를 밝히는 탐험 게임. 서울·인천·경기 탐험률과 뱃지를 모아 보세요.", games: ["explore-map"] },
       { title: "카지노", text: "0이 하나뿐인 유럽식 룰렛, 출목표가 있는 8덱 바카라, 기본 전략 힌트가 있는 6덱 블랙잭. 100만 원으로 시작해 최고 잔액 랭킹에 도전하세요. 실제 돈은 쓰지 않아요.", games: ["roulette", "baccarat", "blackjack"] },
     ],
   },
@@ -520,6 +557,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
       { title: "Survivor-like · Survival", text: "A survivor-like roguelite — grow your skills amid endless hordes and chase the survival-time leaderboard.", games: ["archer"] },
       { title: "Shooter · Tower defense", text: "An arcade vertical shooter and an elemental strategy tower defense.", games: ["raiden", "element-td"] },
       { title: "Card pulls · Typing", text: "A Pokémon / One Piece oripa card-pull simulator and a world-map typing practice game.", games: ["oripa", "world-typing"] },
+      { title: "Location exploration", text: "Check in at real subway stations and bus stops to clear a fog-covered map. Collect exploration rates and badges across the Seoul metro area.", games: ["explore-map"] },
       { title: "Casino", text: "Single-zero European roulette, 8-deck baccarat with full scoreboards and 6-deck blackjack with basic-strategy hints — start with ₩1,000,000 and chase the peak-balance leaderboard. No real money.", games: ["roulette", "baccarat", "blackjack"] },
     ],
   },
