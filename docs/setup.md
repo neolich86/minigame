@@ -108,6 +108,28 @@ Vercel → Settings → Domains에서 도메인 추가 → 안내대로 DNS 설�
 
 ---
 
+## 6. 새 회원 가입 메일 알림 (선택)
+
+카카오·이메일로 새 회원이 생기면 운영자 메일로 알림이 옵니다. 흐름: Supabase 트리거 → `/api/hooks/new-user` → Resend로 메일 발송.
+
+1. [resend.com](https://resend.com) 가입 (무료: 하루 100통). **알림 받을 주소와 같은 메일로 가입**하면 도메인 인증 없이 바로 받을 수 있어요.
+2. Resend → API Keys → Create API Key → 복사
+3. 비밀값 하나 정하기 (아무 긴 문자열, 예: 비밀번호 생성기로 32자)
+4. Vercel → Settings → Environment Variables (Production):
+   - `RESEND_API_KEY` = 2번 키
+   - `SIGNUP_NOTIFY_EMAIL` = 알림 받을 메일 (여러 개면 쉼표로)
+   - `SIGNUP_HOOK_SECRET` = 3번 비밀값
+   - (선택) `SIGNUP_NOTIFY_FROM` = Resend에서 playwithme.kr 도메인을 인증한 뒤 `미니게임천국 <noreply@playwithme.kr>` 처럼 지정
+   - 저장 후 Redeploy
+5. Supabase → SQL Editor 에서 차례로 실행:
+   - `supabase/migrations/0020_signup_notify.sql` 전체
+   - `select vault.create_secret('3번 비밀값', 'signup_hook_secret');`
+6. 확인: 다른 이메일로 가입해 보면 1분 안에 메일이 옵니다. 안 오면 Supabase SQL Editor에서 `select status_code, content from net._http_response order by created desc limit 5;` 로 응답을 확인하세요.
+
+- 비밀값을 바꾸려면: `select vault.update_secret((select id from vault.secrets where name = 'signup_hook_secret'), '새 값');` + Vercel 변수도 같은 값으로
+- 알림을 끄려면: `drop trigger if exists on_auth_user_created_notify on auth.users;`
+- 알림이 실패해도 가입은 막히지 않습니다.
+
 ## 게임 이름 참고
 저작권·상표 문제로 화면에 보이는 이름을 바꿨고, 주소와 DB의 내부 id는 기존 그대로입니다.
 - 헥사 아일랜드(Hexa Isle) = `catan` · 타일러쉬(Tile Rush) = `lexio` · 스카이 스트라이크(Sky Strike) = `raiden`
