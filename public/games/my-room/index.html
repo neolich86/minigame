@@ -29,7 +29,7 @@ canvas#room{display:block;width:100%;height:auto;image-rendering:pixelated;image
 .hint{font-size:12px;color:var(--dim);margin:6px 4px 0;line-height:1.5}
 .panel{background:var(--card);border:2px solid var(--line);border-radius:16px;overflow:hidden}
 .tabs{display:flex;border-bottom:2px solid var(--line)}
-.tab{flex:1;height:42px;font-size:13.5px;font-weight:800;color:var(--dim)}
+.tab{flex:1;height:42px;font-size:13px;white-space:nowrap;font-weight:800;color:var(--dim)}
 .tab.on{color:var(--ink);background:var(--acc2)}
 .pbody{padding:10px;max-height:62vh;overflow:auto}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
@@ -46,6 +46,10 @@ h4:first-child{margin-top:2px}
 .opt{min-width:42px;height:42px;border-radius:10px;border:2px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;padding:0 6px}
 .opt.on{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc2)}
 .opt canvas{image-rendering:pixelated}
+.opts.pics{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr))}
+.opt.pic{height:auto;flex-direction:column;gap:2px;padding:4px 2px 5px;font-size:11px;line-height:1.2;text-align:center}
+.opt.pic canvas{width:48px;height:auto}
+.note{font-size:12px;color:var(--dim);margin:4px 2px 0}
 .sw{width:30px;height:30px;border-radius:8px;border:2px solid #fff;box-shadow:0 0 0 1px var(--line)}
 .ch-prev{display:flex;justify-content:center;background:linear-gradient(#fff,#e6f4ff);border-radius:12px;padding:6px;margin-bottom:6px}
 .ch-prev canvas{image-rendering:pixelated;width:168px;height:auto}
@@ -80,6 +84,7 @@ h4:first-child{margin-top:2px}
       <button class="tab on" data-t="furn"></button>
       <button class="tab" data-t="room"></button>
       <button class="tab" data-t="char"></button>
+      <button class="tab" data-t="look"></button>
     </div>
     <div class="pbody" id="pbody"></div>
   </div>
@@ -290,8 +295,42 @@ const EYES = [['dot', '동글 눈', 'Round'], ['smile', '웃는 눈', 'Smile'], 
 const EYEC = ['#2b1d1d', '#4a2c1a', '#1f3f7a', '#1f5e3f', '#6b1f2a'];
 const TOPS = [['tee', '티셔츠', 'T-shirt'], ['stripe', '줄무늬 티', 'Striped'], ['hood', '후드', 'Hoodie'], ['sailor', '세일러', 'Sailor'], ['dress', '원피스', 'Dress'], ['overall', '멜빵', 'Overalls']];
 const BOTTOMS = [['pants', '긴 바지', 'Pants'], ['shorts', '반바지', 'Shorts'], ['skirt', '치마', 'Skirt']];
-const ACCS = [['none', '없음', 'None'], ['ribbon', '리본', 'Ribbon'], ['flower', '꽃핀', 'Flower pin'], ['cap', '모자', 'Cap'], ['glasses', '안경', 'Glasses'], ['bunny', '토끼 귀', 'Bunny ears'], ['cat', '고양이 귀', 'Cat ears'], ['crown', '왕관', 'Crown']];
-const HOODC = ['#ffffff', '#ffc4d6', '#c9a27a', '#3b3b46', '#f2d16b'];
+/* 외형(의상): 상·하의 대신 한 벌로 입는 옷. hood = 머리카락을 덮는 후드, head = 모자가 포함돼 머리 장식을 쓰지 않음 */
+const COSTUMES = [
+  ['none', '평상복', 'Everyday'], ['knight', '기사', 'Knight'], ['princess', '공주 드레스', 'Princess gown'], ['pirate', '해적 선장', 'Pirate captain'],
+  ['wizard', '마법사', 'Wizard'], ['fairy', '꽃요정', 'Flower fairy'], ['suit', '정장', 'Suit'], ['ninja', '닌자', 'Ninja'],
+  ['pilot', '비행사', 'Pilot'], ['explorer', '탐험가', 'Explorer'], ['chef', '요리사', 'Chef'], ['astro', '우주인', 'Astronaut'],
+  ['fox', '여우 옷', 'Fox suit'], ['bear', '곰 옷', 'Bear suit'], ['sheep', '양 옷', 'Sheep suit'], ['koala', '코알라 옷', 'Koala suit'],
+  ['lion', '사자 옷', 'Lion suit'], ['rabbit', '토끼 옷', 'Bunny suit'], ['dino', '공룡 옷', 'Dino suit'],
+];
+const animal = (c, cs, belly, K, legs) => ({ T: c, t: cs, B: c, b: cs, K, legs: legs || c, hood: [c, cs], belly, head: 1 });
+const COS = {
+  knight: { T: '#c9d1dc', t: '#8e99a8', B: '#aab4c2', b: '#7b8696', K: '#6b7482', legs: '#aab4c2', hood: ['#c9d1dc', '#8e99a8'], head: 1 },
+  princess: { T: '#a9dcff', t: '#7cbdf0', B: '#a9dcff', b: '#7cbdf0', K: '#ffffff' },
+  pirate: { T: '#b8323a', t: '#8a2228', B: '#3b3b46', b: '#2b2b33', K: '#2b2b33', legs: '#2b2b33', head: 1 },
+  wizard: { T: '#6a4bb8', t: '#4a3390', B: '#6a4bb8', b: '#4a3390', K: '#3b2a20', head: 1 },
+  fairy: { T: '#e6d0ff', t: '#c4a6f0', B: '#e6d0ff', b: '#c4a6f0', K: '#ff9ebd' },
+  suit: { T: '#2b2f3a', t: '#1c1f27', B: '#2b2f3a', b: '#1c1f27', K: '#2b2b33', legs: '#2b2f3a' },
+  ninja: { T: '#2f3756', t: '#1f2540', B: '#2f3756', b: '#1f2540', K: '#1f2540', legs: '#2f3756', hood: ['#2f3756', '#1f2540'], head: 1 },
+  pilot: { T: '#8a5a3b', t: '#6b4226', B: '#9c8a5a', b: '#7a6a40', K: '#3b2a20', legs: '#9c8a5a', head: 1 },
+  explorer: { T: '#c9b07a', t: '#a8905a', B: '#8a7a4a', b: '#6b5d36', K: '#6b4226', head: 1 },
+  chef: { T: '#ffffff', t: '#dfe4ec', B: '#3b3b46', b: '#2b2b33', K: '#2b2b33', legs: '#3b3b46', head: 1 },
+  astro: { T: '#f4f6fa', t: '#c7ccd6', B: '#f4f6fa', b: '#c7ccd6', K: '#8e99a8', legs: '#e6e9ef', head: 1 },
+  fox: animal('#f08a3c', '#c96a24', '#fff4e6', '#3b2a20'),
+  bear: animal('#a8744a', '#7d5433', '#e8c79a', '#5a3b22'),
+  sheep: animal('#ffffff', '#dcdfe6', null, '#3b3b46', '#3b3b46'),
+  koala: animal('#9aa0aa', '#767c86', '#e6e8ee', '#5e636c'),
+  lion: animal('#f2c14e', '#d69e2e', '#fff0c8', '#c9782f'),
+  rabbit: animal('#ffffff', '#dfe3ea', '#ffe6ee', '#ffc4d6'),
+  dino: animal('#6cc04a', '#4f9a35', '#e8f5b0', '#3f7a2a'),
+};
+const ACCS = [['none', '없음', 'None'], ['ribbon', '리본', 'Ribbon'], ['flower', '꽃핀', 'Flower pin'], ['crown', '왕관', 'Crown'], ['flowercrown', '꽃관', 'Flower crown'],
+  ['cap', '야구모자', 'Cap'], ['beanie', '털모자', 'Beanie'], ['straw', '밀짚모자', 'Straw hat'], ['witch', '마녀 모자', 'Witch hat'], ['santa', '산타 모자', 'Santa hat'], ['horns', '뿔 투구', 'Horned helmet'],
+  ['bunny', '토끼 귀', 'Bunny ears'], ['cat', '고양이 귀', 'Cat ears'], ['antlers', '순록 뿔', 'Antlers'],
+  ['glasses', '안경', 'Glasses'], ['shades', '선글라스', 'Sunglasses'], ['goggles', '고글', 'Goggles'], ['headphones', '헤드폰', 'Headphones'], ['mask', '마스크', 'Face mask']];
+const ACC_COLORED = ['cap', 'beanie', 'bunny', 'cat', 'headphones'];
+const HANDS = [['none', '없음', 'None'], ['sword', '검', 'Sword'], ['shield', '방패', 'Shield'], ['wand', '요술봉', 'Magic wand'], ['balloon', '풍선', 'Balloon'], ['flower', '꽃 한 송이', 'Flower'], ['lollipop', '막대사탕', 'Lollipop'], ['mic', '마이크', 'Microphone']];
+const HOODC = ['#ffffff', '#e0453f', '#5d9bff', '#7ec8ff', '#ffd36e', '#7ed99a', '#ffc4d6', '#c9a27a', '#3b3b46'];
 const CHW = 28, CHH = 44, YOFF = 4, XOFF = 2;
 
 const SPR_BASE = [
@@ -348,33 +387,124 @@ function charGrid(ch, frame) {
   const at = (x, y) => { y += YOFF; x += XOFF; return x >= 0 && x < GW && y >= 0 && y < GH ? g[y * GW + x] : null; };
   const stamp = (rows, y0 = 0, map) => rows.forEach((r, j) => { for (let i = 0; i < r.length; i++) { const k = r[i]; if (k !== '.') put(i, y0 + j, map ? map(k, i, y0 + j) : k); } });
   const fill = (x, y, w, h, k) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) put(x + i, y + j, typeof k === 'function' ? k(x + i, y + j) : k); };
-  const dress = ch.top === 'dress';
+  // [y, 시작 x, 끝 x] 줄 목록으로 모양 채우기 (mirror = 좌우 대칭 복사)
+  const rows = (spec, k, mirror) => spec.forEach(([y, a, b]) => { for (let x = a; x <= b; x++) { const v = typeof k === 'function' ? k(x, y, a, b) : k; put(x, y, v); if (mirror) put(23 - x, y, typeof k === 'function' ? k(23 - x, y, 23 - b, 23 - a, true) : k); } });
+  const cid = COS[ch.costume] ? ch.costume : 'none', cos = COS[cid] || null;
+  const hooded = !!(cos && cos.hood);
+  const dress = !cos && ch.top === 'dress';
 
-  /* 뒷머리 */
-  if (ch.hair === 'long') fill(2, 8, 20, 24, (x, y) => (x >= 19 ? 'h' : (x + y) % 7 === 0 ? 'L' : 'H'));
-  if (ch.hair === 'bob') fill(2, 8, 20, 12, (x) => (x >= 19 ? 'h' : 'H'));
-  if (ch.hair === 'twin') {
-    // 양갈래: 머리 옆으로 묶은 머리다발
-    const tail = [[1, 2], [0, 3], [-1, 4], [-1, 4], [-2, 4], [-2, 4], [-2, 4], [-1, 3], [-1, 3], [0, 2], [0, 2], [1, 1]];
-    tail.forEach(([x, w], j) => { fill(x, 13 + j, w, 1, (xx) => (xx === x ? 'L' : 'H')); fill(23 - x - w + 1, 13 + j, w, 1, (xx) => (xx === 23 - x ? 'h' : 'H')); });
-    fill(1, 11, 2, 2, 'R'); fill(21, 11, 2, 2, 'R');
+  /* 등 뒤: 뒷머리·날개·꼬리·갈기 */
+  if (!hooded) {
+    if (ch.hair === 'long') fill(2, 8, 20, 24, (x, y) => (x >= 19 ? 'h' : (x + y) % 7 === 0 ? 'L' : 'H'));
+    if (ch.hair === 'bob') fill(2, 8, 20, 12, (x) => (x >= 19 ? 'h' : 'H'));
+    if (ch.hair === 'twin') {
+      const tail = [[1, 2], [0, 3], [-1, 4], [-1, 4], [-2, 4], [-2, 4], [-2, 4], [-1, 3], [-1, 3], [0, 2], [0, 2], [1, 1]];
+      tail.forEach(([x, w], j) => { fill(x, 13 + j, w, 1, (xx) => (xx === x ? 'L' : 'H')); fill(23 - x - w + 1, 13 + j, w, 1, (xx) => (xx === 23 - x ? 'h' : 'H')); });
+      fill(1, 11, 2, 2, 'R'); fill(21, 11, 2, 2, 'R');
+    }
   }
+  if (cid === 'fairy') {
+    rows([[17, 1, 3], [18, 0, 4], [19, -1, 4], [20, -1, 4], [21, -1, 4], [22, 0, 4], [23, 1, 4], [24, 0, 4], [25, -1, 4], [26, -1, 4], [27, 0, 3], [28, 1, 2]], (x, y) => ((x === 1 || x === 22) && y % 3 === 0 ? '#ffffff' : '#d4efffd9'), true);
+  }
+  if (cid === 'fox') rows([[22, 20, 21], [23, 20, 22], [24, 19, 23], [25, 19, 24], [26, 19, 24], [27, 19, 24], [28, 19, 23], [29, 19, 23], [30, 19, 22], [31, 19, 21]], (x, y) => (y <= 23 ? '#fff4e6' : x >= 23 ? '#c96a24' : '#f08a3c'));
+  if (cid === 'lion') {
+    for (let y = -2; y <= 23; y++) for (let x = -2; x <= 25; x++) { const d = ((x - 11.5) / 12.6) ** 2 + ((y - 10.5) / 12.4) ** 2; if (d <= 1) put(x, y, d > 0.78 ? '#a85f22' : '#c9782f'); }
+    fill(20, 28, 1, 4, '#f2c14e'); fill(21, 26, 1, 3, '#f2c14e'); fill(21, 24, 2, 2, '#c9782f'); put(22, 23, '#a85f22');
+  }
+  if (cid === 'dino') {
+    rows([[27, 18, 19], [28, 18, 20], [29, 18, 21], [30, 18, 22], [31, 19, 23], [32, 20, 24], [33, 22, 25]], (x) => (x >= 22 ? '#4f9a35' : '#6cc04a'));
+    put(20, 26, '#ffd23d'); put(22, 28, '#ffd23d'); put(24, 30, '#ffd23d');
+  }
+  if (cid === 'rabbit') fill(19, 30, 3, 3, (x, y) => (x === 21 || y === 32 ? '#dfe3ea' : '#ffffff'));
 
   /* 몸 */
   stamp(SPR_BASE);
-  // 하의
-  if (ch.bottom === 'pants' && !dress) fill(7, 33, 10, 4, (x) => (x === 10 || x === 15 ? 'b' : x === 11 || x === 12 ? null : 'B'));
-  if (ch.bottom === 'shorts' && !dress) fill(7, 33, 10, 1, (x) => (x === 11 || x === 12 ? null : 'B'));
-  if (ch.bottom === 'skirt' && !dress) { fill(5, 31, 14, 1, (x) => (x > 15 ? 'b' : 'B')); fill(4, 32, 16, 2, (x, y) => (x > 16 ? 'b' : (x + y) % 3 === 0 ? 'b' : 'B')); }
-  // 상의 종류
-  if (ch.top === 'stripe') [24, 26, 28].forEach((y) => fill(4, y, 16, 1, (x) => (at(x, y) === 'T' || at(x, y) === 't' ? 'W' : at(x, y))));
-  if (ch.top === 'hood') { fill(7, 22, 10, 1, 't'); put(10, 23, 'W'); put(10, 24, 'W'); put(13, 23, 'W'); put(13, 24, 'W'); fill(9, 26, 6, 2, 't'); }
-  if (ch.top === 'sailor') { fill(6, 22, 12, 1, 'C'); fill(6, 23, 3, 1, 'C'); fill(15, 23, 3, 1, 'C'); put(7, 24, 'C'); put(16, 24, 'C'); fill(11, 23, 2, 2, 'R'); put(10, 25, 'R'); put(13, 25, 'R'); }
-  if (ch.top === 'overall') { put(8, 22, 'B'); put(8, 23, 'B'); put(15, 22, 'B'); put(15, 23, 'B'); fill(8, 24, 8, 6, (x) => (x === 15 ? 'b' : 'B')); put(9, 24, 'Y'); put(14, 24, 'Y'); fill(10, 26, 4, 2, 'b'); }
-  if (ch.top === 'dress') {
-    fill(6, 30, 12, 1, 'T'); fill(5, 31, 14, 1, (x) => (x > 15 ? 't' : 'T')); fill(4, 32, 16, 2, (x) => (x > 16 ? 't' : 'T')); fill(3, 34, 18, 1, (x) => (x % 2 ? 'W' : 'w'));
-    fill(10, 22, 4, 1, 'W'); put(11, 23, 'W'); put(12, 23, 'W');
-    fill(7, 33, 10, 1, (x) => (x === 11 || x === 12 ? null : 'S'));
+  if (!cos) {
+    if (ch.bottom === 'pants' && !dress) fill(7, 33, 10, 4, (x) => (x === 10 || x === 15 ? 'b' : x === 11 || x === 12 ? null : 'B'));
+    if (ch.bottom === 'shorts' && !dress) fill(7, 33, 10, 1, (x) => (x === 11 || x === 12 ? null : 'B'));
+    if (ch.bottom === 'skirt' && !dress) { fill(5, 31, 14, 1, (x) => (x > 15 ? 'b' : 'B')); fill(4, 32, 16, 2, (x, y) => (x > 16 ? 'b' : (x + y) % 3 === 0 ? 'b' : 'B')); }
+    if (ch.top === 'stripe') [24, 26, 28].forEach((y) => fill(4, y, 16, 1, (x) => (at(x, y) === 'T' || at(x, y) === 't' ? 'W' : at(x, y))));
+    if (ch.top === 'hood') { fill(7, 22, 10, 1, 't'); put(10, 23, 'W'); put(10, 24, 'W'); put(13, 23, 'W'); put(13, 24, 'W'); fill(9, 26, 6, 2, 't'); }
+    if (ch.top === 'sailor') { fill(6, 22, 12, 1, 'C'); fill(6, 23, 3, 1, 'C'); fill(15, 23, 3, 1, 'C'); put(7, 24, 'C'); put(16, 24, 'C'); fill(11, 23, 2, 2, 'R'); put(10, 25, 'R'); put(13, 25, 'R'); }
+    if (ch.top === 'overall') { put(8, 22, 'B'); put(8, 23, 'B'); put(15, 22, 'B'); put(15, 23, 'B'); fill(8, 24, 8, 6, (x) => (x === 15 ? 'b' : 'B')); put(9, 24, 'Y'); put(14, 24, 'Y'); fill(10, 26, 4, 2, 'b'); }
+    if (ch.top === 'dress') {
+      fill(6, 30, 12, 1, 'T'); fill(5, 31, 14, 1, (x) => (x > 15 ? 't' : 'T')); fill(4, 32, 16, 2, (x) => (x > 16 ? 't' : 'T')); fill(3, 34, 18, 1, (x) => (x % 2 ? 'W' : 'w'));
+      fill(10, 22, 4, 1, 'W'); put(11, 23, 'W'); put(12, 23, 'W');
+      fill(7, 33, 10, 1, (x) => (x === 11 || x === 12 ? null : 'S'));
+    }
+  } else {
+    if (cos.legs) for (let y = 33; y <= 36; y++) for (let x = 7; x <= 16; x++) { const k = at(x, y); if (k === 'S' || k === 's') put(x, y, x === 10 || x === 16 ? shade(cos.legs, -0.18) : cos.legs); }
+    if (cos.belly) { fill(9, 24, 6, 5, cos.belly); put(9, 24, 'T'); put(14, 24, 'T'); put(9, 28, 'T'); put(14, 28, 'T'); }
+    const skirt = (spec) => spec.forEach(([y, a, b]) => fill(a, y, b - a + 1, 1, (x) => (x >= b - 1 ? 't' : 'T')));
+    switch (cid) {
+      case 'knight':
+        fill(4, 22, 3, 2, '#eef2f7'); fill(17, 22, 3, 2, '#eef2f7');
+        fill(11, 23, 2, 6, '#e0453f'); fill(9, 25, 6, 1, '#e0453f');
+        fill(6, 30, 12, 1, '#6b4a2a'); put(11, 30, 'Y'); put(12, 30, 'Y');
+        break;
+      case 'princess':
+        fill(9, 22, 6, 1, 'S'); fill(3, 22, 4, 3, (x, y) => (y === 24 ? 'w' : 'W')); fill(17, 22, 4, 3, (x, y) => (y === 24 || x === 20 ? 'w' : 'W'));
+        fill(6, 29, 12, 1, 'W'); put(11, 29, '#7cbdf0');
+        skirt([[30, 6, 17], [31, 5, 18], [32, 4, 19], [33, 4, 19], [34, 3, 20], [35, 3, 20], [36, 2, 21]]);
+        fill(2, 37, 20, 1, (x) => (x % 2 ? 'W' : 'w'));
+        [[7, 33], [14, 35], [10, 31], [17, 33], [5, 35]].forEach(([x, y]) => put(x, y, 'W'));
+        break;
+      case 'pirate':
+        fill(11, 22, 2, 4, 'W'); put(10, 22, 'W'); put(13, 22, 'W');
+        [24, 27].forEach((y) => { put(9, y, 'Y'); put(14, y, 'Y'); });
+        fill(4, 27, 2, 1, 'Y'); fill(18, 27, 2, 1, 'Y');
+        fill(6, 29, 12, 1, '#3b2a20'); fill(11, 29, 2, 1, 'Y');
+        fill(5, 30, 2, 3, 'T'); fill(17, 30, 2, 3, 't');
+        break;
+      case 'wizard':
+        fill(3, 26, 3, 3, 'T'); fill(18, 26, 3, 3, 't');
+        fill(6, 29, 12, 1, 'Y');
+        skirt([[30, 5, 18], [31, 5, 18], [32, 5, 18], [33, 4, 19], [34, 4, 19], [35, 4, 19]]);
+        fill(3, 36, 18, 1, 'Y');
+        [[8, 25], [15, 27], [10, 33], [16, 34], [7, 31]].forEach(([x, y]) => put(x, y, 'Y'));
+        break;
+      case 'fairy':
+        put(11, 22, '#ff9ebd'); put(12, 22, '#ff9ebd');
+        fill(6, 29, 12, 1, '#7ccf6a');
+        fill(5, 30, 14, 2, (x) => (x > 15 ? 't' : 'T'));
+        for (let x = 4; x <= 19; x++) { if (x % 3 !== 0) put(x, 32, x % 3 === 1 ? 'T' : 't'); if (x % 3 === 1) put(x, 33, 't'); }
+        break;
+      case 'suit':
+        fill(9, 22, 6, 1, 'W'); fill(10, 23, 4, 2, 'W'); fill(11, 25, 2, 1, 'W');
+        fill(11, 23, 2, 1, '#d63c5c'); fill(11, 24, 2, 4, (x) => (x === 11 ? '#d63c5c' : '#b02a48'));
+        put(15, 24, 'W'); put(16, 24, 'W');
+        break;
+      case 'ninja':
+        fill(6, 29, 12, 1, '#e0453f');
+        break;
+      case 'pilot':
+        fill(5, 22, 14, 1, '#f1e3c8'); fill(5, 23, 2, 1, '#f1e3c8'); fill(17, 23, 2, 1, '#f1e3c8');
+        fill(8, 22, 8, 1, 'W'); fill(14, 23, 2, 4, (x) => (x === 15 ? 'w' : 'W'));
+        fill(11, 23, 1, 7, '#c9a27a'); fill(7, 26, 3, 2, 't');
+        fill(6, 30, 12, 1, '#3b2a20');
+        for (let y = 34; y <= 36; y++) for (const x of [7, 8, 9, 10, 13, 14, 15, 16]) put(x, y, '#3b2a20');
+        break;
+      case 'explorer':
+        fill(9, 22, 6, 1, 't'); fill(7, 24, 3, 2, 't'); fill(14, 24, 3, 2, 't'); [24, 26, 28].forEach((y) => put(11, y, '#6b5d36'));
+        fill(6, 30, 12, 1, '#6b4226'); put(11, 30, 'Y');
+        for (const x of [7, 8, 9, 10, 13, 14, 15, 16]) put(x, 36, 'W');
+        break;
+      case 'chef':
+        fill(10, 22, 4, 1, '#e0453f'); put(11, 23, '#e0453f'); put(12, 23, '#e0453f');
+        [24, 27].forEach((y) => { put(9, y, '#9aa3b2'); put(14, y, '#9aa3b2'); });
+        for (let y = 30; y <= 36; y++) for (let x = 6; x <= 17; x++) { const k = at(x, y); if (k && k !== 'K' && (x + y) % 2 === 0) put(x, y, '#8e99a8'); }
+        break;
+      case 'astro':
+        fill(9, 24, 6, 3, '#5d9bff'); put(10, 25, '#e0453f'); put(12, 25, '#ffd23d'); put(13, 25, '#7ed99a');
+        fill(6, 30, 12, 1, '#c7ccd6'); fill(7, 21, 10, 1, '#9aa3b2');
+        break;
+      case 'sheep':
+        for (let y = 22; y <= 32; y++) for (let x = 4; x <= 19; x++) { const k = at(x, y); if ((k === 'T' || k === 'B') && (x * 3 + y) % 5 === 0) put(x, y, 't'); }
+        break;
+      case 'dino':
+        fill(9, 25, 6, 1, '#c9dd8a'); fill(9, 27, 6, 1, '#c9dd8a');
+        break;
+    }
   }
 
   /* 얼굴 표정 */
@@ -389,59 +519,162 @@ function charGrid(ch, frame) {
   else if (!(blink || ch.eyes === 'sleepy' || ch.eyes === 'smile')) { put(eyeL - 1, 12, 'E'); if (ch.eyes !== 'wink') put(eyeR + 2, 12, 'E'); else put(eyeR + 2, 13, 'E'); }
 
   /* 앞머리 */
-  if (ch.hair === 'short' || ch.hair === 'spike') stamp(SPR_SHORT);
-  else stamp(SPR_BANGS);
-  if (ch.hair === 'spike' && ch.acc !== 'cap') stamp(SPR_SPIKE_TOP, -2);
-  if (ch.hair === 'bob') { fill(1, 12, 3, 8, (x) => (x === 3 ? 'h' : 'H')); fill(20, 12, 3, 8, (x) => (x === 20 ? 'h' : 'H')); fill(2, 20, 2, 1, 'h'); fill(20, 20, 2, 1, 'h'); }
-  if (ch.hair === 'long') { fill(1, 12, 3, 18, (x, y) => (x === 3 ? 'h' : (y % 5 === 0 ? 'L' : 'H'))); fill(20, 12, 3, 18, (x) => (x === 20 ? 'h' : 'H')); }
-  if (ch.hair === 'twin') { fill(2, 12, 2, 4, 'H'); fill(20, 12, 2, 4, 'h'); }
-  if (ch.hair === 'pony') { fill(8, -2, 8, 3, (x) => (x > 13 ? 'h' : 'H')); fill(9, -3, 6, 1, 'H'); fill(10, -1, 3, 1, 'L'); fill(9, 1, 6, 1, 'R'); }
+  const hatOn = (cos && cos.head) || ['cap', 'beanie', 'santa', 'horns', 'witch', 'straw'].includes(ch.acc);
+  if (!hooded) {
+    if (ch.hair === 'short' || ch.hair === 'spike') stamp(SPR_SHORT);
+    else stamp(SPR_BANGS);
+    if (ch.hair === 'spike' && !hatOn) stamp(SPR_SPIKE_TOP, -2);
+    if (ch.hair === 'bob') { fill(1, 12, 3, 8, (x) => (x === 3 ? 'h' : 'H')); fill(20, 12, 3, 8, (x) => (x === 20 ? 'h' : 'H')); fill(2, 20, 2, 1, 'h'); fill(20, 20, 2, 1, 'h'); }
+    if (ch.hair === 'long') { fill(1, 12, 3, 18, (x, y) => (x === 3 ? 'h' : (y % 5 === 0 ? 'L' : 'H'))); fill(20, 12, 3, 18, (x) => (x === 20 ? 'h' : 'H')); }
+    if (ch.hair === 'twin') { fill(2, 12, 2, 4, 'H'); fill(20, 12, 2, 4, 'h'); }
+    if (ch.hair === 'pony' && !hatOn) { fill(8, -2, 8, 3, (x) => (x > 13 ? 'h' : 'H')); fill(9, -3, 6, 1, 'H'); fill(10, -1, 3, 1, 'L'); fill(9, 1, 6, 1, 'R'); }
+  }
 
-  /* 머리 장식 */
-  const a = ch.acc;
+  /* 후드 (동물 옷·기사·닌자) */
+  if (hooded) {
+    const [c, cs] = cos.hood;
+    const spec = [[1, 8, 15], [2, 6, 17], [3, 5, 19], [4, 4, 20], [5, 3, 21], [6, 2, 21], [7, 2, 21], [8, 2, 21], [9, 2, 21], [10, 2, 21], [11, 2, 21, 6, 17], [12, 2, 21, 5, 18], [13, 2, 21, 5, 18], [14, 2, 21, 5, 18], [15, 2, 21, 5, 18], [16, 2, 21, 5, 18], [17, 2, 21, 6, 17], [18, 3, 20, 7, 16], [19, 4, 19, 8, 15], [20, 6, 17]];
+    spec.forEach(([y, a, b, o1, o2]) => { for (let x = a; x <= b; x++) { if (o1 !== undefined && x >= o1 && x <= o2) continue; put(x, y, x >= b - 1 && y > 2 ? cs : c); } });
+    for (let x = 6; x <= 10; x++) put(x, 3, shade(c, 0.35));
+    const L = (spec2, k) => rows(spec2, k, true);
+    switch (cid) {
+      case 'knight':
+        fill(2, 10, 20, 1, '#aab4c2'); fill(11, 11, 2, 3, '#c9d1dc');
+        fill(10, -3, 4, 4, (x) => (x === 13 ? '#b02a3a' : '#e0453f'));
+        break;
+      case 'ninja':
+        fill(5, 15, 14, 2, '#2f3756'); fill(6, 17, 12, 1, '#2f3756'); fill(7, 18, 10, 1, '#1f2540');
+        fill(2, 9, 20, 1, '#e0453f'); put(22, 9, '#e0453f'); put(23, 10, '#e0453f'); put(22, 10, '#b02a3a'); put(24, 11, '#e0453f'); put(23, 12, '#b02a3a');
+        break;
+      case 'fox':
+        L([[-3, 4, 4], [-2, 4, 5], [-1, 4, 6], [0, 4, 7], [1, 5, 8]], (x, y) => (y <= -2 ? '#3b2a20' : (x === 5 || x === 18) && y >= -1 ? '#fff4e6' : c));
+        break;
+      case 'bear':
+        L([[-1, 4, 6], [0, 3, 7], [1, 3, 7], [2, 4, 6]], (x, y) => ((x === 5 || x === 18) && (y === 0 || y === 1) ? '#e8c79a' : c));
+        break;
+      case 'sheep':
+        [7, 9, 11, 13, 15].forEach((x) => put(x, 0, c)); [4, 19].forEach((x) => put(x, 2, c));
+        L([[9, 0, 1], [10, -1, 1], [11, -1, 0]], '#f2d1b0');
+        break;
+      case 'koala':
+        L([[0, 1, 3], [1, 0, 4], [2, -1, 5], [3, -1, 5], [4, -1, 5], [5, -1, 5], [6, 0, 4], [7, 1, 3]], (x, y) => (y >= 2 && y <= 5 && ((x >= 0 && x <= 3) || (x >= 20 && x <= 23)) ? '#e6e8ee' : c));
+        break;
+      case 'lion':
+        L([[1, 4, 5], [2, 3, 6], [3, 4, 5]], (x, y) => (y === 2 && (x === 4 || x === 19) ? '#c9782f' : c));
+        break;
+      case 'rabbit':
+        L([[-4, 6, 6], [-3, 5, 7], [-2, 5, 7], [-1, 5, 7], [0, 5, 7], [1, 5, 7], [2, 5, 7]], (x, y) => ((x === 6 || x === 17) && y >= -3 && y <= 1 ? '#ffc4d6' : c));
+        break;
+      case 'dino':
+        [[11, -2], [12, -2], [10, -1], [11, -1], [12, -1], [13, -1], [10, 0], [13, 0], [6, 1], [17, 1], [6, 0], [17, 0]].forEach(([x, y]) => put(x, y, '#ffd23d'));
+        put(11, 0, '#e6b42a'); put(12, 0, '#e6b42a');
+        break;
+    }
+  }
+
+  /* 의상 모자 */
+  const cone = (c, cs, band) => { rows([[-4, 14, 15], [-3, 13, 15], [-2, 12, 15], [-1, 11, 16], [0, 10, 16], [1, 9, 16], [2, 8, 17], [3, 7, 17]], (x, y, a, b) => (x === b ? cs : c)); fill(6, 4, 12, 1, band); fill(1, 5, 22, 1, c); fill(2, 6, 20, 1, cs); };
+  switch (cid) {
+    case 'pirate':
+      fill(6, 0, 12, 2, '#2b2b33'); fill(4, 2, 16, 3, '#2b2b33'); fill(1, 5, 22, 1, 'Y'); fill(2, 6, 20, 1, '#1c1c22');
+      fill(11, 1, 2, 2, 'W'); put(11, 3, '#2b2b33');
+      fill(15, 12, 2, 3, '#1c1c22'); put(17, 11, '#1c1c22'); put(18, 10, '#1c1c22'); put(14, 11, '#1c1c22');
+      break;
+    case 'wizard': cone('#6a4bb8', '#4a3390', 'Y'); put(12, 1, 'Y'); put(14, -1, 'Y'); break;
+    case 'pilot':
+      rows([[0, 8, 15], [1, 6, 17], [2, 4, 19], [3, 3, 20], [4, 3, 20], [5, 2, 21], [6, 2, 21], [7, 2, 21]], (x, y, a, b) => (x >= b - 1 ? '#5e3b1e' : '#7a4f2a'));
+      fill(2, 8, 2, 8, '#7a4f2a'); fill(20, 8, 2, 8, '#5e3b1e');
+      fill(5, 4, 6, 3, '#3b3b46'); fill(13, 4, 6, 3, '#3b3b46'); fill(6, 5, 4, 1, '#9fd8ff'); fill(14, 5, 4, 1, '#9fd8ff'); put(6, 5, '#ffffff'); put(14, 5, '#ffffff');
+      break;
+    case 'explorer':
+      rows([[0, 8, 15], [1, 6, 17], [2, 5, 18], [3, 5, 18]], (x, y, a, b) => (x >= b - 1 ? '#cdbf98' : '#ece2c2'));
+      fill(5, 4, 14, 1, '#8a6a45'); fill(1, 5, 22, 1, '#d6c79c'); fill(2, 6, 20, 1, '#bfae80');
+      break;
+    case 'chef':
+      rows([[-4, 8, 15], [-3, 6, 17], [-2, 5, 18], [-1, 5, 18], [0, 5, 18], [1, 6, 17]], (x, y, a, b) => (x >= b - 1 || (y === -2 && x % 4 === 0) ? 'w' : 'W'));
+      fill(6, 2, 12, 3, (x, y) => (y === 3 ? 'w' : 'W'));
+      break;
+    case 'astro':
+      for (let y = -3; y <= 22; y++) for (let x = -2; x <= 25; x++) { const d = ((x - 11.5) / 12.5) ** 2 + ((y - 9.5) / 12.6) ** 2; if (d > 1) continue; if (d > 0.84) put(x, y, '#d8eeff'); else if (!at(x, y)) put(x, y, '#cfeaff59'); }
+      put(4, 1, '#ffffff'); put(3, 2, '#ffffff'); put(2, 3, '#ffffff'); put(3, 3, '#ffffff');
+      break;
+  }
+
+  /* 머리 장식 (모자가 있는 의상이면 쓰지 않는다) */
+  const a = cos && cos.head ? 'none' : ch.acc;
+  const mirror = (cells, k) => cells.forEach(([x, y]) => { put(x, y, k); put(23 - x, y, k); });
   if (a === 'ribbon') { fill(15, 1, 3, 3, 'R'); fill(19, 1, 3, 3, 'R'); fill(18, 2, 1, 1, 'r'); put(16, 2, 'r'); put(20, 2, 'r'); }
   if (a === 'flower') { put(18, 5, 'R'); put(20, 5, 'R'); put(19, 4, 'R'); put(19, 6, 'R'); put(19, 5, 'Y'); }
-  if (a === 'cap') { fill(4, 1, 16, 5, (x, y) => (y === 1 && (x < 7 || x > 16) ? null : x > 16 ? 'r' : 'R')); fill(1, 6, 13, 2, 'r'); put(11, 0, 'R'); put(12, 0, 'R'); }
+  if (a === 'cap') { fill(4, 1, 16, 5, (x, y) => (y === 1 && (x < 7 || x > 16) ? null : x > 16 ? 'a' : 'A')); fill(1, 6, 13, 2, 'a'); put(11, 0, 'A'); put(12, 0, 'A'); }
   if (a === 'glasses') { for (const x of [6, 14]) { fill(x, 11, 4, 1, 'G'); fill(x, 15, 4, 1, 'G'); put(x, 12, 'G'); put(x, 13, 'G'); put(x, 14, 'G'); put(x + 3, 12, 'G'); put(x + 3, 13, 'G'); put(x + 3, 14, 'G'); } fill(10, 12, 4, 1, 'G'); }
   if (a === 'bunny') { for (const x0 of [6, 15]) { fill(x0, -3, 3, 5, 'A'); fill(x0 + 1, -2, 1, 3, 'P'); put(x0 + 1, -4, 'A'); } }
   if (a === 'cat') { for (let j = 0; j < 4; j++) { fill(5, j - 2, j + 1, 1, 'A'); fill(18 - j, j - 2, j + 1, 1, 'A'); } put(6, 0, 'P'); put(17, 0, 'P'); }
   if (a === 'crown') { fill(7, 0, 10, 3, 'Y'); put(7, -1, 'Y'); put(11, -2, 'Y'); put(12, -2, 'Y'); put(11, -1, 'Y'); put(12, -1, 'Y'); put(16, -1, 'Y'); put(11, 1, 'R'); put(8, 1, 'C'); put(15, 1, 'C'); }
+  if (a === 'flowercrown') { fill(4, 4, 16, 1, '#5ab868'); ['#ff9ebd', '#ffffff', '#b98cff', '#ff6f7d', '#ffd36e'].forEach((c, i) => { const cx = 5 + i * 3; put(cx, 3, 'Y'); put(cx - 1, 3, c); put(cx + 1, 3, c); put(cx, 2, c); put(cx, 4, c); }); }
+  if (a === 'beanie') { rows([[0, 8, 15], [1, 6, 17], [2, 5, 18], [3, 4, 19], [4, 4, 19], [5, 4, 19]], (x) => (x % 3 === 0 || x >= 18 ? 'a' : 'A')); fill(3, 6, 18, 2, (x, y) => (y === 7 || x % 2 ? 'a' : 'A')); fill(10, -3, 4, 3, (x, y) => (x === 13 || y === -1 ? 'w' : 'W')); }
+  if (a === 'straw') { rows([[0, 8, 15], [1, 7, 16], [2, 6, 17], [3, 6, 17]], (x, y) => ((x + y) % 2 ? '#e8c46a' : '#f4d98c')); fill(6, 4, 12, 1, '#e0453f'); fill(0, 5, 24, 1, '#f0d07a'); fill(-1, 6, 26, 1, '#d9b456'); }
+  if (a === 'witch') { rows([[-4, 14, 15], [-3, 13, 15], [-2, 12, 15], [-1, 11, 16], [0, 10, 16], [1, 9, 16], [2, 8, 17], [3, 7, 17]], (x, y, s, e) => (x === e ? '#1c1c22' : '#2b2b33')); fill(6, 4, 12, 1, '#9b6bff'); fill(1, 5, 22, 1, '#2b2b33'); fill(2, 6, 20, 1, '#1c1c22'); put(12, 4, 'Y'); }
+  if (a === 'santa') { rows([[0, 8, 16], [1, 6, 17], [2, 5, 18], [3, 4, 19]], (x, y, s, e) => (x >= e - 1 ? '#b02a3a' : '#e0453f')); put(17, -1, '#e0453f'); put(18, -1, '#e0453f'); put(19, 0, '#b02a3a'); put(19, 1, '#e0453f'); put(20, 1, '#b02a3a'); fill(20, 2, 3, 3, (x, y) => (x === 22 || y === 4 ? 'w' : 'W')); fill(3, 4, 18, 2, (x, y) => (y === 5 && x % 2 ? 'w' : 'W')); }
+  if (a === 'horns') {
+    rows([[0, 8, 15], [1, 6, 17], [2, 5, 18], [3, 4, 19], [4, 4, 19], [5, 4, 19]], (x, y, s, e) => (x >= e - 1 ? '#8e99a8' : y <= 1 && x < 11 ? '#eef2f7' : '#c9d1dc'));
+    fill(3, 6, 18, 1, (x) => (x % 4 === 1 ? '#fff3b0' : '#d9a93a'));
+    mirror([[2, 5], [3, 5], [1, 4], [2, 4], [1, 3], [2, 3], [0, 2], [1, 2], [0, 1], [1, 1], [0, 0], [0, -1]], '#f4ead2');
+    mirror([[0, -1], [0, 0]], '#c9b98f');
+  }
+  if (a === 'antlers') mirror([[6, 1], [6, 0], [5, -1], [5, -2], [4, -3], [4, -4], [6, -2], [7, -3], [3, -1], [2, -2], [2, -3]], '#8a5a3b');
+  if (a === 'headphones') { mirror([[8, 0], [9, 0], [10, 0], [11, 0], [6, 1], [7, 1], [5, 2], [4, 3], [3, 4], [2, 5], [1, 6], [1, 7], [1, 8]], '#3b3b46'); fill(0, 9, 3, 6, (x) => (x === 0 ? 'a' : 'A')); fill(21, 9, 3, 6, (x) => (x === 23 ? 'a' : 'A')); }
+  if (a === 'goggles') { fill(2, 7, 20, 1, '#3b3b46'); fill(5, 6, 6, 3, '#3b3b46'); fill(13, 6, 6, 3, '#3b3b46'); fill(6, 7, 4, 1, '#9fd8ff'); fill(14, 7, 4, 1, '#9fd8ff'); put(6, 7, '#ffffff'); put(14, 7, '#ffffff'); }
+  if (a === 'shades') { fill(6, 12, 4, 3, '#1f1f2a'); fill(14, 12, 4, 3, '#1f1f2a'); fill(10, 12, 4, 1, '#1f1f2a'); fill(3, 12, 3, 1, '#1f1f2a'); fill(18, 12, 3, 1, '#1f1f2a'); put(7, 12, '#6a7a9a'); put(15, 12, '#6a7a9a'); }
+  if (a === 'mask') { rows([[15, 7, 16], [16, 6, 17], [17, 6, 17], [18, 7, 16]], (x, y) => (y === 17 ? '#e3e8ef' : '#ffffff')); put(4, 15, '#dfe4ec'); put(5, 15, '#dfe4ec'); put(18, 15, '#dfe4ec'); put(19, 15, '#dfe4ec'); }
+
+  /* 손에 든 것 (오른손 = 화면 오른쪽, 방패는 왼손) */
+  const hd = ch.hand;
+  if (hd === 'sword') { put(21, 11, '#ffffff'); fill(21, 12, 2, 16, (x) => (x === 21 ? '#ffffff' : '#9aa6b6')); fill(19, 28, 5, 1, '#d9a93a'); fill(21, 29, 1, 2, '#6b4a2a'); put(21, 31, '#d9a93a'); put(20, 29, 'S'); }
+  if (hd === 'shield') { rows([[23, -1, 4], [24, -2, 5], [25, -2, 5], [26, -2, 5], [27, -2, 5], [28, -2, 5], [29, -2, 5], [30, -2, 5], [31, -1, 4], [32, 0, 3], [33, 1, 2]], (x, y, s, e) => (x === s || x === e || y === 23 || y === 33 ? '#d9a93a' : '#3a5ab0')); fill(1, 25, 2, 6, 'Y'); fill(-1, 27, 6, 2, 'Y'); }
+  if (hd === 'wand') { fill(20, 23, 1, 7, (x, y) => (y % 2 ? '#ffffff' : '#ff9ebd')); put(20, 18, 'Y'); fill(19, 19, 3, 1, 'Y'); fill(18, 20, 5, 1, 'Y'); fill(19, 21, 3, 1, 'Y'); put(19, 22, 'Y'); put(21, 22, 'Y'); put(20, 20, '#fff3b0'); put(23, 17, '#ffffff'); put(17, 18, '#ffffff'); }
+  if (hd === 'balloon') { rows([[-4, 21, 23], [-3, 20, 24], [-2, 19, 25], [-1, 19, 25], [0, 19, 25], [1, 19, 25], [2, 20, 24], [3, 21, 23], [4, 22, 22]], (x, y, s, e) => (x >= e - 1 && y > -3 ? '#d63c5c' : '#ff5c7a')); put(20, -2, '#ffffff'); put(20, -1, '#ffd6e0'); for (let y = 5; y <= 27; y++) put(22, y, '#9aa3b2'); put(21, 28, '#9aa3b2'); }
+  if (hd === 'flower') { fill(20, 22, 1, 8, '#3f9e4a'); put(21, 25, '#5ab868'); put(21, 26, '#5ab868'); put(20, 20, 'Y'); [[19, 20], [21, 20], [20, 19], [20, 21]].forEach(([x, y]) => put(x, y, '#ff6f9a')); }
+  if (hd === 'lollipop') { fill(20, 24, 1, 6, '#ffffff'); rows([[19, 19, 21], [20, 18, 22], [21, 18, 22], [22, 18, 22], [23, 19, 21]], (x, y) => ((x + y) % 2 ? '#ff6f9a' : '#ffffff')); }
+  if (hd === 'mic') { fill(20, 26, 1, 4, '#3b3b46'); fill(19, 23, 3, 3, (x, y) => ((x + y) % 2 ? '#6b7482' : '#aab4c2')); }
   return { g, GW, GH };
 }
 
 function charColors(ch) {
-  const skin = ch.skin, hc = ch.hairC, tc = ch.topC, bc = ch.bottomC, ec = ch.eyeC || EYEC[0], ac = ch.hoodC || '#ffffff';
+  const skin = ch.skin, hc = ch.hairC, ec = ch.eyeC || EYEC[0], ac = ch.hoodC || '#ffffff';
+  const cos = COS[ch.costume];
+  const tc = cos ? cos.T : ch.topC, bc = cos ? cos.B : ch.bottomC, kc = cos ? cos.K : ch.shoes;
   return {
     S: skin, s: shade(skin, -0.12), P: '#ffadc0', M: '#c8566e', E: ec, e: '#ffffff',
     H: hc, h: shade(hc, -0.25), L: shade(hc, 0.32),
-    T: tc, t: shade(tc, -0.18), W: '#ffffff', w: '#e3eefa', C: '#3a5ab0', R: '#ff5c7a', r: '#d63c5c', Y: '#ffd23d', G: '#3b2a33',
-    B: bc, b: shade(bc, -0.22), K: ch.shoes, k: shade(ch.shoes, -0.3), A: ac,
+    T: tc, t: cos ? cos.t : shade(tc, -0.18), W: '#ffffff', w: '#e3eefa', C: '#3a5ab0', R: '#ff5c7a', r: '#d63c5c', Y: '#ffd23d', G: '#3b2a33',
+    B: bc, b: cos ? cos.b : shade(bc, -0.22), K: kc, k: shade(kc, -0.3), A: ac, a: shade(ac, -0.2),
   };
 }
 
 function drawChar(g, ch, ox, oy, frame = 0) {
-  // ox,oy = 발 아래 가운데
+  // ox,oy = 발 아래 가운데. 칸에는 팔레트 글자 또는 색 문자열이 들어 있다
   const { g: grid, GW, GH } = charGrid(ch, frame);
-  const col = charColors(ch);
+  const col = charColors(ch), cc = (k) => col[k] || k;
   const bob = frame === 1 ? 1 : 0;
   g.fillStyle = 'rgba(0,0,0,.16)'; g.beginPath(); g.ellipse(ox, oy - 1, 9, 2.5, 0, 0, Math.PI * 2); g.fill();
   const x0 = Math.round(ox - GW / 2), y0 = Math.round(oy - (38 + YOFF));
   const at = (x, y) => (x >= 0 && y >= 0 && x < GW && y < GH ? grid[y * GW + x] : null);
   for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
     const k = at(x, y), dy = y < 37 + YOFF ? bob : 0; // 숨쉬기: 발은 그대로
-    if (k) { g.fillStyle = col[k] || '#f0f'; g.fillRect(x0 + x, y0 + y + dy, 1, 1); continue; }
-    // 외곽선: 이웃한 칸 색보다 진하게 (부드러운 갈색 톤)
+    if (k) { g.fillStyle = cc(k); g.fillRect(x0 + x, y0 + y + dy, 1, 1); continue; }
+    // 외곽선: 이웃한 칸 색보다 진하게
     const n = at(x - 1, y) || at(x + 1, y) || at(x, y - 1) || at(x, y + 1);
-    if (n) { const ny = (at(x, y - 1) && !at(x, y + 1)) || y >= 37 + YOFF ? 0 : bob; g.fillStyle = shade(col[n] || '#555', -0.55); g.fillRect(x0 + x, y0 + y + ny, 1, 1); }
+    if (n) { const nc = cc(n); const ny = (at(x, y - 1) && !at(x, y + 1)) || y >= 37 + YOFF ? 0 : bob; g.fillStyle = nc.length === 9 ? 'rgba(120,170,210,.55)' : shade(nc, -0.55); g.fillRect(x0 + x, y0 + y + ny, 1, 1); }
   }
 }
 
 /* ───────── 상태 ───────── */
-const DEF_CHAR = { sex: 'f', skin: SKINS[0], hair: 'twin', hairC: HAIRC[1], eyes: 'dot', eyeC: EYEC[0], top: 'dress', topC: '#7ec8ff', bottom: 'skirt', bottomC: '#3a5ab0', shoes: '#5d9bff', acc: 'none', hoodC: '#ffffff' };
-const DEF_CHAR_M = { sex: 'm', skin: SKINS[0], hair: 'short', hairC: HAIRC[0], eyes: 'dot', eyeC: EYEC[0], top: 'hood', topC: '#7ec8ff', bottom: 'pants', bottomC: '#3a5ab0', shoes: '#3b3b46', acc: 'none', hoodC: '#ffffff' };
+const DEF_CHAR = { sex: 'f', skin: SKINS[0], hair: 'twin', hairC: HAIRC[1], eyes: 'dot', eyeC: EYEC[0], top: 'dress', topC: '#7ec8ff', bottom: 'skirt', bottomC: '#3a5ab0', shoes: '#5d9bff', acc: 'none', hoodC: '#ffffff', costume: 'none', hand: 'none' };
+const DEF_CHAR_M = { sex: 'm', skin: SKINS[0], hair: 'short', hairC: HAIRC[0], eyes: 'dot', eyeC: EYEC[0], top: 'hood', topC: '#7ec8ff', bottom: 'pants', bottomC: '#3a5ab0', shoes: '#3b3b46', acc: 'none', hoodC: '#ffffff', costume: 'none', hand: 'none' };
 const SEXES = [['f', '👧 여자', '👧 Girl'], ['m', '👦 남자', '👦 Boy']];
 // 남자 캐릭터는 원피스·치마 대신 바지류만
 const topsFor = (sex) => TOPS.filter(([id]) => !(sex === 'm' && id === 'dress'));
+const costumesFor = (sex) => COSTUMES.filter(([id]) => !(sex === 'm' && id === 'princess'));
 const bottomsFor = (sex) => BOTTOMS.filter(([id]) => !(sex === 'm' && id === 'skirt'));
 function defaultState() {
   return {
@@ -797,20 +1030,32 @@ function renderPanel() {
     const pg = pc.getContext('2d'); drawChar(pg, state.ch, (CHW + 8) / 2, CHH + 4); prev.appendChild(pc); b.appendChild(prev);
     const sec = (title, el) => { b.appendChild(h4(title)); b.appendChild(el); };
     const setCh = (k, v) => { state.ch[k] = v; charCache = null; changed(); renderPanel(); };
-    sec(L_('성별', 'Gender'), txtRow(SEXES, state.ch.sex || 'f', (v) => { if (v === state.ch.sex) return; state.ch = { ...(v === 'm' ? DEF_CHAR_M : DEF_CHAR), skin: state.ch.skin }; charCache = null; changed(); renderPanel(); }));
-    sec(L_('한마디', 'Message'), msgInput());
-    sec(L_('피부', 'Skin'), swRow(SKINS, state.ch.skin, (v) => setCh('skin', v)));
-    sec(L_('머리 모양', 'Hair'), txtRow(HAIRS, state.ch.hair, (v) => setCh('hair', v)));
-    sec(L_('머리 색', 'Hair color'), swRow(HAIRC, state.ch.hairC, (v) => setCh('hairC', v)));
-    sec(L_('눈', 'Eyes'), txtRow(EYES, state.ch.eyes, (v) => setCh('eyes', v)));
-    sec(L_('눈동자 색', 'Eye color'), swRow(EYEC, state.ch.eyeC, (v) => setCh('eyeC', v)));
-    sec(L_('상의', 'Top'), txtRow(topsFor(state.ch.sex), state.ch.top, (v) => setCh('top', v)));
-    sec(L_('상의 색', 'Top color'), swRow(CLOTH, state.ch.topC, (v) => setCh('topC', v)));
-    sec(L_('하의', 'Bottom'), txtRow(bottomsFor(state.ch.sex), state.ch.bottom, (v) => setCh('bottom', v)));
-    sec(L_('하의 색', 'Bottom color'), swRow(CLOTH, state.ch.bottomC, (v) => setCh('bottomC', v)));
-    sec(L_('신발 색', 'Shoes'), swRow(CLOTH, state.ch.shoes, (v) => setCh('shoes', v)));
-    sec(L_('머리 장식', 'Headwear'), txtRow(ACCS, state.ch.acc, (v) => setCh('acc', v)));
-    if (state.ch.acc === 'bunny' || state.ch.acc === 'cat') sec(L_('귀 색', 'Ear color'), swRow(HOODC, state.ch.hoodC, (v) => setCh('hoodC', v)));
+    if (tab === 'char') {
+      sec(L_('성별', 'Gender'), txtRow(SEXES, state.ch.sex || 'f', (v) => { if (v === state.ch.sex) return; state.ch = { ...(v === 'm' ? DEF_CHAR_M : DEF_CHAR), skin: state.ch.skin }; charCache = null; changed(); renderPanel(); }));
+      sec(L_('피부색', 'Skin'), swRow(SKINS, state.ch.skin, (v) => setCh('skin', v)));
+      sec(L_('머리 모양', 'Hair'), txtRow(HAIRS, state.ch.hair, (v) => setCh('hair', v)));
+      sec(L_('머리 색', 'Hair color'), swRow(HAIRC, state.ch.hairC, (v) => setCh('hairC', v)));
+      sec(L_('눈', 'Eyes'), txtRow(EYES, state.ch.eyes, (v) => setCh('eyes', v)));
+      sec(L_('눈동자 색', 'Eye color'), swRow(EYEC, state.ch.eyeC, (v) => setCh('eyeC', v)));
+      sec(L_('말풍선 한마디', 'Speech bubble'), msgInput());
+    } else {
+      const cos = COS[state.ch.costume];
+      sec(L_('의상', 'Outfit'), picRow(costumesFor(state.ch.sex), 'costume'));
+      if (!cos) {
+        sec(L_('상의', 'Top'), picRow(topsFor(state.ch.sex), 'top'));
+        sec(L_('상의 색', 'Top color'), swRow(CLOTH, state.ch.topC, (v) => setCh('topC', v)));
+        sec(L_('하의', 'Bottom'), picRow(bottomsFor(state.ch.sex), 'bottom'));
+        sec(L_('하의 색', 'Bottom color'), swRow(CLOTH, state.ch.bottomC, (v) => setCh('bottomC', v)));
+        sec(L_('신발 색', 'Shoes'), swRow(CLOTH, state.ch.shoes, (v) => setCh('shoes', v)));
+      }
+      b.appendChild(h4(L_('모자·장식', 'Headwear')));
+      if (cos && cos.head) { const n = document.createElement('p'); n.className = 'note'; n.textContent = L_('이 의상에는 모자가 포함돼 있어요. 평상복으로 바꾸면 고를 수 있어요.', 'This outfit has its own headgear. Switch to Everyday to pick one.'); b.appendChild(n); }
+      else {
+        b.appendChild(picRow(ACCS, 'acc'));
+        if (ACC_COLORED.includes(state.ch.acc)) sec(L_('장식 색', 'Headwear color'), swRow(HOODC, state.ch.hoodC, (v) => setCh('hoodC', v)));
+      }
+      sec(L_('손에 들기', 'In hand'), picRow(HANDS, 'hand'));
+    }
   }
 }
 function confirmClear() { try { return window.confirm(L_('가구를 모두 치울까요?', 'Remove all furniture?')); } catch (e) { return true; } }
@@ -825,6 +1070,19 @@ function swRow(list, cur, on) {
   [...new Set(list)].forEach((c) => { const b = document.createElement('button'); b.className = 'opt' + (c === cur ? ' on' : ''); const s = document.createElement('div'); s.className = 'sw'; s.style.background = c; b.appendChild(s); b.onclick = () => on(c); r.appendChild(b); });
   return r;
 }
+// 옵션마다 그 옵션을 입힌 캐릭터 미리보기를 붙인 버튼 줄
+function picRow(list, key) {
+  const r = document.createElement('div'); r.className = 'opts pics';
+  list.forEach(([id, ko, en]) => {
+    const b = document.createElement('button'); b.className = 'opt pic' + (state.ch[key] === id ? ' on' : '');
+    const c = document.createElement('canvas'); c.width = CHW + 8; c.height = CHH + 6;
+    drawChar(c.getContext('2d'), { ...state.ch, [key]: id }, (CHW + 8) / 2, CHH + 4);
+    const t = document.createElement('span'); t.textContent = L_(ko, en);
+    b.append(c, t); b.onclick = () => { state.ch[key] = id; charCache = null; changed(); renderPanel(); };
+    r.appendChild(b);
+  });
+  return r;
+}
 function txtRow(list, cur, on) {
   const r = document.createElement('div'); r.className = 'opts';
   list.forEach(([id, ko, en]) => { const b = document.createElement('button'); b.className = 'opt' + (id === cur ? ' on' : ''); b.textContent = L_(ko, en); b.onclick = () => on(id); r.appendChild(b); });
@@ -837,7 +1095,7 @@ function msgInput() {
   return i;
 }
 document.querySelectorAll('.tab').forEach((t) => {
-  t.textContent = { furn: L_('🛋 가구', '🛋 Furniture'), room: L_('🎨 테마·벽지', '🎨 Theme'), char: L_('🙂 캐릭터', '🙂 Character') }[t.dataset.t];
+  t.textContent = { furn: L_('🛋 가구', '🛋 Items'), room: L_('🎨 테마', '🎨 Theme'), char: L_('🙂 캐릭터', '🙂 Face'), look: L_('👕 외형', '👕 Outfit') }[t.dataset.t];
   t.onclick = () => { tab = t.dataset.t; document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('on', x === t)); renderPanel(); };
 });
 
@@ -868,7 +1126,8 @@ function fixChar(c) {
   c.sex = c.sex === 'm' ? 'm' : 'f';
   const D = c.sex === 'm' ? DEF_CHAR_M : DEF_CHAR;
   c.hair = ok(HAIRS, c.hair, D.hair); c.eyes = ok(EYES, c.eyes, DEF_CHAR.eyes); c.top = ok(topsFor(c.sex), c.top, D.top);
-  c.bottom = ok(bottomsFor(c.sex), c.bottom, D.bottom); c.acc = ok(ACCS, c.acc, 'none'); delete c.style;
+  c.bottom = ok(bottomsFor(c.sex), c.bottom, D.bottom); c.acc = ok(ACCS, c.acc, 'none'); c.costume = ok(costumesFor(c.sex), c.costume, 'none'); c.hand = ok(HANDS, c.hand, 'none');
+  if (!HOODC.includes(c.hoodC)) c.hoodC = HOODC[0]; delete c.style;
   return c;
 }
 function sanitize(s) {
