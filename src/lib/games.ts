@@ -122,6 +122,19 @@ const CATALOG: Game[] = [
     ],
   },
   {
+    id: "my-room",
+    kind: "app",
+    title: { ko: "마이룸", en: "My Room" },
+    desc: {
+      ko: "도트 감성 미니룸 꾸미기 — 벽지·바닥·가구를 고르고 내 캐릭터를 꾸며 방에 세워 보세요",
+      en: "Decorate a cozy pixel mini room — pick wallpaper, floors and furniture and dress up your character",
+    },
+    genre: "casual",
+    thumb: "/thumbs/my-room.jpg",
+    src: "/games/my-room/index.html",
+    saves: true, // 방 꾸미기·캐릭터를 계정에 저장
+  },
+  {
     id: "explore-map",
     kind: "app",
     title: { ko: "동네 정복", en: "Town Conquest" },

@@ -306,6 +306,32 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       ],
     },
   },
+  "my-room": {
+    ko: {
+      tips: [
+        "컴퓨터·노트북·스탠드·화분 같은 작은 소품은 책상이나 탁자 위로 끌어다 놓으면 그 위에 올라가요.",
+        "벽걸이(창문·액자·시계·선반)는 왼쪽 벽과 오른쪽 벽 어디에나 걸 수 있어요. ↔ 버튼을 누르면 반대쪽 벽으로 옮겨져요.",
+        "가구가 겹쳐서 뒤에 가려지면 ⬆ 앞으로 버튼으로 살짝 앞으로 당겨 보세요.",
+        "같은 가구도 🎨 버튼으로 색을 바꿀 수 있어요. 방 분위기에 맞춰 색을 맞춰 보세요.",
+      ],
+      faq: [
+        { q: "꾸민 방이 저장되나요?", a: "이 브라우저에 자동 저장되고, 로그인하면 계정에도 저장돼 다른 기기에서도 이어서 꾸밀 수 있어요." },
+        { q: "사진첩·방명록도 있나요?", a: "지금은 미니룸과 캐릭터 꾸미기부터 열었고, 사진첩·게시글·방명록은 차례로 추가할 예정이에요." },
+        { q: "돈이 드나요?", a: "아니요. 모든 가구와 꾸미기 아이템은 무료예요." },
+      ],
+    },
+    en: {
+      tips: [
+        "Drag small items like computers, lamps and plants onto a desk or table to set them on top.",
+        "Wall items can hang on either wall — Turn moves them to the other side.",
+        "If something hides behind another piece, use Front to pull it forward.",
+      ],
+      faq: [
+        { q: "Is my room saved?", a: "It saves in this browser automatically, and to your account when you sign in." },
+        { q: "Are photo albums and a guestbook coming?", a: "Yes — the mini room and character come first, the rest will follow." },
+      ],
+    },
+  },
   "explore-map": {
     ko: {
       tips: [

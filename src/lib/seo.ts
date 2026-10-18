@@ -359,6 +359,42 @@ export const GAME_SEO: SeoMap = {
       tags: ["Best Nine", "Year in review", "Feed analytics", "Free"],
     },
   },
+  "my-room": {
+    ko: {
+      title: "마이룸 - 도트 미니룸 꾸미기 · 캐릭터 꾸미기",
+      h1: "마이룸 — 추억의 도트 미니룸 꾸미기",
+      description: "그 시절 감성의 도트 미니룸을 무료로 꾸며 보세요. 벽지·바닥을 고르고 침대·책상·피아노·컴퓨터 같은 가구를 배치하고, 머리·옷·액세서리를 바꿔 내 캐릭터를 방에 세울 수 있어요.",
+      keywords: ["미니룸", "미니룸 꾸미기", "방 꾸미기", "도트 방", "캐릭터 꾸미기", "아바타 꾸미기", "픽셀아트", "마이룸", "추억", "감성"],
+      about: [
+        "마이룸은 아이소메트릭(비스듬한 시점) 도트 그림으로 만든 나만의 작은 방이에요. 분홍 꽃·하늘 물방울·밤하늘 별 같은 벽지와 원목 마루·체크 타일·카펫 바닥을 고르고, 침대·소파·책상·책장·냉장고·피아노·TV·곰인형 등 30가지 넘는 가구와 소품을 원하는 자리에 놓을 수 있어요.",
+        "캐릭터는 피부색, 머리 모양과 색, 눈, 상의·하의·신발 색, 안경·리본·모자·헤드폰 같은 액세서리를 바꿔 꾸미고, 말풍선 한마디도 달 수 있어요. 로그인하면 꾸민 방이 계정에 저장되고, 📷 버튼으로 방 사진을 저장할 수 있어요.",
+      ],
+      howTo: [
+        "[가구] 탭에서 마음에 드는 가구의 [배치하기]를 눌러요.",
+        "방 안의 가구나 캐릭터를 눌러 끌어서 옮기고, ↔ 돌리기 · 🎨 색 · 🗑 삭제 버튼으로 다듬어요.",
+        "[벽지·바닥] 탭에서 방 분위기를 바꾸고, [캐릭터] 탭에서 내 캐릭터를 꾸며요.",
+        "📷 버튼으로 방 사진을 저장해 친구에게 자랑해 보세요.",
+      ],
+      tags: ["미니룸", "꾸미기", "도트", "캐릭터", "감성", "무료"],
+    },
+    en: {
+      title: "My Room - Pixel Mini Room & Avatar Maker",
+      h1: "My Room — Decorate a Cozy Pixel Mini Room",
+      description: "Decorate a nostalgic isometric pixel room for free: choose wallpaper and floors, place beds, desks, pianos and computers, and dress up your own character.",
+      keywords: ["mini room", "room decorating game", "pixel room", "avatar maker", "isometric pixel art", "cozy game"],
+      about: [
+        "My Room is a tiny isometric pixel-art room of your own. Pick wallpapers and floors, then place 30+ pieces of furniture and decor — beds, sofas, desks, bookshelves, a fridge, a piano, a TV, teddy bears and more.",
+        "Dress up your character's skin, hair, eyes, clothes and accessories and add a speech bubble. Sign in to keep your room in your account, and use 📷 to save a picture.",
+      ],
+      howTo: [
+        "In Furniture, tap Place on anything you like.",
+        "Drag furniture or your character around; use Turn, Color and Delete to fine-tune.",
+        "Change the mood in Room and dress up in Character.",
+        "Save a picture with 📷 and show it off.",
+      ],
+      tags: ["Mini room", "Decorating", "Pixel art", "Avatar", "Cozy", "Free"],
+    },
+  },
   "explore-map": {
     ko: {
       title: "동네 정복 - 지하철역·버스정류장 체크인 땅따먹기",
@@ -604,6 +640,7 @@ export const KIND_SEO: Record<"tool" | "app", Record<Lang, { heading: string; ti
         "스포츠 승부 예측은 프리미어리그·라리가·분데스리가·세리에A·리그1·챔피언스리그 경기의 승·무·패 확률과 예상 스코어, 리그 우승·강등 확률을 통계 모델로 계산해요. 예측은 킥오프 순간 잠기고 적중률을 그대로 공개합니다.",
         "Passport Map은 다녀온 나라와 도시를 원하는 색으로 칠하고, 장소마다 사진 1장을 남기는 여행 지도예요. 로그인하면 계정에 저장되고 SNS 공유 이미지도 만들 수 있어요.",
         "동네 정복은 서울·인천·경기 지도가 안개로 덮여 있고, 지하철역·버스정류장에서 체크인하거나 화면을 켜고 걸으면 그 주변이 밝혀지는 위치 기반 탐험 서비스예요. 동네별 탐험률과 뱃지를 모아 보세요.",
+        "마이룸은 도트 감성 미니룸을 꾸미는 서비스예요. 벽지·바닥과 30가지 넘는 가구를 배치하고 내 캐릭터를 꾸며 방에 세울 수 있어요.",
       ],
     },
     en: {
@@ -618,6 +655,7 @@ export const KIND_SEO: Record<"tool" | "app", Record<Lang, { heading: string; ti
         "Sports Forecast computes win, draw and loss probabilities, likely scores and title/relegation odds for the Premier League, La Liga, Bundesliga, Serie A, Ligue 1 and Champions League. Forecasts lock at kick-off and the track record is public.",
         "Passport Map lets you color the countries and cities you've visited and pin one photo to each place. Log in to keep it in your account and make a share image for social media.",
         "Town Conquest covers the Seoul metro area in fog; check in at subway stations and bus stops, or walk with the page open, to reveal it. Collect district exploration rates and badges.",
+        "My Room lets you decorate a cozy pixel mini room with 30+ pieces of furniture and dress up your own character.",
       ],
     },
   },
