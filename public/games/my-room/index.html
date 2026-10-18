@@ -7,47 +7,47 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>마이룸 - 미니게임천국</title>
 <meta name="description" content="도트 감성 미니룸 꾸미기. 벽지·바닥을 고르고 침대·책상·피아노 같은 가구를 배치하고, 머리·옷·액세서리를 바꿔 내 캐릭터를 방에 세워 보세요.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ffd6e4'/%3E%3Cpath d='M12 30 32 14 52 30v22H12z' fill='%23fff' stroke='%23d9668c' stroke-width='4'/%3E%3Crect x='27' y='38' width='10' height='14' fill='%23d9668c'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23d4ecff'/%3E%3Cpath d='M12 30 32 14 52 30v22H12z' fill='%23fff' stroke='%233f8fd2' stroke-width='4'/%3E%3Crect x='27' y='38' width='10' height='14' fill='%233f8fd2'/%3E%3C/svg%3E">
 <style>
-:root{--bg:#fff4f7;--ink:#3b2a33;--dim:#8d7280;--pink:#ff7fa8;--pink2:#ffd6e4;--line:#f1d3de;--card:#fff;--sel:#4fa3ff}
+:root{--bg:#f1f8ff;--ink:#24364a;--dim:#6c8199;--acc:#3fa9f5;--acc2:#d4ecff;--line:#cfe3f5;--card:#fff;--sel:#4fa3ff}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 [hidden]{display:none !important}
 .wrap{max-width:980px;margin:0 auto;padding:10px 10px 30px;display:grid;gap:10px}
 @media (min-width:900px){.wrap{grid-template-columns:minmax(0,1fr) 340px;align-items:start}}
-.stage{position:relative;background:linear-gradient(#ffeef4,#fff);border:2px solid var(--line);border-radius:16px;padding:8px;box-shadow:0 6px 18px rgba(217,102,140,.12)}
+.stage{position:relative;background:linear-gradient(#e6f4ff,#fff);border:2px solid var(--line);border-radius:16px;padding:8px;box-shadow:0 6px 18px rgba(63,140,210,.14)}
 .stage-top{display:flex;align-items:center;gap:8px;margin:0 2px 6px}
 .stage-top b{font-size:15px;letter-spacing:.5px}
 .stage-top .sp{flex:1}
 .save{font-size:11.5px;color:var(--dim)}
 .sbtn{height:30px;padding:0 10px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:12.5px;font-weight:700}
-canvas#room{display:block;width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges;border-radius:10px;touch-action:none;background:#fdf6f9}
-.toolbar{display:flex;justify-content:center;gap:6px;margin:8px auto 0;background:rgba(59,42,51,.9);padding:6px;border-radius:14px;width:max-content;max-width:100%;flex-wrap:wrap}
+canvas#room{display:block;width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges;border-radius:10px;touch-action:none;background:#f3f9ff}
+.toolbar{display:flex;justify-content:center;gap:6px;margin:8px auto 0;background:rgba(36,54,74,.9);padding:6px;border-radius:14px;width:max-content;max-width:100%;flex-wrap:wrap}
 .toolbar button{height:34px;padding:0 12px;border-radius:10px;color:#fff;font-size:13px;font-weight:700;background:rgba(255,255,255,.14);white-space:nowrap}
-.toolbar button.del{background:#e25579}
+.toolbar button.del{background:#e2556a}
 .hint{font-size:12px;color:var(--dim);margin:6px 4px 0;line-height:1.5}
 .panel{background:var(--card);border:2px solid var(--line);border-radius:16px;overflow:hidden}
 .tabs{display:flex;border-bottom:2px solid var(--line)}
 .tab{flex:1;height:42px;font-size:13.5px;font-weight:800;color:var(--dim)}
-.tab.on{color:var(--ink);background:var(--pink2)}
+.tab.on{color:var(--ink);background:var(--acc2)}
 .pbody{padding:10px;max-height:62vh;overflow:auto}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .chip{height:28px;padding:0 10px;border-radius:999px;border:1px solid var(--line);font-size:12.5px;font-weight:700;color:var(--dim);background:#fff}
-.chip.on{background:var(--pink);border-color:var(--pink);color:#fff}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
-.item{border:1px solid var(--line);border-radius:12px;padding:6px 4px 8px;text-align:center;background:#fffafc}
+.item{border:1px solid var(--line);border-radius:12px;padding:6px 4px 8px;text-align:center;background:#f7fbff}
 .item canvas{width:64px;height:64px;image-rendering:pixelated;display:block;margin:0 auto}
 .item b{display:block;font-size:12px;margin-top:2px}
-.item .add{margin-top:5px;height:24px;padding:0 10px;border-radius:999px;background:var(--pink);color:#fff;font-size:11.5px;font-weight:800}
+.item .add{margin-top:5px;height:24px;padding:0 10px;border-radius:999px;background:var(--acc);color:#fff;font-size:11.5px;font-weight:800}
 h4{font-size:12.5px;color:var(--dim);margin:12px 2px 6px}
 h4:first-child{margin-top:2px}
 .opts{display:flex;gap:6px;flex-wrap:wrap}
 .opt{min-width:42px;height:42px;border-radius:10px;border:2px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;padding:0 6px}
-.opt.on{border-color:var(--pink);box-shadow:0 0 0 2px var(--pink2)}
+.opt.on{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc2)}
 .opt canvas{image-rendering:pixelated}
 .sw{width:30px;height:30px;border-radius:8px;border:2px solid #fff;box-shadow:0 0 0 1px var(--line)}
-.ch-prev{display:flex;justify-content:center;background:linear-gradient(#fff,#ffeef4);border-radius:12px;padding:6px;margin-bottom:6px}
+.ch-prev{display:flex;justify-content:center;background:linear-gradient(#fff,#e6f4ff);border-radius:12px;padding:6px;margin-bottom:6px}
 .ch-prev canvas{image-rendering:pixelated;width:168px;height:auto}
 .msg{width:100%;height:38px;border-radius:10px;border:1px solid var(--line);padding:0 10px;font:inherit;font-size:14px}
 #toast{position:fixed;left:50%;top:14px;transform:translateX(-50%) translateY(-20px);background:var(--ink);color:#fff;padding:8px 14px;border-radius:12px;font-size:13px;font-weight:700;opacity:0;transition:.25s;pointer-events:none;z-index:50}
@@ -65,7 +65,7 @@ h4:first-child{margin-top:2px}
         <button class="sbtn" id="loginBtn" hidden></button>
         <button class="sbtn" id="dlBtn">📷</button>
       </div>
-      <canvas id="room" width="600" height="500"></canvas>
+      <canvas id="room" width="520" height="500"></canvas>
       <div class="toolbar" id="tools" hidden>
         <button id="tFlip">↔</button>
         <button id="tColor">🎨</button>
@@ -95,7 +95,7 @@ const $ = (id) => document.getElementById(id);
 /* ───────── 좌표 (아이소메트릭: 한 칸 32×16) ───────── */
 const N = 8, TW = 16, TH = 8, WALL_H = 112;
 const cv = $('room'), ctx = cv.getContext('2d');
-const W = 300, H = 250, OX = W / 2, OY = 122, SCALE = 2; // 논리 좌표 360×250, 실제 캔버스 2배
+const W = 2 * N * TW + 4, H = 250, OX = W / 2, OY = 122, SCALE = 2; // 방 폭에 딱 맞춘 논리 좌표 260×250, 실제 캔버스 2배
 const iso = (x, y, z = 0) => [(x - y) * TW, (x + y) * TH - z];
 
 /* ───────── 색 도우미 ───────── */
@@ -134,7 +134,7 @@ function tools(g, o) {
    w,d = 차지하는 칸, h = 대략 높이(그림 크기용), wall = 벽걸이, surface = 위에 소품을 올릴 수 있는 높이, small = 다른 가구 위에 올릴 수 있음 */
 const CATS = [
   ['all', '전체', 'All'], ['bed', '침대·소파', 'Beds & sofas'], ['desk', '책상·의자', 'Desks & chairs'],
-  ['elec', '가전', 'Electronics'], ['deco', '소품', 'Decor'], ['wall', '벽걸이', 'Wall'],
+  ['elec', '가전', 'Electronics'], ['deco', '소품', 'Decor'], ['out', '야외', 'Outdoor'], ['wall', '벽걸이', 'Wall'],
 ];
 const ITEMS = [
   { id: 'bed', cat: 'bed', ko: '싱글 침대', en: 'Single bed', w: 2, d: 3, h: 30, colors: ['#7ab8ff', '#ff9ebd', '#ffd36e', '#9be3a0', '#c9a4ff'],
@@ -201,6 +201,54 @@ const ITEMS = [
     draw: (t, c) => { t.wallQ(0, 46, 1, 30, c, shade(c, -0.4)); const [x, y] = t.P(0.5, 0, 64); t.g.fillStyle = '#ff5c7a'; t.g.beginPath(); t.g.arc(x - 2, y - 1, 3, 0, Math.PI * 2); t.g.arc(x + 3, y + 2, 3, 0, Math.PI * 2); t.g.fill(); t.wallQ(0.15, 50, 0.7, 2, shade(c, -0.4), null); t.wallQ(0.15, 54, 0.5, 2, shade(c, -0.4), null); } },
   { id: 'aircon', cat: 'wall', wall: true, ko: '에어컨', en: 'Air conditioner', w: 1.5, h: 14, colors: ['#ffffff', '#ffe3ec'],
     draw: (t, c) => { t.box(0, 0, 80, 1.5, 0.35, 12, c); t.faceL(0.1, 0.35, 81, 1.3, 2, '#c7ccd6', null); t.faceL(1.2, 0.35, 87, 0.12, 2, '#3fcf6a', null); } },
+  /* ── 야외 ── */
+  { id: 'palm', cat: 'out', ko: '야자나무', en: 'Palm tree', w: 1, d: 1, h: 64, colors: ['#3fae5a', '#6cc04a', '#2f8f6a'],
+    draw: (t, c) => {
+      t.oval(0.5, 0.5, 0, 9, 3.5, 'rgba(0,0,0,.12)');
+      for (let i = 0; i < 8; i++) t.box(0.4 + i * 0.025, 0.4 - i * 0.02, i * 7, 0.2, 0.2, 7, i % 2 ? '#b07a45' : '#c48a50', { ol: '#7a4f2a' });
+      const [cx, cy] = t.P(0.6, 0.25, 58), o = shade(c, -0.45);
+      [[-2.6, 1], [-2.0, 1], [-1.1, 0.8], [-0.2, 1], [0.6, 1], [1.4, 0.9], [2.4, 1], [3.1, 0.8]].forEach(([a, k]) => {
+        const tx = cx + Math.cos(a) * 21 * k, ty = cy + Math.sin(a) * 8 * k + 7, mx = cx + Math.cos(a) * 11 * k, my = cy + Math.sin(a) * 5 * k - 3;
+        const nx = -Math.sin(a) * 3, ny = Math.cos(a) * 2;
+        t.poly([[cx, cy], [mx + nx, my + ny], [tx, ty], [mx - nx, my - ny]], c, o);
+        t.poly([[cx, cy], [mx, my], [tx, ty]], shade(c, 0.18), null);
+      });
+      t.circ(0.5, 0.2, 54, 2.5, '#7a4f2a'); t.circ(0.7, 0.35, 53, 2.5, '#8a5a30');
+    } },
+  { id: 'bench', cat: 'out', ko: '벤치', en: 'Bench', w: 2, d: 0.75, h: 20, colors: ['#c9925b', '#3f8f5a', '#ffffff', '#5d9bff'],
+    draw: (t, c) => { const iron = '#3b3b46'; [[0.1, 0.1], [1.75, 0.1], [0.1, 0.55], [1.75, 0.55]].forEach(([x, y]) => t.box(x, y, 0, 0.12, 0.12, 8, iron)); t.box(0, 0.05, 8, 2, 0.7, 2, c); t.faceL(0, 0.75, 8.6, 2, 0.6, shade(c, -0.3), null); t.box(0, 0, 10, 2, 0.12, 3, c); t.box(0, 0, 15, 2, 0.12, 3, c); t.box(0.1, 0, 8, 0.1, 0.1, 11, iron); t.box(1.8, 0, 8, 0.1, 0.1, 11, iron); } },
+  { id: 'slamp', cat: 'out', ko: '가로등', en: 'Street lamp', w: 0.5, d: 0.5, h: 56, colors: ['#3b3b46', '#2f6b4a', '#ffffff'],
+    draw: (t, c) => { t.box(0.1, 0.1, 0, 0.3, 0.3, 4, c); t.box(0.2, 0.2, 4, 0.1, 0.1, 42, c); t.box(0.08, 0.08, 46, 0.34, 0.34, 2, c); t.box(0.12, 0.12, 48, 0.26, 0.26, 7, '#fff3b0', { ol: shade(c, -0.2) }); t.box(0.06, 0.06, 55, 0.38, 0.38, 2, c); } },
+  { id: 'tent', cat: 'out', ko: '텐트', en: 'Tent', w: 2, d: 2, h: 30, colors: ['#ff8a3d', '#3fa9f5', '#5ab868', '#ffd23d'],
+    draw: (t, c) => {
+      const o = shade(c, -0.45);
+      t.poly([t.P(1, 0, 30), t.P(1, 2, 30), t.P(2, 2, 0), t.P(2, 0, 0)], c, o);
+      t.poly([t.P(0, 2, 0), t.P(2, 2, 0), t.P(1, 2, 30)], shade(c, -0.15), o);
+      t.poly([t.P(0.6, 2, 0), t.P(1.4, 2, 0), t.P(1, 2, 18)], '#3b2a20', null);
+      t.poly([t.P(1, 2, 18), t.P(1.4, 2, 0), t.P(1.25, 2, 0)], shade(c, 0.25), null);
+      t.poly([t.P(1, 0, 30), t.P(1, 2, 30), t.P(1.08, 2, 28), t.P(1.08, 0, 28)], shade(c, 0.3), null);
+      t.box(0.95, 2.1, 0, 0.1, 0.1, 4, '#8a5a3b'); t.box(0.95, -0.2, 0, 0.1, 0.1, 4, '#8a5a3b');
+    } },
+  { id: 'fire', cat: 'out', ko: '모닥불', en: 'Campfire', w: 1, d: 1, h: 18, colors: ['#ff8a3d', '#5d9bff'],
+    draw: (t, c) => {
+      for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; t.oval(0.5 + Math.cos(a) * 0.36, 0.5 + Math.sin(a) * 0.36, 1, 3, 2, '#9aa0aa', '#5e636c'); }
+      t.box(0.2, 0.42, 1, 0.6, 0.16, 3, '#8a5a3b'); t.box(0.42, 0.2, 2, 0.16, 0.6, 3, '#a8744a');
+      const [x, y] = t.P(0.5, 0.5, 4), hot = c === '#5d9bff' ? '#bfe6ff' : '#ffd23d';
+      t.poly([[x - 6, y], [x - 3, y - 9], [x, y - 4], [x + 2, y - 13], [x + 4, y - 5], [x + 6, y]], c, shade(c, -0.3));
+      t.poly([[x - 3, y], [x - 1, y - 6], [x + 1, y - 3], [x + 2, y - 8], [x + 3, y]], hot, null);
+    } },
+  { id: 'flowers', cat: 'out', ko: '꽃밭', en: 'Flower bed', w: 1, d: 1, h: 12, colors: ['#ff6f9a', '#ffd23d', '#b98cff', '#ff5c4a', '#ffffff'],
+    draw: (t, c) => { t.box(0, 0, 0, 1, 1, 4, '#c9925b'); t.box(0.08, 0.08, 4, 0.84, 0.84, 0.5, '#7a5233', { ol: false }); for (let i = 0; i < 9; i++) { const x = 0.2 + (i % 3) * 0.3, y = 0.2 + Math.floor(i / 3) * 0.3; t.circ(x, y, 6, 2, '#3f9e4a'); t.circ(x, y, 9, 2, i % 4 === 3 ? '#ffffff' : c, shade(c, -0.35)); t.px(x, y, 9, 1, 1, '#ffe58a'); } } },
+  { id: 'rock', cat: 'out', ko: '바위', en: 'Rock', w: 1, d: 0.75, h: 12, colors: ['#a3a9b4', '#c7b394', '#7d8592'],
+    draw: (t, c) => { t.oval(0.5, 0.38, 4, 11, 6, c, shade(c, -0.45)); t.oval(0.35, 0.3, 7, 6, 4, shade(c, 0.18), null); t.oval(0.8, 0.5, 2, 5, 3, shade(c, -0.1), shade(c, -0.45)); } },
+  { id: 'bush', cat: 'out', ko: '덤불', en: 'Bush', w: 1, d: 1, h: 18, colors: ['#4fae5a', '#7cc957', '#2f8f6a'],
+    draw: (t, c) => { const o = shade(c, -0.45); [[0.3, 0.6, 5, 7], [0.7, 0.4, 6, 7], [0.5, 0.5, 11, 8], [0.3, 0.3, 9, 6], [0.75, 0.75, 4, 6]].forEach(([x, y, z, r]) => t.circ(x, y, z, r, c, o)); t.circ(0.45, 0.45, 14, 3, shade(c, 0.25)); t.px(0.6, 0.6, 9, 2, 2, '#ff6f9a'); t.px(0.3, 0.5, 12, 2, 2, '#ffffff'); } },
+  { id: 'parasol', cat: 'out', ko: '파라솔', en: 'Parasol', w: 1, d: 1, h: 40, colors: ['#3fa9f5', '#ff5c4a', '#ffd23d', '#5ab868'],
+    draw: (t, c) => {
+      t.box(0.46, 0.46, 0, 0.08, 0.08, 34, '#ffffff', { ol: '#999' });
+      const [x, y] = t.P(0.5, 0.5, 30), [tx, ty] = t.P(0.5, 0.5, 40);
+      [0, 1, 2, 3, 4, 5, 6, 7].sort((p, q) => Math.sin((p + 0.5) * Math.PI / 4) - Math.sin((q + 0.5) * Math.PI / 4)).forEach((i) => { const a0 = (i / 8) * Math.PI * 2, a1 = ((i + 1) / 8) * Math.PI * 2; t.poly([[tx, ty], [x + Math.cos(a0) * 19, y + Math.sin(a0) * 9], [x + Math.cos(a1) * 19, y + Math.sin(a1) * 9]], i % 2 ? '#ffffff' : c, shade(c, -0.4)); });
+    } },
 ];
 const ITEM = Object.fromEntries(ITEMS.map((i) => [i.id, i]));
 const nm = (o) => L_(o.ko, o.en);
@@ -223,16 +271,24 @@ const FLOORS = [
   { id: 'carpet', ko: '연두 카펫', en: 'Green carpet', a: '#c9ebb4', b: '#bfe3a8', kind: 'carpet' },
   { id: 'lav', ko: '보라 카펫', en: 'Lavender', a: '#e3d6ff', b: '#d8c8ff', kind: 'carpet' },
 ];
+/* 테마: 방 또는 야외 (야외에서는 벽·벽걸이가 없다) */
+const THEMES = [
+  { id: 'room', ko: '🏠 방', en: '🏠 Room' },
+  { id: 'island', ko: '🏝 무인도', en: '🏝 Island' },
+  { id: 'park', ko: '🌳 공원', en: '🌳 Park' },
+  { id: 'camp', ko: '🏕 밤 캠핑', en: '🏕 Night camp' },
+];
+const outdoor = () => state.theme && state.theme !== 'room';
 
 /* ───────── 캐릭터 ───────── */
 const SKINS = ['#ffe0c7', '#f5cba7', '#e0a979', '#b97a4f'];
 const HAIRC = ['#3b2a20', '#6b4226', '#c9853f', '#f2d16b', '#e0453f', '#ff8fb0', '#5d6bff', '#e9e9ef'];
-const CLOTH = ['#ff6f7d', '#ff9ebd', '#ffd36e', '#7ed99a', '#5d9bff', '#b98cff', '#ffffff', '#3b3b46'];
+const CLOTH = ['#7ec8ff', '#5d9bff', '#3a5ab0', '#7ed99a', '#ffd36e', '#ff6f7d', '#ff9ebd', '#b98cff', '#ffffff', '#3b3b46'];
 /* ───────── 캐릭터 (직접 찍은 24×40 도트 + 머리·옷 레이어) ───────── */
 const HAIRS = [['short', '짧은 머리', 'Short'], ['bob', '단발', 'Bob'], ['long', '긴 머리', 'Long'], ['twin', '양갈래', 'Pigtails'], ['pony', '똥머리', 'Bun'], ['spike', '삐죽 머리', 'Spiky']];
 const EYES = [['dot', '동글 눈', 'Round'], ['smile', '웃는 눈', 'Smile'], ['wink', '윙크', 'Wink'], ['sleepy', '졸린 눈', 'Sleepy']];
 const EYEC = ['#2b1d1d', '#4a2c1a', '#1f3f7a', '#1f5e3f', '#6b1f2a'];
-const TOPS = [['tee', '티셔츠', 'T-shirt'], ['stripe', '줄무늬 티', 'Striped'], ['hood', '후드', 'Hoodie'], ['sailor', '세일러', 'Sailor'], ['dress', '원피스', 'Dress'], ['overall', '멜빵', 'Overalls'], ['hanbok', '한복', 'Hanbok']];
+const TOPS = [['tee', '티셔츠', 'T-shirt'], ['stripe', '줄무늬 티', 'Striped'], ['hood', '후드', 'Hoodie'], ['sailor', '세일러', 'Sailor'], ['dress', '원피스', 'Dress'], ['overall', '멜빵', 'Overalls']];
 const BOTTOMS = [['pants', '긴 바지', 'Pants'], ['shorts', '반바지', 'Shorts'], ['skirt', '치마', 'Skirt']];
 const ACCS = [['none', '없음', 'None'], ['ribbon', '리본', 'Ribbon'], ['flower', '꽃핀', 'Flower pin'], ['cap', '모자', 'Cap'], ['glasses', '안경', 'Glasses'], ['bunny', '토끼 귀', 'Bunny ears'], ['cat', '고양이 귀', 'Cat ears'], ['crown', '왕관', 'Crown']];
 const HOODC = ['#ffffff', '#ffc4d6', '#c9a27a', '#3b3b46', '#f2d16b'];
@@ -292,7 +348,7 @@ function charGrid(ch, frame) {
   const at = (x, y) => { y += YOFF; x += XOFF; return x >= 0 && x < GW && y >= 0 && y < GH ? g[y * GW + x] : null; };
   const stamp = (rows, y0 = 0, map) => rows.forEach((r, j) => { for (let i = 0; i < r.length; i++) { const k = r[i]; if (k !== '.') put(i, y0 + j, map ? map(k, i, y0 + j) : k); } });
   const fill = (x, y, w, h, k) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) put(x + i, y + j, typeof k === 'function' ? k(x + i, y + j) : k); };
-  const dress = ch.top === 'dress' || ch.top === 'hanbok';
+  const dress = ch.top === 'dress';
 
   /* 뒷머리 */
   if (ch.hair === 'long') fill(2, 8, 20, 24, (x, y) => (x >= 19 ? 'h' : (x + y) % 7 === 0 ? 'L' : 'H'));
@@ -320,11 +376,6 @@ function charGrid(ch, frame) {
     fill(10, 22, 4, 1, 'W'); put(11, 23, 'W'); put(12, 23, 'W');
     fill(7, 33, 10, 1, (x) => (x === 11 || x === 12 ? null : 'S'));
   }
-  if (ch.top === 'hanbok') {
-    fill(9, 22, 6, 1, 'W'); put(10, 23, 'W'); put(13, 23, 'W'); fill(11, 25, 2, 1, 'R'); put(12, 26, 'R'); put(12, 27, 'R'); put(11, 26, 'R');
-    fill(5, 28, 14, 2, (x) => (x > 15 ? 'b' : 'B')); fill(4, 30, 16, 3, (x) => (x > 16 ? 'b' : 'B')); fill(3, 33, 18, 4, (x) => (x > 17 ? 'b' : 'B'));
-    fill(4, 29, 2, 1, 'S'); fill(18, 29, 2, 1, 's');
-  }
 
   /* 얼굴 표정 */
   const blink = frame === 2;
@@ -333,10 +384,14 @@ function charGrid(ch, frame) {
   else if (ch.eyes === 'smile') { for (const x of [eyeL, eyeR]) { put(x, 12, 'S'); put(x + 1, 12, 'S'); put(x - 1, 14, 'E'); put(x, 13, 'E'); put(x + 1, 13, 'E'); put(x + 2, 14, 'E'); put(x, 14, 'S'); put(x + 1, 14, 'S'); } }
   else if (ch.eyes === 'wink') { const x = eyeR; put(x, 12, 'S'); put(x + 1, 12, 'S'); put(x, 13, 'E'); put(x + 1, 13, 'S'); put(x - 1, 13, 'S'); put(x, 14, 'S'); put(x + 1, 14, 'E'); put(x - 1, 14, 'E'); }
 
+  /* 성별: 여자는 속눈썹과 볼터치, 남자는 볼터치 없이 */
+  if (ch.sex === 'm') { put(5, 15, 'S'); put(6, 15, 'S'); put(15, 15, 'S'); put(16, 15, 'S'); }
+  else if (!(blink || ch.eyes === 'sleepy' || ch.eyes === 'smile')) { put(eyeL - 1, 12, 'E'); if (ch.eyes !== 'wink') put(eyeR + 2, 12, 'E'); else put(eyeR + 2, 13, 'E'); }
+
   /* 앞머리 */
   if (ch.hair === 'short' || ch.hair === 'spike') stamp(SPR_SHORT);
   else stamp(SPR_BANGS);
-  if (ch.hair === 'spike') stamp(SPR_SPIKE_TOP, -2);
+  if (ch.hair === 'spike' && ch.acc !== 'cap') stamp(SPR_SPIKE_TOP, -2);
   if (ch.hair === 'bob') { fill(1, 12, 3, 8, (x) => (x === 3 ? 'h' : 'H')); fill(20, 12, 3, 8, (x) => (x === 20 ? 'h' : 'H')); fill(2, 20, 2, 1, 'h'); fill(20, 20, 2, 1, 'h'); }
   if (ch.hair === 'long') { fill(1, 12, 3, 18, (x, y) => (x === 3 ? 'h' : (y % 5 === 0 ? 'L' : 'H'))); fill(20, 12, 3, 18, (x) => (x === 20 ? 'h' : 'H')); }
   if (ch.hair === 'twin') { fill(2, 12, 2, 4, 'H'); fill(20, 12, 2, 4, 'h'); }
@@ -359,7 +414,7 @@ function charColors(ch) {
   return {
     S: skin, s: shade(skin, -0.12), P: '#ffadc0', M: '#c8566e', E: ec, e: '#ffffff',
     H: hc, h: shade(hc, -0.25), L: shade(hc, 0.32),
-    T: tc, t: shade(tc, -0.18), W: '#ffffff', w: '#f4e6ee', C: '#3a5ab0', R: '#ff5c7a', r: '#d63c5c', Y: '#ffd23d', G: '#3b2a33',
+    T: tc, t: shade(tc, -0.18), W: '#ffffff', w: '#e3eefa', C: '#3a5ab0', R: '#ff5c7a', r: '#d63c5c', Y: '#ffd23d', G: '#3b2a33',
     B: bc, b: shade(bc, -0.22), K: ch.shoes, k: shade(ch.shoes, -0.3), A: ac,
   };
 }
@@ -382,10 +437,15 @@ function drawChar(g, ch, ox, oy, frame = 0) {
 }
 
 /* ───────── 상태 ───────── */
-const DEF_CHAR = { skin: SKINS[0], hair: 'twin', hairC: HAIRC[1], eyes: 'dot', eyeC: EYEC[0], top: 'dress', topC: '#ff9ebd', bottom: 'skirt', bottomC: '#5d6bff', shoes: '#e0453f', acc: 'none', hoodC: '#ffffff' };
+const DEF_CHAR = { sex: 'f', skin: SKINS[0], hair: 'twin', hairC: HAIRC[1], eyes: 'dot', eyeC: EYEC[0], top: 'dress', topC: '#7ec8ff', bottom: 'skirt', bottomC: '#3a5ab0', shoes: '#5d9bff', acc: 'none', hoodC: '#ffffff' };
+const DEF_CHAR_M = { sex: 'm', skin: SKINS[0], hair: 'short', hairC: HAIRC[0], eyes: 'dot', eyeC: EYEC[0], top: 'hood', topC: '#7ec8ff', bottom: 'pants', bottomC: '#3a5ab0', shoes: '#3b3b46', acc: 'none', hoodC: '#ffffff' };
+const SEXES = [['f', '👧 여자', '👧 Girl'], ['m', '👦 남자', '👦 Boy']];
+// 남자 캐릭터는 원피스·치마 대신 바지류만
+const topsFor = (sex) => TOPS.filter(([id]) => !(sex === 'm' && id === 'dress'));
+const bottomsFor = (sex) => BOTTOMS.filter(([id]) => !(sex === 'm' && id === 'skirt'));
 function defaultState() {
   return {
-    v: 1, wall: 'pink', floor: 'oak',
+    v: 1, theme: 'room', wall: 'sky', floor: 'oak',
     items: [
       { t: 'window', wall: 'R', a: 1, z: 0, c: 0 },
       { t: 'bed', gx: 0.2, gy: 4.6, z: 0, f: 1, c: 0 },
@@ -411,7 +471,7 @@ function render(it) {
   if (cache.has(key)) return cache.get(key);
   let w, h, o;
   if (def.wall) { w = Math.ceil(def.w * TW) + 24; h = 170; o = [6, 132]; }
-  else { w = Math.ceil((def.w + def.d) * TW) + 12; h = Math.ceil((def.w + def.d) * TH + 70); o = [Math.ceil(def.d * TW) + 6, 66]; }
+  else { const top = Math.max(66, def.h + 26); w = Math.ceil((def.w + def.d) * TW) + 12; h = Math.ceil((def.w + def.d) * TH + top + 4); o = [Math.ceil(def.d * TW) + 6, top]; }
   const c = document.createElement('canvas'); c.width = w; c.height = h;
   const g = c.getContext('2d');
   def.draw(tools(g, o), color);
@@ -466,8 +526,65 @@ function patternCanvas(wl) {
   if (wl.kind === 'panel') { g.fillRect(0, 0, 1, 16); g.fillRect(8, 0, 1, 16); }
   return p;
 }
+const rnd = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+function drawOutdoor(g) {
+  const th = state.theme;
+  const quad = (pts, fill, stroke) => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fillStyle = fill; g.fill(); if (stroke) { g.strokeStyle = stroke; g.lineWidth = 1; g.stroke(); } };
+  const D = (e) => [iso(-e, -e), iso(N + e, -e), iso(N + e, N + e), iso(-e, N + e)].map(([a, b]) => [OX + a, OY + b]);
+  const night = th === 'camp', horizon = th === 'island' ? 70 : 96;
+  // 하늘
+  const sky = g.createLinearGradient(0, 0, 0, horizon);
+  if (night) { sky.addColorStop(0, '#141a3f'); sky.addColorStop(1, '#34407a'); } else { sky.addColorStop(0, '#8fd0ff'); sky.addColorStop(1, '#dff2ff'); }
+  g.fillStyle = sky; g.fillRect(0, 0, W, horizon + 2);
+  if (night) {
+    for (let i = 0; i < 46; i++) { g.fillStyle = i % 5 ? 'rgba(255,255,255,.7)' : '#ffe58a'; g.fillRect(Math.floor(rnd(i) * W), Math.floor(rnd(i + 99) * (horizon - 10)), 1, 1); }
+    g.fillStyle = '#fff6c8'; g.beginPath(); g.arc(214, 22, 9, 0, Math.PI * 2); g.fill(); g.fillStyle = '#141a3f'; g.beginPath(); g.arc(219, 19, 8, 0, Math.PI * 2); g.fill();
+  } else {
+    const cloud = (x, y, s) => { g.fillStyle = '#ffffff'; g.fillRect(x, y + 3 * s, 22 * s, 4 * s); g.fillRect(x + 4 * s, y, 9 * s, 5 * s); g.fillRect(x + 11 * s, y + 1 * s, 7 * s, 4 * s); };
+    cloud(18, 14, 1); cloud(168, 8, 1.2); cloud(110, 34, 0.8);
+  }
+  if (th === 'island') {
+    // 바다
+    const sea = g.createLinearGradient(0, horizon, 0, H);
+    sea.addColorStop(0, '#59c3f0'); sea.addColorStop(1, '#2a8fd6');
+    g.fillStyle = sea; g.fillRect(0, horizon, W, H - horizon);
+    g.fillStyle = '#9fe0ff'; g.fillRect(0, horizon, W, 1);
+    for (let i = 0; i < 40; i++) { const x = Math.floor(rnd(i + 7) * W), y = horizon + 4 + Math.floor(rnd(i + 51) * (H - horizon - 6)); g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(x, y, 3 + (i % 4), 1); }
+    quad(D(0.55), '#bff0ff'); quad(D(0.3), '#8fdcf0');
+    quad(D(0.12), '#f6e2a8', '#e2c47c');
+  } else {
+    // 먼 숲과 땅
+    g.fillStyle = night ? '#1f3a2c' : '#86c96a'; g.fillRect(0, horizon, W, H - horizon);
+    const tree = (x, y, s) => {
+      if (night) { g.fillStyle = '#163024'; for (let k = 0; k < 3; k++) { g.beginPath(); g.moveTo(x - (9 - k * 2) * s, y - k * 9 * s); g.lineTo(x + (9 - k * 2) * s, y - k * 9 * s); g.lineTo(x, y - (k * 9 + 14) * s); g.fill(); } }
+      else { g.fillStyle = '#8a5a3b'; g.fillRect(x - 1, y - 8 * s, 3, 8 * s); g.fillStyle = '#4f9e4a'; g.beginPath(); g.arc(x, y - 14 * s, 10 * s, 0, Math.PI * 2); g.fill(); g.fillStyle = '#6cbb57'; g.beginPath(); g.arc(x - 3 * s, y - 17 * s, 5 * s, 0, Math.PI * 2); g.fill(); }
+    };
+    for (let i = 0; i < 16; i++) tree(Math.floor(i * 17 + rnd(i) * 8), horizon + 3, 0.7 + rnd(i + 3) * 0.4);
+    for (let a = 0.5; a < N; a += 1.6) { const [x, y] = iso(a, -0.7); tree(OX + x, OY + y, 1.1); tree(OX - x, OY + y, 1.1); }
+  }
+  // 바닥 칸
+  for (let x = 0; x < N; x++) for (let y = 0; y < N; y++) {
+    const pts = [iso(x, y), iso(x + 1, y), iso(x + 1, y + 1), iso(x, y + 1)].map(([a, b]) => [OX + a, OY + b]);
+    const edge = Math.min(x, y, N - 1 - x, N - 1 - y), r = rnd(x * 13 + y * 7);
+    const path = th === 'park' && (x === 3 || x === 4 || y === 3 || y === 4);
+    let col;
+    if (th === 'island') col = edge === 0 || (edge === 1 && r < 0.35) ? (r < 0.5 ? '#f6e2a8' : '#f0d898') : r < 0.3 ? '#7fcf5e' : '#8fd86a';
+    else if (th === 'park') col = path ? ((x + y) % 2 ? '#e3d7c3' : '#d8cab2') : r < 0.3 ? '#9be07d' : '#a6e689';
+    else col = edge >= 2 && edge <= 3 && (x === 3 || x === 4 || y === 3 || y === 4) ? (r < 0.5 ? '#8a6a45' : '#7d5f3d') : r < 0.3 ? '#3f6e3c' : '#467a42';
+    quad(pts, col, path ? '#c8b89c' : null);
+    if (!path && r > 0.7 && !col.startsWith('#f')) { const [a, b] = iso(x + 0.5, y + 0.5); g.fillStyle = night ? '#5e9256' : '#5fae48'; g.fillRect(OX + a - 1, OY + b - 2, 1, 2); g.fillRect(OX + a + 1, OY + b - 3, 1, 3); }
+  }
+  if (th === 'park') {
+    // 뒤쪽 울타리
+    const post = (x, y) => { g.fillStyle = '#ffffff'; g.fillRect(x - 1, y - 12, 3, 12); g.fillStyle = '#c9d4de'; g.fillRect(x + 1, y - 12, 1, 12); g.fillStyle = '#ffffff'; g.fillRect(x - 1, y - 13, 2, 1); };
+    for (let a = 0; a <= N; a += 0.5) { const [x, y] = iso(a, 0); post(OX + x, OY + y); post(OX - x, OY + y); }
+    g.strokeStyle = '#e6eef5'; g.lineWidth = 1.5;
+    for (const h of [4, 9]) { g.beginPath(); g.moveTo(OX - N * TW, OY + N * TH - h); g.lineTo(OX, OY - h); g.lineTo(OX + N * TW, OY + N * TH - h); g.stroke(); }
+  }
+}
 function drawRoom(g) {
-  const wl = WALLS.find((w) => w.id === state.wall) || WALLS[0];
+  if (outdoor()) { g.clearRect(0, 0, W, H); return drawOutdoor(g); }
+  const wl =WALLS.find((w) => w.id === state.wall) || WALLS[0];
   const fl = FLOORS.find((f) => f.id === state.floor) || FLOORS[0];
   g.clearRect(0, 0, W, H);
   const B = [OX, OY], Lf = [OX - N * TW, OY + N * TH], Rf = [OX + N * TW, OY + N * TH], F = [OX, OY + 2 * N * TH];
@@ -496,7 +613,7 @@ function drawRoom(g) {
 }
 function drawAll(g, withSel = true) {
   drawRoom(g);
-  const list = state.items.slice();
+  const list = state.items.filter((i) => !(outdoor() && ITEM[i.t].wall));
   list.push('char');
   list.sort((a, b) => depth(a) - depth(b));
   for (const it of list) {
@@ -526,11 +643,11 @@ function bubble(g, x, y, text) {
   g.font = '9px sans-serif';
   const t = text.slice(0, 20), w = Math.ceil(g.measureText(t).width) + 10, h = 15;
   const bx = Math.round(Math.max(2, Math.min(W - w - 2, x - w / 2))), by = Math.round(y - h);
-  g.fillStyle = '#fff'; g.strokeStyle = '#3b2a33'; g.lineWidth = 1;
+  g.fillStyle = '#fff'; g.strokeStyle = '#24364a'; g.lineWidth = 1;
   g.fillRect(bx, by, w, h); g.strokeRect(bx + 0.5, by + 0.5, w - 1, h - 1);
   g.beginPath(); g.moveTo(x - 3, by + h - 0.5); g.lineTo(x, by + h + 4); g.lineTo(x + 3, by + h - 0.5); g.fill(); g.stroke();
   g.fillRect(x - 2, by + h - 1.5, 5, 2);
-  g.fillStyle = '#3b2a33'; g.textBaseline = 'middle'; g.fillText(t, bx + 5, by + h / 2 + 0.5);
+  g.fillStyle = '#24364a'; g.textBaseline = 'middle'; g.fillText(t, bx + 5, by + h / 2 + 0.5);
 }
 let raf = 0;
 function redraw() { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0); ctx.imageSmoothingEnabled = false; drawAll(ctx); }); }
@@ -538,7 +655,7 @@ function redraw() { if (raf) return; raf = requestAnimationFrame(() => { raf = 0
 /* ───────── 선택·끌기 ───────── */
 function toLocal(e) { const r = cv.getBoundingClientRect(); return [((e.clientX - r.left) / r.width) * W, ((e.clientY - r.top) / r.height) * H]; }
 function hit(px, py) {
-  const list = state.items.slice(); list.push('char');
+  const list = state.items.filter((i) => !(outdoor() && ITEM[i.t].wall)); list.push('char');
   list.sort((a, b) => depth(b) - depth(a));
   for (const it of list) {
     const r = it === 'char' ? renderChar() : render(it);
@@ -649,10 +766,10 @@ function renderPanel() {
   b.innerHTML = '';
   if (tab === 'furn') {
     const chips = document.createElement('div'); chips.className = 'chips';
-    CATS.forEach(([id, ko, en]) => { const c = document.createElement('button'); c.className = 'chip' + (cat === id ? ' on' : ''); c.textContent = L_(ko, en); c.onclick = () => { cat = id; renderPanel(); }; chips.appendChild(c); });
+    CATS.filter(([id]) => !(outdoor() && id === 'wall')).forEach(([id, ko, en]) => { const c = document.createElement('button'); c.className = 'chip' + (cat === id ? ' on' : ''); c.textContent = L_(ko, en); c.onclick = () => { cat = id; renderPanel(); }; chips.appendChild(c); });
     b.appendChild(chips);
     const grid = document.createElement('div'); grid.className = 'grid';
-    ITEMS.filter((i) => cat === 'all' || i.cat === cat).forEach((def) => {
+    ITEMS.filter((i) => (cat === 'all' || i.cat === cat) && !(outdoor() && i.wall)).forEach((def) => {
       const el = document.createElement('div'); el.className = 'item';
       el.appendChild(thumb(def, def.colors[0]));
       const t = document.createElement('b'); t.textContent = nm(def); el.appendChild(t);
@@ -661,10 +778,15 @@ function renderPanel() {
     });
     b.appendChild(grid);
   } else if (tab === 'room') {
+    b.appendChild(h4(L_('테마', 'Theme')));
+    b.appendChild(txtRow(THEMES.map((t) => [t.id, t.ko, t.en]), state.theme || 'room', (v) => { state.theme = v; if (outdoor() && cat === 'wall') cat = 'all'; if (sel && sel !== 'char' && outdoor() && ITEM[sel.t].wall) { sel = null; showTools(); } changed(); renderPanel(); }));
+    if (outdoor()) { const p = document.createElement('p'); p.className = 'hint'; p.textContent = L_('야외 테마에서는 벽과 벽걸이가 숨겨져요. 가구 탭의 ‘야외’에서 야자나무·텐트·모닥불을 놓아 보세요.', 'Walls and wall items are hidden outdoors. Try palm trees, tents and campfires under Furniture › Outdoor.'); b.appendChild(p); }
+    if (!outdoor()) {
     b.appendChild(h4(L_('벽지', 'Wallpaper')));
     b.appendChild(optRow(WALLS, state.wall, (w) => { state.wall = w.id; changed(); renderPanel(); }, (w) => { const c = patternCanvas(w); c.style.width = '36px'; c.style.height = '36px'; c.style.borderRadius = '6px'; return c; }));
     b.appendChild(h4(L_('바닥', 'Floor')));
     b.appendChild(optRow(FLOORS, state.floor, (f) => { state.floor = f.id; changed(); renderPanel(); }, (f) => { const c = document.createElement('div'); c.className = 'sw'; c.style.background = f.kind === 'check' ? `repeating-conic-gradient(${f.a} 0 25%, ${f.b} 0 50%) 0 0/12px 12px` : `repeating-linear-gradient(90deg, ${f.a} 0 8px, ${f.b} 8px 10px)`; return c; }));
+    }
     b.appendChild(h4(L_('방 비우기', 'Reset')));
     const clr = document.createElement('button'); clr.className = 'chip'; clr.textContent = L_('🧹 가구 모두 치우기', '🧹 Remove all furniture');
     clr.onclick = () => { if (!state.items.length) return; if (confirmClear()) { state.items = []; sel = null; showTools(); changed(); } };
@@ -675,16 +797,17 @@ function renderPanel() {
     const pg = pc.getContext('2d'); drawChar(pg, state.ch, (CHW + 8) / 2, CHH + 4); prev.appendChild(pc); b.appendChild(prev);
     const sec = (title, el) => { b.appendChild(h4(title)); b.appendChild(el); };
     const setCh = (k, v) => { state.ch[k] = v; charCache = null; changed(); renderPanel(); };
+    sec(L_('성별', 'Gender'), txtRow(SEXES, state.ch.sex || 'f', (v) => { if (v === state.ch.sex) return; state.ch = { ...(v === 'm' ? DEF_CHAR_M : DEF_CHAR), skin: state.ch.skin }; charCache = null; changed(); renderPanel(); }));
     sec(L_('한마디', 'Message'), msgInput());
     sec(L_('피부', 'Skin'), swRow(SKINS, state.ch.skin, (v) => setCh('skin', v)));
     sec(L_('머리 모양', 'Hair'), txtRow(HAIRS, state.ch.hair, (v) => setCh('hair', v)));
     sec(L_('머리 색', 'Hair color'), swRow(HAIRC, state.ch.hairC, (v) => setCh('hairC', v)));
     sec(L_('눈', 'Eyes'), txtRow(EYES, state.ch.eyes, (v) => setCh('eyes', v)));
     sec(L_('눈동자 색', 'Eye color'), swRow(EYEC, state.ch.eyeC, (v) => setCh('eyeC', v)));
-    sec(L_('상의', 'Top'), txtRow(TOPS, state.ch.top, (v) => setCh('top', v)));
+    sec(L_('상의', 'Top'), txtRow(topsFor(state.ch.sex), state.ch.top, (v) => setCh('top', v)));
     sec(L_('상의 색', 'Top color'), swRow(CLOTH, state.ch.topC, (v) => setCh('topC', v)));
-    sec(L_('하의', 'Bottom'), txtRow(BOTTOMS, state.ch.bottom, (v) => setCh('bottom', v)));
-    sec(L_('하의 색', 'Bottom color'), swRow(CLOTH.concat(['#5d6bff']), state.ch.bottomC, (v) => setCh('bottomC', v)));
+    sec(L_('하의', 'Bottom'), txtRow(bottomsFor(state.ch.sex), state.ch.bottom, (v) => setCh('bottom', v)));
+    sec(L_('하의 색', 'Bottom color'), swRow(CLOTH, state.ch.bottomC, (v) => setCh('bottomC', v)));
     sec(L_('신발 색', 'Shoes'), swRow(CLOTH, state.ch.shoes, (v) => setCh('shoes', v)));
     sec(L_('머리 장식', 'Headwear'), txtRow(ACCS, state.ch.acc, (v) => setCh('acc', v)));
     if (state.ch.acc === 'bunny' || state.ch.acc === 'cat') sec(L_('귀 색', 'Ear color'), swRow(HOODC, state.ch.hoodC, (v) => setCh('hoodC', v)));
@@ -714,7 +837,7 @@ function msgInput() {
   return i;
 }
 document.querySelectorAll('.tab').forEach((t) => {
-  t.textContent = { furn: L_('🛋 가구', '🛋 Furniture'), room: L_('🎨 벽지·바닥', '🎨 Room'), char: L_('🙂 캐릭터', '🙂 Character') }[t.dataset.t];
+  t.textContent = { furn: L_('🛋 가구', '🛋 Furniture'), room: L_('🎨 테마·벽지', '🎨 Theme'), char: L_('🙂 캐릭터', '🙂 Character') }[t.dataset.t];
   t.onclick = () => { tab = t.dataset.t; document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('on', x === t)); renderPanel(); };
 });
 
@@ -742,14 +865,16 @@ async function cloudStore() {
 }
 function fixChar(c) {
   const ok = (list, v, d) => (list.some((o) => o[0] === v) ? v : d);
-  c.hair = ok(HAIRS, c.hair, DEF_CHAR.hair); c.eyes = ok(EYES, c.eyes, DEF_CHAR.eyes); c.top = ok(TOPS, c.top, DEF_CHAR.top);
-  c.bottom = ok(BOTTOMS, c.bottom, DEF_CHAR.bottom); c.acc = ok(ACCS, c.acc, 'none'); delete c.style;
+  c.sex = c.sex === 'm' ? 'm' : 'f';
+  const D = c.sex === 'm' ? DEF_CHAR_M : DEF_CHAR;
+  c.hair = ok(HAIRS, c.hair, D.hair); c.eyes = ok(EYES, c.eyes, DEF_CHAR.eyes); c.top = ok(topsFor(c.sex), c.top, D.top);
+  c.bottom = ok(bottomsFor(c.sex), c.bottom, D.bottom); c.acc = ok(ACCS, c.acc, 'none'); delete c.style;
   return c;
 }
 function sanitize(s) {
   const d = defaultState();
   if (!s || typeof s !== 'object') return d;
-  const out = { v: 1, wall: WALLS.some((w) => w.id === s.wall) ? s.wall : d.wall, floor: FLOORS.some((f) => f.id === s.floor) ? s.floor : d.floor,
+  const out = { v: 1, theme: THEMES.some((t) => t.id === s.theme) ? s.theme : 'room', wall: WALLS.some((w) => w.id === s.wall) ? s.wall : d.wall, floor: FLOORS.some((f) => f.id === s.floor) ? s.floor : d.floor,
     items: Array.isArray(s.items) ? s.items.filter((i) => i && ITEM[i.t]).slice(0, 80) : d.items,
     ch: fixChar({ ...DEF_CHAR, ...(s.ch || {}) }), cp: { ...d.cp, ...(s.cp || {}) }, msg: typeof s.msg === 'string' ? s.msg.slice(0, 20) : '' };
   return out;
@@ -776,7 +901,7 @@ function setupAuth() {
 $('dlBtn').title = L_('방 사진 저장', 'Save room picture');
 $('dlBtn').onclick = () => {
   const c = document.createElement('canvas'); c.width = W * 3; c.height = H * 3;
-  const g = c.getContext('2d'); g.fillStyle = '#fdf6f9'; g.fillRect(0, 0, c.width, c.height);
+  const g = c.getContext('2d'); g.fillStyle = '#f3f9ff'; g.fillRect(0, 0, c.width, c.height);
   g.setTransform(3, 0, 0, 3, 0, 0); g.imageSmoothingEnabled = false; drawAll(g, false);
   c.toBlob(async (blob) => {
     const file = new File([blob], 'my-room.png', { type: 'image/png' });
