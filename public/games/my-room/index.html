@@ -65,7 +65,7 @@ h4:first-child{margin-top:2px}
         <button class="sbtn" id="loginBtn" hidden></button>
         <button class="sbtn" id="dlBtn">📷</button>
       </div>
-      <canvas id="room" width="720" height="500"></canvas>
+      <canvas id="room" width="600" height="500"></canvas>
       <div class="toolbar" id="tools" hidden>
         <button id="tFlip">↔</button>
         <button id="tColor">🎨</button>
@@ -95,7 +95,7 @@ const $ = (id) => document.getElementById(id);
 /* ───────── 좌표 (아이소메트릭: 한 칸 32×16) ───────── */
 const N = 8, TW = 16, TH = 8, WALL_H = 112;
 const cv = $('room'), ctx = cv.getContext('2d');
-const W = 360, H = 250, OX = W / 2, OY = 122, SCALE = 2; // 논리 좌표 360×250, 실제 캔버스 2배
+const W = 300, H = 250, OX = W / 2, OY = 122, SCALE = 2; // 논리 좌표 360×250, 실제 캔버스 2배
 const iso = (x, y, z = 0) => [(x - y) * TW, (x + y) * TH - z];
 
 /* ───────── 색 도우미 ───────── */
@@ -228,258 +228,161 @@ const FLOORS = [
 const SKINS = ['#ffe0c7', '#f5cba7', '#e0a979', '#b97a4f'];
 const HAIRC = ['#3b2a20', '#6b4226', '#c9853f', '#f2d16b', '#e0453f', '#ff8fb0', '#5d6bff', '#e9e9ef'];
 const CLOTH = ['#ff6f7d', '#ff9ebd', '#ffd36e', '#7ed99a', '#5d9bff', '#b98cff', '#ffffff', '#3b3b46'];
-const HAIRS = [['short', '짧은 머리', 'Short'], ['bob', '단발', 'Bob'], ['long', '긴 머리', 'Long'], ['wavy', '웨이브', 'Wavy'], ['tail', '포니테일', 'Ponytail'], ['pony', '똥머리', 'Bun'], ['twin', '양갈래', 'Pigtails'], ['spike', '삐죽 머리', 'Spiky']];
-const EYES = [['big', '큰 눈', 'Big'], ['smile', '웃는 눈', 'Smile'], ['sharp', '또렷한 눈', 'Sharp'], ['sleepy', '졸린 눈', 'Sleepy'], ['wink', '윙크', 'Wink']];
-const EYEC = ['#3b2a33', '#5a3a22', '#2f6fd8', '#2f9e6a', '#c0392b', '#8e44ad', '#e6a12e'];
-const TOPS = [['tee', '티셔츠', 'T-shirt'], ['hood', '후드', 'Hoodie'], ['sailor', '세일러', 'Sailor'], ['coat', '코트', 'Coat'], ['dress', '원피스', 'Dress'], ['hanbok', '한복', 'Hanbok'], ['stripe', '줄무늬 티', 'Striped'], ['overall', '멜빵', 'Overalls']];
+/* ───────── 캐릭터 (직접 찍은 24×40 도트 + 머리·옷 레이어) ───────── */
+const HAIRS = [['short', '짧은 머리', 'Short'], ['bob', '단발', 'Bob'], ['long', '긴 머리', 'Long'], ['twin', '양갈래', 'Pigtails'], ['pony', '똥머리', 'Bun'], ['spike', '삐죽 머리', 'Spiky']];
+const EYES = [['dot', '동글 눈', 'Round'], ['smile', '웃는 눈', 'Smile'], ['wink', '윙크', 'Wink'], ['sleepy', '졸린 눈', 'Sleepy']];
+const EYEC = ['#2b1d1d', '#4a2c1a', '#1f3f7a', '#1f5e3f', '#6b1f2a'];
+const TOPS = [['tee', '티셔츠', 'T-shirt'], ['stripe', '줄무늬 티', 'Striped'], ['hood', '후드', 'Hoodie'], ['sailor', '세일러', 'Sailor'], ['dress', '원피스', 'Dress'], ['overall', '멜빵', 'Overalls'], ['hanbok', '한복', 'Hanbok']];
 const BOTTOMS = [['pants', '긴 바지', 'Pants'], ['shorts', '반바지', 'Shorts'], ['skirt', '치마', 'Skirt']];
-const ACCS = [['none', '없음', 'None'], ['bunny', '토끼 후드', 'Bunny hood'], ['cat', '고양이 후드', 'Cat hood'], ['gat', '갓', 'Gat hat'], ['horns', '뿔', 'Horns'], ['ribbon', '리본', 'Ribbon'], ['glasses', '안경', 'Glasses'], ['phones', '헤드폰', 'Headphones'], ['crown', '왕관', 'Crown'], ['cap', '모자', 'Cap']];
-const HOODC = ['#ffffff', '#ffc4d6', '#c9e6ff', '#3b3b46', '#f2d16b'];
-const CHW = 34, CHH = 72; // 캐릭터 도트 크기 (귀·모자 포함)
+const ACCS = [['none', '없음', 'None'], ['ribbon', '리본', 'Ribbon'], ['flower', '꽃핀', 'Flower pin'], ['cap', '모자', 'Cap'], ['glasses', '안경', 'Glasses'], ['bunny', '토끼 귀', 'Bunny ears'], ['cat', '고양이 귀', 'Cat ears'], ['crown', '왕관', 'Crown']];
+const HOODC = ['#ffffff', '#ffc4d6', '#c9a27a', '#3b3b46', '#f2d16b'];
+const CHW = 28, CHH = 44, YOFF = 4, XOFF = 2;
 
-/* 도트 캐릭터 — 32×60 격자에 층층이 칠한 뒤 자동 외곽선 + 명암 */
-function charPixels(ch, frame) {
-  const GW = 34, GH = 62, px = new Array(GW * GH).fill(null);
-  const set = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < GW && y < GH && c) px[y * GW + x] = c; };
-  const get = (x, y) => (x >= 0 && y >= 0 && x < GW && y < GH ? px[y * GW + x] : null);
-  const rect = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, typeof c === 'function' ? c(x + i, y + j) : c); };
-  const ell = (cx, cy, rx, ry, c, keep) => { for (let y = Math.floor(cy - ry); y <= cy + ry; y++) for (let x = Math.floor(cx - rx); x <= cx + rx; x++) { const d = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2; if (d <= 1 && (!keep || keep(x, y))) set(x, y, typeof c === 'function' ? c(x, y, d) : c); } };
-  const blink = frame === 2, bob = frame === 1 ? 1 : 0;
-  const Y = (y) => y + bob; // 숨쉬기: 상체만 1px
-  const skin = ch.skin, sS = shade(skin, -0.14), sH = shade(skin, 0.25);
-  const hc = ch.hairC, hS = shade(hc, -0.3), hL = shade(hc, 0.35);
-  const tc = ch.topC, tS = shade(tc, -0.22), tL = shade(tc, 0.3);
-  const bc = ch.bottomC, bS = shade(bc, -0.25);
-  const shoe = ch.shoes, shoeS = shade(shoe, -0.3);
-  const ec = ch.eyeC || '#3b2a33';
-  const hood = ch.hoodC || '#ffffff', hoS = shade(hood, -0.18);
-  const cx = 17, hy = 27; // 얼굴 중심
-  const long = ['long', 'wavy'].includes(ch.hair);
-  const dressLike = ch.top === 'dress' || ch.top === 'hanbok';
+const SPR_BASE = [
+"........................","........................","........................","........................",
+".......SSSSSSSSSS.......",".....SSSSSSSSSSSSSS.....","....SSSSSSSSSSSSSSSS....","...SSSSSSSSSSSSSSSSss...",
+"...SSSSSSSSSSSSSSSSss...","...SSSSSSSSSSSSSSSSss...","...SSSSSSSSSSSSSSSSss...","...SSSSSSSSSSSSSSSSss...",
+"...SSSSeESSSSSSeESSss...","...SSSSEESSSSSSEESSss...","...SSSSEESSSSSSEESSss...","...SSPPSSSSSSSSSPPSss...",
+"...SSSSSSSSMMSSSSSSss...","...SSSSSSSSSSSSSSSSss...","....SSSSSSSSSSSSSSss....",".....SSSSSSSSSSSsss.....",
+".......sssssssssss......","..........ssss..........",".....TTTTTTTTTTTTTt.....","....TTtTTTTTTTTTTtTt....",
+"....TTtTTTTTTTTTTtTt....","....TTtTTTTTTTTTTtTt....","....TTtTTTTTTTTTTtTt....","....TTtTTTTTTTTTTtTt....",
+"....TTtTTTTTTTTTTtTt....","....SSTTTTTTTTTTTTss....","....SsBBBBBBBBBBBBss....","......BBBBBBBBBBBb......",
+"......BBBBBBBBBBBb......",".......SSSS..SSSs.......",".......SSSS..SSSs.......",".......SSSS..SSSs.......",
+".......SSSS..SSSs.......","......KKKKK..KKKKk......","......kkkkk..kkkkk......","........................",
+];
+const SPR_BANGS = [
+"........................",
+"........HHHHHHHH........",
+"......HHHHHHHHHHHH......",
+".....HHLLLLHHHHHHHh.....",
+"....HHLLHHHHHHHHHHHh....",
+"...HHHHHHHHHHHHHHHHHh...",
+"..HHHHHHHHHHHHHHHHHHhh..",
+"..HHHHHHHHHHHHHHHHHHHh..",
+"..HHHHHHHHHHHHHHHHHHHh..",
+"..HHHHHHHHHhHHHHHHHHHh..",
+"..HHHHhHHH.hHH.HHHhHHh..",
+"..HHH..HH...H...HH.HHh..",
+"..HH................Hh..",
+"..HH................Hh..",
+];
+const SPR_SHORT = [
+"........................",
+"........HHHHHHHH........",
+"......HHHHHHHHHHHH......",
+".....HHLLLLHHHHHHHh.....",
+"....HHLLHHHHHHHHHHHh....",
+"...HHHHHHHHHHHHHHHHHh...",
+"..HHHHHHHHHHHHHHHHHHhh..",
+"..HHHHHHHHHHHHHHHHHHHh..",
+"..HHHHHhHHHHhHHHHhHHHh..",
+"..HHHH.hHHH..HHH..HHHh..",
+"..HHH...H.....H....HHh..",
+"..HH................h...",
+];
+const SPR_SPIKE_TOP = [
+".....H....H....H...H....",
+".....HH..HHH..HHH.HH....",
+".....HHHHHHHHHHHHHHH....",
+];
 
-  /* 1. 뒷머리 · 후드 뒷부분 */
-  if (ch.acc === 'bunny') { ell(11, Y(8), 2.6, 9, (x) => (x > 11 ? hoS : hood)); ell(23, Y(8), 2.6, 9, (x) => (x > 23 ? hoS : hood)); ell(11, Y(9), 1, 6, '#ffb3c8'); ell(23, Y(9), 1, 6, '#ffb3c8'); }
-  if (ch.acc === 'cat') for (const s of [-1, 1]) for (let j = 0; j < 8; j++) { const w = 1 + j, bx = s < 0 ? 8 : 26 - w; rect(s < 0 ? bx : bx + 0, Y(9 + j), w, 1, (x) => (j > 2 && Math.abs(x - (s < 0 ? bx + w / 2 : bx + w / 2)) < j / 3 ? '#ffb3c8' : s > 0 ? hoS : hood)); }
-  if (ch.acc === 'bunny' || ch.acc === 'cat') ell(cx, Y(hy), 13.5, 13, (x) => (x > cx + 6 ? hoS : hood));
-  else {
-    if (long) rect(5, Y(20), 25, ch.hair === 'wavy' ? 22 : 20, (x, y) => (ch.hair === 'wavy' && (y + x) % 5 === 0 ? hL : x > 24 ? hS : hc));
-    if (ch.hair === 'bob') rect(5, Y(20), 25, 13, (x) => (x > 24 ? hS : hc));
-    if (ch.hair === 'twin') { ell(4, Y(34), 3.5, 10, (x) => (x > 5 ? hS : hc)); ell(30, Y(34), 3.5, 10, (x) => (x > 31 ? hS : hc)); rect(3, Y(24), 3, 2, '#ff5c7a'); rect(29, Y(24), 3, 2, '#ff5c7a'); }
-    if (ch.hair === 'tail') { ell(30, Y(30), 3.5, 11, (x) => (x > 31 ? hS : hc)); rect(28, Y(19), 3, 2, '#ff5c7a'); }
+function charGrid(ch, frame) {
+  const GW = CHW, GH = CHH, g = new Array(GW * GH).fill(null);
+  const put = (x, y, k) => { y += YOFF; x += XOFF; if (x >= 0 && x < GW && y >= 0 && y < GH) g[y * GW + x] = k; };
+  const at = (x, y) => { y += YOFF; x += XOFF; return x >= 0 && x < GW && y >= 0 && y < GH ? g[y * GW + x] : null; };
+  const stamp = (rows, y0 = 0, map) => rows.forEach((r, j) => { for (let i = 0; i < r.length; i++) { const k = r[i]; if (k !== '.') put(i, y0 + j, map ? map(k, i, y0 + j) : k); } });
+  const fill = (x, y, w, h, k) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) put(x + i, y + j, typeof k === 'function' ? k(x + i, y + j) : k); };
+  const dress = ch.top === 'dress' || ch.top === 'hanbok';
+
+  /* 뒷머리 */
+  if (ch.hair === 'long') fill(2, 8, 20, 24, (x, y) => (x >= 19 ? 'h' : (x + y) % 7 === 0 ? 'L' : 'H'));
+  if (ch.hair === 'bob') fill(2, 8, 20, 12, (x) => (x >= 19 ? 'h' : 'H'));
+  if (ch.hair === 'twin') {
+    // 양갈래: 머리 옆으로 묶은 머리다발
+    const tail = [[1, 2], [0, 3], [-1, 4], [-1, 4], [-2, 4], [-2, 4], [-2, 4], [-1, 3], [-1, 3], [0, 2], [0, 2], [1, 1]];
+    tail.forEach(([x, w], j) => { fill(x, 13 + j, w, 1, (xx) => (xx === x ? 'L' : 'H')); fill(23 - x - w + 1, 13 + j, w, 1, (xx) => (xx === 23 - x ? 'h' : 'H')); });
+    fill(1, 11, 2, 2, 'R'); fill(21, 11, 2, 2, 'R');
   }
 
-  /* 2. 몸 (다리 → 하의 → 상의 → 팔) */
-  const legC = ch.bottom === 'pants' && !dressLike ? bc : skin, legS = ch.bottom === 'pants' && !dressLike ? bS : sS;
-  rect(12, 48, 4, 8, (x) => (x === 15 ? legS : legC)); rect(18, 48, 4, 8, (x) => (x === 21 ? legS : legC));
-  rect(11, 55, 6, 3, (x) => (x > 14 ? shoeS : shoe)); rect(17, 55, 6, 3, (x) => (x > 20 ? shoeS : shoe));
-  rect(11, 58, 6, 1, shoeS); rect(17, 58, 6, 1, shoeS);
-  if (!dressLike) {
-    if (ch.bottom === 'shorts') { rect(11, Y(45), 12, 4, (x) => (x > 19 ? bS : bc)); rect(16, Y(47), 2, 2, null); }
-    else if (ch.bottom === 'skirt') { for (let j = 0; j < 6; j++) rect(10 - Math.floor(j / 2), Y(44 + j), 14 + Math.floor(j / 2) * 2, 1, (x) => (x > 20 + j / 2 ? bS : (x - j) % 3 === 0 ? bS : bc)); }
-    else rect(11, Y(44), 12, 4, (x) => (x > 19 ? bS : bc));
+  /* 몸 */
+  stamp(SPR_BASE);
+  // 하의
+  if (ch.bottom === 'pants' && !dress) fill(7, 33, 10, 4, (x) => (x === 10 || x === 15 ? 'b' : x === 11 || x === 12 ? null : 'B'));
+  if (ch.bottom === 'shorts' && !dress) fill(7, 33, 10, 1, (x) => (x === 11 || x === 12 ? null : 'B'));
+  if (ch.bottom === 'skirt' && !dress) { fill(5, 31, 14, 1, (x) => (x > 15 ? 'b' : 'B')); fill(4, 32, 16, 2, (x, y) => (x > 16 ? 'b' : (x + y) % 3 === 0 ? 'b' : 'B')); }
+  // 상의 종류
+  if (ch.top === 'stripe') [24, 26, 28].forEach((y) => fill(4, y, 16, 1, (x) => (at(x, y) === 'T' || at(x, y) === 't' ? 'W' : at(x, y))));
+  if (ch.top === 'hood') { fill(7, 22, 10, 1, 't'); put(10, 23, 'W'); put(10, 24, 'W'); put(13, 23, 'W'); put(13, 24, 'W'); fill(9, 26, 6, 2, 't'); }
+  if (ch.top === 'sailor') { fill(6, 22, 12, 1, 'C'); fill(6, 23, 3, 1, 'C'); fill(15, 23, 3, 1, 'C'); put(7, 24, 'C'); put(16, 24, 'C'); fill(11, 23, 2, 2, 'R'); put(10, 25, 'R'); put(13, 25, 'R'); }
+  if (ch.top === 'overall') { put(8, 22, 'B'); put(8, 23, 'B'); put(15, 22, 'B'); put(15, 23, 'B'); fill(8, 24, 8, 6, (x) => (x === 15 ? 'b' : 'B')); put(9, 24, 'Y'); put(14, 24, 'Y'); fill(10, 26, 4, 2, 'b'); }
+  if (ch.top === 'dress') {
+    fill(6, 30, 12, 1, 'T'); fill(5, 31, 14, 1, (x) => (x > 15 ? 't' : 'T')); fill(4, 32, 16, 2, (x) => (x > 16 ? 't' : 'T')); fill(3, 34, 18, 1, (x) => (x % 2 ? 'W' : 'w'));
+    fill(10, 22, 4, 1, 'W'); put(11, 23, 'W'); put(12, 23, 'W');
+    fill(7, 33, 10, 1, (x) => (x === 11 || x === 12 ? null : 'S'));
   }
-  // 몸통
-  const torsoH = ch.top === 'coat' ? 16 : 12;
-  rect(10, Y(36), 14, torsoH, (x) => (x > 20 ? tS : x < 12 ? tL : tc));
-  if (ch.top === 'stripe') for (let j = 0; j < 4; j++) rect(10, Y(38 + j * 3), 14, 1, '#ffffff');
-  if (ch.top === 'overall') { rect(12, Y(41), 10, 7, (x) => (x > 19 ? bS : bc)); rect(12, Y(36), 2, 5, bc); rect(20, Y(36), 2, 5, bc); set(13, Y(41), '#ffd23d'); set(20, Y(41), '#ffd23d'); }
-  if (ch.top === 'hood') { rect(11, Y(35), 12, 3, tS); rect(14, Y(43), 6, 3, tS); set(15, Y(38), '#ffffff'); set(15, Y(39), '#ffffff'); set(19, Y(38), '#ffffff'); set(19, Y(39), '#ffffff'); }
-  if (ch.top === 'sailor') { rect(10, Y(36), 14, 3, '#2f4fa8'); rect(13, Y(39), 8, 1, '#2f4fa8'); rect(15, Y(39), 4, 3, '#e0453f'); set(16, Y(42), '#e0453f'); set(17, Y(42), '#e0453f'); }
-  if (ch.top === 'coat') { for (let j = 0; j < 4; j++) set(17, Y(39 + j * 3), '#ffd23d'); rect(10, Y(44), 14, 1, shade(tc, -0.4)); rect(12, Y(36), 3, 3, tL); rect(19, Y(36), 3, 3, tL); }
-  if (ch.top === 'dress') { for (let j = 0; j < 10; j++) rect(10 - Math.floor(j / 2), Y(43 + j), 14 + Math.floor(j / 2) * 2, 1, (x) => (x > 20 + j / 2 ? tS : tc)); rect(6, Y(52), 22, 1, (x) => (x % 2 ? '#ffffff' : '#f3e7ee')); rect(14, Y(36), 6, 2, '#ffffff'); }
   if (ch.top === 'hanbok') {
-    // 저고리(상의) + 고름 + 치마(하의 색)
-    rect(10, Y(36), 14, 7, (x) => (x > 20 ? tS : tc)); rect(13, Y(36), 2, 6, '#ffffff'); rect(16, Y(40), 2, 2, '#e0453f'); rect(17, Y(42), 1, 5, '#e0453f'); rect(15, Y(42), 1, 4, '#e0453f');
-    for (let j = 0; j < 14; j++) rect(9 - Math.floor(j / 3), Y(43 + j), 16 + Math.floor(j / 3) * 2, 1, (x) => (x > 21 + j / 3 ? bS : bc));
-    rect(9, Y(36), 2, 8, tc); rect(23, Y(36), 2, 8, tS);
-  }
-  // 팔과 손
-  const sleeve = ch.top === 'hanbok' ? tc : tc;
-  rect(7, Y(37), 3, 8, (x) => (x === 7 ? tL : sleeve)); rect(24, Y(37), 3, 8, (x) => (x === 26 ? tS : sleeve));
-  rect(7, Y(45), 3, 2, skin); rect(24, Y(45), 3, 2, sS);
-  rect(15, Y(34), 4, 2, sS); // 목
-
-  /* 3. 얼굴 */
-  ell(cx, Y(hy), 11, 10.5, (x, y) => (x > cx + 8 && y > Y(hy) ? sS : x < cx - 8 && y < Y(hy) ? sH : skin));
-  const ey = Y(hy + 1);
-  const eye = (x0, mirror) => {
-    if (blink || ch.eyes === 'sleepy') { rect(x0, ey + 2, 3, 1, '#3b2a33'); return; }
-    if (ch.eyes === 'smile') { set(x0, ey + 2, '#3b2a33'); rect(x0 + 1, ey + 1, 1, 1, '#3b2a33'); set(x0 + 2, ey + 2, '#3b2a33'); set(x0 + 1, ey + 1, '#3b2a33'); rect(x0, ey + 1, 3, 1, '#3b2a33'); return; }
-    if (ch.eyes === 'wink' && mirror) { set(x0, ey + 1, '#3b2a33'); set(x0 + 1, ey + 2, '#3b2a33'); set(x0 + 2, ey + 1, '#3b2a33'); return; }
-    const dark = shade(ec, -0.45), mid = ec, lite = shade(ec, 0.35);
-    // 속눈썹(바깥쪽으로 살짝 꼬리)
-    rect(x0, ey - 1, 3, 1, '#2a1d24'); set(mirror ? x0 + 3 : x0 - 1, ey - (ch.eyes === 'sharp' ? 2 : 1), '#2a1d24');
-    if (ch.eyes === 'sharp') { rect(x0, ey, 3, 1, dark); rect(x0, ey + 1, 3, 1, mid); set(x0 + 1, ey, '#ffffff'); return; }
-    rect(x0, ey, 3, 1, dark); rect(x0, ey + 1, 3, 1, mid); rect(x0, ey + 2, 3, 1, lite);
-    if (ch.eyes === 'big') rect(x0, ey + 3, 3, 1, shade(ec, 0.15));
-    set(mirror ? x0 + 1 : x0 + 1, ey, '#ffffff'); set(mirror ? x0 : x0 + 2, ey + 2, '#ffffffb0');
-  };
-  eye(11, false); eye(20, true);
-  set(16, Y(hy + 6), '#c0475f'); set(17, Y(hy + 6), '#c0475f');
-  rect(9, Y(hy + 4), 2, 1, '#ffaabf'); rect(23, Y(hy + 4), 2, 1, '#ffaabf');
-
-  /* 4. 앞머리 */
-  const capTop = Y(15);
-  if (ch.acc !== 'bunny' && ch.acc !== 'cat') {
-    ell(cx, Y(hy - 3), 12, 9.5, (x, y) => (y > Y(hy - 3) ? null : x > cx + 7 ? hS : hc), (x, y) => y <= Y(hy - 3));
-    // 앞머리 끝(들쭉날쭉)
-    for (let x = 6; x <= 28; x++) {
-      let len = ch.hair === 'spike' ? 2 + ((x * 7) % 3) : 3 + ((x * 5) % 3 === 0 ? 1 : 0);
-      if (x >= 15 && x <= 18 && ch.hair !== 'spike') len -= 1;
-      rect(x, Y(hy - 3), 1, len, x > cx + 7 ? hS : hc);
-      if (x % 4 === 1 && ch.hair !== 'spike') set(x, Y(hy - 3) + len - 2, hS); // 머리카락 결
-    }
-    // 옆머리
-    const side = ch.hair === 'short' || ch.hair === 'spike' ? 5 : long || ch.hair === 'bob' ? 14 : 8;
-    rect(5, Y(hy - 3), 3, side, (x) => (x === 5 ? hS : hc)); rect(27, Y(hy - 3), 3, side, (x) => (x === 29 ? hS : hc));
-    // 하이라이트
-    for (let x = 10; x <= 16; x++) set(x, Y(19 + Math.round(Math.abs(x - 13) / 3)), hL);
-    if (ch.hair === 'spike') for (let i = 0; i < 5; i++) { rect(7 + i * 5, Y(14 - (i % 2) * 2), 3, 4, hc); }
-    if (ch.hair === 'pony') { ell(cx, Y(13), 5, 4, (x) => (x > cx + 2 ? hS : hc)); set(cx - 2, Y(12), hL); }
-    if (ch.hair === 'tail') rect(25, Y(18), 4, 3, hc);
-  } else {
-    // 후드 안쪽 앞머리만
-    for (let x = 8; x <= 26; x++) { const len = 3 + ((x * 5) % 3 === 0 ? 1 : 0) - (x >= 15 && x <= 18 ? 1 : 0); rect(x, Y(hy - 8), 1, len, x > cx + 6 ? hS : hc); if (x % 4 === 1) set(x, Y(hy - 8) + len - 1, hS); } for (let x = 11; x <= 15; x++) set(x, Y(hy - 7), hL);
-    // 후드 테두리
-    for (let a = 0; a < Math.PI * 2; a += 0.05) { const x = cx + Math.cos(a) * 11.5, y = Y(hy) + Math.sin(a) * 11; if (Math.sin(a) < 0.55) set(x, y, hoS); }
+    fill(9, 22, 6, 1, 'W'); put(10, 23, 'W'); put(13, 23, 'W'); fill(11, 25, 2, 1, 'R'); put(12, 26, 'R'); put(12, 27, 'R'); put(11, 26, 'R');
+    fill(5, 28, 14, 2, (x) => (x > 15 ? 'b' : 'B')); fill(4, 30, 16, 3, (x) => (x > 16 ? 'b' : 'B')); fill(3, 33, 18, 4, (x) => (x > 17 ? 'b' : 'B'));
+    fill(4, 29, 2, 1, 'S'); fill(18, 29, 2, 1, 's');
   }
 
-  /* 5. 액세서리 */
-  if (ch.acc === 'gat') {
-    // 갓: 반투명한 넓은 챙 + 높은 몸통 + 끈
-    ell(cx, Y(17), 17, 3.2, (x, y) => (y < Y(16) ? 'rgba(90,90,110,0.85)' : 'rgba(30,30,38,0.8)'));
-    rect(11, Y(5), 12, 12, (x) => (x > 19 ? '#1d1d24' : '#2b2b33')); ell(cx, Y(5), 6, 2, '#2b2b33');
-    rect(11, Y(14), 12, 2, '#5b3b8c');
-    for (let j = 0; j < 10; j++) { set(7 + Math.floor(j / 3), Y(19 + j), '#d9c27a'); set(27 - Math.floor(j / 3), Y(19 + j), '#d9c27a'); }
-  }
-  if (ch.acc === 'horns') for (const s of [-1, 1]) { rect(cx + s * 6 - (s > 0 ? 0 : 2), Y(14), 3, 3, '#3b2a33'); rect(cx + s * 7 - (s > 0 ? 0 : 1), Y(11), 2, 3, '#3b2a33'); set(cx + s * 8, Y(10), '#3b2a33'); }
-  if (ch.acc === 'ribbon') { rect(21, Y(14), 4, 4, '#ff5c7a'); rect(26, Y(13), 4, 6, '#ff5c7a'); rect(25, Y(15), 1, 2, '#c0304f'); rect(16, Y(13), 4, 6, '#ff5c7a'); }
-  if (ch.acc === 'glasses') { rect(10, ey - 1, 5, 5, null); for (const x0 of [10, 19]) { rect(x0, ey - 1, 5, 1, '#3b2a33'); rect(x0, ey + 3, 5, 1, '#3b2a33'); rect(x0, ey - 1, 1, 5, '#3b2a33'); rect(x0 + 4, ey - 1, 1, 5, '#3b2a33'); } rect(15, ey, 4, 1, '#3b2a33'); }
-  if (ch.acc === 'phones') { for (let a = Math.PI; a <= Math.PI * 2; a += 0.04) set(cx + Math.cos(a) * 13, Y(hy - 1) + Math.sin(a) * 13, '#3b3b46'); rect(3, Y(24), 4, 7, '#3b3b46'); rect(27, Y(24), 4, 7, '#3b3b46'); rect(4, Y(25), 2, 5, '#ff5c7a'); rect(28, Y(25), 2, 5, '#ff5c7a'); }
-  if (ch.acc === 'crown') { rect(10, Y(13), 14, 4, '#ffd23d'); for (const x of [10, 15, 20]) rect(x + 1, Y(10), 2, 3, '#ffd23d'); set(16, Y(14), '#e0453f'); set(12, Y(14), '#5d9bff'); set(21, Y(14), '#5d9bff'); }
-  if (ch.acc === 'cap') { ell(cx, Y(18), 12.5, 6, (x, y) => (y > Y(19) ? null : x > cx + 6 ? '#b8322d' : '#e0453f')); rect(3, Y(18), 16, 3, '#b8322d'); set(cx, Y(12), '#ffffff'); }
+  /* 얼굴 표정 */
+  const blink = frame === 2;
+  const eyeL = 7, eyeR = 15;
+  if (blink || ch.eyes === 'sleepy') { for (const x of [eyeL, eyeR]) { put(x, 12, 'S'); put(x + 1, 12, 'S'); put(x, 13, 'S'); put(x + 1, 13, 'S'); put(x, 14, 'E'); put(x + 1, 14, 'E'); } }
+  else if (ch.eyes === 'smile') { for (const x of [eyeL, eyeR]) { put(x, 12, 'S'); put(x + 1, 12, 'S'); put(x - 1, 14, 'E'); put(x, 13, 'E'); put(x + 1, 13, 'E'); put(x + 2, 14, 'E'); put(x, 14, 'S'); put(x + 1, 14, 'S'); } }
+  else if (ch.eyes === 'wink') { const x = eyeR; put(x, 12, 'S'); put(x + 1, 12, 'S'); put(x, 13, 'E'); put(x + 1, 13, 'S'); put(x - 1, 13, 'S'); put(x, 14, 'S'); put(x + 1, 14, 'E'); put(x - 1, 14, 'E'); }
 
-  /* 6. 자동 외곽선: 빈칸 중 칠한 칸과 닿은 곳을 그 색보다 진하게 */
-  const out = px.slice();
-  for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
-    if (get(x, y)) continue;
-    const n = [get(x - 1, y), get(x + 1, y), get(x, y - 1), get(x, y + 1)].filter(Boolean);
-    if (n.length) out[y * GW + x] = shade(n[0], -0.62);
-  }
-  return { out, GW, GH };
+  /* 앞머리 */
+  if (ch.hair === 'short' || ch.hair === 'spike') stamp(SPR_SHORT);
+  else stamp(SPR_BANGS);
+  if (ch.hair === 'spike') stamp(SPR_SPIKE_TOP, -2);
+  if (ch.hair === 'bob') { fill(1, 12, 3, 8, (x) => (x === 3 ? 'h' : 'H')); fill(20, 12, 3, 8, (x) => (x === 20 ? 'h' : 'H')); fill(2, 20, 2, 1, 'h'); fill(20, 20, 2, 1, 'h'); }
+  if (ch.hair === 'long') { fill(1, 12, 3, 18, (x, y) => (x === 3 ? 'h' : (y % 5 === 0 ? 'L' : 'H'))); fill(20, 12, 3, 18, (x) => (x === 20 ? 'h' : 'H')); }
+  if (ch.hair === 'twin') { fill(2, 12, 2, 4, 'H'); fill(20, 12, 2, 4, 'h'); }
+  if (ch.hair === 'pony') { fill(8, -2, 8, 3, (x) => (x > 13 ? 'h' : 'H')); fill(9, -3, 6, 1, 'H'); fill(10, -1, 3, 1, 'L'); fill(9, 1, 6, 1, 'R'); }
+
+  /* 머리 장식 */
+  const a = ch.acc;
+  if (a === 'ribbon') { fill(15, 1, 3, 3, 'R'); fill(19, 1, 3, 3, 'R'); fill(18, 2, 1, 1, 'r'); put(16, 2, 'r'); put(20, 2, 'r'); }
+  if (a === 'flower') { put(18, 5, 'R'); put(20, 5, 'R'); put(19, 4, 'R'); put(19, 6, 'R'); put(19, 5, 'Y'); }
+  if (a === 'cap') { fill(4, 1, 16, 5, (x, y) => (y === 1 && (x < 7 || x > 16) ? null : x > 16 ? 'r' : 'R')); fill(1, 6, 13, 2, 'r'); put(11, 0, 'R'); put(12, 0, 'R'); }
+  if (a === 'glasses') { for (const x of [6, 14]) { fill(x, 11, 4, 1, 'G'); fill(x, 15, 4, 1, 'G'); put(x, 12, 'G'); put(x, 13, 'G'); put(x, 14, 'G'); put(x + 3, 12, 'G'); put(x + 3, 13, 'G'); put(x + 3, 14, 'G'); } fill(10, 12, 4, 1, 'G'); }
+  if (a === 'bunny') { for (const x0 of [6, 15]) { fill(x0, -3, 3, 5, 'A'); fill(x0 + 1, -2, 1, 3, 'P'); put(x0 + 1, -4, 'A'); } }
+  if (a === 'cat') { for (let j = 0; j < 4; j++) { fill(5, j - 2, j + 1, 1, 'A'); fill(18 - j, j - 2, j + 1, 1, 'A'); } put(6, 0, 'P'); put(17, 0, 'P'); }
+  if (a === 'crown') { fill(7, 0, 10, 3, 'Y'); put(7, -1, 'Y'); put(11, -2, 'Y'); put(12, -2, 'Y'); put(11, -1, 'Y'); put(12, -1, 'Y'); put(16, -1, 'Y'); put(11, 1, 'R'); put(8, 1, 'C'); put(15, 1, 'C'); }
+  return { g, GW, GH };
 }
 
-
-/* 클래식 RPG 스타일 — 3.5등신, 차분한 색, 부드러운 갈색 외곽선 */
-function charPixelsClassic(ch, frame) {
-  const GW = 34, GH = 72, px = new Array(GW * GH).fill(null);
-  const set = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < GW && y < GH && c) px[y * GW + x] = c; };
-  const get = (x, y) => (x >= 0 && y >= 0 && x < GW && y < GH ? px[y * GW + x] : null);
-  const rect = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, typeof c === 'function' ? c(x + i, y + j) : c); };
-  const ell = (cx, cy, rx, ry, c, keep) => { for (let y = Math.floor(cy - ry); y <= cy + ry; y++) for (let x = Math.floor(cx - rx); x <= cx + rx; x++) { if (((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1 && (!keep || keep(x, y))) set(x, y, typeof c === 'function' ? c(x, y) : c); } };
-  // 채도를 낮춰 차분하게
-  const mute = (h) => { const [r, g, b] = hex2rgb(h), m = (r + g + b) / 3, k = 0.22; const f = (v) => Math.round(v + (m - v) * k); return `rgb(${f(r)},${f(g)},${f(b)})`; };
-  const blink = frame === 2, bob = frame === 1 ? 1 : 0;
-  const Y = (y) => y + bob;
-  const skin = mute(ch.skin), sS = shade(skin, -0.16), sH = shade(skin, 0.18);
-  const hc = mute(ch.hairC), hS = shade(hc, -0.28), hL = shade(hc, 0.3);
-  const tc = mute(ch.topC), tS = shade(tc, -0.22), tL = shade(tc, 0.22);
-  const bc = mute(ch.bottomC), bS = shade(bc, -0.25);
-  const shoe = mute(ch.shoes), shoeS = shade(shoe, -0.3);
-  const ec = ch.eyeC || '#3b2a33';
-  const cx = 17, hy = 22;
-  const long = ['long', 'wavy'].includes(ch.hair);
-  const dressLike = ch.top === 'dress' || ch.top === 'hanbok';
-
-  // 뒷머리
-  if (long) rect(9, Y(20), 17, ch.hair === 'wavy' ? 22 : 20, (x, y) => (ch.hair === 'wavy' && (x + y) % 6 === 0 ? hL : x > 22 ? hS : hc));
-  if (ch.hair === 'bob') rect(9, Y(18), 17, 11, (x) => (x > 22 ? hS : hc));
-  if (ch.hair === 'twin') { ell(7, Y(32), 2.5, 9, hc); ell(27, Y(32), 2.5, 9, hS); }
-  if (ch.hair === 'tail') ell(26, Y(28), 2.5, 10, hS);
-
-  // 다리·신발 (길쭉하게)
-  const legC = ch.bottom === 'pants' && !dressLike ? bc : skin, legS = ch.bottom === 'pants' && !dressLike ? bS : sS;
-  rect(13, 50, 3, 14, (x) => (x === 15 ? legS : legC)); rect(18, 50, 3, 14, (x) => (x === 20 ? legS : legC));
-  rect(12, 63, 5, 3, (x) => (x > 14 ? shoeS : shoe)); rect(17, 63, 5, 3, (x) => (x > 19 ? shoeS : shoe));
-  if (!dressLike) {
-    if (ch.bottom === 'shorts') rect(12, Y(47), 10, 6, (x) => (x > 18 ? bS : bc));
-    else if (ch.bottom === 'skirt') for (let j = 0; j < 9; j++) rect(12 - Math.floor(j / 3), Y(46 + j), 10 + Math.floor(j / 3) * 2, 1, (x) => (x > 18 + j / 3 ? bS : bc));
-    else rect(12, Y(46), 10, 5, (x) => (x > 18 ? bS : bc));
-  }
-  // 몸통
-  const torsoH = ch.top === 'coat' ? 22 : 16;
-  rect(11, Y(31), 12, torsoH, (x) => (x > 20 ? tS : x < 13 ? tL : tc));
-  rect(12, Y(45), 10, 1, shade(tc, -0.35)); // 허리
-  if (ch.top === 'stripe') for (let j = 0; j < 5; j++) rect(11, Y(33 + j * 3), 12, 1, '#efe8e0');
-  if (ch.top === 'overall') { rect(13, Y(37), 8, 10, (x) => (x > 18 ? bS : bc)); rect(13, Y(31), 2, 6, bc); rect(19, Y(31), 2, 6, bc); }
-  if (ch.top === 'hood') { rect(12, Y(30), 10, 3, tS); rect(14, Y(40), 6, 3, tS); }
-  if (ch.top === 'sailor') { rect(11, Y(31), 12, 4, '#3d5590'); rect(15, Y(35), 4, 3, '#b8433d'); }
-  if (ch.top === 'coat') { for (let j = 0; j < 5; j++) set(17, Y(34 + j * 3), '#d9b44a'); rect(11, Y(41), 12, 2, shade(tc, -0.45)); set(16, Y(41), '#d9b44a'); }
-  if (ch.top === 'dress') { for (let j = 0; j < 16; j++) rect(11 - Math.floor(j / 3), Y(45 + j), 12 + Math.floor(j / 3) * 2, 1, (x) => (x > 20 + j / 3 ? tS : (x + j) % 5 === 0 ? tL : tc)); rect(15, Y(31), 4, 3, '#efe8e0'); }
-  if (ch.top === 'hanbok') {
-    rect(11, Y(31), 12, 9, (x) => (x > 20 ? tS : tc)); rect(14, Y(31), 2, 8, '#efe8e0'); rect(16, Y(36), 2, 2, '#b8433d'); rect(17, Y(38), 1, 6, '#b8433d');
-    for (let j = 0; j < 22; j++) rect(10 - Math.floor(j / 4), Y(40 + j), 14 + Math.floor(j / 4) * 2, 1, (x) => (x > 21 + j / 4 ? bS : bc));
-  }
-  // 팔 (길게)
-  rect(8, Y(32), 3, 14, (x) => (x === 8 ? tL : tc)); rect(23, Y(32), 3, 14, (x) => (x === 25 ? tS : tc));
-  rect(8, Y(46), 3, 3, skin); rect(23, Y(46), 3, 3, sS);
-  rect(15, Y(29), 4, 3, sS); // 목
-
-  // 얼굴 (작고 갸름하게)
-  ell(cx, Y(hy), 7.5, 8.5, (x, y) => (x > cx + 5 ? sS : x < cx - 5 && y < Y(hy) ? sH : skin));
-  rect(14, Y(hy + 8), 6, 1, skin);
-  const ey = Y(hy + 1);
-  const eye = (x0, right) => {
-    if (blink || ch.eyes === 'sleepy') { rect(x0, ey + 1, 2, 1, '#3a2a24'); return; }
-    if (ch.eyes === 'smile' || (ch.eyes === 'wink' && right)) { rect(x0, ey, 2, 1, '#3a2a24'); set(right ? x0 + 2 : x0 - 1, ey + 1, '#3a2a24'); return; }
-    rect(x0, ey - 1, 2, 1, '#3a2a24'); rect(x0, ey, 2, 2, shade(ec, -0.2)); set(x0, ey, '#ffffff');
-    if (ch.eyes === 'big') rect(x0, ey + 2, 2, 1, shade(ec, 0.25));
+function charColors(ch) {
+  const skin = ch.skin, hc = ch.hairC, tc = ch.topC, bc = ch.bottomC, ec = ch.eyeC || EYEC[0], ac = ch.hoodC || '#ffffff';
+  return {
+    S: skin, s: shade(skin, -0.12), P: '#ffadc0', M: '#c8566e', E: ec, e: '#ffffff',
+    H: hc, h: shade(hc, -0.25), L: shade(hc, 0.32),
+    T: tc, t: shade(tc, -0.18), W: '#ffffff', w: '#f4e6ee', C: '#3a5ab0', R: '#ff5c7a', r: '#d63c5c', Y: '#ffd23d', G: '#3b2a33',
+    B: bc, b: shade(bc, -0.22), K: ch.shoes, k: shade(ch.shoes, -0.3), A: ac,
   };
-  eye(13, false); eye(19, true);
-  set(17, Y(hy + 5), '#a8505f');
-  set(12, Y(hy + 3), '#e8a0a8'); set(22, Y(hy + 3), '#e8a0a8');
-
-  // 앞머리
-  ell(cx, Y(hy - 3), 9, 7.5, (x, y) => (x > cx + 5 ? hS : hc), (x, y) => y <= Y(hy - 2));
-  for (let x = 9; x <= 25; x++) { const len = ch.hair === 'spike' ? 2 + (x % 3) : 2 + ((x * 3) % 4 === 0 ? 2 : 0); rect(x, Y(hy - 2), 1, len, x > cx + 5 ? hS : hc); }
-  const side = ch.hair === 'short' || ch.hair === 'spike' ? 4 : long || ch.hair === 'bob' ? 12 : 7;
-  rect(8, Y(hy - 3), 2, side, hc); rect(25, Y(hy - 3), 2, side, hS);
-  for (let x = 12; x <= 16; x++) set(x, Y(hy - 7 + Math.abs(x - 14) / 2), hL);
-  if (ch.hair === 'spike') for (let i = 0; i < 4; i++) rect(10 + i * 4, Y(11 - (i % 2) * 2), 3, 4, hc);
-  if (ch.hair === 'pony') ell(cx, Y(11), 4, 3.5, (x) => (x > cx + 2 ? hS : hc));
-
-  // 머리 장식 (클래식: 동물 귀 머리띠 · 모자류)
-  if (ch.acc === 'bunny') { const c = mute(ch.hoodC || '#ffffff'); ell(13, Y(6), 2, 7, c); ell(21, Y(6), 2, 7, shade(c, -0.12)); ell(13, Y(7), 0.8, 4, '#e8a0b4'); ell(21, Y(7), 0.8, 4, '#e8a0b4'); }
-  if (ch.acc === 'cat') { const c = mute(ch.hoodC || '#3b3b46'); for (let j = 0; j < 6; j++) { rect(10 + Math.floor(j / 2), Y(9 + j), 6 - j, 1, c); rect(19 + Math.ceil(j / 2), Y(9 + j), 6 - j, 1, shade(c, -0.15)); } }
-  if (ch.acc === 'gat') { ell(cx, Y(hy - 7), 15, 2.6, 'rgba(40,36,40,0.82)'); rect(12, Y(6), 10, 9, (x) => (x > 19 ? '#1f1c22' : '#2e2a30')); ell(cx, Y(6), 5, 1.5, '#2e2a30'); for (let j = 0; j < 12; j++) { set(9, Y(17 + j), '#cdb578'); set(25, Y(17 + j), '#cdb578'); } }
-  if (ch.acc === 'horns') for (const s of [-1, 1]) { rect(cx + s * 5 - 1, Y(11), 3, 3, '#3a2a24'); set(cx + s * 6, Y(9), '#3a2a24'); set(cx + s * 6, Y(10), '#3a2a24'); }
-  if (ch.acc === 'ribbon') { rect(20, Y(12), 3, 4, '#c94a5c'); rect(24, Y(12), 3, 4, '#c94a5c'); rect(23, Y(13), 1, 2, '#9c3444'); }
-  if (ch.acc === 'glasses') { for (const x0 of [12, 18]) { rect(x0, ey - 1, 4, 1, '#3a2a24'); rect(x0, ey + 2, 4, 1, '#3a2a24'); set(x0, ey, '#3a2a24'); set(x0, ey + 1, '#3a2a24'); set(x0 + 3, ey, '#3a2a24'); set(x0 + 3, ey + 1, '#3a2a24'); } set(16, ey, '#3a2a24'); set(17, ey, '#3a2a24'); }
-  if (ch.acc === 'phones') { for (let a = Math.PI; a <= Math.PI * 2; a += 0.05) set(cx + Math.cos(a) * 10, Y(hy - 1) + Math.sin(a) * 11, '#3b3b46'); rect(6, Y(19), 3, 6, '#3b3b46'); rect(25, Y(19), 3, 6, '#3b3b46'); }
-  if (ch.acc === 'crown') { rect(12, Y(11), 10, 3, '#d9b44a'); for (const x of [12, 16, 20]) rect(x, Y(9), 2, 2, '#d9b44a'); }
-  if (ch.acc === 'cap') { ell(cx, Y(15), 9.5, 5, (x, y) => (y > Y(16) ? null : '#9c3a35')); rect(7, Y(15), 11, 2, '#7d2e2a'); }
-
-  // 부드러운 외곽선 (갈색 섞기)
-  const out = px.slice();
-  for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
-    if (get(x, y)) continue;
-    const n = [get(x - 1, y), get(x + 1, y), get(x, y - 1), get(x, y + 1)].filter(Boolean);
-    if (n.length) { const [r, g, b] = hex2rgb(shade(n[0], -0.5)); out[y * GW + x] = `rgb(${Math.round(r * 0.6 + 70 * 0.4)},${Math.round(g * 0.6 + 50 * 0.4)},${Math.round(b * 0.6 + 40 * 0.4)})`; }
-  }
-  return { out, GW, GH };
 }
 
-const STYLES = [['chibi', '귀여운 도트', 'Cute chibi'], ['classic', '클래식 RPG', 'Classic RPG']];
 function drawChar(g, ch, ox, oy, frame = 0) {
   // ox,oy = 발 아래 가운데
-  const { out, GW, GH } = ch.style === 'classic' ? charPixelsClassic(ch, frame) : charPixels(ch, frame);
-  g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.ellipse(ox, oy - 1, 10, 3, 0, 0, Math.PI * 2); g.fill();
-  const x0 = Math.round(ox - GW / 2), y0 = Math.round(oy - GH + 2);
-  for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) { const c = out[y * GW + x]; if (c) { g.fillStyle = c; g.fillRect(x0 + x, y0 + y, 1, 1); } }
+  const { g: grid, GW, GH } = charGrid(ch, frame);
+  const col = charColors(ch);
+  const bob = frame === 1 ? 1 : 0;
+  g.fillStyle = 'rgba(0,0,0,.16)'; g.beginPath(); g.ellipse(ox, oy - 1, 9, 2.5, 0, 0, Math.PI * 2); g.fill();
+  const x0 = Math.round(ox - GW / 2), y0 = Math.round(oy - (38 + YOFF));
+  const at = (x, y) => (x >= 0 && y >= 0 && x < GW && y < GH ? grid[y * GW + x] : null);
+  for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+    const k = at(x, y), dy = y < 37 + YOFF ? bob : 0; // 숨쉬기: 발은 그대로
+    if (k) { g.fillStyle = col[k] || '#f0f'; g.fillRect(x0 + x, y0 + y + dy, 1, 1); continue; }
+    // 외곽선: 이웃한 칸 색보다 진하게 (부드러운 갈색 톤)
+    const n = at(x - 1, y) || at(x + 1, y) || at(x, y - 1) || at(x, y + 1);
+    if (n) { const ny = (at(x, y - 1) && !at(x, y + 1)) || y >= 37 + YOFF ? 0 : bob; g.fillStyle = shade(col[n] || '#555', -0.55); g.fillRect(x0 + x, y0 + y + ny, 1, 1); }
+  }
 }
 
 /* ───────── 상태 ───────── */
-const DEF_CHAR = { style: 'chibi', skin: SKINS[0], hair: 'bob', hairC: HAIRC[1], eyes: 'big', eyeC: EYEC[1], top: 'hood', topC: '#ffffff', bottom: 'skirt', bottomC: '#5d6bff', shoes: '#3b3b46', acc: 'bunny', hoodC: '#ffffff' };
+const DEF_CHAR = { skin: SKINS[0], hair: 'twin', hairC: HAIRC[1], eyes: 'dot', eyeC: EYEC[0], top: 'dress', topC: '#ff9ebd', bottom: 'skirt', bottomC: '#5d6bff', shoes: '#e0453f', acc: 'none', hoodC: '#ffffff' };
 function defaultState() {
   return {
     v: 1, wall: 'pink', floor: 'oak',
@@ -603,7 +506,7 @@ function drawAll(g, withSel = true) {
     if (isFlipped(it)) { g.translate(Math.round(sx), 0); g.scale(-1, 1); g.drawImage(r.c, -r.o[0], Math.round(sy) - r.o[1]); }
     else g.drawImage(r.c, Math.round(sx) - r.o[0], Math.round(sy) - r.o[1]);
     g.restore();
-    if (it === 'char' && state.msg) bubble(g, sx, sy - (state.ch.style === 'classic' ? 70 : 61), state.msg);
+    if (it === 'char' && state.msg) bubble(g, sx, sy - 45, state.msg);
   }
   if (withSel && sel) {
     const r = sel === 'char' ? renderChar() : render(sel);
@@ -772,7 +675,6 @@ function renderPanel() {
     const pg = pc.getContext('2d'); drawChar(pg, state.ch, (CHW + 8) / 2, CHH + 4); prev.appendChild(pc); b.appendChild(prev);
     const sec = (title, el) => { b.appendChild(h4(title)); b.appendChild(el); };
     const setCh = (k, v) => { state.ch[k] = v; charCache = null; changed(); renderPanel(); };
-    sec(L_('캐릭터 스타일', 'Character style'), txtRow(STYLES, state.ch.style || 'chibi', (v) => setCh('style', v)));
     sec(L_('한마디', 'Message'), msgInput());
     sec(L_('피부', 'Skin'), swRow(SKINS, state.ch.skin, (v) => setCh('skin', v)));
     sec(L_('머리 모양', 'Hair'), txtRow(HAIRS, state.ch.hair, (v) => setCh('hair', v)));
@@ -785,7 +687,7 @@ function renderPanel() {
     sec(L_('하의 색', 'Bottom color'), swRow(CLOTH.concat(['#5d6bff']), state.ch.bottomC, (v) => setCh('bottomC', v)));
     sec(L_('신발 색', 'Shoes'), swRow(CLOTH, state.ch.shoes, (v) => setCh('shoes', v)));
     sec(L_('머리 장식', 'Headwear'), txtRow(ACCS, state.ch.acc, (v) => setCh('acc', v)));
-    if (state.ch.acc === 'bunny' || state.ch.acc === 'cat') sec(state.ch.style === 'classic' ? L_('귀 색', 'Ear color') : L_('후드 색', 'Hood color'), swRow(HOODC, state.ch.hoodC, (v) => setCh('hoodC', v)));
+    if (state.ch.acc === 'bunny' || state.ch.acc === 'cat') sec(L_('귀 색', 'Ear color'), swRow(HOODC, state.ch.hoodC, (v) => setCh('hoodC', v)));
   }
 }
 function confirmClear() { try { return window.confirm(L_('가구를 모두 치울까요?', 'Remove all furniture?')); } catch (e) { return true; } }
@@ -838,12 +740,18 @@ async function cloudStore() {
   saving = false;
   if (again) { again = false; cloudStore(); }
 }
+function fixChar(c) {
+  const ok = (list, v, d) => (list.some((o) => o[0] === v) ? v : d);
+  c.hair = ok(HAIRS, c.hair, DEF_CHAR.hair); c.eyes = ok(EYES, c.eyes, DEF_CHAR.eyes); c.top = ok(TOPS, c.top, DEF_CHAR.top);
+  c.bottom = ok(BOTTOMS, c.bottom, DEF_CHAR.bottom); c.acc = ok(ACCS, c.acc, 'none'); delete c.style;
+  return c;
+}
 function sanitize(s) {
   const d = defaultState();
   if (!s || typeof s !== 'object') return d;
   const out = { v: 1, wall: WALLS.some((w) => w.id === s.wall) ? s.wall : d.wall, floor: FLOORS.some((f) => f.id === s.floor) ? s.floor : d.floor,
     items: Array.isArray(s.items) ? s.items.filter((i) => i && ITEM[i.t]).slice(0, 80) : d.items,
-    ch: { ...DEF_CHAR, ...(s.ch || {}) }, cp: { ...d.cp, ...(s.cp || {}) }, msg: typeof s.msg === 'string' ? s.msg.slice(0, 20) : '' };
+    ch: fixChar({ ...DEF_CHAR, ...(s.ch || {}) }), cp: { ...d.cp, ...(s.cp || {}) }, msg: typeof s.msg === 'string' ? s.msg.slice(0, 20) : '' };
   return out;
 }
 function setupAuth() {
