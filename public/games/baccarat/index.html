@@ -121,17 +121,17 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 
 /* 칩 · 버튼 (룰렛과 같은 모양) */
 .dock{margin-top:12px;background:var(--panel);border:1px solid rgba(243,220,149,.16);border-radius:16px;padding:10px 12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.chips{display:flex;gap:8px;flex:1;min-width:0;overflow-x:auto;padding:12px 6px 6px;margin:-8px 0 -2px;scrollbar-width:none}
+.chips{display:flex;gap:8px;flex:1 1 var(--cb,300px);min-width:0;overflow-x:auto;padding:12px 6px 6px;margin:-8px 0 -2px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:0 0 auto;width:52px;height:52px;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;
+.chip{flex:0 1 52px;width:52px;min-width:38px;height:auto;aspect-ratio:1/1;container-type:inline-size;padding:0;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;
   font-weight:900;font-size:12.5px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);transition:transform .15s;
   background:var(--c);box-shadow:0 3px 0 rgba(0,0,0,.4),inset 0 0 0 4px var(--c),inset 0 0 0 7px rgba(255,255,255,.85)}
 .chip::before{content:'';position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(rgba(255,255,255,.9) 0 12deg,transparent 12deg 45deg);
   -webkit-mask:radial-gradient(circle,transparent 61%,#000 62%,#000 100%);mask:radial-gradient(circle,transparent 61%,#000 62%,#000 100%)}
-.chip span{position:relative;z-index:1}
+.chip span{position:relative;z-index:1;white-space:nowrap;font-size:min(12.5px, calc(64cqw / var(--e,2)))}
 .chip.sel{transform:translateY(-5px) scale(1.06);box-shadow:0 0 0 3px var(--gold2),0 8px 14px rgba(0,0,0,.5),inset 0 0 0 4px var(--c),inset 0 0 0 7px rgba(255,255,255,.85)}
 .chip:disabled{opacity:.3;cursor:not-allowed}
-.acts{display:flex;gap:6px;flex-wrap:wrap}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 .dockInfo{display:none}
 .btn{height:42px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);font-weight:800;font-size:14px;white-space:nowrap}
 .btn:hover:not(:disabled){background:rgba(255,255,255,.14)}
@@ -186,7 +186,8 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
   .hint{display:none}
   .dock{position:fixed;left:8px;right:8px;bottom:8px;z-index:40;margin:0;padding:8px;gap:8px;background:rgba(4,16,24,.95);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
   .chips{flex-basis:100%}
-  .chip{width:46px;height:46px;font-size:11.5px}
+  .chip{flex-basis:46px;width:46px;font-size:11.5px}
+  .chip span{font-size:min(11.5px, calc(64cqw / var(--e,2)))}
   .dockInfo{display:flex;flex-basis:100%;gap:10px;align-items:center;font-size:13px;font-weight:700;color:var(--dim);padding:0 4px}
   .dockInfo b{color:var(--gold2);font-variant-numeric:tabular-nums}
   .dockInfo .sp{flex:1}
@@ -718,6 +719,7 @@ $("btnVs").onclick = openVs;
 
 /* ================= 화면 갱신 ================= */
 const CHIP_VALUES = [1e5,2e5,5e5,1e6,5e6,1e7,1e8,1e9,1e10,1e11];
+const labelEm = t => Math.max(2, [...String(t)].reduce((s, ch) => s + (/[가-힣]/.test(ch) ? 1 : 0.62), 0));
 let chipKey = "";
 /** 결과 공개 전에는 결과가 반영되기 전 잔액을 기준으로 — 칩 종류가 바뀌어 승패가 미리 드러나지 않게 */
 function shownCash(){ return pending && hudBal !== null ? hudBal : cash(); }
@@ -727,7 +729,8 @@ function renderChips(){
   let list = CHIP_VALUES.filter(v => v <= Math.max(shownTotal(), MIN_CHIP)); if(list.length > 7) list = list.slice(-7);
   const key = list.join(",");
   if(key !== chipKey){ chipKey = key; if(!list.includes(chip)) chip = list.filter(v=>v<=c).pop() || list[0];
-    $("chips").innerHTML = list.map(v=>`<button class="chip" data-v="${v}" style="--c:${chipColor(v)}"><span>${short(v)}</span></button>`).join(""); }
+    $("chips").style.setProperty("--cb", list.length * 60 + "px");
+    $("chips").innerHTML = list.map(v=>`<button class="chip" data-v="${v}" style="--c:${chipColor(v)};--e:${labelEm(short(v)).toFixed(2)}"><span>${short(v)}</span></button>`).join(""); }
   for(const b of $("chips").children){ const v = +b.dataset.v; b.classList.toggle("sel", v===chip); b.disabled = busy || v > c; }
 }
 $("chips").addEventListener("click", ev=>{ const b = ev.target.closest(".chip"); if(!b || b.disabled) return; chip = +b.dataset.v; sfx.chip(); renderChips(); });
