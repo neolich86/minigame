@@ -56,19 +56,25 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     return null;
   };
 
+  // 이벤트(SportsEvent) 마크업은 경기장 주소(location) 같은 필수값이 없어 구글 경고가 나므로 쓰지 않는다.
+  // 이 페이지는 "경기 예측 글"이므로 일반 웹페이지 + 이동 경로(breadcrumb)로만 표시한다.
+  const url = `${SITE_URL}${BASE}/match/${m.id}`;
+  const comp = COMP_NAME[m.competition]?.[lang] ?? m.competition;
   const jsonLd =
     m.home && m.away
       ? {
           "@context": "https://schema.org",
-          "@type": "SportsEvent",
-          name: `${teamName(m.home, lang)} vs ${teamName(m.away, lang)}`,
-          startDate: m.utc_date,
-          sport: "Soccer",
-          eventStatus: m.status === "POSTPONED" ? "https://schema.org/EventPostponed" : m.status === "CANCELLED" ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled",
-          url: `${SITE_URL}${BASE}/match/${m.id}`,
-          homeTeam: { "@type": "SportsTeam", name: m.home.name },
-          awayTeam: { "@type": "SportsTeam", name: m.away.name },
-          superEvent: { "@type": "SportsEvent", name: COMP_NAME[m.competition]?.en ?? m.competition },
+          "@type": "WebPage",
+          name: lang === "ko" ? `${teamName(m.home, lang)} vs ${teamName(m.away, lang)} 예측` : `${teamName(m.home, lang)} vs ${teamName(m.away, lang)} prediction`,
+          url,
+          inLanguage: lang,
+          breadcrumb: {
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: lang === "ko" ? "스포츠 승부 예측" : "Sports forecast", item: `${SITE_URL}${BASE}` },
+              { "@type": "ListItem", position: 2, name: comp, item: url },
+            ],
+          },
         }
       : null;
 
