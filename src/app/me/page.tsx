@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { useApp } from "@/components/AppProvider";
+import BadgeCollection from "@/components/BadgeCollection";
 import { ALL_BOARDS, formatScore, itemPath } from "@/lib/games";
 import { errorKey, type MsgKey } from "@/lib/i18n";
 import { fetchMyScores, setNickname, signOut, type ScoreRow } from "@/lib/supabase";
@@ -53,6 +54,8 @@ export default function MePage() {
         </form>
         {msg && <div className={`notice ${msg.ok ? "ok" : "err"}`} style={{ marginTop: 12 }}>{t(msg.key)}</div>}
       </div>
+
+      <BadgeCollection lang={lang} />
 
       <div className="panel" style={{ marginBottom: 20 }}>
         <h2 style={{ fontSize: 16, margin: "0 0 12px" }}>{t("myRecords")}</h2>

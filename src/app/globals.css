@@ -553,3 +553,37 @@ header.hero { margin-bottom: 28px; }
 .global-footer p { margin: 0; }
 .fc-updated { font-size: 12px; color: var(--text-dim); margin: 0 0 6px; }
 .fc-updated.top { margin: 8px 0 0; }
+
+/* ───── 뱃지 도감 (내 정보) ───── */
+.bd-head h2 { font-size: 16px; margin: 0 0 12px; }
+.bd-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.bd-sum { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.bd-book { color: var(--text); font-weight: 700; font-size: 14px; text-decoration: none; }
+.bd-count { font-family: "Space Mono", monospace; font-size: 13px; color: var(--text-dim); }
+.bd-count b { color: var(--gold); font-size: 18px; }
+.bd-bar, .bd-prog { display: block; height: 6px; border-radius: 99px; background: rgba(255, 255, 255, .07); overflow: hidden; margin-top: 8px; }
+.bd-bar i, .bd-prog i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--gold), #ffd98a); }
+.bd-group { margin-top: 18px; }
+.bd-group h3 { font-size: 13px; color: var(--text-dim); margin: 0 0 8px; font-weight: 700; }
+.bd-group h3 span { font-family: "Space Mono", monospace; font-weight: 400; margin-left: 4px; }
+.bd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 8px; }
+.bd-item { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 10px 4px 8px; border-radius: 12px; border: 1px solid transparent; background: rgba(255, 255, 255, .025); color: var(--text-dim); cursor: pointer; font: inherit; }
+.bd-item:hover { background: rgba(255, 255, 255, .05); }
+.bd-item.sel { border-color: var(--line); background: var(--bg-panel-hi); }
+.bd-item.done { color: var(--text); }
+.bd-medal { --c1: #6b7486; --c2: #3a4152; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 35% 30%, var(--c1), var(--c2)); box-shadow: inset 0 0 0 3px rgba(255, 255, 255, .12), 0 2px 6px rgba(0, 0, 0, .35); position: relative; }
+.bd-medal.sm { width: 40px; height: 40px; flex: none; }
+.bd-ico { font-size: 24px; line-height: 1; }
+.bd-medal.sm .bd-ico { font-size: 19px; }
+.bd-item:not(.done) .bd-medal, .bd-detail:not(.done) .bd-medal { --c1: #2c3446; --c2: #1d2433; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .06); }
+.bd-item:not(.done) .bd-ico { font-family: "Space Mono", monospace; font-size: 20px; font-weight: 700; color: #4a5470; }
+.t-bronze.done .bd-medal { --c1: #e7a36b; --c2: #8a4f24; }
+.t-silver.done .bd-medal { --c1: #eef2f7; --c2: #7d8799; }
+.t-gold.done .bd-medal { --c1: #ffe08a; --c2: #c78a12; box-shadow: inset 0 0 0 3px rgba(255, 255, 255, .25), 0 0 14px rgba(255, 196, 77, .35); }
+.t-diamond.done .bd-medal { --c1: #b8f3ff; --c2: #6a5cff; box-shadow: inset 0 0 0 3px rgba(255, 255, 255, .3), 0 0 16px rgba(140, 170, 255, .5); }
+.bd-nm { font-size: 11.5px; line-height: 1.25; text-align: center; word-break: keep-all; }
+.bd-item .bd-prog { width: 70%; height: 4px; margin-top: 0; }
+.bd-detail { display: flex; gap: 12px; align-items: center; margin-top: 8px; padding: 12px; border-radius: 12px; background: var(--bg-panel-hi); border: 1px solid var(--line); }
+.bd-detail em { font-style: normal; font-size: 11px; color: var(--text-dim); margin-left: 4px; }
+.bd-tabs .chip { height: 30px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--line); background: transparent; color: var(--text-dim); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.bd-tabs .chip.on { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
