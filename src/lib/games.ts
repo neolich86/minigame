@@ -279,6 +279,19 @@ const CATALOG: Game[] = [
     playStore: "kr.minigame.passportmap",
   },
   {
+    id: "tarot",
+    kind: "app",
+    title: { ko: "타로 운세", en: "Tarot Reading" },
+    desc: {
+      ko: "고민을 고르고 섞인 메이저 아르카나 22장 중에서 직접 카드를 뽑아 보는 타로 — 올해 운세·애정·재회·금전·사업·직장·학업·인간관계",
+      en: "Pick what's on your mind and draw from the 22 Major Arcana yourself — year ahead, love, reunion, money, business, career, study and relationships",
+    },
+    genre: "casual",
+    thumb: "/thumbs/tarot.jpg",
+    src: "/games/tarot/index.html",
+    hidden: true, // M3(공유 카드·카카오)·M4(카드 사전·SEO) 끝나면 공개
+  },
+  {
     id: "raiden",
     title: { ko: "스카이 스트라이크", en: "Sky Strike" },
     desc: {
