@@ -147,6 +147,33 @@ button{font:inherit;color:inherit;cursor:pointer}
 .disc{color:var(--dim);font-size:12px;text-align:center;line-height:1.6;opacity:.8;margin-top:14px}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:#2a2260;border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;transition:.3s;z-index:99;pointer-events:none;white-space:nowrap}
 .toast.on{opacity:1;transform:translateX(-50%)}
+/* 받은 사람 */
+.recv{display:none;text-align:center;background:linear-gradient(160deg,rgba(230,196,122,.16),rgba(230,196,122,.04));border:1px solid rgba(230,196,122,.4);border-radius:14px;padding:12px 14px;margin:2px 0 14px;font-size:14.5px;line-height:1.5}
+.recv b{color:var(--gold);font-family:var(--serif)}
+body.received .recv{display:block}
+.recvbar{display:none;position:absolute;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,rgba(13,11,30,0),rgba(13,11,30,.92) 35%);justify-content:center;z-index:5}
+.recvbar .cta{width:100%;max-width:420px;font-size:17px;padding:16px}
+body.received .recvbar{display:flex}
+body.received #shareBtn{display:none}
+body.received #result .scroll{padding-bottom:100px}
+/* 공유 팝업 */
+#shareModal{position:fixed;inset:0;z-index:60;background:rgba(6,5,18,.78);display:flex;align-items:flex-end;justify-content:center;padding:12px;opacity:0;pointer-events:none;transition:opacity .25s}
+#shareModal.on{opacity:1;pointer-events:auto}
+#shareModal .sheet{width:100%;max-width:440px;max-height:100%;overflow:auto;background:#17123a;border:1px solid var(--line);border-radius:22px;padding:18px 16px calc(16px + env(safe-area-inset-bottom,0px));box-shadow:0 20px 60px rgba(0,0,0,.55);transform:translateY(20px);transition:transform .25s}
+#shareModal.on .sheet{transform:none}
+@media (min-height:640px) and (min-width:500px){#shareModal{align-items:center}}
+.sheet h3{margin:0 0 12px;font-family:var(--serif);font-size:18px;text-align:center}
+.sheet .prev{width:100%;aspect-ratio:1200/630;border-radius:12px;background:#0d0b1e;display:block;object-fit:cover;border:1px solid var(--line)}
+.sheet label{display:block;font-size:12.5px;color:var(--dim);margin:12px 0 6px}
+.sheet input{width:100%;height:44px;border-radius:12px;border:1px solid var(--line);background:#0d0b1e;color:var(--ink);padding:0 14px;font:inherit;font-size:16px;user-select:text;-webkit-user-select:text}
+.sheet input:focus{outline:none;border-color:var(--gold)}
+.sbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.sbtn{border:1px solid var(--line);background:rgba(255,255,255,.05);border-radius:12px;padding:13px 10px;font-size:14.5px;font-weight:500}
+.sbtn.kakao{background:#fee500;color:#191600;border-color:#fee500;font-weight:700;grid-column:1/-1}
+.sbtn:active{transform:scale(.98)}
+.sheet .cta{width:100%;margin-top:12px}
+.sheet .x{position:absolute;right:12px;top:12px}
+.sheet{position:relative}
 @media (min-width:700px){
   .cats{grid-template-columns:repeat(4,minmax(0,1fr));max-width:820px}
   .cat{flex-direction:column;text-align:center;padding:20px 12px}
@@ -198,6 +225,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     <button class="ibtn" id="sndBtn3" aria-label="sound">🔊</button>
   </div>
   <div class="scroll" id="resScroll"><div class="wrap">
+    <div class="recv" id="recv"></div>
     <div class="rtitle"><small id="rSub"></small><h2 id="rTitle"></h2></div>
     <div class="rcards" id="rcards"></div>
     <div id="readings"></div>
@@ -207,7 +235,25 @@ button{font:inherit;color:inherit;cursor:pointer}
     </div>
     <div class="disc" data-t="disclaimer"></div>
   </div></div>
+  <div class="recvbar"><button class="cta" id="recvCta"></button></div>
 </section>
+
+<div id="shareModal" role="dialog" aria-modal="true">
+  <div class="sheet">
+    <button class="ibtn x" id="shClose" aria-label="close">✕</button>
+    <h3 data-t="shareTitle"></h3>
+    <img class="prev" id="shImg" alt="">
+    <label for="shName" data-t="nameLbl"></label>
+    <input id="shName" maxlength="12" autocomplete="nickname">
+    <div class="sbtns">
+      <button class="sbtn kakao" id="shKakao" hidden></button>
+      <button class="sbtn" id="shNative" hidden></button>
+      <button class="sbtn" id="shCopy"></button>
+      <button class="sbtn" id="shSave"></button>
+    </div>
+    <button class="cta" id="shMore"></button>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -244,6 +290,26 @@ const T = {
   yearN: ["{y}년 운세", "{y} Fortune"],
   yearNew: ["{y} 신년운세", "{y} New Year Reading"],
   yearSub: ["올해의 흐름", "The year ahead"],
+  shareTitle: ["결과 공유하기", "Share your reading"],
+  nameLbl: ["공유할 이름 (선택)", "Your name (optional)"],
+  namePh: ["예: 민지", "e.g. Alex"],
+  kakao: ["💬 카카오톡으로 공유", "💬 Share on KakaoTalk"],
+  native: ["📤 다른 앱으로 공유", "📤 Share to apps"],
+  nativeK: ["💬 메신저로 공유", "💬 Share"],
+  copy: ["🔗 링크 복사", "🔗 Copy link"],
+  save: ["🖼️ 이미지 저장", "🖼️ Save image"],
+  saving: ["이미지 만드는 중…", "Making image…"],
+  saved: ["이미지를 저장했어요", "Image saved"],
+  kakaoFail: ["카카오톡 공유를 열지 못했어요", "Could not open KakaoTalk"],
+  kBtnView: ["결과 보기", "See result"],
+  kBtnMine: ["나도 타로 보러가기", "Draw my own cards"],
+  myToo: ["나도 타로 보러가기 🔮", "Draw my own cards 🔮"],
+  otherQ: ["다른 고민도 보기", "Ask something else"],
+  recvNamed: ["<b>{n}</b>님의 {c} 결과예요", "This is <b>{n}</b>'s {c} reading"],
+  recvAnon: ["친구가 보낸 {c} 결과예요", "A friend sent you this {c} reading"],
+  friend: ["친구", "A friend"],
+  shareText: ["{n}님의 {c} 타로 결과 🔮", "{n}'s {c} tarot reading 🔮"],
+  shareTextAnon: ["{c} 타로 결과 🔮", "My {c} tarot reading 🔮"],
 };
 const t = (k, v) => {
   let s = T[k][LANG === "en" ? 1 : 0];
@@ -690,7 +756,9 @@ async function showResult(cat, spread, cards, instant) {
   adv.querySelector("small").textContent = t("advice");
   adv.querySelector("q").textContent = L2(lastD.advice[lastC.rev ? "rev" : "up"]);
   rd.appendChild(adv);
-  $("againBtn").textContent = t("again");
+  const recv = document.body.classList.contains("received");
+  $("againBtn").textContent = recv ? t("myToo") : t("again");
+  $("recvCta").textContent = t("myToo");
   $("shareBtn").textContent = t("share");
   $("actions").classList.remove("shown");
 
@@ -713,11 +781,14 @@ async function showResult(cat, spread, cards, instant) {
 
 // 결과 링크: ?c=love&s=three&d=06r.02.10 (&y=2026)
 function encodeCards(cards) { return cards.map((c) => String(c.n).padStart(2, "0") + (c.rev ? "r" : "")).join("."); }
-function resultUrl() {
+function resultQuery(name) {
   const q = new URLSearchParams({ c: current.cat, s: current.spread, d: encodeCards(current.cards) });
   if (current.year) q.set("y", current.year);
-  return `${location.origin}/apps/tarot?${q}`;
+  if (name) q.set("n", name);
+  return q.toString();
 }
+function resultUrl(name) { return `${location.origin}/apps/tarot?${resultQuery(name)}&ref=1`; }
+const ogUrl = (name) => `${location.origin}/api/tarot/og?${resultQuery(name)}`;
 function parseLink() {
   let qs = "";
   try { qs = window.parent !== window ? window.parent.location.search : location.search; } catch (e) { qs = location.search; }
@@ -734,26 +805,193 @@ function parseLink() {
   }
   if (new Set(cards.map((x) => x.n)).size !== cards.length) return null;
   const yy = y && /^\d{4}$/.test(y) ? +y : null;
-  return { c, s, cards, y: c === "year" ? yy : null };
+  const n = (q.get("n") || "").replace(/[<>\r\n\t]/g, "").trim().slice(0, 12);
+  return { c, s, cards, y: c === "year" ? yy : null, n, ref: q.get("ref") === "1" };
 }
 
-$("resBack").onclick = () => { renderHome(); show("home"); };
-$("againBtn").onclick = () => { renderHome(); show("home"); };
-$("shareBtn").onclick = async () => {
+function goHome(fromReceived) {
+  if (document.body.classList.contains("received")) {
+    if (fromReceived) track("tarot_ref_cta");
+    document.body.classList.remove("received");
+    // 주소의 친구 결과를 지워 새로고침해도 처음 화면이 나오게
+    try { const w = window.parent !== window ? window.parent : window; w.history.replaceState(null, "", "/apps/tarot"); } catch (e) {}
+  }
+  renderHome(); show("home");
+}
+$("resBack").onclick = () => goHome(false);
+$("againBtn").onclick = () => goHome(true);
+$("recvCta").onclick = () => goHome(true);
+/* ───── 공유 ───── */
+function track(event, extra) {
+  try { const w = window.parent !== window ? window.parent : window; (w.dataLayer = w.dataLayer || []).push(Object.assign({ event, tarot_cat: current && current.cat }, extra || {})); } catch (e) {}
+}
+const KAKAO_SDK = "https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js";
+let kakaoP = null;
+function loadKakao() {
+  if (kakaoP) return kakaoP;
+  kakaoP = fetch("/api/public-config").then((r) => r.json()).then((cfg) => new Promise((res) => {
+    if (!cfg || !cfg.kakaoJsKey) return res(false);
+    const init = () => { try { if (!window.Kakao.isInitialized()) window.Kakao.init(cfg.kakaoJsKey); res(true); } catch (e) { res(false); } };
+    if (window.Kakao) return init();
+    const sc = document.createElement("script");
+    sc.src = KAKAO_SDK; sc.crossOrigin = "anonymous"; sc.onload = init; sc.onerror = () => res(false);
+    document.head.appendChild(sc);
+  })).catch(() => false);
+  return kakaoP;
+}
+let shareName = "";
+try { shareName = (localStorage.getItem("tarot:name") || "").slice(0, 12); } catch (e) {}
+const cleanName = (v) => (v || "").replace(/[<>\r\n\t]/g, "").trim().slice(0, 12);
+function shareTexts() {
+  const c = catName(current.cat, current.year), n = cleanName(shareName);
+  return { title: n ? t("shareText", { n, c }) : t("shareTextAnon", { c }) };
+}
+let prevT;
+function refreshPreview() { clearTimeout(prevT); prevT = setTimeout(() => { $("shImg").src = ogUrl(cleanName(shareName)); }, 400); }
+function openShare() {
   if (!current) return;
-  const url = resultUrl();
-  const title = `${catName(current.cat, current.year)} ${LANG === "en" ? "tarot result" : "타로 결과"} 🔮`;
-  if (navigator.share) { try { await navigator.share({ title, text: title, url }); return; } catch (e) { if (e && e.name === "AbortError") return; } }
-  try { await navigator.clipboard.writeText(`${title}\n${url}`); toast(t("copied")); }
-  catch (e) { window.prompt(t("copyFail"), url); }
+  $("shName").value = shareName;
+  $("shName").placeholder = t("namePh");
+  $("shImg").src = ogUrl(cleanName(shareName));
+  $("shKakao").textContent = t("kakao");
+  $("shCopy").textContent = t("copy");
+  $("shSave").textContent = t("save");
+  $("shNative").hidden = typeof navigator.share !== "function";
+  $("shNative").textContent = t("native");
+  $("shNative").classList.remove("kakao");
+  $("shMore").textContent = document.body.classList.contains("received") ? t("myToo") : t("otherQ");
+  $("shareModal").classList.add("on");
+  track("tarot_share_open");
+  loadKakao().then((ok) => {
+    $("shKakao").hidden = !ok;
+    // 카카오를 못 쓰면 공유 시트 버튼을 노란 버튼으로
+    if (!ok && !$("shNative").hidden) { $("shNative").classList.add("kakao"); $("shNative").textContent = t("nativeK"); }
+  });
+}
+function closeShare() { $("shareModal").classList.remove("on"); }
+$("shareBtn").onclick = openShare;
+$("shClose").onclick = closeShare;
+$("shareModal").onclick = (e) => { if (e.target.id === "shareModal") closeShare(); };
+$("shName").oninput = () => {
+  shareName = $("shName").value;
+  try { localStorage.setItem("tarot:name", cleanName(shareName)); } catch (e) {}
+  refreshPreview();
 };
+$("shKakao").onclick = () => {
+  const n = cleanName(shareName), url = resultUrl(n), home = `${location.origin}/apps/tarot?ref=1`;
+  const desc = current.cards.map((c) => `${L2(DATA[c.n].name)}${c.rev ? (LANG === "en" ? " (rev.)" : "(역)") : ""}`).join(" · ");
+  try {
+    window.Kakao.Share.sendDefault({
+      objectType: "feed",
+      content: { title: shareTexts().title, description: desc, imageUrl: ogUrl(n), imageWidth: 1200, imageHeight: 630, link: { mobileWebUrl: url, webUrl: url } },
+      buttons: [
+        { title: t("kBtnView"), link: { mobileWebUrl: url, webUrl: url } },
+        { title: t("kBtnMine"), link: { mobileWebUrl: home, webUrl: home } },
+      ],
+    });
+    track("tarot_share", { method: "kakao" });
+  } catch (e) { toast(t("kakaoFail")); }
+};
+$("shNative").onclick = async () => {
+  const n = cleanName(shareName);
+  try { await navigator.share({ title: shareTexts().title, text: shareTexts().title, url: resultUrl(n) }); track("tarot_share", { method: "native" }); } catch (e) {}
+};
+$("shCopy").onclick = async () => {
+  const n = cleanName(shareName), text = `${shareTexts().title}\n${resultUrl(n)}`;
+  try { await navigator.clipboard.writeText(text); toast(t("copied")); track("tarot_share", { method: "copy" }); }
+  catch (e) { window.prompt(t("copyFail"), resultUrl(n)); }
+};
+$("shSave").onclick = saveStory;
+$("shMore").onclick = () => { closeShare(); goHome(true); };
+
+/* ───── 스토리 이미지 (1080×1920) ───── */
+function loadImg(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
+function wrapText(ctx, text, maxW) {
+  const out = []; let line = "";
+  for (const ch of text) {
+    if (ctx.measureText(line + ch).width > maxW && line) { out.push(line); line = ch.trim() ? ch : ""; } else line += ch;
+  }
+  if (line) out.push(line);
+  return out;
+}
+async function storyBlob() {
+  const W = 1080, H = 1920, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const x = cv.getContext("2d");
+  try { await document.fonts.load('700 60px "Gowun Batang"'); } catch (e) {}
+  const serif = '"Gowun Batang", Georgia, serif', sans = '"Noto Sans KR", system-ui, sans-serif';
+  const g = x.createRadialGradient(W / 2, 520, 50, W / 2, 900, 1300);
+  g.addColorStop(0, "#33287a"); g.addColorStop(1, "#0d0b1e");
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  for (let i = 0; i < 120; i++) { x.globalAlpha = 0.25 + Math.random() * 0.6; x.fillStyle = "#fff"; const r = Math.random() * 2.4 + 0.6; x.beginPath(); x.arc(Math.random() * W, Math.random() * H, r, 0, 7); x.fill(); }
+  x.globalAlpha = 1; x.textAlign = "center";
+  x.fillStyle = "#e6c47a"; x.font = `500 34px ${sans}`; x.fillText("✦  TAROT READING  ✦", W / 2, 190);
+  const n = cleanName(shareName);
+  x.fillStyle = "#a8a2c6"; x.font = `400 52px ${serif}`;
+  x.fillText(n ? (LANG === "en" ? `${n}'s` : `${n}님의`) : (LANG === "en" ? "My" : "나의"), W / 2, 300);
+  x.fillStyle = "#f4efe4"; x.font = `700 92px ${serif}`;
+  x.fillText(catName(current.cat, current.year), W / 2, 410);
+  // 카드
+  const k = current.cards.length, cw = k === 1 ? 460 : 300, ch = cw * 1.72, gap = 36;
+  const imgs = await Promise.all(current.cards.map((c) => loadImg(imgUrl(c.n, 600)).catch(() => null)));
+  const total = k * cw + (k - 1) * gap, top = 560, names = posNames(current.cat, current.spread);
+  current.cards.forEach((c, i) => {
+    const cx = (W - total) / 2 + i * (cw + gap);
+    x.fillStyle = "#a8a2c6"; x.font = `500 32px ${sans}`; x.fillText(names[i], cx + cw / 2, top - 22);
+    x.save(); x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = 30; x.shadowOffsetY = 14;
+    x.fillStyle = "#e9dfc9"; roundRect(x, cx, top, cw, ch, 18); x.fill(); x.restore();
+    if (imgs[i]) {
+      x.save(); roundRect(x, cx, top, cw, ch, 18); x.clip();
+      if (c.rev) { x.translate(cx + cw / 2, top + ch / 2); x.rotate(Math.PI); x.drawImage(imgs[i], -cw / 2, -ch / 2, cw, ch); }
+      else x.drawImage(imgs[i], cx, top, cw, ch);
+      x.restore();
+    }
+    x.strokeStyle = "#e6c47a"; x.lineWidth = 4; roundRect(x, cx, top, cw, ch, 18); x.stroke();
+    x.fillStyle = c.rev ? "#c6bfff" : "#e6c47a"; x.font = `700 ${k === 1 ? 48 : 36}px ${serif}`;
+    x.fillText(L2(DATA[c.n].name), cx + cw / 2, top + ch + 60);
+    x.fillStyle = "#a8a2c6"; x.font = `500 28px ${sans}`;
+    x.fillText(c.rev ? t("reversed") : t("upright"), cx + cw / 2, top + ch + 104);
+  });
+  // 오늘의 조언
+  const last = current.cards[k - 1];
+  const adv = L2(DATA[last.n].advice[last.rev ? "rev" : "up"]);
+  let y = top + ch + 220;
+  x.fillStyle = "#a8a2c6"; x.font = `500 32px ${sans}`; x.fillText(t("advice"), W / 2, y);
+  x.fillStyle = "#f4efe4"; x.font = `700 50px ${serif}`;
+  wrapText(x, `“${adv}”`, W - 180).forEach((l, i) => x.fillText(l, W / 2, y + 86 + i * 70));
+  // 아래
+  x.fillStyle = "#e6c47a"; roundRect(x, W / 2 - 300, H - 250, 600, 104, 52); x.fill();
+  x.fillStyle = "#1a1433"; x.font = `700 40px ${sans}`; x.fillText(t("kBtnMine"), W / 2, H - 184);
+  x.fillStyle = "#a8a2c6"; x.font = `500 30px ${sans}`; x.fillText(`${location.host}/apps/tarot`, W / 2, H - 92);
+  return new Promise((res) => cv.toBlob(res, "image/png"));
+}
+function roundRect(x, l, tp, w, h, r) { x.beginPath(); x.moveTo(l + r, tp); x.arcTo(l + w, tp, l + w, tp + h, r); x.arcTo(l + w, tp + h, l, tp + h, r); x.arcTo(l, tp + h, l, tp, r); x.arcTo(l, tp, l + w, tp, r); x.closePath(); }
+async function saveStory() {
+  const b = $("shSave"), old = b.textContent; b.textContent = t("saving"); b.disabled = true;
+  try {
+    const blob = await storyBlob();
+    const file = new File([blob], `tarot-${current.cat}.png`, { type: "image/png" });
+    if (isTouch && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: shareTexts().title }); track("tarot_share", { method: "story" }); } catch (e) {}
+    } else {
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = file.name;
+      document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+      toast(t("saved")); track("tarot_share", { method: "image" });
+    }
+  } catch (e) { toast("⚠️"); }
+  b.textContent = old; b.disabled = false;
+}
 
 /* ───── 시작 ───── */
 renderHome();
 const link = parseLink();
 if (link) {
   S.year = link.y; S.cat = link.c; S.spread = link.s;
-  dataP.then(() => showResult(link.c, link.s, link.cards, true));
+  document.body.classList.add("received");
+  const c = catName(link.c, link.y);
+  $("recv").innerHTML = link.n
+    ? t("recvNamed", { n: link.n.replace(/&/g, "&amp;").replace(/"/g, "&quot;"), c })
+    : t("recvAnon", { c });
+  dataP.then(() => { showResult(link.c, link.s, link.cards, true); if (link.ref) track("tarot_ref_open"); });
 }
 </script>
 </body>
