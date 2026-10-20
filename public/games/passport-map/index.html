@@ -697,9 +697,13 @@ function applyTheme(id,keepView){TH=THEMES.some(t=>t[0]===id)?id:'basic';stageEl
 const G={rot:[-127,-28],k:1};let GLB=null,gRaf=0;
 function initGlobe(){if(GLB)return;const t=JSON.parse($('#globeData').textContent);const g=$('#gcountries');
   GLB=GL.feature(t,t.objects.countries).features.map(f=>{const p=document.createElementNS(NS,'path');if(f.id==='AQ'||!C[f.id])p.setAttribute('class','gl');else{p.setAttribute('class','c');p.dataset.id=f.id}g.appendChild(p);return {f,p}})}
-function gproj(){return GL.geoOrthographic().scale(228*G.k).translate([500,250]).rotate([G.rot[0],G.rot[1]]).clipAngle(90)}
+const GLOBE_MAX=20;
+// 많이 확대하면 화면 밖 나라는 잘라내고 그린다 (지구본은 매번 새로 계산하므로 속도 유지)
+function gproj(){const pj=GL.geoOrthographic().scale(228*G.k).translate([500,250]).rotate([G.rot[0],G.rot[1]]).clipAngle(90);
+  return pj.clipExtent(gclip())}
+function gclip(){if(G.k<=2.5)return null;try{const r=svg.getBoundingClientRect(),a=svgPt(r.left,r.top),b=svgPt(r.right,r.bottom);if(isFinite(a.x)&&b.x>a.x)return [[a.x-20,a.y-20],[b.x+20,b.y+20]]}catch(e){}return null}
 function gVisible(lon,lat){return GL.geoDistance([lon,lat],[-G.rot[0],-G.rot[1]])<Math.PI/2-.02}
-function renderGlobe(){if(!isGlobe())return;initGlobe();const pj=gproj(),path=GL.geoPath(pj);const sp=path({type:'Sphere'});
+function renderGlobe(){if(!isGlobe())return;initGlobe();const pj=gproj(),path=GL.geoPath(pj);const sp=GL.geoPath(pj.clipExtent(null))({type:'Sphere'});pj.clipExtent(gclip());
   $('#globe .gsea').setAttribute('d',sp);$('#globe .gshade').setAttribute('d',sp);$('#globe .gglow').setAttribute('r',(228*G.k*1.13).toFixed(1));
   for(const o of GLB){o.p.setAttribute('d',path(o.f)||'');const id=o.p.dataset.id;if(id){const st=S.countries[id];o.p.classList.toggle('v',!!st);o.p.style.fill=st?(st.color||DEF_C):'';o.p.classList.toggle('sel',!!(sel&&sel.type==='country'&&sel.id===id))}}
   const gp=$('#gpins');gp.textContent='';const m=svg.getScreenCTM();const u=m?1/m.a:1;
@@ -761,7 +765,7 @@ function clampView(){V.k=Math.min(60,Math.max(1,V.k));const w=1000*V.k,h=500*V.k
   V.x=Math.min(250,Math.max(1000-w-250,V.x));V.y=Math.min(150,Math.max(500-h-150,V.y));if(V.k===1){V.x=Math.max(-250,Math.min(250,V.x))}}
 function svgPt(cx,cy){const p=svg.createSVGPoint();p.x=cx;p.y=cy;return p.matrixTransform(svg.getScreenCTM().inverse())}
 function mapPt(cx,cy){const p=svg.createSVGPoint();p.x=cx;p.y=cy;return p.matrixTransform(zg.getScreenCTM().inverse())}
-function zoomAt(sx,sy,f){if(isGlobe()){G.k=Math.min(8,Math.max(.7,G.k*f));scheduleGlobe();return}const nk=Math.min(60,Math.max(1,V.k*f));const r=nk/V.k;V.x=sx-(sx-V.x)*r;V.y=sy-(sy-V.y)*r;V.k=nk;clampView();applyView()}
+function zoomAt(sx,sy,f){if(isGlobe()){G.k=Math.min(GLOBE_MAX,Math.max(.7,G.k*f));scheduleGlobe();return}const nk=Math.min(60,Math.max(1,V.k*f));const r=nk/V.k;V.x=sx-(sx-V.x)*r;V.y=sy-(sy-V.y)*r;V.k=nk;clampView();applyView()}
 let anim=null;
 function visRect(){const st=$('#stage').getBoundingClientRect();const r={left:st.left,top:st.top,right:st.right,bottom:st.bottom};
   if(!panel.hidden){const p=panel.getBoundingClientRect();if(p.width>=st.width-30)r.bottom=Math.max(st.top+120,p.top);else r.right=Math.max(st.left+200,p.left)}return r}
