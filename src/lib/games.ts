@@ -50,7 +50,11 @@ export interface Game {
   saves?: boolean;
   /** 포털 목록·사이트맵·추천에서 숨김 (주소로 직접 들어가면 열림) */
   hidden?: boolean;
+  /** 구글 플레이에 앱으로도 출시됨 — 패키지 이름 (웹 화면에 "앱으로 받기" 버튼) */
+  playStore?: string;
 }
+
+export const playStoreUrl = (pkg: string) => `https://play.google.com/store/apps/details?id=${encodeURIComponent(pkg)}`;
 
 /** 숨긴 게임까지 포함한 전체 목록 — 주소로 찾을 때만 쓴다 */
 const CATALOG: Game[] = [
@@ -272,6 +276,7 @@ const CATALOG: Game[] = [
     thumb: "/thumbs/passport-map.jpg?v=5",
     src: "/games/passport-map/index.html",
     saves: true,
+    playStore: "kr.minigame.passportmap",
   },
   {
     id: "raiden",

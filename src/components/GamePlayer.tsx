@@ -7,7 +7,7 @@ import { useApp } from "./AppProvider";
 import { Leaderboard } from "./Leaderboard";
 import { LikeButton } from "./LikeButton";
 import { useToasts } from "./Toasts";
-import { formatScore, formatVs, gameById, itemPath } from "@/lib/games";
+import { formatScore, formatVs, gameById, itemPath, playStoreUrl } from "@/lib/games";
 import { cloudEnabled, displayName, fetchMyRank, fetchMyScores, signInKakao, submitScore, type ScoreRow } from "@/lib/supabase";
 import { deleteFiles, deleteShare, fileUrls, loadSave, publishShare, putFile, shareInfo, storeSave } from "@/lib/saves";
 import { errorKey } from "@/lib/i18n";
@@ -253,6 +253,11 @@ export function GamePlayer({ gameId, app }: { gameId: string; app?: string }) {
             <span className="chal-chip" title={lang === "ko" ? "도전장" : "Challenge"}>
               ⚔️ {lang === "ko" ? `${target.nickname}님의 ${targetBoard.vs?.label.ko ?? "기록"} ${formatVs(targetBoard, target.score, lang)}에 도전 중` : `Beat ${target.nickname}'s ${formatVs(targetBoard, target.score, lang)}`}
             </span>
+          )}
+          {game.playStore && (
+            <a className="btn sm play-get" href={playStoreUrl(game.playStore)} target="_blank" rel="noopener">
+              📱 {lang === "ko" ? "앱으로 받기" : "Get the app"}
+            </a>
           )}
           {game.online && (
             <Link className="btn sm teal" href={`/online/${game.id}`}>

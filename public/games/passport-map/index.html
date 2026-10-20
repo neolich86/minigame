@@ -274,6 +274,9 @@ input,button,select,textarea{box-sizing:border-box}
 .viewbar{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:5;background:var(--panel);border:1px solid var(--line);border-radius:999px;box-shadow:var(--shadow);padding:6px 6px 6px 16px;display:flex;align-items:center;gap:12px;max-width:calc(100% - 100px)}
 .viewbar span{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .viewbar a{white-space:nowrap;text-decoration:none;color:#fff;background:var(--visited);border-radius:999px;padding:8px 14px;font-weight:600;font-size:13px}
+.viewbar a.vbapp{background:#1f8f4e;margin-left:-6px}
+.viewbar span{min-width:0}
+@media (max-width:560px){.viewbar #viewTxt{display:none}.viewbar{padding-left:6px}}
 @media (max-width:720px){.dlg{grid-template-columns:1fr}.dlg .pv{min-height:0;padding:14px}.dlg .pv canvas{max-height:42vh}}
 
 @media (max-width:720px){
@@ -341,7 +344,7 @@ input,button,select,textarea{box-sizing:border-box}
       <div class="row"><button class="sbtn" id="clearSample">예시 지우고 내 지도 시작</button></div>
     </div>
     </div>
-    <div class="viewbar" id="viewBar" hidden><span id="viewTxt">친구의 Passport Map을 보고 있어요</span><a href="/play/passport-map" target="_top">나도 내 지도 만들기</a></div>
+    <div class="viewbar" id="viewBar" hidden><span id="viewTxt">친구의 Passport Map을 보고 있어요</span><a href="/play/passport-map" target="_top">나도 내 지도 만들기</a><a class="vbapp" href="https://play.google.com/store/apps/details?id=kr.minigame.passportmap" target="_blank" rel="noopener">📱 앱으로 받기</a></div>
     <div class="deco deco-passport">PASSPORT MAP</div>
     <svg class="deco deco-compass" viewBox="-40 -44 80 84" aria-hidden="true"><circle r="26" fill="none" stroke="currentColor" stroke-width="1"/><g fill="currentColor"><path d="M0-34 5 0-5 0z"/><path d="M0 34 5 0-5 0z" opacity=".55"/><path d="M34 0 0 5 0-5z" opacity=".55"/><path d="M-34 0 0 5 0-5z" opacity=".55"/></g><text y="-37" text-anchor="middle" font-size="10" font-family="Georgia,serif" fill="currentColor">N</text></svg>
     <div class="choice" id="choice" hidden></div>
@@ -1210,7 +1213,8 @@ async function renderCard(cv,F,P,seq){
         x.drawImage(it.im,X+(cw2-it.im.width*sc)/2,Y+(ch-it.im.height*sc)/2,it.im.width*sc,it.im.height*sc);
         const gr=x.createLinearGradient(0,Y+ch-70,0,Y+ch);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.6)');x.fillStyle=gr;x.fillRect(X,Y+ch-70,cw2,70);
         x.fillStyle=it.color;x.beginPath();x.arc(X+20,Y+ch-22,6,0,7);x.fill();x.fillStyle='#FFFFFF';x.font=`600 20px ${BODY}`;x.fillText(it.name,X+34,Y+ch-15,cw2-46);x.restore()})}}
-  x.fillStyle=MUTED;x.font=`500 15px ${MONO}`;x.textAlign='right';x.fillText('Passport Map',W-pad,H-pad+(F==='ls'?24:14));x.textAlign='left';
+  // 하단 가운데 앱 이름
+  x.fillStyle=MUTED;x.globalAlpha=.85;x.font=`700 ${F==='ls'?16:19}px ${DISP}`;x.textAlign='center';x.fillText('Passport Map',W/2,H-B-(F==='ls'?12:16));x.textAlign='left';x.globalAlpha=1;
   return true}
 async function drawShare(){const seq=++shSeq;const cv=$('#shareCv');if(!await renderCard(cv,SH.f,SH.photos,seq))return;
   shBlob=null;cv.toBlob(b=>{if(seq===shSeq)shBlob=b},'image/png');updateShareLinks()}
