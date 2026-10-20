@@ -256,7 +256,9 @@ export function GamePlayer({ gameId, app }: { gameId: string; app?: string }) {
           )}
           {game.playStore && (
             <a className="btn sm play-get" href={playStoreUrl(game.playStore)} target="_blank" rel="noopener">
-              📱 {lang === "ko" ? "앱으로 받기" : "Get the app"}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/mgh/google-play.png" alt="" width={15} height={16} />
+              {lang === "ko" ? "앱으로 받기" : "Get the app"}
             </a>
           )}
           {game.online && (
