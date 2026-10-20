@@ -110,6 +110,10 @@ svg.map.pinmode{cursor:crosshair}
 .stage[data-mt="neon"]{--lab:#CFE3FF;--labh:rgba(7,11,20,.9)}
 .stage[data-mt="globe"]{--lab:#1B2433;--labh:rgba(238,242,230,.92)}
 .chk2{display:flex;align-items:center;gap:8px;font-size:13px}
+.langrow{display:flex;align-items:center;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13px}
+.langrow span{margin-right:auto;color:var(--muted)}
+.langrow button{border:1px solid var(--line);background:transparent;color:inherit;border-radius:999px;padding:5px 11px;font:inherit;font-size:12.5px;cursor:pointer}
+.langrow button[aria-pressed="true"]{background:var(--visited);border-color:var(--visited);color:#fff;font-weight:600}
 .grat{fill:none;vector-effect:non-scaling-stroke}
 .stage[data-mt="passport"]{background:radial-gradient(ellipse at 50% 45%,#1E3159,#0F1B36 75%)}
 .stage[data-mt="passport"] .sphere{fill:transparent;stroke:rgba(212,178,98,.55);stroke-width:.8;vector-effect:non-scaling-stroke}
@@ -349,7 +353,7 @@ input,button,select,textarea{box-sizing:border-box}
     <div class="deco deco-passport">PASSPORT MAP</div>
     <svg class="deco deco-compass" viewBox="-40 -44 80 84" aria-hidden="true"><circle r="26" fill="none" stroke="currentColor" stroke-width="1"/><g fill="currentColor"><path d="M0-34 5 0-5 0z"/><path d="M0 34 5 0-5 0z" opacity=".55"/><path d="M34 0 0 5 0-5z" opacity=".55"/><path d="M-34 0 0 5 0-5z" opacity=".55"/></g><text y="-37" text-anchor="middle" font-size="10" font-family="Georgia,serif" fill="currentColor">N</text></svg>
     <div class="choice" id="choice" hidden></div>
-    <div class="themepop" id="themePop" hidden><h3>지도 테마</h3><div class="tgrid" id="tgrid"></div><label class="chk2"><input type="checkbox" id="labToggle" checked> 유명 도시 이름 표시</label></div>
+    <div class="themepop" id="themePop" hidden><h3>지도 테마</h3><div class="tgrid" id="tgrid"></div><label class="chk2"><input type="checkbox" id="labToggle" checked> 유명 도시 이름 표시</label><div class="langrow" id="langRow"><span>언어</span><button type="button" data-l="ko">한국어</button><button type="button" data-l="en">English</button></div></div>
     <div class="zoom"><button id="zin" aria-label="확대">+</button><button id="zout" aria-label="축소">−</button><button id="zreset" aria-label="처음 보기" style="font-size:13px">⤢</button></div>
     <aside class="panel" id="panel" hidden></aside>
   </div>
@@ -991,6 +995,10 @@ function drawSample(p){const [, h1, h2, kind]=p.split(':');const cv=document.cre
 const tgrid=$('#tgrid');
 THEMES.forEach(([id,ko,en])=>{const b=document.createElement('button');b.className='topt';b.dataset.t=id;b.setAttribute('aria-pressed',id===TH);b.innerHTML=`<canvas width="240" height="120"></canvas><span>${EN?en:ko}</span>`;tgrid.appendChild(b)});
 function paintThemeThumbs(){document.querySelectorAll('.topt').forEach(b=>{const cv=b.querySelector('canvas');const x=cv.getContext('2d');x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,240,120);try{drawThemeMap(x,0,0,240,120,b.dataset.t,0)}catch(e){}})}
+// 언어 바꾸기 — 앱(구글 플레이)에는 사이트 머리글이 없어서 여기서 고른다. 사이트와 같은 저장값(쿠키·mgh:lang)을 쓰고 화면 전체를 다시 연다
+$('#langRow').querySelectorAll('button').forEach(b=>{b.setAttribute('aria-pressed',String((EN?'en':'ko')===b.dataset.l));
+  b.onclick=()=>{const l=b.dataset.l;if((EN?'en':'ko')===l)return;try{localStorage.setItem('mgh:lang',l)}catch(e){}document.cookie='mgh_lang='+l+'; path=/; max-age=31536000; samesite=lax';
+    try{(window.top||window).location.reload()}catch(e){location.reload()}}});
 function closeThemes(){$('#themePop').hidden=true;$('#themeBtn').setAttribute('aria-expanded','false')}
 $('#themeBtn').onclick=()=>{const p=$('#themePop');if(!p.hidden){closeThemes();return}p.hidden=false;$('#themeBtn').setAttribute('aria-expanded','true');hideTip();closeResults();paintThemeThumbs()};
 tgrid.onclick=e=>{const b=e.target.closest('.topt');if(!b)return;S.theme=b.dataset.t;applyTheme(S.theme);closeThemes();if(canEdit()&&!isSample)changed(true)};
