@@ -350,7 +350,7 @@ function spreadLabel(cat, spread) {
   if (cat !== "year") return t(spread);
   return spread === "one" ? (LANG === "en" ? "Card of the year" : "올해의 카드") : (LANG === "en" ? "First half · Second half · Advice" : "상반기·하반기·조언");
 }
-function spreadTitle(cat, spread) { return `${catName(cat)} · ${spreadLabel(cat, spread)}`; }
+function spreadTitle(cat, spread) { return `${catName(cat, S.year)} · ${spreadLabel(cat, spread)}`; }
 function catName(id, year) {
   if (id === "year") return yearInfo(year).label;
   return L2(catById(id))[0];
@@ -984,6 +984,13 @@ async function saveStory() {
 /* ───── 시작 ───── */
 renderHome();
 const link = parseLink();
+const startQ = (() => { try { return new URLSearchParams(window.parent !== window ? window.parent.location.search : location.search); } catch (e) { return new URLSearchParams(location.search); } })();
+if (!link && catById(startQ.get("start") || "")) {
+  const st = startQ.get("start"), yy = startQ.get("y");
+  startDraw(st);
+  if (st === "year" && /^\d{4}$/.test(yy || "")) { S.year = +yy; $("drawTitle").textContent = spreadTitle(st, S.spread); }
+  try { const w = window.parent !== window ? window.parent : window; w.history.replaceState(null, "", "/apps/tarot"); } catch (e) {}
+}
 if (link) {
   S.year = link.y; S.cat = link.c; S.spread = link.s;
   document.body.classList.add("received");

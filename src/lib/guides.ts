@@ -280,6 +280,36 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       ],
     },
   },
+  tarot: {
+    ko: {
+      tips: [
+        "카드를 고르기 전에 고민을 한 문장으로 떠올려 보세요. '그 사람과 잘 될까?'처럼 구체적일수록 해석이 와닿아요.",
+        "역방향 카드는 나쁜 카드가 아니라 그 기운이 막혀 있거나 지나친 상태예요. 조심할 부분을 알려 주는 신호로 읽어 보세요.",
+        "세 장 뽑기에서는 과거→현재→미래로 이어지는 흐름을 함께 보세요. 종합 메시지가 세 장을 하나로 묶어 줘요.",
+        "같은 고민을 연달아 다시 뽑기보다는 처음 나온 카드의 조언을 며칠 동안 기억해 보는 걸 추천해요.",
+      ],
+      faq: [
+        { q: "정말 무료인가요?", a: "네. 회원가입이나 결제 없이 몇 번이든 볼 수 있어요." },
+        { q: "카드는 어떻게 정해지나요?", a: "카드를 섞을 때 22장의 순서와 정·역방향이 무작위로 정해지고, 내가 고른 자리의 카드가 결과가 돼요." },
+        { q: "친구에게 결과를 보낼 수 있나요?", a: "결과 화면의 [결과 공유하기]에서 카카오톡, 링크 복사, 스토리용 이미지 저장을 할 수 있어요. 링크를 받은 친구는 내 결과를 보고 바로 자기 카드를 뽑아 볼 수 있어요." },
+        { q: "해석을 믿어도 되나요?", a: "타로는 재미와 생각 정리를 위한 참고용이에요. 중요한 결정은 스스로 판단하세요." },
+      ],
+    },
+    en: {
+      tips: [
+        "Put your question into one sentence before drawing — the more specific, the more the reading will resonate.",
+        "Reversed cards aren't bad cards; they show energy that's blocked or overdone. Read them as gentle warnings.",
+        "In three-card readings, follow the flow from past to present to future — the overall message ties them together.",
+        "Rather than redrawing the same question, try keeping the first card's advice in mind for a few days.",
+      ],
+      faq: [
+        { q: "Is it free?", a: "Yes — no sign-up or payment, as many times as you like." },
+        { q: "How are the cards chosen?", a: "When the deck is shuffled, the order and upright/reversed state of all 22 cards are randomized, and the card in the spot you pick is your result." },
+        { q: "Can I send my result to friends?", a: "Use Share on the result screen to send it via KakaoTalk, copy a link or save a story image. Friends can open it and draw their own cards." },
+        { q: "Should I trust the reading?", a: "Tarot is for fun and reflection. Make important decisions with your own judgment." },
+      ],
+    },
+  },
   "passport-map": {
     ko: {
       tips: [

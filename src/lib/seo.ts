@@ -319,6 +319,26 @@ export const GAME_SEO: SeoMap = {
       tags: ["Roulette", "Pinball", "Random picker", "Free"],
     },
   },
+  tarot: {
+    ko: {
+      title: "타로 운세 - 무료 타로 카드 뽑기 · 애정운 재회운 금전운 올해 운세",
+      h1: "타로 운세 — 고민을 고르고 카드를 직접 뽑는 무료 타로",
+      description: "애정운·재회운·금전운·사업운·직장운·학업운·인간관계·올해 운세까지, 섞인 메이저 아르카나 22장 중에서 직접 카드를 뽑아 정방향·역방향 해석을 받아 보세요. 결과는 카카오톡으로 친구에게 공유할 수 있어요. 무료, 회원가입 없음.",
+      keywords: ["타로", "무료 타로", "타로 운세", "타로 카드", "타로점", "애정운 타로", "재회운 타로", "금전운", "신년운세", "올해 운세", "오늘의 타로", "타로 카드 의미"],
+      about: ["타로 운세는 고민을 고르면 메이저 아르카나 22장을 섞어 부채꼴로 펼쳐 주고, 마음이 가는 카드를 직접 골라 해석을 받아 보는 무료 타로 서비스입니다. 한 장으로 오늘의 메시지를 보거나, 세 장으로 과거·현재·미래의 흐름을 볼 수 있어요.", "카드마다 정방향과 역방향, 그리고 애정·재회·금전·사업·직장·학업·인간관계·올해 운세 여덟 가지 고민에 맞춘 해석을 직접 써 두었어요. 세 장을 뽑으면 역방향 개수와 카드 단계의 흐름으로 종합 메시지도 알려 드립니다. 결과는 링크·이미지로 친구에게 보낼 수 있어요."],
+      howTo: ["궁금한 고민(애정운·금전운 등)과 한 장/세 장을 고릅니다.", "카드가 섞이면 부채꼴에서 마음이 가는 카드를 고릅니다. 휴대폰은 손가락으로 훑다가 손을 떼면 골라져요.", "[결과 보기]로 카드를 뒤집고 해석을 읽은 뒤, [결과 공유하기]로 친구에게 보내 보세요."],
+      tags: ["타로", "운세", "애정운", "무료"],
+    },
+    en: {
+      title: "Tarot Reading - Free Tarot Card Draw for Love, Money & the Year Ahead",
+      h1: "Tarot Reading — Pick Your Question and Draw the Cards Yourself",
+      description: "Choose love, reunion, money, business, career, study, relationships or the year ahead, then draw from the shuffled 22 Major Arcana for upright and reversed readings. Share your result with friends. Free, no sign-up.",
+      keywords: ["tarot", "free tarot reading", "tarot card draw", "love tarot", "yes or no tarot", "tarot card meanings", "year ahead tarot", "past present future tarot"],
+      about: ["Tarot Reading shuffles the 22 Major Arcana and fans them out so you can pick the cards that call to you. Draw one card for today's message or three for past, present and future.", "Each card has upright and reversed readings written for eight topics: love, reunion, money, business, career, study, relationships and the year ahead. Three-card readings add an overall message, and you can share the result as a link or image."],
+      howTo: ["Choose a topic and one or three cards.", "Pick cards from the fan — on phones, slide your finger and lift on the card you want.", "Tap Reveal to turn them over, then share your reading with friends."],
+      tags: ["Tarot", "Fortune", "Love", "Free"],
+    },
+  },
   "passport-map": {
     ko: {
       title: "Passport Map - 다녀온 나라 색칠하기 · 세계 여행 지도 만들기",

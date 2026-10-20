@@ -289,7 +289,6 @@ const CATALOG: Game[] = [
     genre: "casual",
     thumb: "/thumbs/tarot.jpg",
     src: "/games/tarot/index.html",
-    hidden: true, // M3(공유 카드·카카오)·M4(카드 사전·SEO) 끝나면 공개
   },
   {
     id: "raiden",
