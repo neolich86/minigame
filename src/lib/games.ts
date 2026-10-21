@@ -313,6 +313,7 @@ const CATALOG: Game[] = [
     thumb: "/thumbs/archer.jpg",
     src: "/games/archer/index.html",
     boards: [{ id: "archer", label: { ko: "생존 시간", en: "Survival" }, unit: { ko: "", en: "" }, format: "time", vs: { label: { ko: "생존", en: "survival" }, question: { ko: "누가 오래 버티나?", en: "Who survives longer?" } } }],
+    saves: true, // 앱(/archer-app)에서 로그인 상태를 받고 로그인 창을 띄우기 위해 (게임 데이터를 저장하지는 않음)
   },
   {
     id: "random-td",

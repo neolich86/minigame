@@ -238,6 +238,8 @@ canvas{display:block;image-rendering:auto}
     <div class="stat"><i>처치 수</i><b id="oKill">0</b></div>
     <div class="stat"><i>보스 격파</i><b id="oBoss">0</b></div>
   </div>
+  <button class="btn" id="btnRevive" style="display:none;margin-bottom:10px;background:linear-gradient(90deg,#3ddc84,#2bb673);color:#04210f">📺 광고 보고 이어하기</button>
+  <div id="reviveMsg" style="display:none;font-size:13px;color:#ffb3a8;margin-bottom:8px"></div>
   <button class="btn" id="btnRetry">다시 도전</button>
   <button class="btn" id="btnVs" style="display:none;margin-top:10px;background:linear-gradient(90deg,#ff7a3d,#ffb43d);color:#1d0f00">🔥 친구에게 공유하기</button>
 </div>
@@ -821,7 +823,7 @@ function newPlayer(){
     rouletteSpin:0, rouletteSpinTxt:'', rouletteSwapT:0, rouletteResultT:0,
     buffType:null, buffT:0,
     shield:0, shieldMax:0, shieldT:0,
-    atkT:0, anim:0, atkAnim:-1, invuln:0, hitFlash:0,
+    atkT:0, anim:0, atkAnim:-1, invuln:0, hitFlash:0, reviveT:0, revived:false,
     ups:{}
   };
 }
@@ -1414,7 +1416,7 @@ function update(dt){
   }
 
   /* --- 플레이어 상태 --- */
-  P.invuln-=dt; P.hitFlash=Math.max(0,P.hitFlash-dt*4);
+  P.reviveT=Math.max(0,P.reviveT-dt); P.invuln-=dt; P.hitFlash=Math.max(0,P.hitFlash-dt*4);
   if(P.regen>0 && P.hp<P.hpMax){ P.hp=Math.min(P.hpMax,P.hp+P.regen*dt); }
   if(P.shieldMax>0 && P.shield<P.shieldMax){
     P.shieldT-=dt;
@@ -1557,7 +1559,7 @@ function triggerMimicBox(x,y){
 }
 
 function damagePlayer(d){
-  if(P.buffType==='invuln'){
+  if(P.buffType==='invuln' || P.reviveT>0){
     ring(P.x,P.y,40,'#ffe14d',.25);
     return;
   }
@@ -2091,6 +2093,129 @@ function togglePause(){
     $('pauseStats').innerHTML=`생존 ${fmtTime(game.t)} · LV ${P.lv} · 처치 ${game.kills}`;
   } else last=performance.now();
 }
+/* ==========================================================================
+   광고 (모바일 앱 전용) — 보상형 광고로 판당 1회 이어하기
+   · 네이티브(Capacitor) 앱에서만 동작(앱은 이 포털의 /archer-app 을 열고 부모 창에 브리지가 있다). 웹 브라우저에서는 버튼이 나타나지 않는다.
+   · ?testads=1 로 열면 브라우저에서 가짜 광고(0.4초)로 흐름만 테스트할 수 있다.
+   · 아래 AD_UNIT_REWARD 는 구글 공식 '테스트용' ID. 출시 전 본인 AdMob 광고 단위 ID로 교체!
+   ========================================================================== */
+/* ==========================================================================
+   앱 전용 (구글 플레이 '궁수 키우기') — 앱은 포털의 /archer-app 주소를 연다
+   · 제목을 '궁수 키우기' 로 바꾸고, 로그인 전에 시작 버튼을 누르면 포털 로그인 창을 띄운다.
+   · 웹(포털)에서는 아무것도 바뀌지 않는다.
+   ========================================================================== */
+const APP = (function(){
+  const re = /^\/archer-app/;
+  try { if(re.test(window.top.location.pathname)) return true; } catch(e){}
+  try { if(re.test(window.parent.location.pathname)) return true; } catch(e){}
+  return /[?&]app=1/.test(location.search||'');
+})();
+if(APP){
+  const _t = document.querySelector('#start .title');
+  if(_t) _t.textContent = (window.MGH&&MGH.L) ? MGH.L('궁수 키우기','Grow Your Archer') : '궁수 키우기';
+}
+let authUser, authCloud = true, startWait = 0;
+if(APP && window.MGH && MGH.save && MGH.save.onAuth){
+  MGH.save.onAuth((u,info)=>{ authUser = u; authCloud = !(info && info.cloud===false); });
+}
+function tryStart(){
+  // 포털 안(iframe)이 아니거나 앱이 아니면 그냥 시작
+  if(!APP || !(window.MGH && MGH.save && MGH.embedded)) return startGame();
+  // 로그인 상태가 아직 안 왔으면 잠깐 기다린다 (최대 ~4초)
+  if(authUser===undefined && startWait<12){ startWait++; setTimeout(tryStart,350); return; }
+  startWait = 0;
+  if(authUser || !authCloud) return startGame();   // 로그인됨 · 또는 서버 연동이 꺼진 환경
+  MGH.save.login();                                 // 포털 로그인 화면(이메일·카카오) → 끝나면 이 화면으로 돌아온다
+}
+
+const AD_UNIT_REWARD = 'ca-app-pub-3940256099942544/5224354917'; // TEST ID — 출시 전 교체
+const AdBridge = (function(){
+  const cap = (function(){            // 게임은 포털 페이지의 iframe 안에서 돌아서, 네이티브 브리지는 부모 창에 있다
+    try { if(window.Capacitor) return window.Capacitor; } catch(e){}
+    try { if(window.parent && window.parent!==window) return window.parent.Capacitor; } catch(e){}
+    return undefined;
+  })();
+  const native = !!(cap && cap.isNativePlatform && cap.isNativePlatform());
+  const fake = !native && /[?&]testads=1/.test(location.search||'');
+  const AM = native && ((cap.Plugins && cap.Plugins.AdMob) || (cap.registerPlugin && cap.registerPlugin('AdMob')));
+  let ready = fake, loading = false, rewarded = false, pending = null, inited = false;
+
+  function settle(ok){ if(pending){ const r=pending; pending=null; r(ok); } }
+  async function load(){
+    if(!AM || loading || ready) return;
+    loading = true;
+    try { await AM.prepareRewardVideoAd({adId: AD_UNIT_REWARD}); ready = true; }
+    catch(e){ ready = false; }
+    loading = false;
+  }
+  async function init(){
+    if(!AM || inited) return; inited = true;
+    try {
+      AM.addListener('onRewardedVideoAdReward', ()=>{ rewarded = true; });
+      AM.addListener('onRewardedVideoAdDismissed', ()=>{ ready=false; settle(rewarded); setTimeout(load,500); });
+      AM.addListener('onRewardedVideoAdFailedToShow', ()=>{ ready=false; settle(false); setTimeout(load,3000); });
+      AM.addListener('onRewardedVideoAdLoaded', ()=>{ ready = true; });
+      AM.addListener('onRewardedVideoAdFailedToLoad', ()=>{ ready=false; loading=false; setTimeout(load,15000); });
+      await AM.initialize({});
+      try { // EU 등 동의 필요 지역: 구글 UMP 동의 창
+        const info = await AM.requestConsentInfo();
+        if(info && info.isConsentFormAvailable && info.status==='REQUIRED') await AM.showConsentForm();
+      } catch(e){}
+    } catch(e){}
+    load();
+  }
+  return {
+    enabled: native || fake,
+    init, preload: load,
+    available(){ return (native||fake) && ready; },
+    show(){
+      return new Promise(res=>{
+        if(fake){ setTimeout(()=>res(true),400); return; }
+        if(!AM || !ready){ res(false); return; }
+        rewarded = false; pending = res;
+        AM.showRewardVideoAd().catch(()=>{ settle(false); });
+        setTimeout(()=>{ settle(false); }, 120000); // 안전장치
+      });
+    }
+  };
+})();
+
+function setReviveUI(){
+  const btn=$('btnRevive'), msg=$('reviveMsg');
+  msg.style.display='none';
+  btn.disabled=false;
+  btn.style.display = (AdBridge.available() && !P.revived) ? '' : 'none';
+}
+function revivePlayer(){
+  P.revived = true;
+  game.over = false;
+  P.hp = Math.ceil(P.hpMax*0.5);
+  P.reviveT = 3.0; P.invuln = 3.0; P.hitFlash = 0;
+  for(const e of enemies){                       // 주변 적을 크게 밀쳐낸다 (보스는 약하게)
+    const dx=e.x-P.x, dy=e.y-P.y, d=Math.hypot(dx,dy)||1;
+    if(d<360){ const k = e.boss?260:1100; e.kx += dx/d*k; e.ky += dy/d*k; }
+  }
+  ring(P.x,P.y,200,'#6fffa8',.6); ring(P.x,P.y,120,'#ffffff',.4);
+  burst(P.x,P.y,26,'#9dffc4',320,.6,3.4);
+  popText(P.x,P.y-50,'이어하기!','#6fffa8',true);
+  overEl.classList.remove('show');
+  last = performance.now();
+}
+$('btnRevive').onclick = async ()=>{
+  const btn=$('btnRevive'), msg=$('reviveMsg');
+  if(btn.disabled || !game.over || P.revived) return;
+  btn.disabled = true; btn.textContent = '광고 불러오는 중…';
+  const ok = await AdBridge.show();
+  btn.textContent = '📺 광고 보고 이어하기';
+  if(ok){ revivePlayer(); AdBridge.preload(); }
+  else {
+    btn.disabled=false; btn.style.display='none';
+    msg.textContent='광고를 끝까지 보지 않았거나 불러오지 못했어요.'; msg.style.display='';
+    AdBridge.preload();
+  }
+};
+AdBridge.init();
+
 function gameOver(){
   if(game.over)return;
   game.over=true;
@@ -2103,6 +2228,7 @@ function gameOver(){
   $('overSub').textContent = game.bossKills>0
     ? `보스 ${game.bossKills}체를 쓰러뜨렸다. 다음엔 더 멀리.`
     : '보스의 그림자조차 보지 못했다.';
+  setReviveUI();
   setTimeout(()=>overEl.classList.add('show'), 700);
   const secs = Math.floor(game.t);
   const vsBtn = $('btnVs');
@@ -2128,8 +2254,9 @@ function startGame(){
   overEl.classList.remove('show'); pauseEl.classList.remove('show'); lvupEl.classList.remove('show');
   lvQueue=0;
   last=performance.now();
+  AdBridge.preload();
 }
-$('btnStart').onclick=startGame;
+$('btnStart').onclick=tryStart;
 $('btnRetry').onclick=startGame;
 $('btnResume').onclick=togglePause;
 $('btnQuit').onclick=()=>{pauseEl.classList.remove('show');game.paused=false;startGame()};

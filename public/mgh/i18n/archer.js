@@ -17,6 +17,7 @@
   };
   var RAR = { "일반": "Common", "고급": "Uncommon", "희귀": "Rare", "전설": "Legendary" };
   var exact = {
+    "궁수 키우기": "Grow Your Archer",
     "궁수 서바이버 — Archer Survivor": "Archer Survivor",
     "경계하라": "Beware",
     "궁수 서바이버": "Archer Survivor",

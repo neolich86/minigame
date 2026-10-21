@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useApp } from "./AppProvider";
+import { isAppPath } from "@/lib/appPaths";
 
 // 모든 페이지 아래 공통 바닥글 — 사이트 소개·정책·문의 링크 (애드센스 심사 기준: 운영자·정책 정보가 어디서나 보이도록)
 export function SiteFooter() {
   const { lang } = useApp();
   const path = usePathname();
-  if (path?.startsWith("/passport-map")) return null;
+  if (isAppPath(path)) return null;
   const ko = lang === "ko";
   const links = [
     { href: "/about", label: ko ? "사이트 소개" : "About" },

@@ -21,8 +21,8 @@ export default async function PrivacyPage() {
       <h1 className="page-title">{en ? "Privacy Policy" : "개인정보처리방침"}</h1>
       <p className="page-sub">
         {en
-          ? `Applies to the Mini Game Heaven website and the Passport Map Android app. Last updated ${UPDATED}.`
-          : `미니게임천국 웹사이트와 Passport Map 안드로이드 앱에 적용됩니다. 최종 수정일 ${UPDATED}.`}
+          ? `Applies to the Mini Game Heaven website and the Passport Map and Grow Your Archer (궁수 키우기) Android apps. Last updated ${UPDATED}.`
+          : `미니게임천국 웹사이트와 Passport Map·궁수 키우기 안드로이드 앱에 적용됩니다. 최종 수정일 ${UPDATED}.`}
       </p>
       {en ? (
         <>
@@ -31,7 +31,7 @@ export default async function PrivacyPage() {
             <li><b>Account</b>: email address (email sign-up) or Kakao account identifier (Kakao login), and the nickname you set.</li>
             <li><b>Passport Map data</b>: countries and cities you mark, pin colors, visit dates, notes, map theme and the photos you add.</li>
             <li><b>Game records</b>: scores and rankings, online room participation.</li>
-            <li><b>Usage data</b>: pages visited and device/browser information collected by Google Analytics, and cookies used by Google AdSense on the website.</li>
+            <li><b>Usage data</b>: pages visited and device/browser information collected by Google Analytics, and cookies used by Google AdSense on the website. In the Grow Your Archer app, Google AdMob may collect the advertising ID and device information to show rewarded ads.</li>
           </ul>
           <p>Passport Map requires signing in with Kakao or email so your map can be kept in your account.</p>
           <h2>2. Why we use it</h2>
@@ -61,7 +61,7 @@ export default async function PrivacyPage() {
             <li><b>계정</b>: 이메일 가입 시 이메일 주소, 카카오 로그인 시 카카오 계정 식별자, 직접 정한 닉네임</li>
             <li><b>Passport Map 데이터</b>: 표시한 나라·도시, 핀 색, 방문 기간, 메모, 지도 테마, 올린 사진</li>
             <li><b>게임 기록</b>: 점수·랭킹, 온라인 방 참여 기록</li>
-            <li><b>이용 기록</b>: 구글 애널리틱스가 수집하는 방문 페이지·기기·브라우저 정보, 웹사이트의 구글 애드센스 쿠키</li>
+            <li><b>이용 기록</b>: 구글 애널리틱스가 수집하는 방문 페이지·기기·브라우저 정보, 웹사이트의 구글 애드센스 쿠키, 궁수 키우기 앱의 구글 애드몹(보상형 광고)이 수집하는 광고 ID·기기 정보</li>
           </ul>
           <p>Passport Map은 지도를 계정에 보관하기 위해 카카오 또는 이메일 로그인 후 이용할 수 있습니다.</p>
           <h2>2. 이용 목적</h2>
