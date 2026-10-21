@@ -8,7 +8,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // 업로드할 때마다 1씩 올려야 함. GitHub Actions 는 VERSION_CODE 환경변수로 넣어 준다 (없으면 1)
-        versionCode (System.getenv("VERSION_CODE") ?: "1").toInteger()
+        versionCode Integer.parseInt(System.getenv("VERSION_CODE") ?: "1")
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
