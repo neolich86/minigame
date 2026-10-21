@@ -764,8 +764,8 @@ const UPGRADES = [
     apply:p=>p.pierce++},
   {id:'aoe',   ic:'aoe',   rar:'e', max:6,  name:'폭발 화살',   desc:l=>`명중 시 범위 폭발 (반경 ${Math.round(52+l*15)})`,
     apply:p=>p.aoe++},
-  {id:'shield',ic:'shield',rar:'l', max:4,  name:'수호 방패',   desc:l=>`피해를 막는 방패 ${l}개 (${Math.max(4,10-l)}초마다 재생)`,
-    apply:p=>{p.shieldMax++;p.shield=p.shieldMax}},
+  {id:'shield',ic:'shield',rar:'l', max:4,  name:'수호 방패',   desc:l=>`쉴드가 몸을 감싸 ${l+1}번의 피격을 무효화 (${Math.max(4,10-l)}초마다 1회 재생)`,
+    apply:p=>{p.shieldMax += (p.shieldMax===0?2:1); p.shield=p.shieldMax}},
   {id:'dmg',   ic:'dmg',   rar:'r', max:10, name:'강궁',        desc:l=>`공격력 +20%  (현재 ${Math.round((Math.pow(1.20,l)-1)*100)}%)`,
     apply:p=>p.dmg*=1.20},
   {id:'move',  ic:'speed', rar:'n', max:5,  name:'질풍 보행',   desc:l=>`이동 속도 +8%  (현재 +${Math.round((Math.pow(1.08,l)-1)*100)}%)`,
@@ -784,7 +784,7 @@ const UPGRADES = [
     apply:p=>p.xpMul*=1.20},
   {id:'bounce',ic:'bounce',rar:'l', max:5,  name:'도약 화살',   desc:l=>`화살이 명중 시 반드시 튕겨 ${l}명을 추가 타격`,
     apply:p=>p.bounce++},
-  {id:'trap',  ic:'trap',  rar:'l', max:5,  name:'가시 장판',   desc:l=>`몬스터가 근접하면 밀쳐내는 장판 발동 (피해 ${Math.round((0.7+l*0.35)*10)/10}×공격력)`,
+  {id:'trap',  ic:'trap',  rar:'l', max:5,  name:'가시 장판',   desc:l=>`몬스터가 근접하면 밀쳐내는 장판 발동 (피해 ${Math.round((0.7+l*0.35)*10)/10}×공격력, 범위 ${trapR(l)})`,
     apply:p=>p.trap++},
   {id:'bolt',  ic:'bolt',  rar:'l', max:5,  name:'벼락',        desc:l=>`3초마다 번개 ${l}줄기가 무작위로 내리쳐 범위 피해`,
     apply:p=>p.bolt++},
@@ -867,7 +867,11 @@ const BOSSES = [
 ];
 const BOSS_INTERVAL = 300; // 5분마다 보스 출현
 
-function timeScale(){ const m = game.t/60; return 1 + m*0.30 + Math.pow(m,1.85)*0.030 }
+function trapR(l){ return 46 + 12*l }   // 가시 장판 반경: 레벨 1=58 … 레벨 5=106
+function lateL(){ return Math.max(0,(game.t-900)/60) }   // 15분 이후 경과 분
+// 15분(900초) 이후: 1분에 걸쳐 체력이 1.5배로 뛰고, 이후에도 가파르게 계속 강해진다
+function lateMul(){ const L=lateL(); return (1+0.5*Math.min(L,1))*(1+0.30*L+0.03*L*L) }
+function timeScale(){ const m = game.t/60; return (1 + m*0.30 + Math.pow(m,1.85)*0.030) * lateMul() }
 function elemForTime(){
   const t = game.t;
   if(t<150) return 'none';
@@ -891,8 +895,8 @@ function spawnEnemy(){
     k:M.k, name:M.name, el:el.key,
     x:P.x+Math.cos(ang)*rad, y:P.y+Math.sin(ang)*rad,
     hp:M.hp*ts*el.hp, hpMax:M.hp*ts*el.hp,
-    spd:M.spd*el.spd*(1+Math.min(0.55,game.t/700))*rnd(1.08,0.92),
-    dmg:M.dmg*el.dmg*(1+game.t/380), r:M.r, xp:M.xp*(0.7+ts*0.22),
+    spd:M.spd*el.spd*(1+Math.min(0.55,game.t/700)+Math.min(0.3,lateL()*0.03))*rnd(1.08,0.92),
+    dmg:M.dmg*el.dmg*(1+game.t/380)*(1+(lateMul()-1)*0.35), r:M.r, xp:M.xp*(0.7+ts*0.22),
     size:M.size, face:1, ph:rnd(TAU), flash:0, kx:0, ky:0, boss:false, hitT:0, trapT:0,
     freezeT:0, chill:0, slowT:0
   });
@@ -1048,10 +1052,10 @@ function update(dt){
   cam.y = lerp(cam.y, P.y, 1-Math.pow(0.0006,dt));
 
   /* --- 스폰 --- */
-  let rate = Math.min(11, 0.70 + game.t/95 + Math.pow(game.t/60,1.35)*0.28);
+  let rate = Math.min(11, 0.70 + game.t/95 + Math.pow(game.t/60,1.35)*0.28) * (1+Math.min(0.7,lateL()*0.12));
   if(game.boss) rate *= 0.05;          // 보스전 동안 잡몹 압박 대폭 완화 (몬스터 벽에 화살이 막히는 문제 방지)
   game.spawnT += dt*rate;
-  const cap = game.boss? 12 : 160;
+  const cap = game.boss? 12 : (game.t>900 ? 200 : 160);
   while(game.spawnT>=1){ game.spawnT-=1; if(enemies.length<cap) spawnEnemy(); }
 
   if(!game.boss && game.t>=game.nextBossT){
@@ -1083,7 +1087,7 @@ function update(dt){
 
   /* --- 가시 장판 (근접 시 1회 밀쳐내는 장판) --- */
   if(P.trap>0){
-    const TR = 58;
+    const TR = trapR(P.trap);
     const dmg = pdmg()*(0.7+P.trap*0.35);
     near(P.x,P.y,TR,e=>{
       if(e.trapT>0) return;
@@ -1949,8 +1953,8 @@ function drawPlayer(){
 
   // 가시 장판 감지 범위(은은, 점선)
   if(P.trap>0){
-    // 가시덤불 모양 — 테두리에 큰 가시 10개 + 작은 가시 10개가 번갈아 (반경 58 = 실제 발동 범위)
-    const R=58, z=1/ZOOM;                               // 선 두께는 줌과 상관없이 화면에서 일정하게
+    // 가시덤불 모양 — 테두리에 큰 가시 10개 + 작은 가시 10개가 번갈아 (반경 = 실제 발동 범위, 레벨마다 확대)
+    const R=trapR(P.trap), z=1/ZOOM, sk=R/58;                               // 선 두께는 줌과 상관없이 화면에서 일정하게
     ctx.save(); ctx.translate(P.x,P.y); ctx.lineJoin='round';
     ctx.globalAlpha=.08; ctx.fillStyle='#78c86e';
     ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.fill();
@@ -1967,8 +1971,8 @@ function drawPlayer(){
         ctx.strokeStyle='#1c261a'; ctx.lineWidth=2.2*z; ctx.stroke();
       }
     };
-    spikes(10,16,0.15,-Math.PI/2,'#cfd8c4');            // 큰 가시
-    spikes(10,11,0.115,-Math.PI/2+TAU/20,'#b4c4a2');    // 작은 가시
+    spikes(10,16*sk,0.15/sk,-Math.PI/2,'#cfd8c4');            // 큰 가시
+    spikes(10,11*sk,0.115/sk,-Math.PI/2+TAU/20,'#b4c4a2');    // 작은 가시
     ctx.strokeStyle='#1c261a'; ctx.lineWidth=6*z; ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.stroke();
     ctx.strokeStyle='#e8c46a'; ctx.lineWidth=3*z; ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.stroke();
     ctx.restore();
@@ -1985,21 +1989,35 @@ function drawPlayer(){
   }
   ctx.restore();
 
-  // 방패
+  // 쉴드 — 캐릭터를 감싸는 보호막 (남은 횟수만큼 막이 진해지고, 테두리에 횟수 구슬 표시)
   if(P.shield>0){
-    const t=performance.now()/1000;
-    for(let i=0;i<P.shield;i++){
-      const a=t*1.6+i/P.shield*TAU, R=30;
-      ctx.save();ctx.globalAlpha=.85;
-      ctx.translate(P.x+Math.cos(a)*R, P.y-6+Math.sin(a)*R*0.5);
-      ctx.shadowColor='#6fd3ff';ctx.shadowBlur=10;
-      ctx.fillStyle='#8fe3ff';ctx.beginPath();ctx.arc(0,0,4.2,0,TAU);ctx.fill();
-      ctx.restore();
+    const t=performance.now()/1000, cx=P.x, cy=P.y-16, n=P.shield, mx=P.shieldMax;
+    const R=36+Math.sin(t*2.4)*0.8, z=1/ZOOM;
+    ctx.save(); ctx.translate(cx,cy); ctx.scale(1,1.08);
+    const g=ctx.createRadialGradient(-R*.3,-R*.35,R*.1,0,0,R);
+    g.addColorStop(0,'rgba(190,240,255,'+(0.10+0.03*n)+')');
+    g.addColorStop(.7,'rgba(110,205,255,'+(0.14+0.04*n)+')');
+    g.addColorStop(1,'rgba(90,190,255,'+(0.32+0.05*n)+')');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,R,0,TAU); ctx.fill();
+    // 겹 수만큼 안쪽 막
+    for(let k=1;k<n;k++){
+      ctx.globalAlpha=.22; ctx.strokeStyle='#9be4ff'; ctx.lineWidth=1.4*z;
+      ctx.beginPath(); ctx.arc(0,0,R-k*3.2,0,TAU); ctx.stroke();
     }
-    ctx.save();ctx.globalAlpha=.13;ctx.strokeStyle='#6fd3ff';ctx.lineWidth=2;
-    ctx.beginPath();ctx.arc(P.x,P.y-6,32,0,TAU);ctx.stroke();ctx.restore();
-  }
-}
+    ctx.globalAlpha=.9; ctx.strokeStyle='#8fe3ff'; ctx.lineWidth=2.4*z; ctx.shadowColor='#6fd3ff'; ctx.shadowBlur=12;
+    ctx.beginPath(); ctx.arc(0,0,R,0,TAU); ctx.stroke(); ctx.shadowBlur=0;
+    // 돌아가는 광택
+    ctx.globalAlpha=.75; ctx.strokeStyle='#ffffff'; ctx.lineWidth=2.6*z; ctx.lineCap='round';
+    const ra=t*1.3; ctx.beginPath(); ctx.arc(0,0,R-4,ra,ra+.9); ctx.stroke();
+    ctx.globalAlpha=.4; ctx.lineWidth=1.8*z; ctx.beginPath(); ctx.arc(0,0,R-4,ra+TAU/2,ra+TAU/2+.5); ctx.stroke();
+    // 남은 횟수 구슬
+    for(let i=0;i<mx;i++){
+      const a=Math.PI/2+(i-(mx-1)/2)*0.34;
+      ctx.globalAlpha=i<n?1:.22; ctx.fillStyle=i<n?'#e8fbff':'#4a6a7a';
+      ctx.beginPath(); ctx.arc(Math.cos(a)*(R+6),Math.sin(a)*(R+6),3,0,TAU); ctx.fill();
+    }
+    ctx.restore();
+  }}
 
 /* ==========================================================================
    HUD / UI
