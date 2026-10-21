@@ -154,6 +154,7 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
         "불은 단일 대상 피해, 얼음은 감속, 자연은 지속 피해에 강해요. 경로가 꺾이는 곳에 얼음 타워를 두면 다른 타워가 때릴 시간이 늘어납니다.",
         "새 타워를 늘리기보다 핵심 타워를 업그레이드하는 편이 대부분 효율적이에요.",
         "10라운드마다 보스가 나와요. 보스 직전 라운드에는 업그레이드할 골드를 남겨 두세요.",
+        "타워는 3×3 칸 블록의 36자리에만 지을 수 있어요. 몬스터가 네 모서리 블록을 한 바퀴씩 돌기 때문에, 가운데 줄 블록의 자리는 여러 구간을 동시에 공격할 수 있어 특히 좋아요.",
       ],
       faq: [
         { q: "몇 라운드까지 있나요?", a: "50라운드를 모두 막으면 클리어입니다." },
@@ -166,6 +167,7 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
         "Fire hits single targets hard, ice slows, nature deals damage over time. Ice at path corners buys time for others.",
         "Upgrading core towers usually beats building many new ones.",
         "A boss appears every 10 rounds — keep gold for upgrades right before.",
+        "Towers go on the 36 spots inside the 3×3 blocks. Monsters circle each corner block, so spots in the middle blocks can hit several stretches of the path.",
       ],
       faq: [
         { q: "How many rounds?", a: "Survive all 50 rounds to clear." },
