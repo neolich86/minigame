@@ -1,0 +1,15 @@
+{
+  "name": "archer-survivor-android",
+  "version": "1.0.0",
+  "description": "궁수 키우기 - Android(Capacitor) 앱 (playwithme.kr/archer-app 을 여는 방식)",
+  "scripts": {
+    "sync": "npx cap sync android"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@capacitor/android": "^6.2.1",
+    "@capacitor/cli": "^6.2.1",
+    "@capacitor/core": "^6.2.1",
+    "@capacitor-community/admob": "^6.2.0"
+  }
+}

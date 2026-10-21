@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>궁수 키우기</title>
+<style>
+  html,body{margin:0;height:100%;background:#12161c;color:#e8eefa;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif}
+  body{display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;box-sizing:border-box}
+  h1{margin:0 0 10px;font-size:28px;color:#ffc45a;letter-spacing:.04em}
+  p{margin:0 0 20px;font-size:15px;color:#9fb0c8;line-height:1.6}
+  button{font-size:16px;font-weight:800;padding:13px 30px;border:0;border-radius:12px;background:linear-gradient(180deg,#ffd27a,#e0951e);color:#2b1a00}
+</style></head><body>
+<div>
+  <h1>궁수 키우기</h1>
+  <p id="msg">게임을 불러오는 중…</p>
+  <button id="retry">다시 시도</button>
+</div>
+<script>
+  var SITE = "https://playwithme.kr/archer-app";
+  document.getElementById("retry").onclick = function(){ location.href = SITE; };
+  setTimeout(function(){ location.href = SITE; }, 300);
+</script>
+</body></html>

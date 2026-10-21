@@ -1,0 +1,21 @@
+{
+  "appId": "kr.minigame.archer",
+  "appName": "궁수 키우기",
+  "webDir": "www",
+  "backgroundColor": "#12161c",
+  "server": {
+    "url": "https://playwithme.kr/archer-app",
+    "errorPath": "error.html",
+    "cleartext": false,
+    "allowNavigation": [
+      "playwithme.kr",
+      "*.playwithme.kr",
+      "*.kakao.com",
+      "*.kakaocdn.net",
+      "*.supabase.co"
+    ]
+  },
+  "android": {
+    "backgroundColor": "#12161c"
+  }
+}
