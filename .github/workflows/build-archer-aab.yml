@@ -70,7 +70,9 @@ jobs:
           if [ $code -ne 0 ]; then
             echo "::group::gradle log tail"; tail -n 80 "$RUNNER_TEMP/gradle.log"; echo "::endgroup::"
             # 원인 줄을 Annotations 에 바로 보이게 한다
-            grep -E "What went wrong|error:|Could not|FAILED|not found|Execution failed" -A2 "$RUNNER_TEMP/gradle.log" | head -20 | while IFS= read -r l; do echo "::error::${l}"; done
+            # 원인 줄을 Annotations 에 바로 보이게 한다 (한 줄에 모아서)
+            msg=$(grep -E "Build file|What went wrong|Value is null|Caused by|problem occurred" -A3 "$RUNNER_TEMP/gradle.log" | head -30 | tr '\n' '|')
+            echo "::error::${msg}"
           fi
           exit $code
 
