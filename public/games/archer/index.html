@@ -1947,8 +1947,11 @@ function drawPlayer(){
 
   // 가시 장판 감지 범위(은은, 점선)
   if(P.trap>0){
-    ctx.save();ctx.globalAlpha=.09;ctx.strokeStyle='#e8c46a';ctx.lineWidth=1.5;
-    ctx.setLineDash([5,6]);
+    ctx.save();
+    ctx.globalAlpha=.07;ctx.fillStyle='#e8c46a';
+    ctx.beginPath();ctx.arc(P.x,P.y,58,0,TAU);ctx.fill();
+    ctx.globalAlpha=.75;ctx.strokeStyle='#ffd978';ctx.lineWidth=3/ZOOM;   // 화면에서 항상 3px 두께로 보이게
+    ctx.setLineDash([9/ZOOM,6/ZOOM]);
     ctx.beginPath();ctx.arc(P.x,P.y,58,0,TAU);ctx.stroke();ctx.restore();
   }
 
