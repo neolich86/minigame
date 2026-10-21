@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: android-archer
@@ -36,12 +36,14 @@ jobs:
           cache: npm
           cache-dependency-path: android-archer/package-lock.json
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
 
-      - uses: android-actions/setup-android@v3
+      # ubuntu 러너에는 Android SDK 가 이미 들어 있다. 라이선스만 수락해 두면 Gradle 이 부족한 플랫폼을 받는다.
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
 
       - name: Install deps and sync Capacitor
         run: |
