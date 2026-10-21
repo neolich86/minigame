@@ -1949,12 +1949,29 @@ function drawPlayer(){
 
   // 가시 장판 감지 범위(은은, 점선)
   if(P.trap>0){
-    ctx.save();
-    ctx.globalAlpha=.07;ctx.fillStyle='#e8c46a';
-    ctx.beginPath();ctx.arc(P.x,P.y,58,0,TAU);ctx.fill();
-    ctx.globalAlpha=.75;ctx.strokeStyle='#ffd978';ctx.lineWidth=3/ZOOM;   // 화면에서 항상 3px 두께로 보이게
-    ctx.setLineDash([9/ZOOM,6/ZOOM]);
-    ctx.beginPath();ctx.arc(P.x,P.y,58,0,TAU);ctx.stroke();ctx.restore();
+    // 가시덤불 모양 — 테두리에 큰 가시 10개 + 작은 가시 10개가 번갈아 (반경 58 = 실제 발동 범위)
+    const R=58, z=1/ZOOM;                               // 선 두께는 줌과 상관없이 화면에서 일정하게
+    ctx.save(); ctx.translate(P.x,P.y); ctx.lineJoin='round';
+    ctx.globalAlpha=.08; ctx.fillStyle='#78c86e';
+    ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.fill();
+    ctx.globalAlpha=.95;
+    const spikes=(n,len,half,rot,fill)=>{
+      for(let i=0;i<n;i++){
+        const a=rot+i/n*TAU;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a-half)*R,Math.sin(a-half)*R);
+        ctx.lineTo(Math.cos(a)*(R+len),Math.sin(a)*(R+len));
+        ctx.lineTo(Math.cos(a+half)*R,Math.sin(a+half)*R);
+        ctx.closePath();
+        ctx.fillStyle=fill; ctx.fill();
+        ctx.strokeStyle='#1c261a'; ctx.lineWidth=2.2*z; ctx.stroke();
+      }
+    };
+    spikes(10,16,0.15,-Math.PI/2,'#cfd8c4');            // 큰 가시
+    spikes(10,11,0.115,-Math.PI/2+TAU/20,'#b4c4a2');    // 작은 가시
+    ctx.strokeStyle='#1c261a'; ctx.lineWidth=6*z; ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.stroke();
+    ctx.strokeStyle='#e8c46a'; ctx.lineWidth=3*z; ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.stroke();
+    ctx.restore();
   }
 
   ctx.save();
