@@ -496,7 +496,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div class="toolbar">
     <button class="btn btn-ghost" id="btnRules">📜 게임 룰</button>
     <button class="btn btn-ghost" id="btnDex">📖 컬렉션 도감 보기</button>
-    <button class="btn btn-ghost" id="btnVs" style="display:none">🔥 친구에게 도전</button>
+    <button class="btn btn-ghost" id="btnVs" style="display:none">🔥 친구에게 공유하기</button>
   </div>
 
   <div class="booth-panel">
@@ -1243,7 +1243,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       shareText:L2(`🃏 오리파 시뮬레이터 최고 자산 ${won(peakCash)}! 누가 더 부자가 되나 대결하자`, `🃏 Peak funds ${won(peakCash)} in Oripa Simulator. Who gets richer?`)
     });
   }
-  if(btnVs){ btnVs.onclick = openVs; if(window.MGH && MGH.L) btnVs.textContent = MGH.L("🔥 친구에게 도전","🔥 Challenge a friend"); }
+  if(btnVs){ btnVs.onclick = openVs; if(window.MGH && MGH.L) btnVs.textContent = MGH.L("🔥 친구에게 공유하기","🔥 Share"); }
 
   function openBankruptModal(){
     el.bankruptStamp.textContent = t("bankruptStamp");

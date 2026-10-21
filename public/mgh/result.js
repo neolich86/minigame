@@ -1,4 +1,5 @@
-/* 미니게임천국 — 게임 결과 · 친구에게 도전하기 공용 팝업
+/* 미니게임천국 — 게임 결과 · 친구에게 공유하기 공용 팝업
+ *   ※ 결과 화면 위에 자동으로 띄우지 말고, 유저가 '친구에게 공유하기' 버튼을 눌렀을 때 open() 을 호출할 것.
  *
  *   MGH.result.open({
  *     board: 'archer',            // 랭킹 보드 id (도전장·TOP % 기준)
@@ -83,7 +84,7 @@
       "</div>";
     document.body.appendChild(el);
     $("mghrName").placeholder = L("내 이름 (친구에게 보여져요)", "Your name (shown to your friend)");
-    $("mghrChal").textContent = L("🔥 친구에게 도전하기", "🔥 Challenge a friend");
+    $("mghrChal").textContent = L("🔥 친구에게 공유하기", "🔥 Share with a friend");
     $("mghrShare").textContent = L("📸 결과 공유하기", "📸 Share result");
     $("mghrCopy").textContent = L("🔗 링크 복사", "🔗 Copy link");
     $("mghrClose").textContent = L("계속하기", "Continue");

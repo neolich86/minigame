@@ -224,7 +224,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
       <div class="stat"><b id="resTime">00:00</b><span>TIME</span></div>
     </div>
     <p id="resScore" style="margin:-8px 0 22px;font-size:13px;line-height:1.6;color:var(--muted);"></p>
-    <button class="playAgainBtn" id="vsBtn" style="margin:0 auto 10px;display:none;">🔥 친구에게 도전하기</button>
+    <button class="playAgainBtn" id="vsBtn" style="margin:0 auto 10px;display:none;">🔥 친구에게 공유하기</button>
     <button class="playAgainBtn" id="playAgainBtn" style="margin:0 auto;">다시하기</button>
   </div>
 </div>
@@ -664,10 +664,9 @@ function showResult(){
       meta: {speed:speed, acc:acc, cities:citiesDone},
       shareText: kr ? L2(`⌨️ 세계도시 타이핑 ${rankScoreVal}타! 누가 더 빠른지 대결하자`, `⌨️ ${rankScoreVal} CPM in World City Typing. Who's faster?`) : L2(`⌨️ 세계도시 타이핑 ${rankScoreVal} WPM! 누가 더 빠른지 대결하자`, `⌨️ ${rankScoreVal} WPM in World City Typing. Who's faster?`)
     };
-    vsBtn.textContent = L2('🔥 친구에게 도전하기','🔥 Challenge a friend');
+    vsBtn.textContent = L2('🔥 친구에게 공유하기','🔥 Share with a friend');
     vsBtn.style.display = '';
     vsBtn.onclick = ()=> MGH.result.open(vsOpts);
-    setTimeout(()=> MGH.result.open(vsOpts), 700);
   }
   if(window.MGH && citiesDone >= 25){
     MGH.submitScore(mode==='kr' ? 'world-typing-kr' : 'world-typing-en', Math.round(speed*acc/100), {speed:speed, acc:acc, cities:citiesDone, ms:elapsedMs});

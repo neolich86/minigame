@@ -184,7 +184,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
     <div class="logo">ROULETTE<small id="tSub">싱글 제로 · 유럽식</small></div>
     <div class="sp"></div>
     <button class="ibtn" id="btnLogin" style="display:none">🔑 <span id="tLogin">로그인하고 랭킹 등록</span></button>
-    <button class="ibtn" id="btnVs" style="display:none">🔥 친구에게 도전</button>
+    <button class="ibtn" id="btnVs" style="display:none">🔥 친구에게 공유하기</button>
     <button class="ibtn" id="btnHelp">📖 배당표</button>
     <button class="ibtn" id="btnSound">🔊</button>
   </div>
@@ -857,7 +857,7 @@ function texts(){
   $("lHint").textContent = L("선 위를 누르면 스플릿·코너 · 길게 누르거나 우클릭하면 회수","Tap a line for splits/corners · long-press or right-click to remove");
   $("tUndo").textContent = L("취소","Undo"); $("tClear").textContent = L("지우기","Clear"); $("tRebet").textContent = L("다시","Rebet");
   $("btnHelp").textContent = L("📖 배당표","📖 Payouts"); $("tLogin").textContent = L("로그인하고 랭킹 등록","Log in to rank");
-  $("btnVs").textContent = L("🔥 친구에게 도전","🔥 Challenge");
+  $("btnVs").textContent = L("🔥 친구에게 공유하기","🔥 Share");
   $("hTitle").textContent = L("배당표","Payouts");
   $("hIntro").textContent = L("숫자 0이 하나뿐인 유럽식 룰렛입니다(37칸). 0이 나오면 0을 포함하지 않은 베팅은 모두 집니다. 배당은 원금을 제외한 금액이에요.","European roulette with a single zero (37 pockets). When 0 hits, every bet that doesn't cover 0 loses. Payouts exclude your stake.");
   $("hHow").textContent = L("칩을 고르고 칸을 누르면 베팅됩니다. 숫자 사이 선은 스플릿, 네 칸이 만나는 점은 코너, 숫자판 아래(세로 화면은 왼쪽) 가장자리는 스트리트·식스 라인이에요. 잔액이 100만 원 이상이면 로그인한 계정의 최고 잔액이 랭킹에 기록됩니다. Space = 스핀, Ctrl+Z = 취소.","Pick a chip and tap a spot. Lines between numbers are splits, intersections are corners, and the outer edge of the number grid gives streets and six lines. While your balance is ₩1,000,000 or more, your peak is recorded on the leaderboard when signed in. Space = spin, Ctrl+Z = undo.");

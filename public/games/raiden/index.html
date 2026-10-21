@@ -27,6 +27,9 @@
   #pauseBtn{right:10px;top:34px}
   #sndBtn{right:10px;top:74px}
   @media (hover:hover){#bombBtn{opacity:.55}#bombBtn:hover{opacity:1}}
+  #vsBtn{display:none;left:50%;top:64%;transform:translateX(-50%);white-space:nowrap;padding:12px 18px;font-size:14px;
+    border-color:#ff9b4a;color:#ffb43d;background:rgba(40,18,6,.85)}
+  #vsBtn:active{transform:translateX(-50%) translateY(1px)}
 </style>
 </head>
 <body>
@@ -37,6 +40,7 @@
     <div class="btn" id="pauseBtn">II</div>
     <div class="btn" id="sndBtn">♪</div>
     <div class="btn" id="bombBtn"><b>💣</b><span id="bombN">3</span></div>
+    <div class="btn" id="vsBtn">🔥 친구에게 공유하기</div>
   </div>
 </div>
 <script>
@@ -332,7 +336,7 @@ function killPlayer(){
   P.dead=true;P.resp=110;P.lives--;SFX.dead();shake=20;
   burst(P.x,P.y,60,'#ff9a5a',7,5);ring(P.x,P.y,'#ff6a4a',180);
   const t=WP.type;WP.lv[t]=Math.max(1,WP.lv[t]-2);WP.dmg[t]=Math.max(1,WP.dmg[t]-1);
-  if(P.lives<0){state='over';high=Math.max(high,score);saveHigh();if(window.MGH)MGH.submitScore('raiden',score,{stage:stage_});openVs();}
+  if(P.lives<0){state='over';high=Math.max(high,score);saveHigh();if(window.MGH)MGH.submitScore('raiden',score,{stage:stage_});}
 }
 
 /* ---------- 업데이트 ---------- */
@@ -630,6 +634,7 @@ function render(){
   if(state==='select')drawSelect();
   if(state==='pause'){g.fillStyle='rgba(4,10,8,.6)';g.fillRect(0,0,W,H);
     center([{t:'PAUSED',f:'bold 32px monospace'},{t:'P 키로 계속',f:'12px monospace',c:'#7ea592'}]);}
+  syncVsBtn();
   if(state==='over'){g.fillStyle='rgba(20,4,4,.75)';g.fillRect(0,0,W,H);
     center([{t:'GAME OVER',f:'bold 36px monospace',c:'#ff6a4a'},
       {t:'SCORE '+score,f:'16px monospace',c:'#cfe6d8'},
@@ -646,13 +651,24 @@ function openVs(){
   if(!(window.MGH && MGH.result) || score<=0) return;
   const L2=(ko,en)=> MGH.L ? MGH.L(ko,en) : ko;
   const s=score, st=stage_, ship=SHIPS[P.ship].n;
-  setTimeout(()=>MGH.result.open({
+  MGH.result.open({
     board:'raiden', score:s, fmt:v=>v.toLocaleString(),
     game:'SKY STRIKE', icon:'✈️', accent:'#5ff0a8',
     label:L2('내 점수','MY SCORE'), friend:L2('친구','Friend'), question:L2('점수 대결','Score battle'),
     sub:`STAGE ${st} · ${ship}`, meta:{stage:st},
     shareText:L2(`✈️ 스카이 스트라이크 ${s.toLocaleString()}점! 점수 대결하자`, `✈️ ${s.toLocaleString()} pts in Sky Strike. Score battle?`)
-  }), 900);
+  });
+}
+/* 게임오버 화면에서만 '친구에게 공유하기' 버튼 노출 — 누르면 결과 팝업이 열린다 */
+const vsBtnEl=document.getElementById('vsBtn');
+vsBtnEl.onclick=e=>{e.stopPropagation();openVs()};
+['mousedown','touchstart'].forEach(t=>vsBtnEl.addEventListener(t,e=>e.stopPropagation(),{passive:true}));
+let vsShown=false;
+function syncVsBtn(){
+  const on = state==='over' && score>0 && !!(window.MGH && MGH.result);
+  if(on===vsShown) return; vsShown=on;
+  vsBtnEl.style.display = on ? 'block' : 'none';
+  if(on) vsBtnEl.textContent = (window.MGH&&MGH.L) ? MGH.L('🔥 친구에게 공유하기','🔥 Share with a friend') : '🔥 친구에게 공유하기';
 }
 
 /* ---------- 하이스코어 ---------- */
