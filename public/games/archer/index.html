@@ -2114,7 +2114,7 @@ function togglePause(){
    광고 (모바일 앱 전용) — 보상형 광고로 판당 1회 이어하기
    · 네이티브(Capacitor) 앱에서만 동작(앱은 이 포털의 /archer-app 을 열고 부모 창에 브리지가 있다). 웹 브라우저에서는 버튼이 나타나지 않는다.
    · ?testads=1 로 열면 브라우저에서 가짜 광고(0.4초)로 흐름만 테스트할 수 있다.
-   · 아래 AD_UNIT_REWARD 는 구글 공식 '테스트용' ID. 출시 전 본인 AdMob 광고 단위 ID로 교체!
+   · AD_UNIT_REWARD: 실제 AdMob 보상형 광고 단위 ID
    ========================================================================== */
 /* ==========================================================================
    앱 전용 (구글 플레이 '궁수 키우기') — 앱은 포털의 /archer-app 주소를 연다
@@ -2145,7 +2145,7 @@ function tryStart(){
   MGH.save.login();                                 // 포털 로그인 화면(이메일·카카오) → 끝나면 이 화면으로 돌아온다
 }
 
-const AD_UNIT_REWARD = 'ca-app-pub-3940256099942544/5224354917'; // TEST ID — 출시 전 교체
+const AD_UNIT_REWARD = 'ca-app-pub-9826307769121956/8305405897';
 const AdBridge = (function(){
   const cap = (function(){            // 게임은 포털 페이지의 iframe 안에서 돌아서, 네이티브 브리지는 부모 창에 있다
     try { if(window.Capacitor) return window.Capacitor; } catch(e){}

@@ -25,10 +25,10 @@
 
         </activity>
 
-        <!-- AdMob 앱 ID: 아래는 구글 공식 '테스트용' ID 입니다. 출시 전에 본인 AdMob 앱 ID(ca-app-pub-XXXX~YYYY)로 교체하세요. -->
+        <!-- AdMob 앱 ID (실제 ID) -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="ca-app-pub-9826307769121956~3623924854"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"
