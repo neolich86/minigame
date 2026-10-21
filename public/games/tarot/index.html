@@ -333,22 +333,25 @@ const L2 = (o) => (LANG === "en" ? o.en : o.ko);
 const POS = {
   one: [["핵심 카드", "Your card"]],
   three: [["과거", "Past"], ["현재", "Present"], ["미래", "Future"]],
-  yearOne: [["올해의 카드", "Card of the year"]],
+  yearOne: [["한 해의 카드", "Card of the year"]],
   yearThree: [["상반기", "First half"], ["하반기", "Second half"], ["한 해의 조언", "Advice for the year"]],
 };
 const posNames = (cat, spread) => POS[(cat === "year" ? "year" + spread[0].toUpperCase() + spread.slice(1) : spread)].map((p) => p[LANG === "en" ? 1 : 0]);
 
 // 올해 운세: 12월은 다음 해, 1월은 그 해의 '신년운세'
+// 올해 운세: 10~12월은 다음 해 신년운세, 1월은 그 해 신년운세, 그 밖에는 'O년 운세'
+function isNewYear(y) {
+  const d = new Date(), m = d.getMonth(), cy = d.getFullYear();
+  return y > cy || (m === 0 && y === cy);
+}
 function yearInfo(fixed) {
-  if (fixed) return { y: fixed, label: t("yearN", { y: fixed }) };
-  const d = new Date(), m = d.getMonth(), y = d.getFullYear();
-  if (m === 11) return { y: y + 1, label: t("yearNew", { y: y + 1 }) };
-  if (m === 0) return { y, label: t("yearNew", { y }) };
-  return { y, label: t("yearN", { y }) };
+  const d = new Date(), m = d.getMonth(), cy = d.getFullYear();
+  const y = fixed || (m >= 9 ? cy + 1 : cy);
+  return { y, label: t(isNewYear(y) ? "yearNew" : "yearN", { y }) };
 }
 function spreadLabel(cat, spread) {
   if (cat !== "year") return t(spread);
-  return spread === "one" ? (LANG === "en" ? "Card of the year" : "올해의 카드") : (LANG === "en" ? "First half · Second half · Advice" : "상반기·하반기·조언");
+  return spread === "one" ? (LANG === "en" ? "Card of the year" : "한 해의 카드") : (LANG === "en" ? "First half · Second half · Advice" : "상반기·하반기·조언");
 }
 function spreadTitle(cat, spread) { return `${catName(cat, S.year)} · ${spreadLabel(cat, spread)}`; }
 function catName(id, year) {

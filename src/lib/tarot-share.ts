@@ -63,8 +63,18 @@ export function tarotShareQuery(x: TarotShare) {
   return q.toString();
 }
 
+/** 10월~다음 해 1월은 신년운세 시즌 — 그 해는 'O 신년운세', 그 밖에는 'O년 운세' (한국 시간 기준) */
+function isNewYear(y: number, now = new Date()) {
+  const kst = new Date(now.getTime() + 9 * 3600_000);
+  const cy = kst.getUTCFullYear();
+  return y > cy || (kst.getUTCMonth() === 0 && y === cy);
+}
+
 export function tarotCatName(x: TarotShare, lang: "ko" | "en") {
-  if (x.c === "year" && x.y) return lang === "ko" ? `${x.y}년 운세` : `${x.y} Fortune`;
+  if (x.c === "year" && x.y) {
+    if (isNewYear(x.y)) return lang === "ko" ? `${x.y} 신년운세` : `${x.y} New Year`;
+    return lang === "ko" ? `${x.y}년 운세` : `${x.y} Fortune`;
+  }
   return TAROT_CATS[x.c][lang];
 }
 

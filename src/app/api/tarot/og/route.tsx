@@ -33,7 +33,7 @@ export async function GET(req: Request) {
   const imgs = await Promise.all(x.cards.map((k) => cardImage(url.origin, k.n, k.rev, cw)));
 
   const pos = x.c === "year"
-    ? (one ? ["올해의 카드"] : ["상반기", "하반기", "한 해의 조언"])
+    ? (one ? ["한 해의 카드"] : ["상반기", "하반기", "한 해의 조언"])
     : (one ? ["핵심 카드"] : ["과거", "현재", "미래"]);
   const lines = {
     top: "TAROT READING · 타로 운세",
