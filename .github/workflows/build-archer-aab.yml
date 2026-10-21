@@ -63,7 +63,16 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: ./gradlew bundleRelease --no-daemon
+        run: |
+          set +e
+          ./gradlew bundleRelease --no-daemon --stacktrace > "$RUNNER_TEMP/gradle.log" 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            echo "::group::gradle log tail"; tail -n 80 "$RUNNER_TEMP/gradle.log"; echo "::endgroup::"
+            # 원인 줄을 Annotations 에 바로 보이게 한다
+            grep -E "What went wrong|error:|Could not|FAILED|not found|Execution failed" -A2 "$RUNNER_TEMP/gradle.log" | head -20 | while IFS= read -r l; do echo "::error::${l}"; done
+          fi
+          exit $code
 
       - uses: actions/upload-artifact@v4
         with:
