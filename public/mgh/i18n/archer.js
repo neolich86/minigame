@@ -3,10 +3,10 @@
   var SK = {
     "신속 사격": "Rapid Fire", "멀티샷": "Multishot", "관통": "Pierce", "폭발 화살": "Explosive Arrow",
     "수호 방패": "Guardian Shield", "강궁": "Longbow", "질풍 보행": "Gale Stride", "수정 자석": "Crystal Magnet",
-    "강인한 육체": "Iron Body", "급소 간파": "Weak Spot", "가시 오라": "Thorn Aura", "재생": "Regeneration",
+    "강인한 육체": "Iron Body", "급소 간파": "Weak Spot", "재생": "Regeneration",
     "충격 화살": "Impact Arrow", "현자의 통찰": "Sage's Insight", "도약 화살": "Ricochet Arrow",
     "가시 장판": "Spike Trap", "벼락": "Thunderbolt", "운석 낙하": "Meteor Fall", "블랙홀": "Black Hole",
-    "독구름": "Poison Cloud", "행운의 룰렛": "Lucky Roulette",
+    "지뢰": "Landmine", "부메랑": "Boomerang", "행운의 룰렛": "Lucky Roulette",
   };
   var MON = {
     "초록 슬라임": "Green Slime", "파랑 슬라임": "Blue Slime", "박쥐": "Bat", "꿀벌": "Bee", "새싹이": "Sprout",
@@ -74,7 +74,6 @@
       [/^이동 속도 \+8% \(현재 \+(\d+)%\)$/, "Move speed +8% (now +$1%)"],
       [/^최대 체력 \+30 및 즉시 회복 \((\d+)\)$/, "Max HP +30 and heal fully ($1)"],
       [/^치명타 확률 \+10% \((\d+)%, 2\.2배\)$/, "Crit chance +10% ($1%, ×2.2)"],
-      [/^주변 지속 피해 \(반경 (\d+), 0\.5초마다 ([\d.]+)×공격력\)$/, "Damage aura (radius $1, $2×ATK every 0.5s)"],
       [/^초당 체력 ([\d.]+) 회복$/, "Regenerate $1 HP per second"],
       [/^적을 밀쳐냅니다 \(강도 (\d+)\)$/, "Knocks enemies back (power $1)"],
       [/^경험치 획득 \+20% \(현재 \+(\d+)%\)$/, "XP gain +20% (now +$1%)"],
@@ -82,7 +81,8 @@
       [/^몬스터가 근접하면 밀쳐내는 장판 발동 \(피해 ([\d.]+)×공격력\)$/, "A trap knocks back monsters that get close ($1×ATK)"],
       [/^3초마다 번개 (\d+)줄기가 무작위로 내리쳐 범위 피해$/, "Every 3s, $1 lightning bolt(s) strike at random for area damage"],
       [/^11초마다 블랙홀 생성 — 적을 빨아들이고 이동속도 감소, 종료 시 폭발 \(Lv(\d+)\)$/, "Every 11s a black hole pulls enemies in and slows them, then explodes (Lv$1)"],
-      [/^나를 따라다니는 독구름이 지나가는 적에게 지속 피해 \+ 중첩 \(반경 (\d+)\)$/, "A poison cloud follows you, stacking damage on enemies (radius $1)"],
+      [/^3초마다 주변에 지뢰 (\d+)개 설치 — 밟으면 폭발 \(반경 (\d+), 피해 ([\d.]+)×공격력\)$/, "Every 3s, plant $1 mine(s) nearby — they explode when stepped on (radius $2, $3×ATK)"],
+      [/^2\.2초마다 (적 방향 \+ 반대 방향 2개를 )?던져 왕복하며 관통 타격 \(크기 (\d+), 피해 ([\d.]+)×공격력, 왕복 각 1회\)$/, function (_, two, sz, d) { return "Every 2.2s throw " + (two ? "2 boomerangs (one at the enemy, one opposite) " : "a boomerang ") + "that pierces on the way out and back (size " + sz + ", " + d + "×ATK, once per leg)"; }],
       [/^(\d+)초마다 슬롯머신이 돌아 7초간 무작위 버프 \(공속×2 \/ 이속×3 \/ 치명타100% \/ 공격력×2 \/ 무적\)$/, "Every $1s a slot machine grants a random 7s buff (ATK SPD×2 / Speed×3 / Crit 100% / ATK×2 / Invincible)"],
       [/^(일반|고급|희귀|전설) · Lv (\d+)\/(\d+)$/, function (_, r, a, b) { return RAR[r] + " · Lv " + a + "/" + b; }],
       [/^생존 ([\d:]+) · LV (\d+) · 처치 (\d+)$/, "Survived $1 · LV $2 · Kills $3"],

@@ -659,19 +659,6 @@ const ICONS = {
   crit(g,S,c){g.fillStyle=c;g.beginPath();
     for(let i=0;i<10;i++){const a=-Math.PI/2+i/10*TAU,r=i%2?S*.16:S*.40;
       g[i?'lineTo':'moveTo'](S*.5+Math.cos(a)*r,S*.5+Math.sin(a)*r);}g.closePath();g.fill()},
-  aura(g,S,c){
-    g.fillStyle=c;g.beginPath();g.arc(S*.5,S*.5,S*.13,0,TAU);g.fill();
-    for(const rr of [S*.26,S*.40]){
-      g.globalAlpha = rr>S*.3?.45:.8;
-      g.strokeStyle=c;g.lineWidth=S*.045;g.beginPath();g.arc(S*.5,S*.5,rr,0,TAU);g.stroke();
-    }
-    g.globalAlpha=1;
-    for(let i=0;i<8;i++){const a=i/8*TAU;
-      g.save();g.translate(S*.5+Math.cos(a)*S*.40,S*.5+Math.sin(a)*S*.40);g.rotate(a);
-      g.beginPath();g.moveTo(-S*.045,0);g.lineTo(S*.045,0);g.lineTo(0,-S*.11);g.closePath();g.fillStyle=c;g.fill();
-      g.restore();
-    }
-  },
   regen(g,S,c){g.strokeStyle=c;g.lineWidth=S*.085;g.lineCap='round';
     g.beginPath();g.arc(S*.5,S*.52,S*.30,0.6,TAU-0.2);g.stroke();
     g.beginPath();g.moveTo(S*.72,S*.16);g.lineTo(S*.80,S*.40);g.lineTo(S*.56,S*.40);g.closePath();g.fillStyle=c;g.fill();
@@ -685,6 +672,18 @@ const ICONS = {
   bounce(g,S,c){g.strokeStyle=c;g.lineWidth=S*.075;g.lineCap='round';g.lineJoin='round';
     g.beginPath();g.moveTo(S*.12,S*.72);g.lineTo(S*.38,S*.28);g.lineTo(S*.60,S*.66);g.lineTo(S*.86,S*.24);g.stroke();
     g.fillStyle=c;g.beginPath();g.arc(S*.86,S*.24,S*.09,0,TAU);g.fill()},
+  mine(g,S,c){
+    g.fillStyle=c;g.beginPath();g.arc(S*.5,S*.55,S*.26,0,TAU);g.fill();
+    g.strokeStyle=c;g.lineWidth=S*.06;g.lineCap='round';
+    for(let i=0;i<8;i++){const a=i/8*TAU;
+      g.beginPath();g.moveTo(S*.5+Math.cos(a)*S*.26,S*.55+Math.sin(a)*S*.26);
+      g.lineTo(S*.5+Math.cos(a)*S*.40,S*.55+Math.sin(a)*S*.40);g.stroke();}
+    g.fillStyle='#2a1a10';g.beginPath();g.arc(S*.5,S*.55,S*.09,0,TAU);g.fill();
+  },
+  boom(g,S,c){
+    g.strokeStyle=c;g.lineWidth=S*.15;g.lineCap='round';g.lineJoin='round';
+    g.beginPath();g.moveTo(S*.22,S*.74);g.lineTo(S*.42,S*.30);g.lineTo(S*.80,S*.26);g.stroke();
+  },
   trap(g,S,c){
     g.strokeStyle=c;g.lineWidth=S*.06;g.beginPath();g.ellipse(S*.5,S*.62,S*.34,S*.14,0,0,TAU);g.stroke();
     g.globalAlpha=.28;g.fillStyle=c;g.beginPath();g.ellipse(S*.5,S*.62,S*.34,S*.14,0,0,TAU);g.fill();g.globalAlpha=1;
@@ -723,17 +722,6 @@ const ICONS = {
       g.beginPath();g.arc(S*.5,S*.5,S*rr,rr*2,rr*2+4.6);g.stroke();
     }
     g.globalAlpha=1;
-  },
-  poison(g,S,c){
-    g.fillStyle=c;g.globalAlpha=.85;
-    g.beginPath();
-    g.arc(S*.36,S*.48,S*.20,Math.PI*0.5,Math.PI*1.5);
-    g.arc(S*.56,S*.34,S*.24,Math.PI*1.1,Math.PI*2.15);
-    g.arc(S*.76,S*.50,S*.16,Math.PI*1.5,Math.PI*0.5);
-    g.closePath();g.fill();
-    g.globalAlpha=1;
-    g.fillStyle='#1b2e14';
-    for(const [dx,dy] of [[-0.10,-0.02],[0.10,-0.02]]) { g.beginPath();g.arc(S*.5+S*dx,S*.42+S*dy,S*.03,0,TAU);g.fill(); }
   },
   blizzard(g,S,c){
     g.strokeStyle=c;g.lineWidth=S*.06;g.lineCap='round';
@@ -786,8 +774,6 @@ const UPGRADES = [
     apply:p=>{p.hpMax+=30;p.hp=Math.min(p.hpMax,p.hp+30)}},
   {id:'crit',  ic:'crit',  rar:'e', max:6,  name:'급소 간파',   desc:l=>`치명타 확률 +10% (${l*10}%, 2.2배)`,
     apply:p=>p.crit+=0.10},
-  {id:'aura',  ic:'aura',  rar:'l', max:6,  name:'가시 오라',   desc:l=>`주변 지속 피해 (반경 ${Math.round(64+l*17)}, 0.5초마다 ${Math.round((0.9+l*0.55)*10)/10}×공격력)`,
-    apply:p=>p.aura++},
   {id:'regen', ic:'regen', rar:'r', max:6,  name:'재생',        desc:l=>`초당 체력 ${(l*0.7).toFixed(1)} 회복`,
     apply:p=>p.regen+=0.7},
   {id:'knock', ic:'knock', rar:'n', max:4,  name:'충격 화살',   desc:l=>`적을 밀쳐냅니다 (강도 ${l})`,
@@ -808,8 +794,10 @@ const UPGRADES = [
     apply:p=>p.meteor++},
   {id:'blackhole',ic:'blackhole',rar:'l', max:4, name:'블랙홀',  desc:l=>`11초마다 블랙홀 생성 — 적을 빨아들이고 이동속도 감소, 종료 시 폭발 (Lv${l})`,
     apply:p=>p.blackhole++},
-  {id:'poison',ic:'poison',rar:'l', max:4, name:'독구름',      desc:l=>`나를 따라다니는 독구름이 지나가는 적에게 지속 피해 + 중첩 (반경 ${Math.round(110+l*24)})`,
-    apply:p=>p.poison++},
+  {id:'mine',ic:'mine',rar:'l', max:5, name:'지뢰', desc:l=>`3초마다 주변에 지뢰 ${l}개 설치 — 밟으면 폭발 (반경 ${70+l*16}, 피해 ${Math.round((2.2+l*0.45)*10)/10}×공격력)`,
+    apply:p=>p.mine++},
+  {id:'boom',ic:'boom',rar:'l', max:5, name:'부메랑', desc:l=>`2.2초마다 ${l>=4?'적 방향 + 반대 방향 2개를 ':''}던져 왕복하며 관통 타격 (크기 ${Math.round(16+l*5)}, 피해 ${Math.round((1.2+l*0.6)*10)/10}×공격력, 왕복 각 1회)`,
+    apply:p=>p.boom++},
   {id:'roulette',ic:'roulette',rar:'l', max:3, name:'행운의 룰렛', desc:l=>`${l===1?30:l===2?20:10}초마다 슬롯머신이 돌아 7초간 무작위 버프 (공속×2 / 이속×3 / 치명타100% / 공격력×2 / 무적)`,
     apply:p=>p.roulette++}
 ];
@@ -818,7 +806,7 @@ const UPMAP = Object.fromEntries(UPGRADES.map(u=>[u.id,u]));
 /* ==========================================================================
    게임 상태
    ========================================================================== */
-let P, enemies, bullets, gems, fx, texts, cam, keys, game, meteors, blackholes, poisonCloud, zones;
+let P, enemies, bullets, gems, fx, texts, cam, keys, game, meteors, blackholes, zones, mines, booms;
 
 function newPlayer(){
   return {
@@ -826,9 +814,9 @@ function newPlayer(){
     hp:100, hpMax:100,
     lv:1, xp:0, xpNeed:10,
     spd:178, dmg:15, aspd:1, range:330, pick:105,
-    multi:1, pierce:1, aoe:0, crit:0, aura:0, regen:0, knock:0,
-    xpMul:1, bounce:0, auraT:0, trap:0, bolt:0, boltT:3,
-    meteor:0, meteorT:3.0, blackhole:0, blackholeT:11, poison:0,
+    multi:1, pierce:1, aoe:0, crit:0, regen:0, knock:0,
+    xpMul:1, bounce:0, trap:0, bolt:0, boltT:3,
+    meteor:0, meteorT:3.0, blackhole:0, blackholeT:11, mine:0, mineT:1.5, boom:0, boomT:1.2,
     blizzard:0, blizzardT:2, roulette:0, rouletteT:30,
     rouletteSpin:0, rouletteSpinTxt:'', rouletteSwapT:0, rouletteResultT:0,
     buffType:null, buffT:0,
@@ -840,7 +828,7 @@ function newPlayer(){
 function reset(){
   P = newPlayer();
   enemies=[]; bullets=[]; gems=[]; fx=[]; texts=[];
-  meteors=[]; blackholes=[]; poisonCloud=null; zones=[];
+  meteors=[]; blackholes=[]; zones=[]; mines=[]; booms=[];
   cam={x:0,y:0};
   game = {
     t:0, kills:0, bossKills:0, spawnT:0, over:false, paused:false,
@@ -904,7 +892,7 @@ function spawnEnemy(){
     spd:M.spd*el.spd*(1+Math.min(0.55,game.t/700))*rnd(1.08,0.92),
     dmg:M.dmg*el.dmg*(1+game.t/380), r:M.r, xp:M.xp*(0.7+ts*0.22),
     size:M.size, face:1, ph:rnd(TAU), flash:0, kx:0, ky:0, boss:false, hitT:0, trapT:0,
-    freezeT:0, chill:0, poisonStk:0, poisonT:0, slowT:0
+    freezeT:0, chill:0, slowT:0
   });
 }
 function spawnBoss(tier){
@@ -916,11 +904,11 @@ function spawnBoss(tier){
   // 멀티샷도 부채꼴로 퍼져 나가 단일 목표에는 일부만 명중하므로 보정한다.
   const effMulti = 1 + (P.multi-1)*0.4;
   let estDPS = (P.dmg*effMulti*P.aspd/0.56)*(1+P.crit*1.2)
-                 +(P.aura*(P.dmg*0.6+3)*2)
                  +(P.bolt*P.dmg*1.6/3)+(P.trap*(P.dmg*0.9)*0.6);
   if(P.meteor>0) estDPS += (P.meteor>=2?2:1)*P.dmg*(2.4+P.meteor*0.5)/6.5;
   if(P.blackhole>0) estDPS += P.dmg*(2.0+P.blackhole*0.6)/11;
-  if(P.poison>0) estDPS += P.dmg*(0.5+P.poison*0.25)/0.4*0.5;
+  if(P.mine>0) estDPS += P.mine*P.dmg*(2.2+P.mine*0.45)/3*0.35;
+  if(P.boom>0) estDPS += (P.boom>=4?2:1)*P.dmg*(1.2+P.boom*0.6)*1.6/2.2;
   if(P.roulette>0){
     const interval = P.roulette===1?30:P.roulette===2?20:10;
     const uptime = Math.min(1, 7/interval);
@@ -942,7 +930,7 @@ function spawnBoss(tier){
     spd:Math.max(B.spd, 104)*(1+tier*0.035), dmg:(B.dmg*1.7+16)*(1+game.t/380),
     r:B.r, xp:B.xp*mul, size:B.size,
     face:1, ph:0, flash:0, kx:0, ky:0, boss:true, tier:tier, hitT:0, rageT:0, trapT:0,
-    freezeT:0, chill:0, poisonStk:0, poisonT:0, slowT:0
+    freezeT:0, chill:0, slowT:0
   };
   enemies.push(e);
   game.boss = e;
@@ -1091,18 +1079,6 @@ function update(dt){
   }
   if(P.atkAnim>=0){ P.atkAnim += dt; if(P.atkAnim>0.34) P.atkAnim=-1 }
 
-  /* --- 가시 오라 (지속 범위 피해) --- */
-  if(P.aura>0){
-    P.auraT -= dt;
-    if(P.auraT<=0){
-      P.auraT = 0.5;
-      const R = 64+P.aura*17, dmg = pdmg()*(0.9+P.aura*0.55);
-      near(P.x,P.y,R,e=>{ if(dist2(P.x,P.y,e.x,e.y)<R*R) hurt(e,dmg,e.x,e.y,false) });
-      ring(P.x,P.y,R,'#c9ff5a',.4);
-      fx.push({aura:1,x:P.x,y:P.y,r:R,t:0,life:.4});
-    }
-  }
-
   /* --- 가시 장판 (근접 시 1회 밀쳐내는 장판) --- */
   if(P.trap>0){
     const TR = 58;
@@ -1210,30 +1186,80 @@ function update(dt){
     }
   }
 
-  /* --- 독구름 --- */
-  if(P.poison>0){
-    if(!poisonCloud) poisonCloud = {x:P.x+60,y:P.y,ang:rnd(TAU),turnT:2,tickT:0};
-    const pc = poisonCloud;
-    pc.turnT -= dt;
-    if(pc.turnT<=0){ pc.turnT=rnd(3,1.4); pc.ang += rnd(2.2,-2.2); }
-    const leash = 240;
-    const dx=P.x-pc.x, dy=P.y-pc.y, d=Math.hypot(dx,dy);
-    let mvx=Math.cos(pc.ang), mvy=Math.sin(pc.ang);
-    if(d>leash){ mvx=dx/d; mvy=dy/d; }
-    pc.x += mvx*46*dt; pc.y += mvy*46*dt;
-    const R = 110+P.poison*24;
-    pc.tickT -= dt;
-    if(pc.tickT<=0){
-      pc.tickT = 0.4;
-      const dmg = pdmg()*(0.5+P.poison*0.25);
-      near(pc.x,pc.y,R,e=>{
-        if(dist2(pc.x,pc.y,e.x,e.y)<R*R){
-          hurt(e,dmg,e.x,e.y,false);
-          e.poisonStk = Math.min(P.poison+1, (e.poisonStk||0)+1);
-          e.poisonT = Math.min(e.poisonT||0.55, 0.55); e.poisonDecayT = 1.4;
-        }
-      });
+  /* --- 지뢰 (설치형 폭발) --- */
+  if(P.mine>0){
+    P.mineT -= dt;
+    if(P.mineT<=0){
+      P.mineT = 3.0;
+      const n = P.mine;
+      for(let i=0;i<n;i++){
+        if(mines.length>=16) mines.shift();
+        const ang = rnd(TAU), rad = rnd(130,45);
+        mines.push({x:P.x+Math.cos(ang)*rad, y:P.y+Math.sin(ang)*rad, arm:0.6, t:0, life:25,
+                    R:70+P.mine*16, dmg:0});
+      }
     }
+  }
+  for(let i=mines.length-1;i>=0;i--){
+    const m=mines[i];
+    m.t += dt; if(m.arm>0) m.arm -= dt;
+    let boom_=false;
+    if(m.arm<=0){
+      near(m.x,m.y,40,e=>{ if(!boom_ && dist2(m.x,m.y,e.x,e.y) < (e.r+16)*(e.r+16)) boom_=true; });
+    }
+    if(boom_ || m.t>m.life){
+      if(boom_){
+        const R=70+P.mine*16, dmg=pdmg()*(2.2+P.mine*0.45);
+        near(m.x,m.y,R,o=>{
+          if(dist2(m.x,m.y,o.x,o.y)<R*R){
+            hurt(o,dmg,o.x,o.y,false);
+            if(!o.boss){ const a=Math.atan2(o.y-m.y,o.x-m.x); o.kx += Math.cos(a)*220; o.ky += Math.sin(a)*220; }
+          }
+        });
+        ring(m.x,m.y,R,'#ffb23c',.45); ring(m.x,m.y,R*.6,'#fff0b0',.3);
+        burst(m.x,m.y,16,'#ffb23c',260,.5,3.4);
+        shake(0.12,4);
+      }
+      mines.splice(i,1);
+    }
+  }
+
+  /* --- 부메랑 (왕복 관통) --- */
+  if(P.boom>0){
+    P.boomT -= dt;
+    if(P.boomT<=0){
+      P.boomT = 2.2;
+      const cnt = P.boom>=4 ? 2 : 1;
+      let tgt=null, bd=1e9;
+      for(const e of enemies){ const d=dist2(P.x,P.y,e.x,e.y); if(d<bd){bd=d;tgt=e} }
+      const base = tgt ? Math.atan2(tgt.y-P.y,tgt.x-P.x) : rnd(TAU);
+      for(let k=0;k<cnt;k++){
+        const a = base + (k?Math.PI:0);
+        booms.push({x:P.x,y:P.y,ang:a,out:true,dist:0,maxD:300+P.boom*18,rot:0,hit:new Set(),
+                    r:16+P.boom*5, dmg:pdmg()*(1.2+P.boom*0.6)});
+      }
+    }
+  }
+  for(let i=booms.length-1;i>=0;i--){
+    const b=booms[i], sp=430;
+    b.rot += dt*18;
+    if(b.out){
+      b.x += Math.cos(b.ang)*sp*dt; b.y += Math.sin(b.ang)*sp*dt; b.dist += sp*dt;
+      if(b.dist>=b.maxD){ b.out=false; b.hit.clear(); }
+    } else {
+      const dx=P.x-b.x, dy=P.y-b.y, d=Math.hypot(dx,dy)||1;
+      const step=Math.min(d,sp*1.15*dt);
+      b.x += dx/d*step; b.y += dy/d*step;
+      if(d<22){ booms.splice(i,1); continue; }
+    }
+    near(b.x,b.y,b.r+40,e=>{
+      if(b.hit.has(e)) return;
+      if(dist2(b.x,b.y,e.x,e.y)<(b.r+e.r)*(b.r+e.r)){
+        b.hit.add(e);
+        hurt(e,b.dmg,e.x,e.y,false);
+        burst(e.x,e.y,3,'#ffe08a',150,.25,2.2);
+      }
+    });
   }
 
   /* --- 행운의 룰렛 (슬롯머신 연출) --- */
@@ -1334,17 +1360,6 @@ function update(dt){
     }
     if(e.slowT>0) e.slowT-=dt;
     if(e.chill>0 && e.freezeT<=0) e.chill = Math.max(0, e.chill - dt*0.18);
-    if(e.poisonStk>0){
-      e.poisonT -= dt;
-      if(e.poisonT<=0){
-        const poisonDmg = e.poisonStk * pdmg() * 0.22;
-        hurt(e, poisonDmg, e.x, e.y-e.r*0.4, false);
-        fx.push({poisontick:1, x:e.x, y:e.y-e.r*0.5, t:0, life:.3});
-        e.poisonT = 0.55;
-      }
-      e.poisonDecayT = (e.poisonDecayT||0) - dt;
-      if(e.poisonDecayT<=0){ e.poisonStk = Math.max(0,e.poisonStk-1); e.poisonDecayT = 1.4; }
-    }
 
     const dx=P.x-e.x, dy=P.y-e.y, d=Math.hypot(dx,dy)||1;
     e.face = dx>0?1:-1;
@@ -1466,9 +1481,9 @@ function killEnemy(e, idx){
   } else {
     dropGem(e.x,e.y,e.xp);
     const r = Math.random();
-    if(r<0.001) dropNuke(e.x,e.y);
-    else if(r<0.0017) dropTimeStop(e.x,e.y);
-    else if(r<0.0024) dropMimicBox(e.x,e.y);
+    if(r<0.0003) dropNuke(e.x,e.y);
+    else if(r<0.0010) dropTimeStop(e.x,e.y);
+    else if(r<0.0017) dropMimicBox(e.x,e.y);
   }
 }
 function dropGem(x,y,v){ gems.push({x,y,v,ph:rnd(TAU),pull:false}) }
@@ -1609,19 +1624,30 @@ function draw(){
     ctx.restore();
   }
 
-  // 독구름
-  if(poisonCloud && P.poison>0){
-    const R=110+P.poison*24, t=performance.now()/1000;
-    ctx.save(); ctx.globalAlpha=0.30;
-    const grd=ctx.createRadialGradient(poisonCloud.x,poisonCloud.y,0,poisonCloud.x,poisonCloud.y,R);
-    grd.addColorStop(0,'rgba(140,220,70,.55)'); grd.addColorStop(1,'rgba(80,160,50,0)');
-    ctx.fillStyle=grd; ctx.beginPath();ctx.arc(poisonCloud.x,poisonCloud.y,R,0,TAU);ctx.fill();
-    ctx.globalAlpha=0.5;
-    for(let i=0;i<5;i++){
-      const a=i/5*TAU+t*0.4, rr=R*0.55;
-      ctx.beginPath();ctx.arc(poisonCloud.x+Math.cos(a)*rr,poisonCloud.y+Math.sin(a)*rr*0.6,8+i%2*4,0,TAU);
-      ctx.fillStyle='#9adf5a'; ctx.fill();
-    }
+  // 지뢰
+  for(const m of mines){
+    const armed=m.arm<=0, t=performance.now()/1000;
+    ctx.save(); ctx.translate(m.x,m.y);
+    ctx.globalAlpha=0.16; ctx.strokeStyle='#ffb23c'; ctx.lineWidth=1.5; ctx.setLineDash([4,5]);
+    ctx.beginPath();ctx.arc(0,0,70+P.mine*16,0,TAU);ctx.stroke();ctx.setLineDash([]);
+    ctx.globalAlpha=1;
+    ctx.fillStyle='#3a3f4a'; ctx.beginPath();ctx.arc(0,0,9,0,TAU);ctx.fill();
+    ctx.strokeStyle='#8a93a3'; ctx.lineWidth=2; ctx.beginPath();ctx.arc(0,0,9,0,TAU);ctx.stroke();
+    for(let k=0;k<6;k++){const a=k/6*TAU;ctx.beginPath();ctx.moveTo(Math.cos(a)*9,Math.sin(a)*9);ctx.lineTo(Math.cos(a)*13,Math.sin(a)*13);ctx.stroke();}
+    ctx.fillStyle = armed ? (Math.sin(t*8)>0?'#ff4a3c':'#7a1d18') : '#c8a23c';
+    ctx.beginPath();ctx.arc(0,0,3.4,0,TAU);ctx.fill();
+    ctx.restore();
+  }
+  // 부메랑
+  for(const b of booms){
+    ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.rot);
+    const s=b.r;
+    ctx.globalAlpha=0.25; ctx.fillStyle='#ffe08a'; ctx.beginPath();ctx.arc(0,0,s*1.15,0,TAU);ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.strokeStyle='#8a5a1c'; ctx.lineWidth=s*0.5; ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.beginPath();ctx.moveTo(-s*.75,s*.55);ctx.lineTo(-s*.1,-s*.1);ctx.lineTo(s*.75,-s*.6);ctx.stroke();
+    ctx.strokeStyle='#ffd070'; ctx.lineWidth=s*0.3;
+    ctx.beginPath();ctx.moveTo(-s*.75,s*.55);ctx.lineTo(-s*.1,-s*.1);ctx.lineTo(s*.75,-s*.6);ctx.stroke();
     ctx.restore();
   }
 
@@ -1746,13 +1772,7 @@ function draw(){
   for(const f of fx){
     const k=1-f.t/f.life;
     ctx.globalAlpha=k;
-    if(f.aura){
-      ctx.globalAlpha=k*0.30;
-      ctx.fillStyle='#c9ff5a';
-      ctx.beginPath();ctx.arc(f.x,f.y,f.r*(0.6+0.4*(1-k)),0,TAU);ctx.fill();
-      ctx.globalAlpha=k*0.6; ctx.strokeStyle='#d7ff8a'; ctx.lineWidth=2;
-      ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,TAU);ctx.stroke();
-    } else if(f.iceburst){
+    if(f.iceburst){
       ctx.save(); ctx.globalAlpha=k*0.7;
       ctx.strokeStyle='#bfeeff'; ctx.lineWidth=3;
       ctx.beginPath();ctx.arc(f.x,f.y,f.r*(0.5+0.5*(1-k)),0,TAU);ctx.stroke();
@@ -1766,10 +1786,6 @@ function draw(){
         const a=i/6*TAU;
         ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(a)*14*(1-k+0.3),Math.sin(a)*14*(1-k+0.3));ctx.stroke();
       }
-      ctx.restore();
-    } else if(f.poisontick){
-      ctx.save(); ctx.globalAlpha=k*0.8; ctx.fillStyle='#9adf5a';
-      ctx.beginPath();ctx.arc(f.x,f.y-(1-k)*14,3.4,0,TAU);ctx.fill();
       ctx.restore();
     } else if(f.trap){
       ctx.save(); ctx.translate(f.x,f.y);
@@ -1897,16 +1913,6 @@ function drawEnemy(e){
     ctx.save();ctx.globalAlpha=e.chill*0.28;ctx.fillStyle='#8fe0ff';
     ctx.beginPath();ctx.arc(e.x,e.y-bob-e.size*0.3,e.size*0.30,0,TAU);ctx.fill();ctx.restore();
   }
-  if(e.poisonStk>0){
-    ctx.save(); ctx.globalAlpha=0.65;
-    const pt=performance.now()/1000;
-    for(let i=0;i<Math.min(3,e.poisonStk);i++){
-      const bob2=Math.sin(pt*3+i*2)*3;
-      ctx.fillStyle='#9adf5a';
-      ctx.beginPath();ctx.arc(e.x-e.size*0.18+i*e.size*0.18, e.y-bob-e.size*0.5+bob2, 2.6,0,TAU);ctx.fill();
-    }
-    ctx.restore();
-  }
 
   if(e.boss){
     // 아래에서 위로 은은히 새어나오는 붉은 기운
@@ -1939,12 +1945,6 @@ function drawPlayer(){
   ctx.save();ctx.globalAlpha=.035;ctx.strokeStyle='#f5b73d';ctx.lineWidth=1.5;
   ctx.setLineDash([7,9]);ctx.beginPath();ctx.arc(P.x,P.y,P.range,0,TAU);ctx.stroke();ctx.restore();
 
-  // 가시 오라 범위(은은)
-  if(P.aura>0){
-    const R=64+P.aura*17;
-    ctx.save();ctx.globalAlpha=.07;ctx.strokeStyle='#c9ff5a';ctx.lineWidth=2;
-    ctx.beginPath();ctx.arc(P.x,P.y,R,0,TAU);ctx.stroke();ctx.restore();
-  }
   // 가시 장판 감지 범위(은은, 점선)
   if(P.trap>0){
     ctx.save();ctx.globalAlpha=.09;ctx.strokeStyle='#e8c46a';ctx.lineWidth=1.5;
