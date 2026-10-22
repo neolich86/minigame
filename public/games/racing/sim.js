@@ -1,5 +1,5 @@
 // 서킷 메이커 — 주행 물리 · 랩 판정 · AI (렌더링 없음)
-import { T, ROAD_HW, DECOS, cellsOf, pillarsOf } from "./track.js?v=3";
+import { T, ROAD_HW, DECOS, cellsOf, pillarsOf } from "./track.js?v=4";
 
 export const VMAX = 36; // m/s (화면 표시는 ×5 km/h)
 const ACC = 17, BRAKE = 36, COAST = 4, VREV = 9;

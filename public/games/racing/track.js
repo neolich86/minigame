@@ -197,18 +197,23 @@ export function traceTrack(map) {
     const port = sh.ports[exit];
     const nx = port.cx + DX[port.d], ny = port.cy + DY[port.d];
     const need = (port.d + 2) % 4;
-    if (nx < 0 || ny < 0 || nx >= map.w || ny >= map.h) return { ok: false, err: "open", cell: [port.cx, port.cy] };
+    // 오류에는 끊긴 곳(나가는 칸 → 들어갈 칸)과 높이를 함께 알려 준다
+    const here = { cell: [port.cx, port.cy], cell2: [nx, ny], lv: port.lv };
+    if (nx < 0 || ny < 0 || nx >= map.w || ny >= map.h) return { ok: false, err: "open", ...here, cell2: null };
     const q = occ.get(nx + "," + ny + "@" + port.lv);
     if (!q) {
-      // 같은 칸 다른 층에 도로가 있으면 높이가 안 맞는 것
-      for (let lv = 0; lv <= MAX_LEVEL + 1; lv++) if (occ.has(nx + "," + ny + "@" + lv)) return { ok: false, err: "level", cell: [nx, ny] };
-      return { ok: false, err: "open", cell: [port.cx, port.cy] };
+      // 옆 칸 다른 높이에 도로가 있으면 높이가 안 맞는 것
+      for (let lv = 0; lv <= MAX_LEVEL + 1; lv++) if (occ.has(nx + "," + ny + "@" + lv)) return { ok: false, err: "level", ...here, lv2: lv };
+      return { ok: false, err: "open", ...here };
     }
     const qs = shapes.get(q);
     const ei = qs.ports.findIndex((pp) => pp.cx === nx && pp.cy === ny && pp.d === need && pp.lv === port.lv);
-    if (ei < 0) return { ok: false, err: qs.ports.some((pp) => pp.cx === nx && pp.cy === ny && pp.d === need) ? "level" : "mismatch", cell: [nx, ny] };
+    if (ei < 0) {
+      const other = qs.ports.find((pp) => pp.cx === nx && pp.cy === ny && pp.d === need);
+      return other ? { ok: false, err: "level", ...here, lv2: other.lv } : { ok: false, err: "mismatch", ...here };
+    }
     if (q === start) {
-      if (ei !== 1) return { ok: false, err: "reverse", cell: [nx, ny] };
+      if (ei !== 1) return { ok: false, err: "reverse", cell: [nx, ny], lv: port.lv };
       return finish(map, pts, start, sShape, tiles, order);
     }
     piece = q;

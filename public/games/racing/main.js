@@ -1,9 +1,9 @@
 // 서킷 메이커 — 렌더링 · 화면 · 에디터 · 온라인
 import * as THREE from "three";
 import { GLTFLoader } from "./vendor/jsm/GLTFLoader.js";
-import { T, ROAD_HW, PIECES, DECOS, isRoad, traceTrack, sanitizeMap, encodeMap, decodeMap, cellsOf, levelsOf, footprint, pillarsOf, MAX_LEVEL, LH } from "./track.js?v=3";
-import { builtinMaps, BLANK } from "./maps.js?v=3";
-import { World, CARS, carById, DIFFS, VMAX } from "./sim.js?v=3";
+import { T, ROAD_HW, PIECES, DECOS, isRoad, traceTrack, sanitizeMap, encodeMap, decodeMap, cellsOf, levelsOf, footprint, pillarsOf, MAX_LEVEL, LH } from "./track.js?v=4";
+import { builtinMaps, BLANK } from "./maps.js?v=4";
+import { World, CARS, carById, DIFFS, VMAX } from "./sim.js?v=4";
 
 const MG = window.MGH || null;
 const KO = MG ? MG.L("ko", "en") === "ko" : /^ko/i.test(navigator.language || "");
@@ -535,6 +535,10 @@ function staticText() {
   $("eNew").title = L("새 맵", "New"); $("eCode").title = L("공유 코드", "Share code"); $("eSave").title = L("저장", "Save"); $("eTest").title = L("시험 주행", "Test drive");
   $("eName").placeholder = L("맵 이름", "Track name");
   $("eLvL").textContent = L("높이", "LEVEL");
+  $("eTiltL0").textContent = L("위", "Top");
+  $("eTiltL1").textContent = L("옆", "Side");
+  $("eYaw").title = L("화면 돌리기", "Rotate view");
+  $("eTop").title = L("위에서 보기 (처음 화면)", "Top view (reset)");
   $("eUp").title = L("한 층 위 편집 (PageUp)", "Edit level above (PageUp)");
   $("eDn").title = L("한 층 아래 편집 (PageDown)", "Edit level below (PageDown)");
   $("hHint").textContent = L("←→ 조향 · ↑ 가속 · ↓ 브레이크/후진 · R 코스 복귀 · Esc 일시정지", "←→ steer · ↑ gas · ↓ brake · R reset · Esc pause");
@@ -1078,7 +1082,7 @@ const audio = (() => {
 addEventListener("pointerdown", () => audio.unlock(), { once: true });
 
 // ───────────────────────── 에디터 ─────────────────────────
-const ED = { on: false, map: null, brush: "straight", rot: 0, erase: false, pan: false, objs: new Map(), hist: [], ghost: null, ghostKey: "", hover: null, dirty: false, zoom: 60, cx: 0, cz: 0, errBox: null, tab: "road", srcId: null, lv: 0 };
+const ED = { on: false, map: null, brush: "straight", rot: 0, erase: false, pan: false, objs: new Map(), hist: [], ghost: null, ghostKey: "", hover: null, dirty: false, zoom: 60, cx: 0, cz: 0, errBox: null, tab: "road", srcId: null, lv: 0, tilt: 0, yaw: 0, err: null };
 const PAL = {
   road: ["straight", "start", "c1", "c2", "c3", "cross", "ramp"],
   deco: ["boost", "treeLarge", "treeSmall", "pine", "tree", "grandStand", "grandStandCovered", "tent", "pitsGarage", "pitsOffice", "billboard", "lightPost", "bannerRed", "bannerGreen", "radar", "fence", "cone"],
@@ -1092,14 +1096,14 @@ const PNAME = {
 const ERRS = {
   noStart: ["출발선을 하나 놓아 주세요", "Place a start line"],
   multiStart: ["출발선은 하나만 놓을 수 있어요", "Only one start line allowed"],
-  open: ["코스가 끊겨 있어요 (빨간 칸)", "Track is open here (red)"],
+  open: ["높이 {lv} 길이 여기서 끊겨 있어요 (빨간 표시)", "The level-{lv} road ends here (red)"],
   mismatch: ["도로 방향이 맞지 않아요 (빨간 칸)", "Pieces don't connect (red)"],
   reverse: ["출발선 방향과 반대로 돌아와요 — 출발선을 돌려 보세요", "Loop returns backwards — rotate the start line"],
   broken: ["연결이 맞지 않아요", "Broken connection"],
   loop: ["출발선으로 돌아오지 않는 고리가 있어요", "Loop doesn't return to the start"],
   overlap: ["조각이 겹쳐 있어요", "Pieces overlap"],
   outside: ["맵 밖으로 나간 조각이 있어요", "A piece is outside the map"],
-  level: ["높이가 맞지 않아요 (빨간 칸) — 오르막으로 이어 주세요", "Heights don't match (red) — connect them with a ramp"],
+  level: ["높이 {lv} 길과 높이 {lv2} 길이 바로 붙어 있어요 — 사이에 오르막을 넣어 주세요 (빨간 표시)", "A level-{lv} road meets a level-{lv2} road — put a ramp between them (red)"],
   tooHigh: ["2층보다 높이 쌓을 수 없어요", "Can't build higher than level 2"],
 };
 
@@ -1124,6 +1128,8 @@ function openEditor(map, fromBuiltin, keepState) {
     ED.hist = [];
     ED.dirty = false;
     ED.lv = 0;
+    ED.tilt = 0;
+    ED.yaw = 0;
   }
   $("eName").value = ED.map.name || "";
   edPalette();
@@ -1136,18 +1142,31 @@ function openEditor(map, fromBuiltin, keepState) {
 function edRebuild() {
   ED.objs = buildMap(ED.map, true);
   mapRoot.userData.id = "editor";
+  scene.fog = null; // 에디터 카메라는 멀리 있어서 안개를 끈다
   for (const [p, o] of ED.objs) edFade(p, o);
   edLevelUI();
-  // 격자
+  // 격자 (지금 편집하는 높이에 그린다)
   const m = ED.map;
   const pts = [];
-  for (let i = 0; i <= m.w; i++) pts.push(i * T, 0.3, 0, i * T, 0.3, m.h * T);
-  for (let j = 0; j <= m.h; j++) pts.push(0, 0.3, j * T, m.w * T, 0.3, j * T);
+  const gy = ED.lv * LH + 0.3;
+  for (let i = 0; i <= m.w; i++) pts.push(i * T, gy, 0, i * T, gy, m.h * T);
+  for (let j = 0; j <= m.h; j++) pts.push(0, gy, j * T, m.w * T, gy, j * T);
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
   const grid = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.22 }));
   mapRoot.add(grid);
-  ED.errBox = new THREE.Mesh(new THREE.BoxGeometry(T, 1, T), new THREE.MeshBasicMaterial({ color: 0xff3344, transparent: true, opacity: 0.45, depthWrite: false }));
+  // 오류 표시: 칸 위로 솟은 빨간 기둥 (다리에 가려지지 않게 항상 위에 그림)
+  ED.errBox = new THREE.Group();
+  for (let i = 0; i < 2; i++) {
+    const col = new THREE.Mesh(new THREE.BoxGeometry(T * 0.92, (MAX_LEVEL + 1.2) * LH, T * 0.92), new THREE.MeshBasicMaterial({ color: 0xff2840, transparent: true, opacity: 0.32, depthTest: false, depthWrite: false }));
+    col.renderOrder = 10;
+    const pad = new THREE.Mesh(new THREE.BoxGeometry(T * 0.98, 0.6, T * 0.98), new THREE.MeshBasicMaterial({ color: 0xff2840, transparent: true, opacity: 0.75, depthTest: false, depthWrite: false }));
+    pad.renderOrder = 11;
+    const g = new THREE.Group();
+    g.add(col, pad);
+    g.userData = { col, pad };
+    ED.errBox.add(g);
+  }
   ED.errBox.visible = false;
   mapRoot.add(ED.errBox);
   ED.ghostKey = "";
@@ -1182,10 +1201,18 @@ function edFitCam(reset) {
   }
   const a = vw / vh;
   ortho.left = -ED.zoom * a; ortho.right = ED.zoom * a; ortho.top = ED.zoom; ortho.bottom = -ED.zoom;
-  ortho.position.set(ED.cx, 300, ED.cz);
-  ortho.up.set(0, 0, -1);
-  ortho.lookAt(ED.cx, 0, ED.cz);
+  // 기울기(0 = 바로 위에서, 클수록 옆에서) · 회전
+  const t = Math.max(0.012, ED.tilt), yaw = ED.yaw, ty = ED.lv * LH, dist = 900;
+  ortho.near = 1; ortho.far = 3000;
+  ortho.position.set(ED.cx + dist * Math.sin(t) * Math.sin(yaw), ty + dist * Math.cos(t), ED.cz + dist * Math.sin(t) * Math.cos(yaw));
+  ortho.up.set(0, 1, 0);
+  ortho.lookAt(ED.cx, ty, ED.cz);
   ortho.updateProjectionMatrix();
+  const cam = $("edCam");
+  if (cam) {
+    cam.style.bottom = botPx + 8 + "px";
+    $("eTilt").value = Math.round((ED.tilt * 180) / Math.PI);
+  }
   sunFollow(ED.cx, ED.cz);
   sun.shadow.camera.left = sun.shadow.camera.bottom = -Math.max(SH, ED.zoom * a * 1.2);
   sun.shadow.camera.right = sun.shadow.camera.top = Math.max(SH, ED.zoom * a * 1.2);
@@ -1244,6 +1271,7 @@ function edCell(ev) {
   const r = canvas.getBoundingClientRect();
   const v = new THREE.Vector2(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(v, ortho);
+  plane.constant = -ED.lv * LH; // 지금 편집하는 높이의 평면에서 칸을 고른다
   const p = new THREE.Vector3();
   if (!ray.ray.intersectPlane(plane, p)) return null;
   return { x: Math.floor(p.x / T), y: Math.floor(p.z / T), wx: p.x, wz: p.z };
@@ -1365,27 +1393,48 @@ function edSetLevel(lv) {
 function edValidate() {
   const r = traceTrack(ED.map);
   const st = $("edStatus");
+  ED.err = r.ok ? null : r;
   if (r.ok) {
     st.innerHTML = `<span class="okc">✓ ${L("코스 완성", "Track OK")}</span> · ${L("1랩", "Lap")} ${Math.round(r.L)}m · ${L("높이", "Level")} ${ED.lv}`;
     ED.errBox.visible = false;
   } else {
     const e = ERRS[r.err] || [r.err, r.err];
-    st.innerHTML = `<span class="err">${e[KO ? 0 : 1]}</span> · ${L("높이", "Level")} ${ED.lv}`;
-    if (r.cell) {
-      ED.errBox.visible = true;
-      ED.errBox.position.set((r.cell[0] + 0.5) * T, 0.6, (r.cell[1] + 0.5) * T);
-    } else ED.errBox.visible = false;
+    const msg = e[KO ? 0 : 1].replace("{lv}", r.lv ?? 0).replace("{lv2}", r.lv2 ?? 0);
+    st.innerHTML = `<span class="err">${msg}</span>${r.cell ? ` <u style="cursor:pointer">${L("위치 보기", "Show")}</u>` : ""} · ${L("높이", "Level")} ${ED.lv}`;
+    const cells = [r.cell, r.cell2].filter(Boolean);
+    ED.errBox.visible = cells.length > 0;
+    ED.errBox.children.forEach((g, i) => {
+      const c = cells[i];
+      g.visible = !!c;
+      if (!c) return;
+      const lv = i === 0 ? r.lv ?? 0 : r.lv2 ?? r.lv ?? 0;
+      g.position.set((c[0] + 0.5) * T, 0, (c[1] + 0.5) * T);
+      g.userData.col.position.y = ((MAX_LEVEL + 1.2) * LH) / 2;
+      g.userData.pad.position.y = lv * LH + 0.5;
+    });
   }
   $("eTest").disabled = !r.ok;
   return r;
 }
+$("edStatus").addEventListener("click", () => {
+  const r = ED.err;
+  if (!r || !r.cell) return;
+  // 문제 칸으로 화면 이동 + 그 높이로 전환
+  ED.cx = (r.cell[0] + 0.5) * T;
+  ED.cz = (r.cell[1] + 0.5) * T;
+  ED.zoom = Math.min(ED.zoom, 70);
+  if ((r.lv ?? 0) !== ED.lv) edSetLevel(r.lv ?? 0);
+  edFitCam(false);
+});
 
 let edPtr = null;
 canvas.addEventListener("pointerdown", (e) => {
   if (MODE !== "editor") return;
   canvas.setPointerCapture(e.pointerId);
-  const pan = ED.pan || e.button === 1 || e.button === 2 || keys.Space;
-  edPtr = { id: e.pointerId, x: e.clientX, y: e.clientY, pan, cx: ED.cx, cz: ED.cz, moved: false };
+  const orbit = e.button === 2;
+  const pan = !orbit && (ED.pan || e.button === 1 || keys.Space);
+  edPtr = { id: e.pointerId, x: e.clientX, y: e.clientY, pan, orbit, cx: ED.cx, cz: ED.cz, tilt: ED.tilt, yaw: ED.yaw, moved: false };
+  if (orbit) return;
   ED.strokePushed = false;
   if (!pan) { const c = edCell(e); if (c) edApply(c, false); edPtr.last = c && c.x + "," + c.y; }
 });
@@ -1396,11 +1445,18 @@ canvas.addEventListener("pointermove", (e) => {
   if (e.pointerType === "touch" && !edPtr) ED.hover = null;
   edGhost();
   if (!edPtr || edPtr.id !== e.pointerId) return;
-  if (edPtr.pan) {
+  if (edPtr.orbit) {
+    // 오른쪽 버튼 끌기: 좌우 = 회전, 위아래 = 기울기
+    ED.yaw = edPtr.yaw - (e.clientX - edPtr.x) * 0.008;
+    ED.tilt = Math.max(0, Math.min(1.45, edPtr.tilt + (e.clientY - edPtr.y) * 0.006));
+    edFitCam(false);
+  } else if (edPtr.pan) {
     const r = canvas.getBoundingClientRect();
     const k = (ED.zoom * 2) / r.height;
-    ED.cx = edPtr.cx - (e.clientX - edPtr.x) * k;
-    ED.cz = edPtr.cz - (e.clientY - edPtr.y) * k;
+    const dx = (e.clientX - edPtr.x) * k, dy = ((e.clientY - edPtr.y) * k) / Math.max(0.25, Math.cos(ED.tilt));
+    const cy = Math.cos(ED.yaw), sy = Math.sin(ED.yaw);
+    ED.cx = edPtr.cx - dx * cy - dy * sy;
+    ED.cz = edPtr.cz + dx * sy - dy * cy;
     edFitCam(false);
   } else if (c) {
     const key = c.x + "," + c.y;
@@ -1441,6 +1497,9 @@ $("eZin").onclick = () => edZoom(1 / 1.25);
 $("eZout").onclick = () => edZoom(1.25);
 $("eUndo").onclick = edUndo;
 $("eUp").onclick = () => edSetLevel(ED.lv + 1);
+$("eTilt").addEventListener("input", () => { ED.tilt = (+$("eTilt").value * Math.PI) / 180; edFitCam(false); });
+$("eYaw").onclick = () => { ED.yaw += Math.PI / 4; edFitCam(false); };
+$("eTop").onclick = () => { ED.tilt = 0; ED.yaw = 0; edFitCam(true); };
 $("eDn").onclick = () => edSetLevel(ED.lv - 1);
 $("eName").addEventListener("input", () => { ED.map.name = $("eName").value.trim(); lsSet("cm.draft", { map: ED.map, srcId: ED.srcId }); ED.dirty = true; });
 function edResize(dw, dh) {

@@ -1,5 +1,5 @@
 // 서킷 메이커 — 기본 제공 맵. 거북이(turtle) 명령으로 코스를 깔고, 빈 칸에 장식을 뿌린다.
-import { cellsOf, levelsOf, DECOS } from "./track.js?v=3";
+import { cellsOf, levelsOf, DECOS } from "./track.js?v=4";
 
 const DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0];
 function rotCell(cx, cy, k, r) {
