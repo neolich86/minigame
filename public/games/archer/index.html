@@ -1052,7 +1052,8 @@ function update(dt){
   cam.y = lerp(cam.y, P.y, 1-Math.pow(0.0006,dt));
 
   /* --- 스폰 --- */
-  let rate = Math.min(11, 0.70 + game.t/95 + Math.pow(game.t/60,1.35)*0.28) * (1+Math.min(0.7,lateL()*0.12));
+  let rate = Math.min(11, 0.70 + game.t/95 + Math.pow(Math.max(0,game.t)/60,1.35)*0.28) * (1+Math.min(0.7,lateL()*0.12));
+  if(!(game.spawnT>=0)) game.spawnT=0;   // 방어: NaN 이 되면 스폰이 영구 중단되므로 복구
   if(game.boss) rate *= 0.05;          // 보스전 동안 잡몹 압박 대폭 완화 (몬스터 벽에 화살이 막히는 문제 방지)
   game.spawnT += dt*rate;
   const cap = game.boss? 12 : (game.t>900 ? 200 : 160);
@@ -2303,7 +2304,7 @@ $('btnPause').onclick=e=>{e.stopPropagation();togglePause()};
 let last=0;
 function loop(now){
   requestAnimationFrame(loop);
-  const dt = Math.min(0.05,(now-last)/1000)||0;
+  const dt = Math.max(0,Math.min(0.05,(now-last)/1000))||0;   // rAF 시각이 last 보다 앞서면 음수 dt → 시간이 음수가 되어 스폰율이 NaN 이 되던 버그 방지
   last=now;
   if(!game) return;
   if(!game.over && !game.paused && !game.picking && startEl.style.display==='none'){
