@@ -252,8 +252,7 @@
           <label>핀볼 맵</label>
           <select id="mapSelect">
             <option value="1" selected>맵 1 · 클래식</option>
-            <option value="3">맵 2 · 깔때기</option>
-            <option value="4">맵 3 · 로터 필드</option>
+            <option value="4">맵 2 · 로터 필드</option>
           </select>
         </div>
       </div>
@@ -414,60 +413,45 @@
     }
   }
 
-  function buildMap1(){ // classic galton board, repeated down the whole track
+  // 겹치지 않게 무작위로 점을 뿌린다 (점끼리 minD 이상 떨어짐 → 공이 끼지 않는 간격 보장)
+  function scatter(count, minD, xMin, xMax, yMin, yMax, avoid){
+    const pts = [];
+    for(let tries=0; pts.length<count && tries<count*400; tries++){
+      const x = xMin + Math.random()*(xMax-xMin), y = yMin + Math.random()*(yMax-yMin);
+      if(pts.some(p=>Math.hypot(p.x-x,p.y-y) < minD)) continue;
+      if(avoid && avoid(x,y)) continue;
+      pts.push({x,y});
+    }
+    return pts;
+  }
+
+  function buildMap1(){ // classic: 불규칙하게 흩어진 핀 (핀 사이 간격은 공보다 넓게)
+    const PEG_R = 7, MIN_D = 56; // 공 지름 24 + 핀 지름 14 + 여유
     forEachUnit((offset)=>{
-      const rows = 11, gap = UNIT_H/rows;
-      for(let row=0; row<rows; row++){
-        const y = offset + row*gap + gap/2;
-        const cols = 8 + (row%2===0?0:1);
-        const spacing = CW/(cols+1);
-        for(let c=1;c<=cols;c++){
-          let x = spacing*c + (row%2===0? spacing/2 : 0);
-          if(x < 30 || x > CW-30) continue;
-          addPeg(x,y,7);
-        }
-      }
+      scatter(92, MIN_D, 44, CW-44, offset + 18, offset + UNIT_H - 18)
+        .forEach(p=>addPeg(p.x, p.y, PEG_R + (Math.random()<0.25 ? 2 : 0)));
     });
   }
 
-  function buildMap3(){ // funnel: open, evenly-spaced peg field with periodic hourglass pinch points
+  function buildMap4(){ // rotor field: 불규칙하게 흩어진 회전 막대 + 핀
+    const ROTOR_LEN = 130, all = [];
     forEachUnit((offset)=>{
-      const rows = 4, pinchClearance = 90;
-      const rowGap = (UNIT_H - pinchClearance) / rows;
-      const cols = 6;
-      const spacing = (CW - 80) / (cols - 1); // wide, constant spacing - always bigger than a ball
-      for(let row=0; row<rows; row++){
-        const y = offset + row*rowGap + rowGap*0.55;
-        for(let c=0; c<cols; c++){
-          let x = 40 + c*spacing + (row%2===0 ? spacing/2 : 0);
-          if(x < 30 || x > CW-30) continue;
-          addPeg(x, y, 8);
-        }
-      }
-      const pinchY = offset + rows*rowGap + pinchClearance*0.5;
-      addBlock(CW*0.16, pinchY, 220, 16, 0.55);
-      addBlock(CW*0.84, pinchY, 220, 16, -0.55);
-    });
-  }
-
-  function buildMap4(){ // rotor field: scattered spinning obstacles + random pegs
-    forEachUnit((offset,u)=>{
-      const relPositions = [
-        [0.25,0.20],[0.50,0.16],[0.75,0.20],
-        [0.20,0.40],[0.50,0.46],[0.80,0.40],
-        [0.30,0.68],[0.70,0.68]
-      ];
-      relPositions.forEach((p,i)=>{
-        const x = CW*p[0], y = offset + UNIT_H*p[1];
-        addRotor(x,y, 130, 10, (((i+u)%2===0)?1:-1)*(1.2 + (i%3)*0.4));
+      const rs = scatter(8, ROTOR_LEN + 22, 72, CW-72, offset + 60, offset + UNIT_H - 50,
+        (x,y)=>all.some(r=>Math.hypot(r.x-x,r.y-y) < ROTOR_LEN + 22));
+      rs.forEach(r=>{
+        all.push(r);
+        const len = ROTOR_LEN - 20 + Math.random()*40;
+        const dir = Math.random()<0.5 ? -1 : 1;
+        addRotor(r.x, r.y, len, 10, dir*(0.9 + Math.random()*1.3));
+        Body.setAngle(rotators[rotators.length-1].body, Math.random()*Math.PI);
       });
-      for(let i=0;i<8;i++){
-        addPeg(40 + Math.random()*(CW-80), offset + Math.random()*UNIT_H*0.9 + UNIT_H*0.05, 6);
-      }
+      scatter(9, 52, 40, CW-40, offset + 20, offset + UNIT_H - 20,
+        (x,y)=>all.some(r=>Math.hypot(r.x-x,r.y-y) < ROTOR_LEN/2 + 30))
+        .forEach(p=>addPeg(p.x, p.y, 6));
     });
   }
 
-  const MAP_BUILDERS = {1:buildMap1, 3:buildMap3, 4:buildMap4};
+  const MAP_BUILDERS = {1:buildMap1, 4:buildMap4};
 
   function buildSelectedMap(){
     clearMap();
