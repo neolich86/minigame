@@ -1,0 +1,19 @@
+{
+  "name": "pinball-toss",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "핀볼 추첨기 — 앱인토스 미니앱",
+  "scripts": {
+    "prepare-web": "node prepare.mjs",
+    "build": "node prepare.mjs && vite build && ait build",
+    "deploy": "ait deploy"
+  },
+  "dependencies": {
+    "@apps-in-toss/web-framework": "3.8.1"
+  },
+  "devDependencies": {
+    "vite": "6.3.5",
+    "matter-js": "0.19.0"
+  }
+}
