@@ -253,8 +253,8 @@
     <div class="controls">
       <div class="controls-row">
         <div class="field" style="flex:1 1 320px;">
-          <label>참가 공 입력 (예: a10, b10, c10)</label>
-          <input type="text" id="ballInput" value="" placeholder="a10, b10, c10" aria-describedby="ballErr">
+          <label>참가 공 입력 (예: 철수10, 영희10, 민수10)</label>
+          <input type="text" id="ballInput" value="" placeholder="철수10, 영희10, 민수10" aria-describedby="ballErr">
           <div class="field-err" id="ballErr" role="alert" hidden></div>
         </div>
         <div class="field" style="flex:0 0 200px;">
@@ -549,8 +549,8 @@
     const {groups, queue} = buildLegendAndQueue();
     if(groups.length < 2){
       showInputError(groups.length === 0
-        ? L('참가자와 공 개수를 입력해 주세요. (예: a10, b10, c10)', 'Enter names and ball counts. (e.g. a10, b10, c10)')
-        : L('최소 두 명 이상 입력해 주세요. (예: a10, b10)', 'Enter at least two people. (e.g. a10, b10)'));
+        ? L('참가자와 공 개수를 입력해 주세요. (예: 철수10, 영희10, 민수10)', 'Enter names and ball counts. (e.g. Amy10, Ben10, Chris10)')
+        : L('최소 두 명 이상 입력해 주세요. (예: 철수10, 영희10)', 'Enter at least two people. (e.g. Amy10, Ben10)'));
       return;
     }
     showInputError('');
