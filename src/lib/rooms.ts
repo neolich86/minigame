@@ -10,6 +10,8 @@ export interface Room {
   max_players: number;
   host_seen_at: string;
   result: { winner: number; winners?: number[]; scores: number[]; turn: number } | null;
+  /** 대기실에서 방장이 고른 게임별 설정 (0022_room_options.sql) */
+  options?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }
@@ -39,6 +41,7 @@ export const createRoom = (game: string, maxPlayers: number) => rpc<Room>("mg_cr
 export const joinRoom = (code: string) => rpc<Room>("mg_join_room", { p_code: code });
 export const setSeatAI = (roomId: string, seat: number, ai: boolean) => rpc<void>("mg_set_seat_ai", { p_room: roomId, p_seat: seat, p_ai: ai });
 export const setMaxPlayers = (roomId: string, max: number) => rpc<void>("mg_set_max_players", { p_room: roomId, p_max: max });
+export const setRoomOptions = (roomId: string, options: Record<string, unknown>) => rpc<void>("mg_set_options", { p_room: roomId, p_options: options });
 export const setReady = (roomId: string, ready: boolean) => rpc<void>("mg_set_ready", { p_room: roomId, p_ready: ready });
 export const startRoom = (roomId: string) => rpc<Room>("mg_start_room", { p_room: roomId });
 export const saveState = (roomId: string, state: unknown, version: number) => rpc<void>("mg_save_state", { p_room: roomId, p_state: state, p_version: version });

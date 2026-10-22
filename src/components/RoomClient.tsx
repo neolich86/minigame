@@ -26,6 +26,7 @@ import {
   saveState,
   setMaxPlayers,
   setReady,
+  setRoomOptions,
   setSeatAI,
   startRoom,
   type Member,
@@ -180,7 +181,7 @@ export function RoomClient({ gameId, code }: { gameId: string; code: string }) {
           try {
             saved = await fetchSavedState(r.id);
           } catch {}
-          post({ type: "net:init", role: "host", mySeat: mine.seat, players, state: saved?.state ?? null, ver: saved?.version ?? 0 });
+          post({ type: "net:init", role: "host", mySeat: mine.seat, players, state: saved?.state ?? null, ver: saved?.version ?? 0, options: r.options ?? {} });
         } else {
           let st = latest.current;
           if (!st) {
@@ -189,7 +190,7 @@ export function RoomClient({ gameId, code }: { gameId: string; code: string }) {
               if (saved) st = { state: saved.state, ver: saved.version };
             } catch {}
           }
-          post({ type: "net:init", role: "guest", mySeat: mine.seat, players, state: st?.state ?? null, ver: st?.ver ?? 0 });
+          post({ type: "net:init", role: "guest", mySeat: mine.seat, players, state: st?.state ?? null, ver: st?.ver ?? 0, options: r.options ?? {} });
           chRef.current?.send({ type: "broadcast", event: "req", payload: { from: uid } });
         }
       } else if (d.type === "net:state" && roleRef.current === "host") {
@@ -443,6 +444,33 @@ export function RoomClient({ gameId, code }: { gameId: string; code: string }) {
             </div>
           ))}
         </div>
+        {(game.roomOptions ?? []).map((o) => {
+          const cur = Number(room.options?.[o.key] ?? o.def);
+          const unit = o.unit ? o.unit[lang] : "";
+          return (
+            <div key={o.key} style={{ marginTop: 16 }}>
+              <div className="row spread wrap-row">
+                <b style={{ fontSize: 14 }}>{o.label[lang]}</b>
+                {isHost ? (
+                  <div className="seg">
+                    {o.values.map((v) => (
+                      <button key={v} className={cur === v ? "on" : ""} onClick={() => run(() => setRoomOptions(room.id, { ...(room.options ?? {}), [o.key]: v }))}>
+                        {v}
+                        {unit}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="pill host">
+                    {cur}
+                    {unit}
+                  </span>
+                )}
+              </div>
+              {o.note && <div className="muted small" style={{ marginTop: 6 }}>{o.note[lang]}</div>}
+            </div>
+          );
+        })}
         {err && <div className="notice err" style={{ marginTop: 14 }}>{t(err)}</div>}
         <div className="row spread wrap-row" style={{ marginTop: 18 }}>
           <div className="row">

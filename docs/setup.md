@@ -41,6 +41,7 @@ GitHub(`neolich86/minigame`) → Vercel 자동 배포, 계정·랭킹·온라인
    16. `supabase/migrations/0018_blackjack.sql` — 블랙잭 최고 잔액 랭킹 보드 (`ranked_boards` 에 `blackjack` 추가)
    17. `supabase/migrations/0019_explore_map.sql` — 탐험 지도 밝힌 칸 랭킹 보드 (`ranked_boards` 에 `explore-map` 추가)
    18. `supabase/migrations/0021_racing.sql` — 서킷 메이커 온라인 방 (방 인원·좌석을 8명까지, `mg_create_room` 에 racing 허용)
+   19. `supabase/migrations/0022_room_options.sql` — 온라인 대기실 방 설정 (`mg_rooms.options`, `mg_set_options` — 서킷 메이커 랩 수)
 2. **Project Settings → API (API Keys)** 에서 복사
    - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
    - anon(또는 publishable) 키 → `NEXT_PUBLIC_SUPABASE_ANON_KEY`

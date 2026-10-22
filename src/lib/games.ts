@@ -42,6 +42,8 @@ export interface Game {
   online?: boolean;
   /** 온라인 방에서 고를 수 있는 인원 (기본 2·3·4) */
   onlinePlayers?: number[];
+  /** 온라인 대기실에서 방장이 고르는 설정 (게임에는 net:init 의 options 로 전달) */
+  roomOptions?: { key: string; label: { ko: string; en: string }; values: number[]; def: number; unit?: { ko: string; en: string }; note?: { ko: string; en: string } }[];
   /** 좌석 색 (팀전이면 같은 팀끼리 같은 색) */
   seatColors?: string[];
   /** 2:2 팀전 — 좌석 0·2 vs 1·3 */
@@ -122,6 +124,16 @@ const CATALOG: Game[] = [
     src: "/games/racing/index.html",
     online: true,
     onlinePlayers: [2, 3, 4, 5, 6, 7, 8],
+    roomOptions: [
+      {
+        key: "laps",
+        label: { ko: "랩 수", en: "Laps" },
+        values: [1, 2, 3, 4, 5, 7, 9],
+        def: 3,
+        unit: { ko: "랩", en: "" },
+        note: { ko: "맵과 차는 게임이 시작되면 고를 수 있어요 (방장이 맵 선택)", en: "Track and cars are picked once the game starts (host picks the track)" },
+      },
+    ],
     seatColors: ["#e8453c", "#2f7fe0", "#f0a020", "#e6e0d0", "#3fae5a", "#8e5bd9", "#20c0c8", "#ff70b0"],
     saves: true, // 내가 만든 맵을 계정에 저장
   },

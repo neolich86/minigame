@@ -1709,6 +1709,9 @@ function onlineInit(m) {
   NET.mySeat = m.mySeat;
   NET.players = m.players || [];
   NET.ver = m.ver || 0;
+  // 대기실에서 방장이 고른 랩 수
+  const optLaps = m.options && Number(m.options.laps);
+  if (optLaps >= 1 && optLaps <= 9) SET.laps = optLaps;
   if (m.role === "host") {
     let st = m.state;
     const first = allMaps().find((x) => x.id === SET.mapId && x.valid) || allMaps()[0];
