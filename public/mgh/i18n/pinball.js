@@ -3,6 +3,7 @@ MGH.dict({
   exact: {
     "핀볼 추첨기": "Pinball Lottery Machine",
     "이름과 개수를 붙여서 입력하세요": "Type a name followed by a count",
+    "참가 공 입력 (예: a10, b10, c10)": "Players (e.g. a10, b10, c10)",
     "참가 공 입력 (예: a10, b5, c7, d3)": "Enter balls (e.g. a10, b5, c7, d3)",
     "당첨 조건": "Winning rule",
     "첫 도착": "First to arrive",

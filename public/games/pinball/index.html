@@ -180,6 +180,21 @@
     font-family:'Orbitron',sans-serif; font-size:10px; letter-spacing:1.5px;
     margin:0 0 6px; color:var(--cyan); text-transform:uppercase; text-align:center;
   }
+  .field-err{margin-top:6px;font-size:12.5px;font-weight:700;color:#ff6b81}
+  #ballInput.bad{border-color:#ff6b81 !important;box-shadow:0 0 0 2px rgba(255,107,129,.25)}
+  .win-pop{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(3,6,12,.72);backdrop-filter:blur(3px)}
+  .win-pop.show{display:flex;animation:wpFade .25s ease}
+  .win-card{position:relative;width:min(380px,100%);text-align:center;padding:30px 24px 22px;border-radius:20px;background:linear-gradient(160deg,#1b2140,#0f1426);border:1px solid rgba(255,200,87,.55);box-shadow:0 0 40px rgba(255,200,87,.25),0 20px 50px rgba(0,0,0,.5);animation:wpPop .45s cubic-bezier(.2,1.6,.4,1)}
+  .win-card .trophy{font-size:56px;line-height:1;filter:drop-shadow(0 0 14px rgba(255,200,87,.6))}
+  .win-card .wlabel{margin-top:10px;font-size:13px;letter-spacing:2px;color:#9aa6c8;font-weight:700}
+  .win-card .wname{display:flex;align-items:center;justify-content:center;gap:12px;margin:10px 0 6px;font-family:'Orbitron',sans-serif;font-size:40px;font-weight:900;color:#fff;word-break:break-all}
+  .win-card .wname i{width:26px;height:26px;border-radius:50%;flex:none;box-shadow:0 0 14px currentColor}
+  .win-card .wmode{font-size:14px;color:var(--amber);font-weight:700}
+  .win-card .wbtns{display:flex;gap:8px;justify-content:center;margin-top:20px}
+  .win-card .wbtns button{flex:1;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+  .win-card .wbtns button.main{background:var(--amber);border-color:var(--amber);color:#1a1300}
+  @keyframes wpFade{from{opacity:0}to{opacity:1}}
+  @keyframes wpPop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
   .winner-banner{
     display:none;
     text-align:center;
@@ -238,8 +253,9 @@
     <div class="controls">
       <div class="controls-row">
         <div class="field" style="flex:1 1 320px;">
-          <label>참가 공 입력 (예: a10, b5, c7, d3)</label>
-          <input type="text" id="ballInput" value="a10, b5, c7, d3" placeholder="이름과 개수를 붙여서 입력하세요">
+          <label>참가 공 입력 (예: a10, b10, c10)</label>
+          <input type="text" id="ballInput" value="" placeholder="a10, b10, c10" aria-describedby="ballErr">
+          <div class="field-err" id="ballErr" role="alert" hidden></div>
         </div>
         <div class="field" style="flex:0 0 200px;">
           <label>당첨 조건</label>
@@ -280,6 +296,15 @@
   </div>
 </div>
 
+<div class="win-pop" id="winPop" role="dialog" aria-modal="true" aria-labelledby="winName">
+  <div class="win-card">
+    <div class="trophy">🏆</div>
+    <div class="wlabel" id="winLabel">당첨</div>
+    <div class="wname" id="winName"></div>
+    <div class="wmode" id="winMode"></div>
+    <div class="wbtns"><button type="button" id="winClose">닫기</button><button type="button" class="main" id="winAgain">다시 추첨</button></div>
+  </div>
+</div>
 <script>
 (function(){
   const { Engine, Runner, Bodies, Composite, Body, Events } = Matter;
@@ -522,10 +547,13 @@
   function startRace(){
     if(raceActive) return;
     const {groups, queue} = buildLegendAndQueue();
-    if(queue.length === 0){
-      alert('공 입력을 확인해주세요. 예: a10, b5, c7, d3');
+    if(groups.length < 2){
+      showInputError(groups.length === 0
+        ? L('참가자와 공 개수를 입력해 주세요. (예: a10, b10, c10)', 'Enter names and ball counts. (e.g. a10, b10, c10)')
+        : L('최소 두 명 이상 입력해 주세요. (예: a10, b10)', 'Enter at least two people. (e.g. a10, b10)'));
       return;
     }
+    showInputError('');
     if(queue.length > 160){
       alert('공 개수가 너무 많습니다 (최대 160개). 개수를 줄여주세요.');
       return;
@@ -609,9 +637,7 @@
     const mode = getWinMode();
     const winner = mode === 'first' ? arrivalOrder[0] : arrivalOrder[arrivalOrder.length-1];
 
-    const banner = document.getElementById('winnerBanner');
-    banner.style.display = 'block';
-    banner.textContent = `🏆 당첨: ${winner.name}  (${mode==='first' ? '첫 번째 도착' : '마지막 도착'})`;
+    showWinner(winner, mode);
 
     const items = document.querySelectorAll('#resultList li');
     const targetIdx = mode==='first' ? 0 : items.length-1;
@@ -762,6 +788,33 @@
     checkArrivals();
     requestAnimationFrame(renderLoop);
   }
+
+  // ---------- 입력 오류 · 당첨 팝업 ----------
+  function L(ko, en){ return (window.MGH && MGH.L) ? MGH.L(ko, en) : ko; }
+  function showInputError(msg){
+    const el = document.getElementById('ballErr'), inp = document.getElementById('ballInput');
+    el.textContent = msg; el.hidden = !msg; inp.classList.toggle('bad', !!msg);
+    if(msg) inp.focus();
+  }
+  function showWinner(w, mode){
+    document.getElementById('winLabel').textContent = L('당첨', 'WINNER');
+    const nm = document.getElementById('winName');
+    nm.innerHTML = '';
+    const dot = document.createElement('i'); dot.style.background = w.color; dot.style.color = w.color;
+    const t = document.createElement('span'); t.textContent = w.name;
+    nm.append(dot, t);
+    document.getElementById('winMode').textContent = mode === 'first' ? L('가장 먼저 도착했어요', 'First to arrive') : L('가장 마지막에 도착했어요', 'Last to arrive');
+    document.getElementById('winClose').textContent = L('닫기', 'Close');
+    document.getElementById('winAgain').textContent = L('다시 추첨', 'Draw again');
+    document.getElementById('winPop').classList.add('show');
+  }
+  function hideWinner(){ document.getElementById('winPop').classList.remove('show'); }
+  document.getElementById('winClose').addEventListener('click', hideWinner);
+  document.getElementById('winAgain').addEventListener('click', ()=>{ hideWinner(); startRace(); });
+  document.getElementById('winPop').addEventListener('click', e=>{ if(e.target.id === 'winPop') hideWinner(); });
+  document.addEventListener('keydown', e=>{ if(e.key === 'Escape') hideWinner(); });
+  document.getElementById('ballInput').addEventListener('input', ()=>{ showInputError(''); buildLegendAndQueue(); });
+  document.getElementById('ballInput').addEventListener('keydown', e=>{ if(e.key === 'Enter') startRace(); });
 
   // ---------- UI wiring ----------
   document.getElementById('winModeSeg').addEventListener('click', (e)=>{
