@@ -1,7 +1,7 @@
 // 미니게임천국 게임 카탈로그 — 포털 목록·플레이 페이지·랭킹이 모두 이 데이터를 기준으로 동작한다.
 import type { Lang } from "./i18n";
 
-export type Genre = "board" | "action" | "strategy" | "casual";
+export type Genre = "board" | "action" | "racing" | "strategy" | "casual";
 
 /** 사이트 안의 큰 구분 — 게임(/play) · 추첨·도구(/tools) · 서비스(/apps) */
 export type Kind = "game" | "tool" | "app";
@@ -117,7 +117,7 @@ const CATALOG: Game[] = [
       ko: "트랙을 직접 만들고 달리는 3D 레이싱. 맵·랩 수·인원수를 골라 AI와 대결하거나, 최대 8명이 친구와 온라인으로 함께 달려요",
       en: "A 3D racer where you build the track — pick a map, laps and racers to take on AI, or race up to 8 friends online",
     },
-    genre: "action",
+    genre: "racing",
     thumb: "/thumbs/racing.jpg",
     src: "/games/racing/index.html",
     online: true,
@@ -375,7 +375,7 @@ export function entryPath(g: Game): string {
   return g.online ? `/online/${g.id}` : itemPath(g);
 }
 
-export const GENRES: Genre[] = ["board", "action", "strategy", "casual"];
+export const GENRES: Genre[] = ["board", "action", "racing", "strategy", "casual"];
 
 export function gameById(id: string): Game | undefined {
   return CATALOG.find((g) => g.id === id);

@@ -11,6 +11,7 @@ import { fetchMyScores, type ScoreRow } from "@/lib/supabase";
 const ACCENT: Record<Genre, { c: string; bg: string }> = {
   board: { c: "var(--rose)", bg: "var(--rose-dim)" },
   action: { c: "var(--gold)", bg: "var(--gold-dim)" },
+  racing: { c: "var(--green)", bg: "#1f4a38" },
   strategy: { c: "var(--teal)", bg: "var(--teal-dim)" },
   casual: { c: "var(--violet)", bg: "var(--violet-dim)" },
 };

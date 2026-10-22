@@ -200,6 +200,7 @@ function makeTileObj(p, theme, ghost) {
   if (!key) return null;
   const m = MODELS[key];
   const o = cloneModel(key, { ghost });
+  if (!ghost && CROWD[key]) o.add(CROWD[key].clone());
   const toy = key.startsWith("toy/");
   let s = toy ? TOY_SCALE : T;
   if (p.t === "pine" || p.t === "tree") s = TOY_SCALE * 2.1;
@@ -381,6 +382,108 @@ function nameTag(text, color) {
 
 // 썸네일 (차·장식·도로 조각) — 작은 별도 렌더러
 const thumbs = {};
+// ───────────────────────── 관중 (관중석을 채우는 사람 그림) ─────────────────────────
+const CROWD = {}; // 모델 키 → 관중 메시 (모델 좌표)
+let crowdMat = null;
+function crowdAtlas() {
+  // 사람 8명 그림 (가로로 나란히): 머리·머리카락·옷·팔(일부는 만세)
+  const N = 8, W = 64, H = 128;
+  const c = document.createElement("canvas");
+  c.width = W * N; c.height = H;
+  const g = c.getContext("2d");
+  const skins = ["#f6d2b0", "#e8b98f", "#c98c62", "#8d5a3b", "#f1c7a0", "#d9a477", "#b07650", "#f3d6bd"];
+  const shirts = ["#e8453c", "#2f7fe0", "#f0a020", "#ffffff", "#3fae5a", "#8e5bd9", "#20c0c8", "#ff70b0"];
+  const hairs = ["#2b1d14", "#5a3a22", "#111", "#c9a050", "#3a2a1a", "#7a4a2a", "#222", "#a0522d"];
+  for (let i = 0; i < N; i++) {
+    const x0 = i * W, cx = x0 + W / 2;
+    const cheer = i % 3 === 0;
+    g.fillStyle = shirts[i];
+    // 팔
+    g.strokeStyle = shirts[i]; g.lineWidth = 9; g.lineCap = "round";
+    g.beginPath();
+    if (cheer) { g.moveTo(cx - 14, 66); g.lineTo(cx - 22, 30); g.moveTo(cx + 14, 66); g.lineTo(cx + 22, 30); }
+    else { g.moveTo(cx - 15, 66); g.lineTo(cx - 19, 100); g.moveTo(cx + 15, 66); g.lineTo(cx + 19, 100); }
+    g.stroke();
+    g.fillStyle = skins[i];
+    if (cheer) { g.beginPath(); g.arc(cx - 22, 27, 5, 0, 7); g.arc(cx + 22, 27, 5, 0, 7); g.fill(); }
+    // 몸통
+    g.fillStyle = shirts[i];
+    g.beginPath(); g.roundRect(cx - 17, 58, 34, 70, 10); g.fill();
+    // 머리
+    g.fillStyle = skins[i];
+    g.beginPath(); g.arc(cx, 40, 15, 0, 7); g.fill();
+    g.fillStyle = hairs[i];
+    g.beginPath(); g.arc(cx, 35, 15, Math.PI * 1.05, Math.PI * 1.95); g.fill();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return { tex, N };
+}
+/** 모델의 빨간 좌석 면을 위에서 찔러 보고, 계단 줄마다 사람 그림을 세운다 */
+function buildCrowd(key) {
+  const m = MODELS[key];
+  if (!m) return;
+  if (!crowdMat) {
+    const { tex } = crowdAtlas();
+    crowdMat = new THREE.MeshLambertMaterial({ map: tex, alphaTest: 0.5, side: THREE.DoubleSide });
+    crowdMat.userData.N = 8;
+  }
+  const root = m.scene;
+  root.updateMatrixWorld(true);
+  const rc = new THREE.Raycaster();
+  const b = m.box;
+  const hitSeat = (x, z) => {
+    rc.set(new THREE.Vector3(x, b.max.y + 1, z), new THREE.Vector3(0, -1, 0));
+    const hits = rc.intersectObject(root, true);
+    for (const h of hits) {
+      const mt = Array.isArray(h.object.material) ? h.object.material[h.face.materialIndex] : h.object.material;
+      if (mt && mt.name === "red" && h.face.normal.y > 0.5) return h.point;
+    }
+    return null;
+  };
+  // 가운데 x 에서 앞뒤로 훑어 계단 줄(높이가 같은 구간)을 찾는다
+  const cx = (b.min.x + b.max.x) / 2;
+  const rows = [];
+  let cur = null;
+  for (let z = b.min.z; z <= b.max.z; z += 0.005) {
+    const p = hitSeat(cx, z);
+    if (p && cur && Math.abs(p.y - cur.y) < 0.004) { cur.z1 = z; continue; }
+    if (cur) rows.push(cur);
+    cur = p ? { y: p.y, z0: z, z1: z } : null;
+  }
+  if (cur) rows.push(cur);
+  const seatRows = rows.filter((r) => r.z1 - r.z0 > 0.03);
+  const pos = [], uv = [], idx = [];
+  const PW = 0.062, PH = 0.12, N = 8;
+  let rnd = 7;
+  const rand = () => ((rnd = (rnd * 16807) % 2147483647) / 2147483647);
+  for (const r of seatRows) {
+    const z = r.z0 + (r.z1 - r.z0) * 0.35;
+    for (let x = b.min.x + 0.07; x <= b.max.x - 0.07; x += 0.078) {
+      if (rand() < 0.12) continue; // 빈자리
+      const xx = x + (rand() - 0.5) * 0.02;
+      const p = hitSeat(xx, z);
+      if (!p) continue;
+      const v = (rand() * N) | 0, s = 0.9 + rand() * 0.2;
+      const w = PW * s, h = PH * s, base = pos.length / 3;
+      pos.push(xx - w / 2, p.y, z, xx + w / 2, p.y, z, xx + w / 2, p.y + h, z, xx - w / 2, p.y + h, z);
+      const u0 = v / N, u1 = (v + 1) / N;
+      uv.push(u0, 0, u1, 0, u1, 1, u0, 1);
+      idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    }
+  }
+  if (!pos.length) return;
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  const mesh = new THREE.Mesh(geo, crowdMat);
+  mesh.castShadow = false;
+  mesh.receiveShadow = true;
+  CROWD[key] = mesh;
+}
+
 function makeThumbs() {
   const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
   r.setSize(160, 110);
@@ -1331,6 +1434,14 @@ function edApply(cell, drag) {
     edChanged();
     return;
   }
+  // 관중석은 옆에 도로가 있으면 자동으로 도로 쪽을 보게 돌린다 (다시 누르면 회전)
+  if (/^grandStand/.test(np.t)) {
+    const D = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+    const roadAt = (x, y) => m.tiles.some((p) => isRoad(p.t) && cellsOf(p).some(([cx, cy]) => cx === x && cy === y));
+    const pref = (ED.rot + 2) % 4;
+    const dirs = [pref, 0, 1, 2, 3].filter((d) => roadAt(ax + D[d][0], ay + D[d][1]));
+    if (dirs.length) { np.r = (dirs[0] + 2) % 4; ED.rot = np.r; edGhost(); }
+  }
   const cells = new Set(cellsOf(np).map(([a, b]) => a + "," + b));
   const lvs = levelsOf(np);
   const road = isRoad(np.t);
@@ -1898,6 +2009,8 @@ async function boot() {
     console.error(e);
     return;
   }
+  buildCrowd("rk/grandStand");
+  buildCrowd("rk/grandStandCovered");
   makeThumbs();
   $("loading").hidden = true;
   requestAnimationFrame(frame);

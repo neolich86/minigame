@@ -99,22 +99,22 @@ export function builtinMaps() {
   return [
     make("oval", { ko: "그린 오벌", en: "Green Oval" }, 12, 8, "grass", [5, 6, 3],
       "F 2S R2 2S R2 6S R2 2S R2 3S", 11,
-      [{ t: "grandStand", x: 4, y: 7, r: 0 }, { t: "grandStand", x: 5, y: 7, r: 0 }, { t: "grandStandCovered", x: 6, y: 7, r: 0 }, { t: "pitsGarage", x: 5, y: 3, r: 2 }, { t: "pitsOffice", x: 6, y: 3, r: 2 }, { t: "boost", x: 6, y: 1, r: 1 }]),
+      [{ t: "grandStand", x: 4, y: 7, r: 2 }, { t: "grandStand", x: 5, y: 7, r: 2 }, { t: "grandStandCovered", x: 6, y: 7, r: 2 }, { t: "pitsGarage", x: 5, y: 3, r: 2 }, { t: "pitsOffice", x: 6, y: 3, r: 2 }, { t: "boost", x: 6, y: 1, r: 1 }]),
     make("eight", { ko: "8자 교차로", en: "Figure Eight" }, 13, 13, "grass", [6, 9, 0],
       "F 2S X 2S R2 2S R2 S R2 3S X 2S L2 2S L2 S L2", 23,
-      [{ t: "grandStandCovered", x: 7, y: 9, r: 3 }, { t: "grandStand", x: 7, y: 8, r: 3 }, { t: "billboard", x: 5, y: 9, r: 1 }, { t: "boost", x: 6, y: 4, r: 0 }, { t: "boost", x: 4, y: 6, r: 1 }]),
+      [{ t: "grandStandCovered", x: 7, y: 9, r: 1 }, { t: "grandStand", x: 7, y: 8, r: 1 }, { t: "billboard", x: 5, y: 9, r: 1 }, { t: "boost", x: 6, y: 4, r: 0 }, { t: "boost", x: 4, y: 6, r: 1 }]),
     make("bridge", { ko: "하이 브릿지", en: "High Bridge" }, 13, 13, "grass", [6, 9, 0],
       "F 5S R2 2S R2 S R2 S U S D L2 2S L2 S L2", 29,
-      [{ t: "grandStandCovered", x: 7, y: 9, r: 3 }, { t: "grandStand", x: 7, y: 8, r: 3 }, { t: "bannerRed", x: 5, y: 8, r: 0 }, { t: "boost", x: 6, y: 3, r: 0 }]),
+      [{ t: "grandStandCovered", x: 7, y: 9, r: 1 }, { t: "grandStand", x: 7, y: 8, r: 1 }, { t: "bannerRed", x: 5, y: 8, r: 0 }, { t: "boost", x: 6, y: 3, r: 0 }]),
     make("sky", { ko: "스카이 루프", en: "Sky Loop" }, 16, 15, "grass", [8, 11, 0],
       "F S U S 2S R2 3S R2 S R2 D 4S L2 3S L2 L2", 41,
-      [{ t: "grandStandCovered", x: 9, y: 10, r: 3 }, { t: "grandStandCovered", x: 9, y: 11, r: 3 }, { t: "grandStand", x: 9, y: 12, r: 3 }, { t: "tent", x: 6, y: 9, r: 1 }, { t: "tent", x: 7, y: 9, r: 1 }, { t: "pitsGarage", x: 6, y: 10, r: 1 }, { t: "pitsOffice", x: 7, y: 10, r: 1 }, { t: "boost", x: 5, y: 10, r: 0 }, { t: "billboard", x: 11, y: 5, r: 0 }, { t: "lightPost", x: 10, y: 9, r: 0 }]),
+      [{ t: "grandStandCovered", x: 9, y: 10, r: 1 }, { t: "grandStandCovered", x: 9, y: 11, r: 1 }, { t: "grandStand", x: 9, y: 12, r: 1 }, { t: "tent", x: 6, y: 9, r: 1 }, { t: "tent", x: 7, y: 9, r: 1 }, { t: "pitsGarage", x: 6, y: 10, r: 1 }, { t: "pitsOffice", x: 7, y: 10, r: 1 }, { t: "boost", x: 5, y: 10, r: 0 }, { t: "billboard", x: 11, y: 5, r: 0 }, { t: "lightPost", x: 10, y: 9, r: 0 }]),
     make("canyon", { ko: "사막 협곡", en: "Desert Canyon" }, 16, 12, "sand", [6, 9, 1],
       "F 5S L3 3S L2 2S L1 R1 S R1 L1 3S L2 4S L2 S", 37,
       [{ t: "tent", x: 7, y: 10, r: 0 }, { t: "tent", x: 8, y: 10, r: 0 }, { t: "tent", x: 9, y: 10, r: 0 }, { t: "radar", x: 6, y: 7, r: 0 }, { t: "bannerRed", x: 6, y: 8, r: 0 }, { t: "boost", x: 14, y: 5, r: 0 }, { t: "boost", x: 3, y: 5, r: 0 }], 0.1),
     make("alpine", { ko: "알파인 서킷", en: "Alpine Circuit" }, 18, 14, "snow", [8, 11, 3],
       "F 3S R3 2S R2 2S L1 S R2 5S R3 2S R2 2S L1 S R2 S", 51,
-      [{ t: "grandStandCovered", x: 5, y: 12, r: 0 }, { t: "grandStandCovered", x: 6, y: 12, r: 0 }, { t: "grandStand", x: 7, y: 12, r: 0 }, { t: "grandStand", x: 8, y: 12, r: 0 }, { t: "pitsGarage", x: 6, y: 10, r: 2 }, { t: "pitsOffice", x: 7, y: 10, r: 2 }, { t: "lightPost", x: 9, y: 12, r: 0 }, { t: "boost", x: 10, y: 2, r: 1 }]),
+      [{ t: "grandStandCovered", x: 5, y: 12, r: 2 }, { t: "grandStandCovered", x: 6, y: 12, r: 2 }, { t: "grandStand", x: 7, y: 12, r: 2 }, { t: "grandStand", x: 8, y: 12, r: 2 }, { t: "pitsGarage", x: 6, y: 10, r: 2 }, { t: "pitsOffice", x: 7, y: 10, r: 2 }, { t: "lightPost", x: 9, y: 12, r: 0 }, { t: "boost", x: 10, y: 2, r: 1 }]),
   ];
 }
 
