@@ -124,6 +124,12 @@ export function RoomClient({ gameId, code }: { gameId: string; code: string }) {
         if (!m || m.seat !== payload.seat) return;
         post({ type: "net:intent", seat: m.seat, intent: payload.intent });
       })
+      // 실시간 위치 등 자주 오가는 메시지 — 모든 참가자끼리 바로 주고받는다 (레이싱). 저장하지 않음
+      .on("broadcast", { event: "peer" }, ({ payload }) => {
+        const m = membersRef.current.find((x) => x.user_id === payload.from);
+        if (!m || m.seat !== payload.seat) return;
+        post({ type: "net:peer", seat: m.seat, host: payload.from === roomRef.current?.host_user_id, data: payload.data });
+      })
       .on("broadcast", { event: "req" }, () => {
         if (roleRef.current === "host") post({ type: "net:requestState" });
       })
@@ -201,6 +207,8 @@ export function RoomClient({ gameId, code }: { gameId: string; code: string }) {
         else saveTimer.current = setTimeout(doSave, 2000);
       } else if (d.type === "net:intent" && roleRef.current === "guest") {
         chRef.current?.send({ type: "broadcast", event: "intent", payload: { from: uid, seat: mine.seat, intent: d.intent } });
+      } else if (d.type === "net:peer") {
+        chRef.current?.send({ type: "broadcast", event: "peer", payload: { from: uid, seat: mine.seat, data: d.data } });
       } else if (d.type === "net:finished" && roleRef.current === "host") {
         const winners = Array.isArray(d.winners) ? d.winners : undefined;
         finishRoom(r.id, { winner: d.winner, winners, scores: d.scores, turn: d.turn }).catch(() => {});

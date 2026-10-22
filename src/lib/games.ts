@@ -111,6 +111,21 @@ const CATALOG: Game[] = [
     onlinePlayers: [2, 3, 4, 5, 6],
   },
   {
+    id: "racing",
+    title: { ko: "서킷 메이커", en: "Circuit Maker" },
+    desc: {
+      ko: "트랙을 직접 만들고 달리는 3D 레이싱. 맵·랩 수·인원수를 골라 AI와 대결하거나, 최대 8명이 친구와 온라인으로 함께 달려요",
+      en: "A 3D racer where you build the track — pick a map, laps and racers to take on AI, or race up to 8 friends online",
+    },
+    genre: "action",
+    thumb: "/thumbs/racing.jpg",
+    src: "/games/racing/index.html",
+    online: true,
+    onlinePlayers: [2, 3, 4, 5, 6, 7, 8],
+    seatColors: ["#e8453c", "#2f7fe0", "#f0a020", "#e6e0d0", "#3fae5a", "#8e5bd9", "#20c0c8", "#ff70b0"],
+    saves: true, // 내가 만든 맵을 계정에 저장
+  },
+  {
     id: "world-typing",
     title: { ko: "세계도시 타이핑", en: "World City Typing" },
     desc: {

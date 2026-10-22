@@ -540,6 +540,36 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       ],
     },
   },
+  racing: {
+    ko: {
+      tips: [
+        "코너 앞에서 미리 ↓로 살짝 속도를 줄이고, 코너 안쪽을 스치듯 돌아 나오면서 다시 가속하면 기록이 확 줄어요.",
+        "잔디로 나가면 최고 속도가 크게 떨어져요. 많이 벗어났으면 R(휴대폰은 ↺)로 코스에 복귀하는 게 빨라요.",
+        "노란 부스트 박스를 지나면 1.6초 동안 빨라져요. 박스는 5초 뒤 다시 생겨요.",
+        "작은 코너(S)는 아주 급해서 속도를 많이 줄여야 해요. 맵을 만들 때 큰 코너(M·L)를 섞으면 시원하게 달리는 코스가 돼요.",
+      ],
+      faq: [
+        { q: "맵은 어떻게 만드나요?", a: "메뉴의 '맵 에디터'에서 도로 조각을 골라 격자에 놓으세요. 같은 조각을 다시 누르거나 R 키로 회전해요. 출발선에서 시작해 다시 출발선으로 돌아오면 '코스 완성'이 뜨고, 저장하면 레이스 설정에서 고를 수 있어요." },
+        { q: "만든 맵을 친구에게 보낼 수 있나요?", a: "에디터의 '공유 코드'를 눌러 코드를 복사해 보내면, 친구가 같은 창에 붙여 넣고 '불러오기'로 열 수 있어요. 온라인 방에서는 방장이 고른 맵이 모두에게 자동으로 전달돼요." },
+        { q: "친구와 같이 하려면?", a: "'친구와 온라인 대전'에서 방을 만들고 초대 링크를 보내세요. 2~8명까지, 빈자리는 AI로 채울 수 있어요. 방장이 맵과 랩 수를 고르고 출발해요." },
+        { q: "만든 맵은 어디에 저장되나요?", a: "이 기기 브라우저에 저장되고, 로그인하면 계정에도 저장돼 다른 기기에서도 쓸 수 있어요." },
+      ],
+    },
+    en: {
+      tips: [
+        "Brake a little before corners, clip the inside and get back on the gas on the way out — it saves a lot of time.",
+        "Grass cuts your top speed hard. If you go far off track, press R (↺ on phones) to reset.",
+        "Yellow boost boxes give you 1.6 seconds of extra speed and respawn after 5 seconds.",
+        "Small (S) corners are very tight. Mixing in M and L corners makes a faster, flowing track.",
+      ],
+      faq: [
+        { q: "How do I build a track?", a: "Open the Track Editor, pick road pieces and place them on the grid. Tap a piece again or press R to rotate. When the loop returns to the start line you'll see 'Track OK' — save it and pick it in race setup." },
+        { q: "Can I send my track to a friend?", a: "Press 'Share code' in the editor and send the code. Your friend pastes it in the same window and presses Load. In online rooms, the host's track is sent to everyone automatically." },
+        { q: "How do I race friends?", a: "Open 'Race friends online', create a room and share the invite link. 2–8 players; empty seats can be filled with AI. The host picks the track and laps and starts the race." },
+        { q: "Where are my tracks saved?", a: "In this browser, and in your account when you're signed in so you can use them on other devices." },
+      ],
+    },
+  },
   "world-typing": {
     ko: {
       tips: [

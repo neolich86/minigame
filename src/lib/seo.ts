@@ -569,6 +569,32 @@ export const GAME_SEO: SeoMap = {
       tags: ["Casino", "Blackjack", "Basic strategy", "Leaderboard", "Free"],
     },
   },
+  racing: {
+    ko: {
+      title: "서킷 메이커 - 트랙을 만들고 친구와 달리는 3D 레이싱 게임",
+      h1: "서킷 메이커 — 맵 만들기 3D 레이싱",
+      description: "설치 없이 바로 하는 무료 3D 레이싱. 도로 조각을 이어 나만의 서킷을 만들고, 랩 수·인원수·맵을 골라 AI와 대결하거나 최대 8명이 친구와 온라인으로 함께 달려요. 만든 맵은 공유 코드로 친구에게 보낼 수 있어요.",
+      keywords: ["레이싱 게임", "자동차 게임", "카트 게임", "맵 만들기", "트랙 에디터", "온라인 레이싱", "멀티플레이 레이싱", "3D 레이싱", "무료 게임"],
+      about: [
+        "서킷 메이커는 직선·코너·교차로 같은 도로 조각을 격자 위에 이어 붙여 나만의 레이싱 트랙을 만들고, 바로 그 트랙에서 달리는 3D 아케이드 레이싱 게임입니다. 출발선에서 출발해 다시 출발선으로 돌아오면 코스가 완성되고, 관중석·나무·부스트 박스로 꾸밀 수 있어요.",
+        "레이스는 맵, 랩 수(1~9), 인원수(최대 8명)를 고르고 시작합니다. 혼자 할 때는 쉬움·보통·어려움 AI와 겨루고, 온라인 방을 만들면 친구와 실시간으로 함께 달려요. 레이싱카·카트·몬스터 트럭 등 13대의 차가 속도·가속·핸들링이 조금씩 달라요.",
+      ],
+      howTo: ["메뉴에서 '레이스'를 누르고 맵·랩 수·인원수·차를 고르세요.", "← → 로 조향, ↑ 가속, ↓ 브레이크. 휴대폰은 화면 버튼으로 조작해요. 코스를 벗어나면 R(↺)로 복귀!", "'맵 에디터'에서 도로 조각을 이어 출발선으로 돌아오는 코스를 만들고 저장하면 레이스에서 고를 수 있어요."],
+      tags: ["레이싱", "맵 만들기", "온라인 대전", "AI 대전", "3D", "무료"],
+    },
+    en: {
+      title: "Circuit Maker - Build a Track and Race Friends in 3D",
+      h1: "Circuit Maker — 3D Racing with a Track Editor",
+      description: "A free 3D racing game in your browser. Snap road pieces together to build your own circuit, then pick laps, racers and a track to race AI or up to 8 friends online. Share tracks with a code.",
+      keywords: ["racing game", "car game", "track editor", "track builder", "online racing", "multiplayer racing", "3D racing", "free game"],
+      about: [
+        "Circuit Maker is a 3D arcade racer where you build the track yourself: snap straights, corners and crossings onto a grid, close the loop back to the start line, and dress it up with grandstands, trees and boost boxes.",
+        "Choose a track, 1–9 laps and up to 8 racers. Play solo against Easy, Normal or Hard AI, or open an online room and race friends in real time. Thirteen cars — racers, karts, a monster truck and more — each trade off speed, acceleration and handling.",
+      ],
+      howTo: ["Press Race and choose a track, laps, racers and your car.", "Steer with ← →, ↑ to accelerate, ↓ to brake. On phones use the on-screen buttons. Off track? Press R (↺) to reset.", "In the Track Editor, connect road pieces into a loop that returns to the start line, save it, and race it."],
+      tags: ["Racing", "Track editor", "Online", "AI", "3D", "Free"],
+    },
+  },
   "world-typing": {
     ko: {
       title: "세계도시 타이핑 - 무료 타자 연습 게임 (한타·영타)",
