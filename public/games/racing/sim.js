@@ -1,5 +1,5 @@
 // 서킷 메이커 — 주행 물리 · 랩 판정 · AI (렌더링 없음)
-import { T, ROAD_HW, DECOS, cellsOf } from "./track.js?v=2";
+import { T, ROAD_HW, DECOS, cellsOf, pillarsOf } from "./track.js?v=3";
 
 export const VMAX = 36; // m/s (화면 표시는 ×5 km/h)
 const ACC = 17, BRAKE = 36, COAST = 4, VREV = 9;
@@ -59,6 +59,8 @@ export class World {
       if (!d.r) continue;
       for (const [cx, cy] of k > 1 ? cells : [[p.x, p.y]]) this.solids.push({ x: (cx + 0.5) * T, z: (cy + 0.5) * T, r: d.r * T, box: !!d.box });
     }
+    // 높은 도로를 받치는 기둥 (땅 위 차만 부딪힘)
+    for (const q of pillarsOf(map)) this.solids.push({ x: q.x, z: q.z, r: 0.9, box: false });
     this.buildSpeedProfile();
   }
 
@@ -101,7 +103,7 @@ export class World {
     const p = pts[idx];
     const nx = -p.tz, nz = p.tx;
     const lat = (col ? 1 : -1) * 2.1;
-    return { x: p.x + nx * lat, z: p.z + nz * lat, a: Math.atan2(p.tz, p.tx), idx, P: -acc };
+    return { x: p.x + nx * lat, z: p.z + nz * lat, y: p.y || 0, a: Math.atan2(p.tz, p.tx), idx, P: -acc };
   }
 
   addCar(o) {
@@ -113,7 +115,7 @@ export class World {
       car: def.id,
       mul: carMul(def),
       kind: o.kind || "ai", // human | ai | remote
-      x: slot.x, z: slot.z, a: slot.a, vx: 0, vz: 0, steer: 0, thr: 0,
+      x: slot.x, z: slot.z, y: slot.y, pitch: 0, a: slot.a, vx: 0, vz: 0, steer: 0, thr: 0,
       idx: slot.idx, P: slot.P, lapsDone: 0, lapStart: 0, lapTimes: [], best: null,
       finished: false, finishTime: null, boostT: 0, offroad: false, wrongT: 0, stuckT: 0, revT: 0,
       lane: o.lane ?? 0, laneT: Math.random() * 10, ai: o.ai || null, lostT: 0, lastGood: slot.idx,
@@ -131,7 +133,9 @@ export class World {
       for (let j = from; j <= to; j++) {
         const i = ((car.idx + j) % N + N) % N;
         const p = pts[i];
-        const d = (p.x - car.x) ** 2 + (p.z - car.z) ** 2;
+        let d = (p.x - car.x) ** 2 + (p.z - car.z) ** 2;
+        // 전체 탐색에서는 높이가 다른 층(다리 위/아래)을 고르지 않도록
+        if (wide) d += ((p.y || 0) - (car.y || 0)) ** 2 * 16;
         if (d < bd) { bd = d; best = i; }
       }
     };
@@ -162,7 +166,26 @@ export class World {
     const p = pts[i];
     // 중심선에서의 옆 거리 (부호)
     car.lat = (car.x - p.x) * -p.tz + (car.z - p.z) * p.tx;
-    car.offroad = Math.abs(car.lat) > ROAD_HW;
+    if (p.wall) {
+      // 다리·오르막: 난간 밖으로 못 나간다
+      const lim = ROAD_HW - CAR_R * 0.7;
+      if (Math.abs(car.lat) > lim) {
+        const nx = -p.tz, nz = p.tx, sg = Math.sign(car.lat);
+        const over = car.lat - sg * lim;
+        car.x -= nx * over; car.z -= nz * over;
+        const vn = car.vx * nx + car.vz * nz;
+        if (vn * sg > 0) { car.vx -= nx * vn * 1.3; car.vz -= nz * vn * 1.3; car.vx *= 0.92; car.vz *= 0.92; car.bump = Math.min(1, Math.abs(vn) / 8); }
+        car.lat = sg * lim;
+      }
+      car.offroad = false;
+    } else car.offroad = Math.abs(car.lat) > ROAD_HW;
+    // 높이 · 기울기 (중심선 기준)
+    const q = pts[(i + 1) % N];
+    const u = Math.max(0, Math.min(1, ((car.x - p.x) * p.tx + (car.z - p.z) * p.tz) / (p.ds || 1)));
+    car.y = (p.y || 0) + ((q.y || 0) - (p.y || 0)) * u;
+    const ya = pts[(i - 2 + N) % N].y || 0, yb = pts[(i + 2) % N].y || 0;
+    const fwd = Math.cos(car.a) * p.tx + Math.sin(car.a) * p.tz;
+    car.pitch = Math.atan((yb - ya) / 4) * fwd;
     if (!car.offroad) car.lastGood = i;
   }
 
@@ -171,7 +194,7 @@ export class World {
     const i = car.lastGood ?? car.idx;
     const p = pts[i];
     const q = pts[(i + 3) % N];
-    car.x = p.x; car.z = p.z; car.a = Math.atan2(q.z - p.z, q.x - p.x);
+    car.x = p.x; car.z = p.z; car.y = p.y || 0; car.a = Math.atan2(q.z - p.z, q.x - p.x);
     car.vx = car.vz = 0; car.steer = 0; car.idx = i; car.stuckT = 0; car.revT = 0;
     car.respawnT = 1.2; // 잠깐 다른 차와 부딪히지 않음
   }
@@ -221,7 +244,8 @@ export class World {
       if (c.z < r) { c.z = r; c.vz = Math.abs(c.vz) * 0.3; }
       if (c.x > W - r) { c.x = W - r; c.vx = -Math.abs(c.vx) * 0.3; }
       if (c.z > H - r) { c.z = H - r; c.vz = -Math.abs(c.vz) * 0.3; }
-      // 장식물
+      // 장식물·기둥 (땅 위에서만)
+      if ((c.y || 0) > 1.5) continue;
       for (const s of this.solids) {
         const dx = c.x - s.x, dz = c.z - s.z;
         const rr = s.r + r;
@@ -246,6 +270,7 @@ export class World {
       const a = this.cars[i], b = this.cars[j];
       if (a.kind === "remote" && b.kind === "remote") continue;
       if (a.respawnT > 0 || b.respawnT > 0 || a.finishedHidden || b.finishedHidden) continue;
+      if (Math.abs((a.y || 0) - (b.y || 0)) > 2.5) continue; // 다리 위·아래는 부딪히지 않음
       const dx = b.x - a.x, dz = b.z - a.z;
       const d = Math.hypot(dx, dz);
       const rr = CAR_R * 2;
@@ -271,7 +296,7 @@ export class World {
       if (c.kind === "remote") continue;
       for (const b of this.boosts) {
         if (b.off > 0) continue;
-        if ((c.x - b.x) ** 2 + (c.z - b.z) ** 2 < 3.2 * 3.2) { b.off = 5; c.boostT = 1.6; c.gotBoost = true; }
+        if ((c.y || 0) < 1.5 && (c.x - b.x) ** 2 + (c.z - b.z) ** 2 < 3.2 * 3.2) { b.off = 5; c.boostT = 1.6; c.gotBoost = true; }
       }
     }
   }

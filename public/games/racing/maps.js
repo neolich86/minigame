@@ -1,5 +1,5 @@
 // 서킷 메이커 — 기본 제공 맵. 거북이(turtle) 명령으로 코스를 깔고, 빈 칸에 장식을 뿌린다.
-import { cellsOf, DECOS } from "./track.js?v=2";
+import { cellsOf, levelsOf, DECOS } from "./track.js?v=3";
 
 const DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0];
 function rotCell(cx, cy, k, r) {
@@ -9,30 +9,44 @@ function rotCell(cx, cy, k, r) {
 }
 
 /**
- * cmds: "S"(직선) "F"(출발선) "X"(교차로) "R1".."R3" / "L1".."L3"(오른/왼 코너, 크기) — 숫자 접두로 반복: "3S"
+ * cmds: "S"(직선) "F"(출발선) "X"(교차로) "R1".."R3" / "L1".."L3"(오른/왼 코너, 크기) "U"/"D"(한 층 오르막/내리막, 2칸)
+ *       — 숫자 접두로 반복: "3S"
  * 출발 칸 (x,y)과 방향 d 에서 시작
  */
 export function turtle(x, y, d, cmds) {
   const tiles = [];
-  const seen = new Map();
+  const seen = new Map(); // "x,y@층" → 조각
+  let h = 0;
+  const mark = (t) => { for (const [cx, cy] of cellsOf(t)) for (const lv of levelsOf(t)) seen.set(cx + "," + cy + "@" + lv, t); };
+  const add = (t) => { if (h) t.h = h; tiles.push(t); mark(t); };
   for (let raw of cmds.trim().split(/\s+/)) {
     let rep = 1;
     const m = raw.match(/^(\d+)([A-Z]\d?)$/);
     if (m) { rep = +m[1]; raw = m[2]; }
     for (let n = 0; n < rep; n++) {
       if (raw === "S" || raw === "F" || raw === "X") {
-        const key = x + "," + y;
+        const key = x + "," + y + "@" + h;
         if (raw === "X" || seen.has(key)) {
-          // 교차로: 이미 지나간 칸이면 그 칸을 교차로로 바꾼다
+          // 교차로: 같은 층에서 이미 지나간 칸이면 그 칸을 교차로로 바꾼다
           const prev = seen.get(key);
           if (prev) { prev.t = "cross"; prev.r = 0; }
-          else { const t = { t: "cross", x, y, r: 0 }; tiles.push(t); seen.set(key, t); }
+          else add({ t: "cross", x, y, r: 0 });
         } else {
-          const t = raw === "F" ? { t: "start", x, y, r: d } : { t: "straight", x, y, r: d % 2 };
-          tiles.push(t);
-          seen.set(key, t);
+          add(raw === "F" ? { t: "start", x, y, r: d } : { t: "straight", x, y, r: d % 2 });
         }
         x += DX[d]; y += DY[d];
+      } else if (raw === "U" || raw === "D") {
+        // 오르막/내리막 (진행 방향으로 2칸)
+        const up = raw === "U";
+        const r = up ? d : (d + 2) % 4;
+        const t = { t: "ramp", x: 0, y: 0, r };
+        // 진입 칸이 (x,y)가 되도록 발자국 위치를 잡는다
+        const x2 = x + DX[d], y2 = y + DY[d];
+        t.x = Math.min(x, x2); t.y = Math.min(y, y2);
+        if (!up) h--;
+        add(t);
+        if (up) h++;
+        x = x2 + DX[d]; y = y2 + DY[d];
       } else {
         const right = raw[0] === "R", k = +raw[1];
         const type = "c" + k;
@@ -41,16 +55,14 @@ export function turtle(x, y, d, cmds) {
         else { r = (d + 1) % 4; inL = [k - 1, 0]; outL = [0, k - 1]; nd = (d + 3) % 4; }
         const [ix, iy] = rotCell(inL[0], inL[1], k, r);
         const ox0 = x - ix, oy0 = y - iy;
-        const t = { t: type, x: ox0, y: oy0, r };
-        tiles.push(t);
-        for (const [cx, cy] of cellsOf(t)) seen.set(cx + "," + cy, t);
+        add({ t: type, x: ox0, y: oy0, r });
         const [ex, ey] = rotCell(outL[0], outL[1], k, r);
         d = nd;
         x = ox0 + ex + DX[d]; y = oy0 + ey + DY[d];
       }
     }
   }
-  tiles.end = { x, y, d };
+  tiles.end = { x, y, d, h };
   return tiles;
 }
 
@@ -91,6 +103,12 @@ export function builtinMaps() {
     make("eight", { ko: "8자 교차로", en: "Figure Eight" }, 13, 13, "grass", [6, 9, 0],
       "F 2S X 2S R2 2S R2 S R2 3S X 2S L2 2S L2 S L2", 23,
       [{ t: "grandStandCovered", x: 7, y: 9, r: 3 }, { t: "grandStand", x: 7, y: 8, r: 3 }, { t: "billboard", x: 5, y: 9, r: 1 }, { t: "boost", x: 6, y: 4, r: 0 }, { t: "boost", x: 4, y: 6, r: 1 }]),
+    make("bridge", { ko: "하이 브릿지", en: "High Bridge" }, 13, 13, "grass", [6, 9, 0],
+      "F 5S R2 2S R2 S R2 S U S D L2 2S L2 S L2", 29,
+      [{ t: "grandStandCovered", x: 7, y: 9, r: 3 }, { t: "grandStand", x: 7, y: 8, r: 3 }, { t: "bannerRed", x: 5, y: 8, r: 0 }, { t: "boost", x: 6, y: 3, r: 0 }]),
+    make("sky", { ko: "스카이 루프", en: "Sky Loop" }, 16, 15, "grass", [8, 11, 0],
+      "F S U S 2S R2 3S R2 S R2 D 4S L2 3S L2 L2", 41,
+      [{ t: "grandStandCovered", x: 9, y: 10, r: 3 }, { t: "grandStandCovered", x: 9, y: 11, r: 3 }, { t: "grandStand", x: 9, y: 12, r: 3 }, { t: "tent", x: 6, y: 9, r: 1 }, { t: "tent", x: 7, y: 9, r: 1 }, { t: "pitsGarage", x: 6, y: 10, r: 1 }, { t: "pitsOffice", x: 7, y: 10, r: 1 }, { t: "boost", x: 5, y: 10, r: 0 }, { t: "billboard", x: 11, y: 5, r: 0 }, { t: "lightPost", x: 10, y: 9, r: 0 }]),
     make("canyon", { ko: "사막 협곡", en: "Desert Canyon" }, 16, 12, "sand", [6, 9, 1],
       "F 5S L3 3S L2 2S L1 R1 S R1 L1 3S L2 4S L2 S", 37,
       [{ t: "tent", x: 7, y: 10, r: 0 }, { t: "tent", x: 8, y: 10, r: 0 }, { t: "tent", x: 9, y: 10, r: 0 }, { t: "radar", x: 6, y: 7, r: 0 }, { t: "bannerRed", x: 6, y: 8, r: 0 }, { t: "boost", x: 14, y: 5, r: 0 }, { t: "boost", x: 3, y: 5, r: 0 }], 0.1),

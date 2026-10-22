@@ -550,6 +550,7 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       ],
       faq: [
         { q: "맵은 어떻게 만드나요?", a: "메뉴의 '맵 에디터'에서 도로 조각을 골라 격자에 놓으세요. 같은 조각을 다시 누르거나 R 키로 회전해요. 출발선에서 시작해 다시 출발선으로 돌아오면 '코스 완성'이 뜨고, 저장하면 레이스 설정에서 고를 수 있어요." },
+        { q: "다리나 고가도로처럼 위아래로 쌓을 수 있나요?", a: "네. 에디터 오른쪽 ▲▼로 편집할 높이(0~2)를 고르고, 도로 탭의 '오르막'으로 한 층씩 올라가요. 높은 층에 놓은 도로는 기둥이 자동으로 생기고, 그 아래로 다른 길이 지나갈 수 있어요. 높이가 다른 길끼리는 반드시 오르막으로 이어야 해요." },
         { q: "만든 맵을 친구에게 보낼 수 있나요?", a: "에디터의 '공유 코드'를 눌러 코드를 복사해 보내면, 친구가 같은 창에 붙여 넣고 '불러오기'로 열 수 있어요. 온라인 방에서는 방장이 고른 맵이 모두에게 자동으로 전달돼요." },
         { q: "친구와 같이 하려면?", a: "'친구와 온라인 대전'에서 방을 만들고 초대 링크를 보내세요. 2~8명까지, 빈자리는 AI로 채울 수 있어요. 방장이 맵과 랩 수를 고르고 출발해요." },
         { q: "만든 맵은 어디에 저장되나요?", a: "이 기기 브라우저에 저장되고, 로그인하면 계정에도 저장돼 다른 기기에서도 쓸 수 있어요." },
@@ -564,6 +565,7 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       ],
       faq: [
         { q: "How do I build a track?", a: "Open the Track Editor, pick road pieces and place them on the grid. Tap a piece again or press R to rotate. When the loop returns to the start line you'll see 'Track OK' — save it and pick it in race setup." },
+        { q: "Can I stack roads, like bridges and flyovers?", a: "Yes. Use ▲▼ on the right of the editor to pick the level you're editing (0–2) and the Ramp piece to climb one level. Raised roads get pillars automatically and other roads can pass underneath. Roads at different heights must be joined with a ramp." },
         { q: "Can I send my track to a friend?", a: "Press 'Share code' in the editor and send the code. Your friend pastes it in the same window and presses Load. In online rooms, the host's track is sent to everyone automatically." },
         { q: "How do I race friends?", a: "Open 'Race friends online', create a room and share the invite link. 2–8 players; empty seats can be filled with AI. The host picks the track and laps and starts the race." },
         { q: "Where are my tracks saved?", a: "In this browser, and in your account when you're signed in so you can use them on other devices." },

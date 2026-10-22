@@ -1,9 +1,9 @@
 // 서킷 메이커 — 렌더링 · 화면 · 에디터 · 온라인
 import * as THREE from "three";
 import { GLTFLoader } from "./vendor/jsm/GLTFLoader.js";
-import { T, ROAD_HW, PIECES, DECOS, isRoad, traceTrack, sanitizeMap, encodeMap, decodeMap, cellsOf } from "./track.js?v=2";
-import { builtinMaps, BLANK } from "./maps.js?v=2";
-import { World, CARS, carById, DIFFS, VMAX } from "./sim.js?v=2";
+import { T, ROAD_HW, PIECES, DECOS, isRoad, traceTrack, sanitizeMap, encodeMap, decodeMap, cellsOf, levelsOf, footprint, pillarsOf, MAX_LEVEL, LH } from "./track.js?v=3";
+import { builtinMaps, BLANK } from "./maps.js?v=3";
+import { World, CARS, carById, DIFFS, VMAX } from "./sim.js?v=3";
 
 const MG = window.MGH || null;
 const KO = MG ? MG.L("ko", "en") === "ko" : /^ko/i.test(navigator.language || "");
@@ -32,7 +32,7 @@ function toast(msg, ms = 2200) {
 }
 
 // ───────────────────────── 에셋 ─────────────────────────
-const RK = ["roadStraight", "roadCornerSmall", "roadCornerLarge", "roadCornerLarger", "roadCornerSmallBorder", "roadCornerLargeBorder", "roadCornerLargerBorder", "roadCornerLargeBorderInner", "roadCornerLargerBorderInner", "treeLarge", "treeSmall", "grandStand", "grandStandCovered", "tent", "lightPostLarge", "billboard", "pitsGarage", "pitsOffice", "bannerTowerRed", "bannerTowerGreen", "barrierRed", "barrierWhite", "fenceStraight", "flagCheckers", "overhead", "overheadLights", "radarEquipment", "pylon"];
+const RK = ["roadRampLongCurvedWall", "roadStraightBridgeMid", "roadCornerBridgeSmall", "roadCornerBridgeLarge", "roadCornerBridgeLarger", "roadStraight", "roadCornerSmall", "roadCornerLarge", "roadCornerLarger", "roadCornerSmallBorder", "roadCornerLargeBorder", "roadCornerLargerBorder", "roadCornerLargeBorderInner", "roadCornerLargerBorderInner", "treeLarge", "treeSmall", "grandStand", "grandStandCovered", "tent", "lightPostLarge", "billboard", "pitsGarage", "pitsOffice", "bannerTowerRed", "bannerTowerGreen", "barrierRed", "barrierWhite", "fenceStraight", "flagCheckers", "overhead", "overheadLights", "radarEquipment", "pylon"];
 const TOY = ["item-box", "item-cone", "tree-pine", "tree", "gate-finish"];
 const DECO_MODEL = {
   treeLarge: "rk/treeLarge", treeSmall: "rk/treeSmall", pine: "toy/tree-pine", tree: "toy/tree",
@@ -100,15 +100,21 @@ function cloneModel(key, opts = {}) {
 }
 
 /** 도로 조각 모델: bbox 최대 모서리를 발자국 (k,k)에 맞추고 발자국 중심으로 회전 */
-function placeRoadModel(key, x, y, k, r, opts) {
+/**
+ * 도로 조각 모델: bbox 최대 모서리를 발자국 (W,L)에 맞추고 발자국 중심으로 회전.
+ * top: 이 높이(칸 단위)에 모델 윗면을 맞춘다 (높은 층). 없으면 바닥을 땅에 둔다.
+ */
+function placeRoadModel(key, x, y, W, L, r, opts, top) {
   const m = MODELS[key];
   const inner = cloneModel(key, opts);
-  inner.position.set(k / 2 - m.box.max.x, -m.box.min.y - 0.01, k / 2 - m.box.max.z);
+  const iy = top !== undefined ? top - m.box.max.y : -m.box.min.y - 0.01;
+  inner.position.set(W / 2 - m.box.max.x, iy, L / 2 - m.box.max.z);
   const piv = new THREE.Group();
   piv.add(inner);
   piv.rotation.y = -r * Math.PI / 2;
   piv.scale.setScalar(T);
-  piv.position.set((x + k / 2) * T, 0, (y + k / 2) * T);
+  const [fw, fl] = (r & 1) ? [L, W] : [W, L];
+  piv.position.set((x + fw / 2) * T, 0, (y + fl / 2) * T);
   return piv;
 }
 
@@ -135,27 +141,46 @@ function roadMat() {
 /** 배치 하나(도로/장식)의 3D 오브젝트 */
 function makeTileObj(p, theme, ghost) {
   const grass = ghost ? null : themeEdgeMat(theme);
-  const opts = { grass, ghost, flat: true };
+  const h = p.h | 0;
+  const opts = { grass, ghost, flat: h === 0 };
   if (isRoad(p.t)) {
-    const k = PIECES[p.t].k;
+    const { w: W, l: Lw } = PIECES[p.t];
+    const k = W;
+    const top = h > 0 ? 0.01 + h * 0.5 : undefined; // 높은 층 윗면 (칸 단위)
     const g = new THREE.Group();
-    if (p.t === "straight" || p.t === "start") g.add(placeRoadModel("rk/roadStraight", p.x, p.y, 1, p.r, opts));
+    if (p.t === "straight" || p.t === "start") g.add(placeRoadModel(h ? "rk/roadStraightBridgeMid" : "rk/roadStraight", p.x, p.y, 1, 1, p.r, opts, top));
+    if (p.t === "ramp") {
+      const o = placeRoadModel("rk/roadRampLongCurvedWall", p.x, p.y, 1, 2, p.r, opts);
+      o.position.y = h * LH;
+      g.add(o);
+    }
     if (p.t === "cross") {
-      const pl = new THREE.Mesh(new THREE.PlaneGeometry(T, T), ghost ? new THREE.MeshBasicMaterial({ color: 0x777777, transparent: true, opacity: 0.55 }) : roadMat());
-      pl.rotation.x = -Math.PI / 2;
-      pl.position.set((p.x + 0.5) * T, ROAD_Y - 0.02, (p.y + 0.5) * T);
-      pl.receiveShadow = true;
-      g.add(pl);
+      const mat = ghost ? new THREE.MeshBasicMaterial({ color: 0x777777, transparent: true, opacity: 0.55 }) : roadMat();
+      if (h) {
+        const deck = new THREE.Mesh(new THREE.BoxGeometry(T, 0.13 * T, T), mat);
+        deck.position.set((p.x + 0.5) * T, top * T - 0.065 * T, (p.y + 0.5) * T);
+        deck.castShadow = deck.receiveShadow = true;
+        g.add(deck);
+      } else {
+        const pl = new THREE.Mesh(new THREE.PlaneGeometry(T, T), mat);
+        pl.rotation.x = -Math.PI / 2;
+        pl.position.set((p.x + 0.5) * T, ROAD_Y - 0.02, (p.y + 0.5) * T);
+        pl.receiveShadow = true;
+        g.add(pl);
+      }
     }
     if (p.t[0] === "c" && p.t !== "cross") {
       const nm = { c1: "Small", c2: "Large", c3: "Larger" }[p.t];
-      g.add(placeRoadModel("rk/roadCorner" + nm, p.x, p.y, k, p.r, opts));
-      g.add(placeRoadModel("rk/roadCorner" + nm + "Border", p.x, p.y, k, p.r, opts));
-      if (k > 1) g.add(placeRoadModel("rk/roadCorner" + nm + "BorderInner", p.x, p.y, k, p.r, opts));
+      if (h) g.add(placeRoadModel("rk/roadCornerBridge" + nm, p.x, p.y, k, k, p.r, opts, top));
+      else {
+        g.add(placeRoadModel("rk/roadCorner" + nm, p.x, p.y, k, k, p.r, opts));
+        g.add(placeRoadModel("rk/roadCorner" + nm + "Border", p.x, p.y, k, k, p.r, opts));
+        if (k > 1) g.add(placeRoadModel("rk/roadCorner" + nm + "BorderInner", p.x, p.y, k, k, p.r, opts));
+      }
     }
     if (p.t === "start") {
       const piv = new THREE.Group();
-      piv.position.set((p.x + 0.5) * T, 0, (p.y + 0.5) * T);
+      piv.position.set((p.x + 0.5) * T, h * LH, (p.y + 0.5) * T);
       piv.rotation.y = -p.r * Math.PI / 2;
       const strip = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_HW * 2, 1.6), new THREE.MeshBasicMaterial({ map: checker(), transparent: !!ghost, opacity: ghost ? 0.6 : 1 }));
       strip.rotation.x = -Math.PI / 2;
@@ -263,8 +288,28 @@ function buildMap(map, withFence = true) {
     if (o) { mapRoot.add(o); objs.set(p, o); }
   }
   if (withFence) mapRoot.add(makeFence(map));
+  mapRoot.add(makePillars(map));
   scene.add(mapRoot);
   return objs;
+}
+
+let pillarMat = null;
+function makePillars(map) {
+  const g = new THREE.Group();
+  g.userData.pillars = true;
+  if (!pillarMat) {
+    MODELS["rk/roadStraightBridgeMid"].scene.traverse((o) => { if (o.isMesh && !pillarMat && /grey|white/i.test(o.material.name)) pillarMat = o.material; });
+    pillarMat = pillarMat || new THREE.MeshStandardMaterial({ color: 0xd8d4cc });
+  }
+  for (const q of pillarsOf(map)) {
+    const hgt = q.top - 1.3;
+    if (hgt < 0.5) continue;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(1.6, hgt, 1.6), pillarMat);
+    m.position.set(q.x, hgt / 2, q.z);
+    m.castShadow = m.receiveShadow = true;
+    g.add(m);
+  }
+  return g;
 }
 function disposeTree(o) {
   o.traverse((c) => { if (c.isMesh && c.geometry && c.geometry.type === "PlaneGeometry") c.geometry.dispose(); });
@@ -357,7 +402,7 @@ function makeThumbs() {
     return r.domElement.toDataURL();
   };
   for (const c of CARS) { const o = makeCar(c, "#fff"); o.remove(o.children[o.children.length - 1]); o.rotation.y = Math.PI / 2 + 0.5; thumbs["car:" + c.id] = shoot(o); }
-  for (const t of Object.keys(PIECES)) thumbs["p:" + t] = shoot(makeTileObj({ t, x: 0, y: 0, r: t === "start" ? 0 : 0 }, "grass"), true);
+  for (const t of Object.keys(PIECES)) thumbs["p:" + t] = shoot(makeTileObj({ t, x: 0, y: 0, r: t === "ramp" ? 1 : 0 }, "grass"), t !== "ramp");
   for (const t of Object.keys(DECOS)) thumbs["p:" + t] = shoot(makeTileObj({ t, x: 0, y: 0, r: 0 }, "grass"));
   r.dispose();
 }
@@ -436,6 +481,18 @@ function drawMapPreview(cv, map, track) {
     tr.pts.forEach((p, i) => { const x = ox + (p.x / T) * s, y = oy + (p.z / T) * s; i ? g.lineTo(x, y) : g.moveTo(x, y); });
     g.closePath();
     g.stroke();
+    // 다리(높은 곳)는 위에 한 번 더 — 아래 길과 겹치는 곳이 보이게
+    const hiSeg = (lw, col) => {
+      g.strokeStyle = col; g.lineWidth = lw; g.lineCap = "butt";
+      let on = false;
+      g.beginPath();
+      tr.pts.forEach((p) => {
+        const x = ox + (p.x / T) * s, y = oy + (p.z / T) * s;
+        if ((p.y || 0) > 1) { on ? g.lineTo(x, y) : g.moveTo(x, y); on = true; } else on = false;
+      });
+      g.stroke();
+    };
+    if (tr.pts.some((p) => (p.y || 0) > 1)) { hiSeg(Math.max(4, s * 1.15), "#20242c"); hiSeg(Math.max(2, s * 0.8), "#8a909c"); }
     const st = tr.start;
     g.fillStyle = "#fff";
     g.beginPath(); g.arc(ox + (st.x / T) * s, oy + (st.z / T) * s, Math.max(2.5, s * 0.3), 0, 7); g.fill();
@@ -477,6 +534,9 @@ function staticText() {
   $("eTest").lastChild.textContent = " " + L("시험 주행", "Test drive");
   $("eNew").title = L("새 맵", "New"); $("eCode").title = L("공유 코드", "Share code"); $("eSave").title = L("저장", "Save"); $("eTest").title = L("시험 주행", "Test drive");
   $("eName").placeholder = L("맵 이름", "Track name");
+  $("eLvL").textContent = L("높이", "LEVEL");
+  $("eUp").title = L("한 층 위 편집 (PageUp)", "Edit level above (PageUp)");
+  $("eDn").title = L("한 층 아래 편집 (PageDown)", "Edit level below (PageDown)");
   $("hHint").textContent = L("←→ 조향 · ↑ 가속 · ↓ 브레이크/후진 · R 코스 복귀 · Esc 일시정지", "←→ steer · ↑ gas · ↓ brake · R reset · Esc pause");
   if (!MG) $("mOnline").hidden = true;
 }
@@ -774,8 +834,10 @@ function ord(n) { return KO ? L("위", "") : ["th", "st", "nd", "rd"][n % 10 > 3
 
 function updateCarMeshes(race, dt) {
   for (const [car, mesh] of race.meshes) {
-    mesh.position.set(car.x, ROAD_Y, car.z);
+    mesh.position.set(car.x, ROAD_Y + (car.y || 0), car.z);
+    mesh.rotation.order = "YXZ";
     mesh.rotation.y = Math.PI / 2 - car.a;
+    mesh.rotation.x = -(car.pitch || 0);
     const v = car.kind === "remote" ? car.vf || 0 : car.vx * Math.cos(car.a) + car.vz * Math.sin(car.a);
     car.spin = (car.spin || 0) + v * dt * 1.4;
     for (const wh of mesh.userData.wheels) {
@@ -783,7 +845,7 @@ function updateCarMeshes(race, dt) {
       if (wh.front) wh.o.rotation.y = -(car.steer || 0) * 0.45;
     }
     // 부스트 중 살짝 들림, 충돌 흔들림
-    mesh.position.y = ROAD_Y + (car.boostT > 0 ? 0.08 : 0);
+    mesh.position.y = ROAD_Y + (car.y || 0) + (car.boostT > 0 ? 0.08 : 0);
     if (mesh.userData.tag) mesh.userData.tag.visible = car.seat !== race.mySeat;
   }
 }
@@ -795,13 +857,15 @@ function updateCamera(race, dt) {
   const fx = Math.cos(me.a), fz = Math.sin(me.a);
   const sp = me.speed || 0;
   const back = 9.5 + sp * 0.06, up = 4.2 + sp * 0.02;
-  const want = tmpV.set(me.x - fx * back, up, me.z - fz * back);
-  const look = new THREE.Vector3(me.x + fx * 7, 1.2, me.z + fz * 7);
+  const cy = me.y || 0;
+  race.camY = race.camY === undefined ? cy : race.camY + (cy - race.camY) * Math.min(1, dt * 5);
+  const want = tmpV.set(me.x - fx * back, up + race.camY, me.z - fz * back);
+  const look = new THREE.Vector3(me.x + fx * 7, 1.2 + cy, me.z + fz * 7);
   if (race.phase === "intro") {
     // 출발 전: 위에서 내려오며 차 뒤로
     const k = Math.max(0, Math.min(1, 1 - (race.cd - 0.6) / 2.8));
     const e = k * k * (3 - 2 * k);
-    const hi = new THREE.Vector3(me.x - fx * 30, 34, me.z - fz * 30 + 8);
+    const hi = new THREE.Vector3(me.x - fx * 30, 34 + cy, me.z - fz * 30 + 8);
     want.lerpVectors(hi, want.clone(), e);
     race.camPos.copy(want);
     race.camLook.copy(look);
@@ -809,9 +873,9 @@ function updateCamera(race, dt) {
   } else if (me.finished) {
     // 완주 후: 천천히 차 주위를 돈다
     const a = race.t * 0.4;
-    want.set(me.x + Math.cos(a) * 14, 6, me.z + Math.sin(a) * 14);
+    want.set(me.x + Math.cos(a) * 14, 6 + cy, me.z + Math.sin(a) * 14);
     race.camPos.lerp(want, 1 - Math.exp(-dt * 2));
-    race.camLook.lerp(new THREE.Vector3(me.x, 1, me.z), 1 - Math.exp(-dt * 4));
+    race.camLook.lerp(new THREE.Vector3(me.x, 1 + cy, me.z), 1 - Math.exp(-dt * 4));
   } else {
     const k = 1 - Math.exp(-dt * 6);
     race.camPos.lerp(want, k);
@@ -1014,13 +1078,13 @@ const audio = (() => {
 addEventListener("pointerdown", () => audio.unlock(), { once: true });
 
 // ───────────────────────── 에디터 ─────────────────────────
-const ED = { on: false, map: null, brush: "straight", rot: 0, erase: false, pan: false, objs: new Map(), hist: [], ghost: null, ghostKey: "", hover: null, dirty: false, zoom: 60, cx: 0, cz: 0, errBox: null, tab: "road", srcId: null };
+const ED = { on: false, map: null, brush: "straight", rot: 0, erase: false, pan: false, objs: new Map(), hist: [], ghost: null, ghostKey: "", hover: null, dirty: false, zoom: 60, cx: 0, cz: 0, errBox: null, tab: "road", srcId: null, lv: 0 };
 const PAL = {
-  road: ["straight", "start", "c1", "c2", "c3", "cross"],
+  road: ["straight", "start", "c1", "c2", "c3", "cross", "ramp"],
   deco: ["boost", "treeLarge", "treeSmall", "pine", "tree", "grandStand", "grandStandCovered", "tent", "pitsGarage", "pitsOffice", "billboard", "lightPost", "bannerRed", "bannerGreen", "radar", "fence", "cone"],
 };
 const PNAME = {
-  straight: ["직선", "Straight"], start: ["출발선", "Start"], c1: ["코너 S", "Corner S"], c2: ["코너 M", "Corner M"], c3: ["코너 L", "Corner L"], cross: ["교차로", "Crossing"],
+  straight: ["직선", "Straight"], start: ["출발선", "Start"], c1: ["코너 S", "Corner S"], c2: ["코너 M", "Corner M"], c3: ["코너 L", "Corner L"], cross: ["교차로", "Crossing"], ramp: ["오르막", "Ramp"],
   boost: ["부스트", "Boost"], treeLarge: ["큰 나무", "Tree"], treeSmall: ["작은 나무", "Small tree"], pine: ["소나무", "Pine"], tree: ["둥근 나무", "Round tree"],
   grandStand: ["관중석", "Stand"], grandStandCovered: ["지붕 관중석", "Covered stand"], tent: ["텐트", "Tent"], pitsGarage: ["피트 차고", "Garage"], pitsOffice: ["피트 건물", "Pit office"],
   billboard: ["광고판", "Billboard"], lightPost: ["조명탑", "Lights"], bannerRed: ["빨간 배너", "Red banner"], bannerGreen: ["초록 배너", "Green banner"], radar: ["레이더", "Radar"], fence: ["펜스", "Fence"], cone: ["콘", "Cone"],
@@ -1035,6 +1099,8 @@ const ERRS = {
   loop: ["출발선으로 돌아오지 않는 고리가 있어요", "Loop doesn't return to the start"],
   overlap: ["조각이 겹쳐 있어요", "Pieces overlap"],
   outside: ["맵 밖으로 나간 조각이 있어요", "A piece is outside the map"],
+  level: ["높이가 맞지 않아요 (빨간 칸) — 오르막으로 이어 주세요", "Heights don't match (red) — connect them with a ramp"],
+  tooHigh: ["2층보다 높이 쌓을 수 없어요", "Can't build higher than level 2"],
 };
 
 function openEditor(map, fromBuiltin, keepState) {
@@ -1057,6 +1123,7 @@ function openEditor(map, fromBuiltin, keepState) {
     }
     ED.hist = [];
     ED.dirty = false;
+    ED.lv = 0;
   }
   $("eName").value = ED.map.name || "";
   edPalette();
@@ -1069,6 +1136,8 @@ function openEditor(map, fromBuiltin, keepState) {
 function edRebuild() {
   ED.objs = buildMap(ED.map, true);
   mapRoot.userData.id = "editor";
+  for (const [p, o] of ED.objs) edFade(p, o);
+  edLevelUI();
   // 격자
   const m = ED.map;
   const pts = [];
@@ -1148,11 +1217,15 @@ function edToolsUI() {
   $("ePan").className = ED.pan ? "on" : "";
 }
 
+function brushLevel(t) {
+  if (!isRoad(t)) return 0;
+  return t === "ramp" ? Math.min(ED.lv, MAX_LEVEL - 1) : ED.lv;
+}
 function edGhost() {
-  const key = ED.erase || ED.pan ? "" : ED.brush + ":" + ED.rot;
+  const key = ED.erase || ED.pan ? "" : ED.brush + ":" + ED.rot + ":" + brushLevel(ED.brush);
   if (key !== ED.ghostKey) {
     if (ED.ghost) mapRoot.remove(ED.ghost);
-    ED.ghost = key ? makeTileObj({ t: ED.brush, x: 0, y: 0, r: ED.rot }, ED.map.theme, true) : null;
+    ED.ghost = key ? makeTileObj({ t: ED.brush, x: 0, y: 0, r: ED.rot, h: brushLevel(ED.brush) }, ED.map.theme, true) : null;
     if (ED.ghost) { ED.ghost.userData.base = ED.ghost.position.clone(); mapRoot.add(ED.ghost); }
     ED.ghostKey = key;
   }
@@ -1176,7 +1249,9 @@ function edCell(ev) {
   return { x: Math.floor(p.x / T), y: Math.floor(p.z / T), wx: p.x, wz: p.z };
 }
 
-function kOf(t) { return (PIECES[t] || DECOS[t] || {}).k || 1; }
+/** 브러시 발자국 [가로, 세로] (회전 반영) */
+function fpOf(t, r) { return isRoad(t) ? footprint({ t, r }) : [1, 1]; }
+function anchorOf(cell, t, r) { const [fw, fl] = fpOf(t, r); return { x: cell.x - Math.floor((fw - 1) / 2), y: cell.y - Math.floor((fl - 1) / 2) }; }
 function edPush() {
   ED.hist.push(JSON.stringify(ED.map));
   if (ED.hist.length > 60) ED.hist.shift();
@@ -1188,14 +1263,16 @@ function edChanged() {
   edValidate();
 }
 
-function edAt(x, y) {
-  return ED.map.tiles.filter((p) => cellsOf(p).some(([cx, cy]) => cx === x && cy === y));
+function edAt(x, y, lv) {
+  return ED.map.tiles.filter((p) => levelsOf(p).includes(lv) && cellsOf(p).some(([cx, cy]) => cx === x && cy === y));
 }
 
 function edApply(cell, drag) {
   const m = ED.map;
   if (ED.erase) {
-    const hit = edAt(cell.x, cell.y);
+    let hit = edAt(cell.x, cell.y, ED.lv);
+    // 이 높이에 없으면 아무 높이의 조각이라도 (위에서부터)
+    if (!hit.length) hit = ED.map.tiles.filter((p) => cellsOf(p).some(([cx, cy]) => cx === cell.x && cy === cell.y)).sort((a, b) => (b.h | 0) - (a.h | 0)).slice(0, 1);
     if (!hit.length) return;
     if (!drag || !ED.strokePushed) { edPush(); ED.strokePushed = true; }
     // 장식이 있으면 장식 먼저 지운다
@@ -1204,12 +1281,14 @@ function edApply(cell, drag) {
     edChanged();
     return;
   }
-  const k = kOf(ED.brush);
   // 큰 조각은 마우스 칸이 가운데쯤 오게
-  const ax = cell.x - Math.floor((k - 1) / 2), ay = cell.y - Math.floor((k - 1) / 2);
-  if (ax < 0 || ay < 0 || ax + k > m.w || ay + k > m.h) return;
+  const { x: ax, y: ay } = anchorOf(cell, ED.brush, ED.rot);
+  const [fw, fl] = fpOf(ED.brush, ED.rot);
+  if (ax < 0 || ay < 0 || ax + fw > m.w || ay + fl > m.h) return;
   const np = { t: ED.brush, x: ax, y: ay, r: ED.rot };
-  const same = m.tiles.find((p) => p.t === np.t && p.x === ax && p.y === ay);
+  const bl = brushLevel(ED.brush);
+  if (bl) np.h = bl;
+  const same = m.tiles.find((p) => p.t === np.t && p.x === ax && p.y === ay && (p.h | 0) === bl);
   if (same) {
     if (drag) return;
     // 같은 조각을 다시 누르면 회전
@@ -1217,15 +1296,19 @@ function edApply(cell, drag) {
     ED.rot = (same.r + 1) & 3;
     np.r = ED.rot;
     edRemove(same);
+    const nf = fpOf(np.t, np.r);
+    if (np.x + nf[0] > m.w || np.y + nf[1] > m.h) { np.x = Math.min(np.x, m.w - nf[0]); np.y = Math.min(np.y, m.h - nf[1]); }
     edAdd(np);
     edGhost();
     edChanged();
     return;
   }
   const cells = new Set(cellsOf(np).map(([a, b]) => a + "," + b));
+  const lvs = levelsOf(np);
   const road = isRoad(np.t);
   const over = m.tiles.filter((p) => {
     if (!cellsOf(p).some(([a, b]) => cells.has(a + "," + b))) return false;
+    if (!levelsOf(p).some((l) => lvs.includes(l))) return false; // 다른 높이는 겹쳐도 된다 (다리 아래)
     // 부스트 박스는 도로 위에 둘 수 있다
     if (np.t === "boost" && isRoad(p.t)) return false;
     if (p.t === "boost" && road) return false;
@@ -1240,23 +1323,54 @@ function edApply(cell, drag) {
 function edAdd(p) {
   ED.map.tiles.push(p);
   const o = makeTileObj(p, ED.map.theme);
-  if (o) { mapRoot.add(o); ED.objs.set(p, o); }
+  if (o) { mapRoot.add(o); ED.objs.set(p, o); edFade(p, o); }
+  if (isRoad(p.t)) edPillars();
 }
 function edRemove(p) {
   ED.map.tiles = ED.map.tiles.filter((q) => q !== p);
   const o = ED.objs.get(p);
   if (o) { mapRoot.remove(o); ED.objs.delete(p); }
+  if (isRoad(p.t)) edPillars();
+}
+/** 지금 편집 중인 높이보다 위에 있는 조각은 흐리게 (아래가 보이게) */
+function edFade(p, o) {
+  if (!isRoad(p.t) || levelsOf(p)[0] <= ED.lv) return;
+  o.traverse((c) => {
+    if (!c.isMesh) return;
+    const mats = (Array.isArray(c.material) ? c.material : [c.material]).map((m) => { const x = m.clone(); x.transparent = true; x.opacity = 0.28; x.depthWrite = false; return x; });
+    c.material = Array.isArray(c.material) ? mats : mats[0];
+    c.castShadow = false;
+  });
+}
+function edPillars() {
+  const old = mapRoot.children.find((c) => c.userData.pillars);
+  if (old) mapRoot.remove(old);
+  mapRoot.add(makePillars(ED.map));
+}
+function edLevelUI() {
+  $("eLv").textContent = ED.lv;
+  $("eUp").disabled = ED.lv >= MAX_LEVEL;
+  $("eDn").disabled = ED.lv <= 0;
+}
+function edSetLevel(lv) {
+  lv = Math.max(0, Math.min(MAX_LEVEL, lv));
+  if (lv === ED.lv) return;
+  ED.lv = lv;
+  ED.ghostKey = "";
+  edRebuild();
+  edValidate();
+  toast(lv === 0 ? L("땅 높이 편집", "Editing ground level") : L(`높이 ${lv} 편집 — 다리·고가 도로를 놓아요`, `Editing level ${lv} — place bridges`), 1400);
 }
 
 function edValidate() {
   const r = traceTrack(ED.map);
   const st = $("edStatus");
   if (r.ok) {
-    st.innerHTML = `<span class="okc">✓ ${L("코스 완성", "Track OK")}</span> · ${L("1랩", "Lap")} ${Math.round(r.L)}m`;
+    st.innerHTML = `<span class="okc">✓ ${L("코스 완성", "Track OK")}</span> · ${L("1랩", "Lap")} ${Math.round(r.L)}m · ${L("높이", "Level")} ${ED.lv}`;
     ED.errBox.visible = false;
   } else {
     const e = ERRS[r.err] || [r.err, r.err];
-    st.innerHTML = `<span class="err">${e[KO ? 0 : 1]}</span>`;
+    st.innerHTML = `<span class="err">${e[KO ? 0 : 1]}</span> · ${L("높이", "Level")} ${ED.lv}`;
     if (r.cell) {
       ED.errBox.visible = true;
       ED.errBox.position.set((r.cell[0] + 0.5) * T, 0.6, (r.cell[1] + 0.5) * T);
@@ -1278,7 +1392,7 @@ canvas.addEventListener("pointerdown", (e) => {
 canvas.addEventListener("pointermove", (e) => {
   if (MODE !== "editor") return;
   const c = edCell(e);
-  ED.hover = c && c.x >= 0 && c.y >= 0 && c.x < ED.map.w && c.y < ED.map.h ? (() => { const k = kOf(ED.brush); return { x: c.x - Math.floor((k - 1) / 2), y: c.y - Math.floor((k - 1) / 2) }; })() : null;
+  ED.hover = c && c.x >= 0 && c.y >= 0 && c.x < ED.map.w && c.y < ED.map.h ? anchorOf(c, ED.brush, ED.rot) : null;
   if (e.pointerType === "touch" && !edPtr) ED.hover = null;
   edGhost();
   if (!edPtr || edPtr.id !== e.pointerId) return;
@@ -1309,6 +1423,8 @@ function edKey(e) {
   if (e.code === "KeyR") { ED.rot = (ED.rot + 1) & 3; edGhost(); }
   if (e.code === "KeyE") { ED.erase = !ED.erase; ED.pan = false; edToolsUI(); edPalette(); edGhost(); }
   if ((e.ctrlKey || e.metaKey) && e.code === "KeyZ") { e.preventDefault(); edUndo(); }
+  if (e.code === "PageUp" || e.code === "BracketRight") edSetLevel(ED.lv + 1);
+  if (e.code === "PageDown" || e.code === "BracketLeft") edSetLevel(ED.lv - 1);
 }
 function edUndo() {
   const s = ED.hist.pop();
@@ -1324,6 +1440,8 @@ $("ePan").onclick = () => { ED.pan = !ED.pan; ED.erase = false; edToolsUI(); edP
 $("eZin").onclick = () => edZoom(1 / 1.25);
 $("eZout").onclick = () => edZoom(1.25);
 $("eUndo").onclick = edUndo;
+$("eUp").onclick = () => edSetLevel(ED.lv + 1);
+$("eDn").onclick = () => edSetLevel(ED.lv - 1);
 $("eName").addEventListener("input", () => { ED.map.name = $("eName").value.trim(); lsSet("cm.draft", { map: ED.map, srcId: ED.srcId }); ED.dirty = true; });
 function edResize(dw, dh) {
   const m = ED.map;
@@ -1558,6 +1676,8 @@ function interpRemote(race, c) {
   const k = b.t > a.t ? Math.max(0, Math.min(1.2, (tt - a.t) / (b.t - a.t))) : 0;
   c.x = a.x + (b.x - a.x) * k;
   c.z = a.z + (b.z - a.z) * k;
+  c.y = a.y + (b.y - a.y) * k;
+  c.pitch = b.pitch;
   let da = b.a - a.a;
   while (da > Math.PI) da -= 2 * Math.PI;
   while (da < -Math.PI) da += 2 * Math.PI;
@@ -1574,21 +1694,21 @@ function interpRemote(race, c) {
 
 function packCar(c) {
   const vf = c.vx * Math.cos(c.a) + c.vz * Math.sin(c.a);
-  return [c.seat, +c.x.toFixed(2), +c.z.toFixed(2), +c.a.toFixed(3), +vf.toFixed(1), +c.P.toFixed(1), c.lapsDone, c.finished ? +c.finishTime.toFixed(3) : -1, c.boostT > 0 ? 1 : 0, c.best ? +c.best.toFixed(3) : 0];
+  return [c.seat, +c.x.toFixed(2), +c.z.toFixed(2), +c.a.toFixed(3), +vf.toFixed(1), +c.P.toFixed(1), c.lapsDone, c.finished ? +c.finishTime.toFixed(3) : -1, c.boostT > 0 ? 1 : 0, c.best ? +c.best.toFixed(3) : 0, +(c.y || 0).toFixed(2), +(c.pitch || 0).toFixed(3)];
 }
 
 function onPeer(m) {
   if (!R || !m.data || m.data.r !== R.raceId) return;
   const now = performance.now();
   for (const e of m.data.c || []) {
-    const [seat, x, z, a, v, P, lap, fin, boost, best] = e;
+    const [seat, x, z, a, v, P, lap, fin, boost, best, y, pitch] = e;
     // 다른 사람이 보낸 자기 차 외의 자리는 방장만 믿는다
     if (seat !== m.seat && !m.host) continue;
     const c = R.world.cars.find((q) => q.seat === seat);
     if (!c) continue;
     if (seat === R.mySeat) {
       if (NET.pendingPose && m.host) {
-        Object.assign(c, { x, z, a, vx: Math.cos(a) * v, vz: Math.sin(a) * v, P, lapsDone: lap });
+        Object.assign(c, { x, z, y: y || 0, a, vx: Math.cos(a) * v, vz: Math.sin(a) * v, P, lapsDone: lap });
         const g = R.world.nearest(c, true);
         c.idx = g.i; c.lastGood = g.i;
         NET.pendingPose = false;
@@ -1596,7 +1716,7 @@ function onPeer(m) {
       continue;
     }
     if (c.kind !== "remote") continue;
-    c.snaps.push({ t: now, x, z, a, v, P, lap, fin, boost });
+    c.snaps.push({ t: now, x, z, a, v, P, lap, fin, boost, y: y || 0, pitch: pitch || 0 });
     if (best) c.best = best;
     if (c.snaps.length > 30) c.snaps.shift();
   }

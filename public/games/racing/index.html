@@ -112,6 +112,10 @@ table.res td.n{font-variant-numeric:tabular-nums}
 #edSide{position:absolute;right:8px;top:60px;display:grid;gap:6px;pointer-events:auto}
 #edSide button{width:44px;height:44px;border-radius:12px;background:rgba(18,22,34,.86);font-size:19px;border:1px solid var(--line)}
 #edSide button.on{background:var(--acc);color:#2a2100}
+#edSide button:disabled{opacity:.35}
+.lvbox{display:grid;gap:3px;justify-items:center;background:rgba(18,22,34,.86);border:1px solid var(--line);border-radius:12px;padding:4px 0;margin-top:6px}
+.lvbox button{width:40px!important;height:34px!important;border:0!important;background:var(--panel2)!important;font-size:14px!important}
+.lvbox b{font-size:20px;line-height:1;color:var(--acc)}.lvbox small{font-size:10px;color:var(--dim);margin-top:-2px}
 textarea.code{width:100%;height:90px;border-radius:10px;border:1px solid var(--line);background:#1b2130;color:var(--ink);padding:8px;font-family:monospace;font-size:12px;user-select:text;-webkit-user-select:text;resize:vertical}
 #loading{position:fixed;inset:0;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;z-index:50;background:var(--bg)}
 #loading .bar{width:220px;height:8px;border-radius:6px;background:var(--panel2);overflow:hidden}
@@ -221,6 +225,7 @@ textarea.code{width:100%;height:90px;border-radius:10px;border:1px solid var(--l
     <button id="eZin">＋</button>
     <button id="eZout">－</button>
     <button id="eUndo" title="Ctrl+Z">↶</button>
+    <div class="lvbox"><button id="eUp" title="PageUp ]">▲</button><b id="eLv">0</b><small id="eLvL">높이</small><button id="eDn" title="PageDown [">▼</button></div>
   </div>
   <div id="edPal">
     <div class="tabs" id="edTabs"></div>
@@ -229,6 +234,6 @@ textarea.code{width:100%;height:90px;border-radius:10px;border:1px solid var(--l
 </div>
 
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
-<script type="module" src="./main.js?v=2"></script>
+<script type="module" src="./main.js?v=3"></script>
 </body>
 </html>
