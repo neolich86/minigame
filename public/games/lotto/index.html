@@ -83,6 +83,9 @@
     border-radius:3px;padding:8px 10px;flex-shrink:0;white-space:nowrap;
   }
   .copy-row-btn:active{transform:scale(.95);}
+  .copy-all-btn{display:block;width:100%;margin-top:12px;padding:10px 0;border-radius:3px;border:1.5px solid var(--ink);background:transparent;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink);cursor:pointer}
+  .copy-all-btn:active{transform:scale(.98);}
+  .copy-all-btn.copied{background:var(--green);border-color:var(--green);color:#fff;}
   .copy-row-btn.copied{background:var(--green);border-color:var(--green);color:#fff;}
 
   .r-meta{
@@ -393,12 +396,26 @@ function renderGames(games){
 
     gamesEl.appendChild(row);
   });
+
+  // 여러 게임을 뽑았으면 한 번에 복사 (A: 1, 2, … 줄바꿈)
+  if(games.length > 1){
+    const allBtn = document.createElement('button');
+    allBtn.type = 'button';
+    allBtn.className = 'copy-all-btn';
+    allBtn.textContent = '전체 번호 복사';
+    const text = games.map((nums, gi)=> `${labels[gi]}: ${nums.join(', ')}`).join('\n');
+    allBtn.addEventListener('click', ()=> copyText(text, allBtn, `${games.length}게임 번호를 모두 복사했어요`));
+    gamesEl.appendChild(allBtn);
+  }
 }
 
-async function copyNumbers(nums, btnEl){
+function copyNumbers(nums, btnEl){
   const text = nums.join(', ');
+  return copyText(text, btnEl, '복사되었습니다: ' + text);
+}
+async function copyText(text, btnEl, msg){
   const done = ()=>{
-    showToast('복사되었습니다: ' + text);
+    showToast(msg);
     if(btnEl){
       const old = btnEl.textContent;
       btnEl.textContent = '완료';
