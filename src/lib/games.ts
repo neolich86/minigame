@@ -166,6 +166,19 @@ const CATALOG: Game[] = [
     saves: true, // 방 꾸미기·캐릭터를 계정에 저장
   },
   {
+    id: "dragon-ranch",
+    title: { ko: "드래곤 목장", en: "Dragon Ranch" },
+    desc: {
+      ko: "둥지를 짓고 알을 부화시켜 용을 키우는 작은 목장. 밭에서 먹이를 길러 용을 키우고, 두 용을 짝지어 새로운 용을 도감에 모아 보세요",
+      en: "A tiny ranch for raising dragons — hatch eggs, grow feed, and pair dragons to discover new species",
+    },
+    genre: "casual",
+    thumb: "/thumbs/dragon-ranch.jpg",
+    src: "/games/dragon-ranch/index.html",
+    saves: true, // 목장·용을 계정에 저장
+    hidden: true, // 시험판 — 주소로만 열림
+  },
+  {
     id: "explore-map",
     kind: "app",
     title: { ko: "동네 정복", en: "Town Conquest" },

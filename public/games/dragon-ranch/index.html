@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<link rel="canonical" href="/play/dragon-ranch">
+<script src="/mgh/bridge.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>드래곤 목장 - 미니게임천국</title>
+<meta name="description" content="둥지를 짓고 알을 부화시켜 용을 키우는 작은 목장 게임. 밭에서 먹이를 길러 용을 키우고, 두 용을 짝지어 새로운 용을 도감에 모아 보세요.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2378c060'/%3E%3Cellipse cx='32' cy='36' rx='15' ry='19' fill='%23fff3d0' stroke='%23553a1c' stroke-width='4'/%3E%3Cpath d='M22 34l6 5 5-6 5 6 5-4' fill='none' stroke='%23d0773a' stroke-width='3'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#eaf3d9;--ink:#3b2a17;--dim:#7d6a52;--card:#fffaf0;--line:#d8c9a6;--acc:#e48a2c;--acc2:#ffe7c4;--good:#4f9d3a;--bad:#d4553f}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;overscroll-behavior:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:disabled{cursor:default;opacity:.45}
+[hidden]{display:none !important}
+.wrap{max-width:480px;margin:0 auto;padding:8px 8px 90px}
+.hud{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.pill{display:flex;align-items:center;gap:4px;height:32px;padding:0 10px;border-radius:999px;background:var(--card);border:2px solid var(--line);font-weight:800;font-size:14px;white-space:nowrap}
+.pill .ic{font-size:15px}
+.lvbox{flex:1;min-width:0;display:flex;align-items:center;gap:6px;height:32px;padding:0 8px;border-radius:999px;background:var(--card);border:2px solid var(--line)}
+.lvbox b{font-size:13px;white-space:nowrap}
+.bar{flex:1;height:10px;border-radius:6px;background:#efe3c8;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#8bd05a,#4f9d3a);width:0}
+.stage{position:relative;border-radius:14px;overflow:hidden;border:3px solid #6b4a26;box-shadow:0 6px 18px rgba(80,60,20,.25);background:#7cc25a}
+canvas#cv{display:block;width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none}
+.place{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:center;gap:8px}
+.place button{height:40px;padding:0 18px;border-radius:12px;font-weight:800;color:#fff;background:var(--good);box-shadow:0 3px 0 rgba(0,0,0,.2)}
+.place button.no{background:#8c7a63}
+.place .msg{position:absolute;bottom:50px;left:0;right:0;text-align:center;font-size:12.5px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.sub{display:flex;align-items:center;gap:8px;margin:6px 2px 0;font-size:12px;color:var(--dim)}
+.sub .sp{flex:1}
+.sbtn{height:28px;padding:0 10px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:12px;font-weight:700}
+.tabbar{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(234,243,217,.95) 30%);z-index:5}
+.tabbar .in{display:flex;gap:6px;background:#5b3e1f;padding:6px;border-radius:16px;box-shadow:0 4px 14px rgba(60,40,10,.35)}
+.tabbar button{min-width:72px;height:44px;padding:0 10px;border-radius:11px;color:#fff;font-weight:800;font-size:13px;background:rgba(255,255,255,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.tabbar button span{font-size:18px}
+.tabbar button.on{background:var(--acc)}
+.dim{position:fixed;inset:0;background:rgba(40,25,5,.35);z-index:10;display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:480px;max-height:78vh;overflow:auto;background:var(--card);border-radius:18px 18px 0 0;padding:14px 14px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -6px 24px rgba(0,0,0,.2);animation:up .18s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+.sh-h{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sh-h h3{margin:0;font-size:17px;flex:1}
+.x{width:32px;height:32px;border-radius:50%;background:#efe3c8;font-size:16px;font-weight:800}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tabs button{flex:1;height:34px;border-radius:10px;background:#f3e8cf;font-weight:800;font-size:13px}
+.tabs button.on{background:var(--acc);color:#fff}
+.list{display:grid;gap:8px}
+.row{display:flex;align-items:center;gap:10px;padding:8px;border-radius:12px;background:#fff;border:1.5px solid var(--line)}
+.row canvas{width:48px;height:48px;image-rendering:pixelated;flex:none;background:#f6efdc;border-radius:10px}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-size:14px}
+.row .t small{display:block;font-size:12px;color:var(--dim);margin-top:2px;line-height:1.35}
+.btn{height:36px;padding:0 12px;border-radius:10px;background:var(--acc);color:#fff;font-weight:800;font-size:13px;white-space:nowrap;flex:none}
+.btn.g{background:var(--good)}
+.btn.w{background:#efe3c8;color:var(--ink)}
+.btn.r{background:var(--bad)}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.acts .btn{flex:1}
+.note{font-size:12.5px;color:var(--dim);line-height:1.5;margin:4px 2px 8px}
+.dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.dex div{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:6px;text-align:center}
+.dex canvas{width:64px;height:64px;image-rendering:pixelated}
+.dex b{display:block;font-size:12.5px}
+.dex small{display:block;font-size:11px;color:var(--dim)}
+.tag{display:inline-block;font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:6px;margin-right:3px;color:#fff;vertical-align:1px}
+.pick{border:2px solid transparent}
+.pick.on{border-color:var(--acc);background:var(--acc2)}
+.toast{position:fixed;left:50%;top:14px;transform:translate(-50%,-30px);opacity:0;background:rgba(50,32,12,.92);color:#fff;padding:9px 14px;border-radius:12px;font-size:13.5px;font-weight:700;z-index:30;transition:.2s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.on{transform:translate(-50%,0);opacity:1}
+.credit{font-size:11px;color:var(--dim);text-align:center;margin-top:10px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud">
+    <div class="pill"><span class="ic">🪙</span><span id="gold">0</span></div>
+    <div class="pill"><span class="ic">🍖</span><span id="food">0</span></div>
+    <div class="lvbox"><b id="lv">Lv 1</b><div class="bar"><i id="xp"></i></div></div>
+  </div>
+  <div class="stage">
+    <canvas id="cv" width="384" height="512"></canvas>
+    <div class="place" id="placeBar" hidden>
+      <div class="msg" id="placeMsg">끌어서 놓을 자리를 고르세요</div>
+      <button class="no" id="placeNo">취소</button>
+      <button id="placeOk">여기에 놓기</button>
+    </div>
+  </div>
+  <div class="sub"><span id="save"></span><span class="sp"></span><button class="sbtn" id="loginBtn" hidden></button></div>
+  <div class="credit">드래곤 목장 (시험판) · Farm animal sprites: World of Solaria by Jamie Brownhill</div>
+</div>
+<div class="tabbar"><div class="in">
+  <button id="tShop"><span>🏪</span>상점</button>
+  <button id="tDex"><span>📖</span>도감</button>
+  <button id="tHelp"><span>❔</span>도움말</button>
+</div></div>
+<div class="dim" id="dim" hidden><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const MG = window.MGH || null;
+const $ = (id) => document.getElementById(id);
+const T = 32, COLS = 12, ROWS = 16, CW = COLS * T, CH = ROWS * T;
+const cv = $('cv'), g = cv.getContext('2d');
+g.imageSmoothingEnabled = false;
+
+/* ───────── 데이터 ───────── */
+const ELS = {
+  grass: { name: '풀', c: '#4f9d3a' }, fire: { name: '불', c: '#d9532c' }, water: { name: '물', c: '#3b84d6' },
+  earth: { name: '땅', c: '#9a6a36' }, bolt: { name: '번개', c: '#d6a614' }, ice: { name: '얼음', c: '#6cb7d8' },
+};
+// b/a: 스프라이트 줄 번호와 배율 (아기 / 어른)
+const SPECIES = [
+  { id: 'green', name: '초록 용', els: ['grass'], tier: 1, price: 100, hatch: 20, meal: 5, rate: 4, b: [0, 3], a: [1, 3] },
+  { id: 'red', name: '불꽃 용', els: ['fire'], tier: 1, price: 100, hatch: 20, meal: 5, rate: 4, b: [2, 2], a: [2, 3] },
+  { id: 'aqua', name: '물결 드레이크', els: ['water'], tier: 1, price: 250, hatch: 60, meal: 10, rate: 7, b: [3, 2], a: [3, 3] },
+  { id: 'mud', name: '진흙 와이번', els: ['earth'], tier: 1, price: 400, hatch: 120, meal: 15, rate: 10, b: [4, 2], a: [4, 3] },
+  { id: 'brass', name: '황동 번개용', els: ['bolt'], tier: 1, price: 600, hatch: 180, meal: 20, rate: 14, b: [5, 3], a: [6, 3] },
+  { id: 'white', name: '서리 용', els: ['ice'], tier: 1, price: 900, hatch: 300, meal: 25, rate: 18, b: [7, 3], a: [8, 3] },
+  { id: 'bronze', name: '용암 용', els: ['fire', 'earth'], tier: 2, hatch: 240, meal: 30, rate: 28, sell: 900, b: [9, 3], a: [10, 3] },
+  { id: 'viridian', name: '늪지 드레이크', els: ['water', 'grass'], tier: 2, hatch: 240, meal: 30, rate: 24, sell: 800, b: [11, 2], a: [11, 3] },
+  { id: 'poison', name: '독안개 드레이크', els: ['grass', 'earth'], tier: 2, hatch: 300, meal: 35, rate: 30, sell: 1000, b: [12, 2], a: [12, 3] },
+  { id: 'copper', name: '구리 천둥용', els: ['fire', 'bolt'], tier: 2, hatch: 420, meal: 40, rate: 36, sell: 1300, b: [13, 2], a: [13, 3] },
+  { id: 'pygmy', name: '눈보라 와이번', els: ['bolt', 'ice'], tier: 2, hatch: 600, meal: 50, rate: 44, sell: 1800, b: [14, 2], a: [14, 3] },
+];
+const SP = Object.fromEntries(SPECIES.map((s) => [s.id, s]));
+const HYBRID_P = 0.35;
+const NESTS = {
+  grass: { price: 300, lv: 1 }, fire: { price: 300, lv: 1 }, water: { price: 600, lv: 3 },
+  earth: { price: 1000, lv: 4 }, bolt: { price: 1500, lv: 5 }, ice: { price: 2200, lv: 6 },
+};
+const NEST_CAP = 3, GOLD_CAP_MIN = 180, MEALS_TO_ADULT = 3, MAX_DLV = 10;
+const CROPS = [
+  { id: 'fruit', name: '용과', time: 30, cost: 5, food: 10, xp: 1, lv: 1, c: '#e0457b' },
+  { id: 'chili', name: '불꽃 고추', time: 180, cost: 20, food: 50, xp: 3, lv: 2, c: '#e8402a' },
+  { id: 'shroom', name: '달빛 버섯', time: 900, cost: 60, food: 180, xp: 8, lv: 4, c: '#9b7be0' },
+  { id: 'apple', name: '별사과', time: 3600, cost: 150, food: 550, xp: 20, lv: 6, c: '#f2c230' },
+];
+const CROP = Object.fromEntries(CROPS.map((c) => [c.id, c]));
+const BUILD = {
+  field: { name: '밭', w: 1, h: 1, price: 40, lv: 1, desc: '먹이 작물을 심어요' },
+  love: { name: '짝짓기 둥지', w: 2, h: 2, price: 800, lv: 2, desc: '어른 용 두 마리로 새 알을 얻어요' },
+  cow: { name: '젖소', w: 0, h: 0, price: 1000, lv: 3, max: 3, desc: '목장을 돌아다니며 4분마다 우유(먹이 40)를 줘요' },
+};
+const MILK_MS = 240000, MILK_FOOD = 40, SCALE_MS = 180000, SCALE_MAX = 4;
+const needXp = (lv) => 15 * lv * lv + 5;
+const UNLOCK = [
+  [2, '불꽃 고추 · 짝짓기 둥지'], [3, '물 둥지 · 젖소'], [4, '달빛 버섯 · 땅 둥지'], [5, '번개 둥지'], [6, '별사과 · 얼음 둥지'],
+];
+const HINT = { bronze: '불 + 땅', viridian: '물 + 풀', poison: '풀 + 땅', copper: '불 + 번개', pygmy: '번개 + 얼음' };
+
+/* ───────── 이미지 ───────── */
+const IMG = {};
+function loadImg(k, src) { return new Promise((r) => { const i = new Image(); i.onload = () => { IMG[k] = i; r(); }; i.onerror = () => r(); i.src = src; }); }
+
+/* ───────── 상태 ───────── */
+const LS = 'mgh:dragon-ranch:v1';
+let S;
+function defaultState() {
+  const now = Date.now();
+  return {
+    v: 1, gold: 300, food: 20, xp: 0, lv: 1, nid: 10,
+    objs: [
+      { id: 1, t: 'nest', el: 'grass', x: 1, y: 2, bank: 0, gAt: now, scales: [], sAt: now },
+      { id: 2, t: 'field', x: 6, y: 2 }, { id: 3, t: 'field', x: 7, y: 2 }, { id: 4, t: 'field', x: 6, y: 3 }, { id: 5, t: 'field', x: 7, y: 3 },
+    ],
+    dragons: [{ id: 6, sp: 'green', home: 1, st: 'egg', at: now + 8000, fed: 0, lv: 1 }],
+    dex: { green: 1 }, cows: [], tut: 0,
+  };
+}
+function sanitize(s) {
+  const d = defaultState();
+  if (!s || typeof s !== 'object' || !Array.isArray(s.objs)) return d;
+  const n = (v, def) => (Number.isFinite(v) && v >= 0 ? v : def);
+  const out = { v: 1, gold: n(s.gold, d.gold), food: n(s.food, d.food), xp: n(s.xp, 0), lv: Math.max(1, Math.min(99, n(s.lv, 1) | 0)), nid: n(s.nid, 10),
+    objs: s.objs.filter((o) => o && (o.t === 'nest' ? ELS[o.el] : o.t === 'field' || o.t === 'love')).slice(0, 80),
+    dragons: (Array.isArray(s.dragons) ? s.dragons : []).filter((d) => d && SP[d.sp]).slice(0, 200),
+    dex: s.dex && typeof s.dex === 'object' ? s.dex : {}, cows: Array.isArray(s.cows) ? s.cows.slice(0, 3) : [], tut: n(s.tut, 9) };
+  for (const o of out.objs) { if (o.t === 'nest') { o.scales = Array.isArray(o.scales) ? o.scales.slice(0, SCALE_MAX) : []; o.bank = n(o.bank, 0); o.gAt = n(o.gAt, Date.now()); o.sAt = n(o.sAt, Date.now()); } }
+  const ids = new Set(out.objs.map((o) => o.id));
+  out.dragons = out.dragons.filter((d) => ids.has(d.home));
+  for (const d of out.dragons) if (!out.dex[d.sp]) out.dex[d.sp] = 1;
+  return out;
+}
+try { S = sanitize(JSON.parse(localStorage.getItem(LS))); } catch (e) { S = defaultState(); }
+
+/* ───────── 유틸 ───────── */
+const objById = (id) => S.objs.find((o) => o.id === id);
+const dims = (o) => (o.t === 'nest' ? [3, 3] : o.t === 'love' ? [2, 2] : [1, 1]);
+const nestDragons = (o) => S.dragons.filter((d) => d.home === o.id && !d.love);
+const fmt = (n) => Math.floor(n).toLocaleString('ko-KR');
+function fmtT(ms) { const s = Math.max(0, Math.ceil(ms / 1000)); if (s >= 3600) return `${Math.floor(s / 3600)}시간 ${Math.floor((s % 3600) / 60)}분`; if (s >= 60) return `${Math.floor(s / 60)}분 ${s % 60}초`; return `${s}초`; }
+const dRate = (d) => (d.st === 'adult' ? SP[d.sp].rate * (1 + 0.2 * (d.lv - 1)) : 0);
+const nestRate = (o) => S.dragons.filter((d) => d.home === o.id).reduce((a, d) => a + dRate(d), 0);
+function pending(o, now = Date.now()) { return Math.min(nestRate(o) * GOLD_CAP_MIN, o.bank + (nestRate(o) * (now - o.gAt)) / 60000); }
+function settle(o) { o.bank = pending(o); o.gAt = Date.now(); }
+function occupied(x, y, w, h, skipId) {
+  if (x < 0 || y < 0 || x + w > COLS || y + h > ROWS) return true;
+  return S.objs.some((o) => { if (o.id === skipId) return false; const [ow, oh] = dims(o); return x < o.x + ow && o.x < x + w && y < o.y + oh && o.y < y + h; });
+}
+function findSpot(w, h) { for (let y = 0; y <= ROWS - h; y++) for (let x = 0; x <= COLS - w; x++) if (!occupied(x, y, w, h)) return [x, y]; return null; }
+function homeFor(sp, exclude) { return S.objs.find((o) => o.t === 'nest' && SP[sp].els.includes(o.el) && S.dragons.filter((d) => d.home === o.id).length < NEST_CAP && o.id !== exclude); }
+
+/* ───────── 경험치·레벨 ───────── */
+function addXp(n) {
+  S.xp += n;
+  while (S.xp >= needXp(S.lv)) {
+    S.xp -= needXp(S.lv); S.lv++;
+    const u = UNLOCK.find((x) => x[0] === S.lv);
+    toast(`🎉 레벨 ${S.lv}!${u ? ' 새로 열림: ' + u[1] : ''}`);
+  }
+}
+
+/* ───────── 시간 진행 ───────── */
+function tick() {
+  const now = Date.now();
+  let ch = false;
+  for (const d of S.dragons) {
+    if (d.st === 'egg' && now >= d.at) { d.st = 'baby'; d.fed = 0; addXp(SP[d.sp].tier === 2 ? 15 : 3); ch = true; fx.push(floatAt(d, '🐣 부화!')); }
+  }
+  for (const o of S.objs) {
+    if (o.t !== 'nest') continue;
+    const hasAdult = S.dragons.some((d) => d.home === o.id && d.st === 'adult');
+    if (!hasAdult) { o.sAt = now; continue; }
+    while (now - o.sAt >= SCALE_MS) {
+      o.sAt += SCALE_MS;
+      if (o.scales.length < SCALE_MAX) { o.scales.push([4 + Math.floor(Math.random() * 88), 30 + Math.floor(Math.random() * 60)]); ch = true; }
+    }
+  }
+  if (ch) changed();
+}
+
+/* ───────── 그리기 ───────── */
+let grassC = null;
+function rnd(seed) { let s = seed; return () => ((s = (s * 16807) % 2147483647) / 2147483647); }
+function buildGrass() {
+  grassC = document.createElement('canvas'); grassC.width = CW; grassC.height = CH;
+  const q = grassC.getContext('2d'), r = rnd(7);
+  q.fillStyle = '#7cc25a'; q.fillRect(0, 0, CW, CH);
+  for (let i = 0; i < 1600; i++) { q.fillStyle = r() < 0.5 ? '#6cb34c' : '#8bce66'; q.fillRect((r() * CW) | 0, (r() * CH) | 0, 2, 2); }
+  for (let i = 0; i < 260; i++) { const x = (r() * CW) | 0, y = (r() * CH) | 0; q.fillStyle = '#5ea443'; q.fillRect(x, y, 1, 3); q.fillRect(x + 2, y + 1, 1, 2); }
+  for (let i = 0; i < 40; i++) { const x = (r() * CW) | 0, y = (r() * CH) | 0; q.fillStyle = ['#fff', '#ffe066', '#ff9ec4'][i % 3]; q.fillRect(x, y, 2, 2); q.fillStyle = '#f7c948'; q.fillRect(x, y, 1, 1); }
+  q.strokeStyle = 'rgba(40,80,20,.08)';
+  for (let x = 0; x <= COLS; x++) { q.beginPath(); q.moveTo(x * T + 0.5, 0); q.lineTo(x * T + 0.5, CH); q.stroke(); }
+  for (let y = 0; y <= ROWS; y++) { q.beginPath(); q.moveTo(0, y * T + 0.5); q.lineTo(CW, y * T + 0.5); q.stroke(); }
+}
+const NEST_LOOK = {
+  grass: { g: '#5aa846', d: '#478a36' }, fire: { g: '#7a3b2a', d: '#5e2a1d' }, water: { g: '#83c47a', d: '#6aaa62' },
+  earth: { g: '#b88d57', d: '#9a7444' }, bolt: { g: '#6d5b8c', d: '#574873' }, ice: { g: '#cfe9f3', d: '#a9d3e4' },
+};
+function rect(c, x, y, w, h, col) { c.fillStyle = col; c.fillRect(x, y, w, h); }
+function drawNest(c, o, t) {
+  const x = o.x * T, y = o.y * T, L = NEST_LOOK[o.el], r = rnd(o.id * 31 + 3);
+  rect(c, x + 2, y + 2, 92, 92, L.g);
+  for (let i = 0; i < 60; i++) rect(c, x + 4 + ((r() * 86) | 0), y + 4 + ((r() * 86) | 0), 2, 2, L.d);
+  if (o.el === 'grass') { for (const [bx, by] of [[10, 12], [70, 10], [76, 70]]) { rect(c, x + bx, y + by + 4, 14, 8, '#2f7a2a'); rect(c, x + bx + 2, y + by, 10, 6, '#3f9a36'); rect(c, x + bx + 4, y + by + 2, 2, 2, '#e85a8a'); } }
+  if (o.el === 'fire') { const f = (t / 180) | 0; rect(c, x + 60, y + 62, 26, 18, '#3a1a12'); rect(c, x + 63, y + 65, 20, 12, f % 2 ? '#ff7a1a' : '#ffb21a'); rect(c, x + 68, y + 68, 8, 5, '#ffe36a'); for (const [bx, by] of [[10, 12], [74, 14]]) { rect(c, x + bx, y + by, 12, 9, '#4b2a22'); rect(c, x + bx + 2, y + by - 2, 8, 3, '#5d3529'); } }
+  if (o.el === 'water') { c.fillStyle = '#3b84d6'; c.beginPath(); c.ellipse(x + 66, y + 66, 22, 15, 0, 0, 7); c.fill(); c.fillStyle = '#6fb0f0'; const w = ((t / 300) | 0) % 3; rect(c, x + 54 + w * 4, y + 60, 8, 2, '#a8d4ff'); rect(c, x + 68 - w * 3, y + 70, 10, 2, '#a8d4ff'); }
+  if (o.el === 'earth') { for (const [bx, by, s] of [[8, 10, 14], [70, 12, 12], [66, 66, 18]]) { rect(c, x + bx, y + by + 3, s, s - 4, '#7a5a3a'); rect(c, x + bx + 2, y + by, s - 4, 4, '#937049'); } }
+  if (o.el === 'bolt') { for (const [bx, by] of [[10, 10], [74, 12], [70, 66]]) { rect(c, x + bx + 3, y + by, 6, 16, '#c9a6ff'); rect(c, x + bx, y + by + 6, 12, 10, '#9d78e0'); rect(c, x + bx + 4, y + by + 2, 2, 6, '#fff'); } if (((t / 900) | 0) % 4 === 0) { rect(c, x + 46, y + 8, 3, 8, '#ffe14a'); rect(c, x + 43, y + 15, 3, 7, '#ffe14a'); } }
+  if (o.el === 'ice') { for (const [bx, by] of [[10, 12], [72, 10], [68, 68]]) { rect(c, x + bx, y + by + 4, 14, 10, '#e9f8ff'); rect(c, x + bx + 3, y + by, 8, 6, '#bfe6f7'); rect(c, x + bx + 2, y + by + 6, 3, 3, '#fff'); } }
+  // 울타리
+  for (let i = 0; i < 12; i++) { rect(c, x + 2 + i * 8, y + 2, 4, 7, '#8a5a2b'); rect(c, x + 2 + i * 8, y + 87, 4, 7, '#8a5a2b'); }
+  for (let i = 0; i < 12; i++) { rect(c, x + 2, y + 2 + i * 8, 4, 7, '#8a5a2b'); rect(c, x + 90, y + 2 + i * 8, 4, 7, '#8a5a2b'); }
+  rect(c, x + 2, y + 4, 92, 2, '#b07a3f'); rect(c, x + 2, y + 89, 92, 2, '#b07a3f');
+  rect(c, x + 3, y + 2, 2, 92, '#b07a3f'); rect(c, x + 91, y + 2, 2, 92, '#b07a3f');
+  // 이름표
+  c.fillStyle = ELS[o.el].c; c.fillRect(x + 32, y + 83, 32, 13); c.fillStyle = '#fff'; c.font = "bold 10px 'Apple SD Gothic Neo','Malgun Gothic',sans-serif"; c.textAlign = 'center'; c.fillText(ELS[o.el].name, x + 48, y + 93);
+  // 비늘
+  for (const [sx, sy] of o.scales) { const b = Math.sin(t / 250 + sx) > 0.7; rect(c, x + sx, y + sy, 6, 6, '#7fe0d2'); rect(c, x + sx + 1, y + sy + 1, 2, 2, b ? '#fff' : '#c8fff5'); rect(c, x + sx + 1, y + sy + 5, 4, 1, '#3aa79a'); }
+}
+function drawField(c, o, t, now) {
+  const x = o.x * T, y = o.y * T;
+  rect(c, x + 2, y + 2, 28, 28, '#8a5a32'); for (let i = 0; i < 4; i++) rect(c, x + 4, y + 6 + i * 6, 24, 2, '#6e4426');
+  if (!o.crop) return;
+  const cr = CROP[o.crop], p = Math.min(1, (now - o.at) / (cr.time * 1000));
+  if (p < 0.34) { for (let i = 0; i < 4; i++) rect(c, x + 7 + (i % 2) * 14, y + 9 + ((i / 2) | 0) * 12, 3, 3, '#3d2512'); }
+  else if (p < 1) { for (let i = 0; i < 4; i++) { const bx = x + 6 + (i % 2) * 14, by = y + 8 + ((i / 2) | 0) * 12; rect(c, bx + 2, by + 2, 2, 6, '#3f9a36'); rect(c, bx, by + 1, 3, 3, '#5ac04a'); rect(c, bx + 3, by, 3, 3, '#5ac04a'); } }
+  else {
+    for (let i = 0; i < 4; i++) { const bx = x + 5 + (i % 2) * 14, by = y + 6 + ((i / 2) | 0) * 12; rect(c, bx + 3, by + 5, 2, 5, '#3f9a36'); rect(c, bx, by, 8, 7, cr.c); rect(c, bx + 1, by + 1, 2, 2, 'rgba(255,255,255,.6)'); }
+    const b = Math.sin(t / 200) * 2; c.fillStyle = '#fff'; c.beginPath(); c.arc(x + 26, y + 3 + b, 5, 0, 7); c.fill(); c.fillStyle = '#4f9d3a'; c.font = 'bold 8px sans-serif'; c.textAlign = 'center'; c.fillText('✓', x + 26, y + 6 + b);
+  }
+}
+const EGG = ['...XX...', '..XooX..', '.XooooX.', '.XoAooX.', 'XooooooX', 'XooooBoX', 'XoBooooX', 'XooooAoX', '.XooooX.', '..XXXX..'];
+function drawEgg(c, cx, by, sp, s, t) {
+  const A = ELS[SP[sp].els[0]].c, B = SP[sp].els[1] ? ELS[SP[sp].els[1]].c : A;
+  const x0 = Math.round(cx - 4 * s), y0 = Math.round(by - 10 * s), wob = Math.sin(t / 120 + cx) > 0.93 ? s : 0;
+  rect(c, x0 + s, by - s, 6 * s, s, 'rgba(0,0,0,.18)');
+  EGG.forEach((row, j) => { for (let i = 0; i < 8; i++) { const ch = row[i]; if (ch === '.') continue; rect(c, x0 + i * s + (j < 5 ? wob : 0), y0 + j * s, s, s, ch === 'X' ? '#5b3e1f' : ch === 'A' ? A : ch === 'B' ? B : j < 4 && i < 4 ? '#fffdf2' : '#fbeccb'); } });
+}
+function drawDragon(c, d, cx, by, t, flip) {
+  const s = SP[d.sp];
+  if (d.st === 'egg') { drawEgg(c, cx, by, d.sp, 2, t); return; }
+  const [row, sc] = d.st === 'adult' ? s.a : s.b;
+  const fr = (((t / 160) | 0) + d.id) % 4, w = 16 * sc;
+  if (!IMG.dr) return;
+  rect(c, Math.round(cx - w * 0.3), by - 2, Math.round(w * 0.6), 3, 'rgba(0,0,0,.18)');
+  c.save(); c.translate(Math.round(cx), Math.round(by - w)); if (flip) { c.scale(-1, 1); }
+  c.drawImage(IMG.dr, fr * 16, row * 16, 16, 16, -w / 2, 0, w, w);
+  c.restore();
+}
+function drawLove(c, o, t, now) {
+  const x = o.x * T, y = o.y * T;
+  c.fillStyle = '#d9b26a'; c.beginPath(); c.ellipse(x + 32, y + 38, 28, 20, 0, 0, 7); c.fill();
+  c.fillStyle = '#b88a3e'; c.beginPath(); c.ellipse(x + 32, y + 38, 20, 13, 0, 0, 7); c.fill();
+  for (let i = 0; i < 14; i++) { const a = (i / 14) * 6.28; rect(c, x + 32 + Math.cos(a) * 25, y + 38 + Math.sin(a) * 17, 4, 2, '#f0d08c'); }
+  // 하트
+  const hy = y + 4 + Math.sin(t / 300) * 2; c.fillStyle = '#ff5c8a';
+  rect(c, x + 26, hy, 4, 4, '#ff5c8a'); rect(c, x + 34, hy, 4, 4, '#ff5c8a'); rect(c, x + 24, hy + 2, 16, 4, '#ff5c8a'); rect(c, x + 26, hy + 6, 12, 2, '#ff5c8a'); rect(c, x + 28, hy + 8, 8, 2, '#ff5c8a'); rect(c, x + 30, hy + 10, 4, 2, '#ff5c8a');
+  if (!o.a) return;
+  if (now < o.done) {
+    const A = S.dragons.find((d) => d.id === o.a), B = S.dragons.find((d) => d.id === o.b);
+    if (A) drawDragon(c, A, x + 20, y + 50, t, false); if (B) drawDragon(c, B, x + 44, y + 50, t, true);
+    const p = 1 - (o.done - now) / (o.dur || 1); rect(c, x + 8, y + 58, 48, 5, '#5b3e1f'); rect(c, x + 9, y + 59, Math.round(46 * p), 3, '#ff7aa2');
+  } else { drawEgg(c, x + 32, y + 50, o.res, 3, t); const b = Math.sin(t / 200) * 2; c.fillStyle = '#fff'; c.font = 'bold 9px sans-serif'; c.textAlign = 'center'; c.fillText('✨탭!', x + 32, y + 22 + b); }
+}
+// 용들이 둥지 안에서 돌아다니는 위치 (화면용, 저장 안 함)
+const walk = new Map();
+function wpos(d, o, dt) {
+  let w = walk.get(d.id);
+  const big = d.st === 'adult', rx = () => o.x * T + (big ? 30 : 22) + Math.random() * (big ? 36 : 52), ry = () => o.y * T + (big ? 58 : 40) + Math.random() * (big ? 26 : 42);
+  if (!w || w.home !== o.id) { w = { home: o.id, x: rx(), y: ry(), tx: 0, ty: 0, wait: Math.random() * 2000, flip: false }; w.tx = w.x; w.ty = w.y; walk.set(d.id, w); }
+  if (d.st === 'egg') return w;
+  if (w.wait > 0) { w.wait -= dt; if (w.wait <= 0) { w.tx = rx(); w.ty = ry(); } }
+  else { const dx = w.tx - w.x, dy = w.ty - w.y, L = Math.hypot(dx, dy), sp = 0.012 * dt; if (L < sp) { w.x = w.tx; w.y = w.ty; w.wait = 1500 + Math.random() * 3000; } else { w.x += (dx / L) * sp; w.y += (dy / L) * sp; if (Math.abs(dx) > 1) w.flip = dx > 0; } }
+  return w;
+}
+// 젖소 (Solaria 스프라이트 4방향: 0 뒤, 1 앞, 2 왼, 3 오)
+const cowPos = [];
+function cowAt(i, dt) {
+  let w = cowPos[i];
+  if (!w) { w = cowPos[i] = { x: 40 + Math.random() * (CW - 80), y: 60 + Math.random() * (CH - 100), tx: 0, ty: 0, wait: 1000, dir: 1 }; w.tx = w.x; w.ty = w.y; }
+  if (w.wait > 0) { w.wait -= dt; if (w.wait <= 0) { w.tx = 24 + Math.random() * (CW - 48); w.ty = 40 + Math.random() * (CH - 60); } }
+  else { const dx = w.tx - w.x, dy = w.ty - w.y, L = Math.hypot(dx, dy), sp = 0.018 * dt; if (L < sp) { w.wait = 2500 + Math.random() * 5000; } else { w.x += (dx / L) * sp; w.y += (dy / L) * sp; w.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 2 : 3) : dy < 0 ? 0 : 1; } }
+  return w;
+}
+
+/* 떠오르는 글씨 */
+const fx = [];
+function floatAt(d, text) { const w = walk.get(d.id); return { x: w ? w.x : CW / 2, y: w ? w.y - 30 : CH / 2, text, t: 0 }; }
+function floatXY(x, y, text, col) { fx.push({ x, y, text, t: 0, col }); }
+
+let placing = null, lastT = performance.now();
+function draw(t) {
+  const now = Date.now(), dt = Math.min(100, t - lastT); lastT = t;
+  if (!grassC) buildGrass();
+  g.drawImage(grassC, 0, 0);
+  const sprites = [];
+  for (const o of S.objs) {
+    if (placing && placing.id === o.id) continue;
+    if (o.t === 'nest') drawNest(g, o, t);
+    else if (o.t === 'field') drawField(g, o, t, now);
+    else if (o.t === 'love') drawLove(g, o, t, now);
+  }
+  for (const o of S.objs) {
+    if (o.t !== 'nest' || (placing && placing.id === o.id)) continue;
+    for (const d of nestDragons(o)) { const w = wpos(d, o, dt); sprites.push({ y: w.y, f: () => drawDragon(g, d, w.x, w.y, t, w.flip) }); }
+  }
+  S.cows.forEach((cw, i) => {
+    const w = cowAt(i, dt), ready = now - cw.at >= MILK_MS;
+    sprites.push({ y: w.y, f: () => {
+      const moving = w.wait <= 0, im = moving ? IMG.cowW : IMG.cowI, n = moving ? 4 : 6;
+      if (im) { const fr = ((t / (moving ? 150 : 220)) | 0) % n; g.drawImage(im, fr * 64, w.dir * 64, 64, 64, Math.round(w.x - 32), Math.round(w.y - 48), 64, 64); }
+      if (ready) { const b = Math.sin(t / 200) * 2; g.fillStyle = '#fff'; g.beginPath(); g.arc(w.x, w.y - 40 + b, 7, 0, 7); g.fill(); g.font = '9px sans-serif'; g.textAlign = 'center'; g.fillText('🥛', w.x, w.y - 37 + b); }
+    } });
+  });
+  sprites.sort((a, b) => a.y - b.y).forEach((s) => s.f());
+  // 골드 말풍선
+  for (const o of S.objs) {
+    if (o.t !== 'nest' || (placing && placing.id === o.id)) continue;
+    const p = pending(o, now);
+    if (p >= 1) {
+      const x = o.x * T + 48, y = o.y * T + 4 + Math.sin(t / 260 + o.id) * 2, txt = fmt(p);
+      g.font = 'bold 10px sans-serif'; const w = g.measureText(txt).width + 22;
+      g.fillStyle = 'rgba(255,255,255,.95)'; g.beginPath(); g.roundRect(x - w / 2, y - 9, w, 16, 8); g.fill();
+      g.fillStyle = '#f2b51e'; g.beginPath(); g.arc(x - w / 2 + 9, y - 1, 5, 0, 7); g.fill(); g.fillStyle = '#c98a0a'; g.fillRect(x - w / 2 + 8, y - 3, 2, 4);
+      g.fillStyle = '#5b3e1f'; g.textAlign = 'left'; g.fillText(txt, x - w / 2 + 16, y + 3);
+    }
+  }
+  // 배치 미리보기
+  if (placing) {
+    const ok = !occupied(placing.x, placing.y, placing.w, placing.h, placing.id);
+    g.fillStyle = ok ? 'rgba(80,220,90,.35)' : 'rgba(230,60,50,.4)'; g.fillRect(placing.x * T, placing.y * T, placing.w * T, placing.h * T);
+    g.strokeStyle = ok ? '#2f9a3a' : '#c0392b'; g.lineWidth = 2; g.strokeRect(placing.x * T + 1, placing.y * T + 1, placing.w * T - 2, placing.h * T - 2);
+    const ghost = { ...placing.obj, x: placing.x, y: placing.y };
+    g.globalAlpha = 0.75;
+    if (ghost.t === 'nest') drawNest(g, ghost, t); else if (ghost.t === 'field') drawField(g, ghost, t, now); else drawLove(g, ghost, t, now);
+    g.globalAlpha = 1;
+  }
+  for (let i = fx.length - 1; i >= 0; i--) {
+    const f = fx[i]; f.t += dt; if (f.t > 1200) { fx.splice(i, 1); continue; }
+    g.globalAlpha = 1 - f.t / 1200; g.font = 'bold 12px sans-serif'; g.textAlign = 'center';
+    g.lineWidth = 3; g.strokeStyle = 'rgba(40,25,5,.8)'; g.strokeText(f.text, f.x, f.y - f.t / 30); g.fillStyle = f.col || '#fff'; g.fillText(f.text, f.x, f.y - f.t / 30); g.globalAlpha = 1;
+  }
+}
+
+/* ───────── 입력 ───────── */
+function toLocal(e) { const r = cv.getBoundingClientRect(); return [((e.clientX - r.left) / r.width) * CW, ((e.clientY - r.top) / r.height) * CH]; }
+let dragging = false;
+cv.addEventListener('pointerdown', (e) => {
+  const [px, py] = toLocal(e);
+  if (placing) { dragging = true; cv.setPointerCapture(e.pointerId); movePlace(px, py); return; }
+  tap(px, py);
+});
+cv.addEventListener('pointermove', (e) => { if (placing && dragging) { const [px, py] = toLocal(e); movePlace(px, py); } });
+cv.addEventListener('pointerup', () => { dragging = false; });
+function movePlace(px, py) { placing.x = Math.max(0, Math.min(COLS - placing.w, Math.floor(px / T - placing.w / 2 + 0.5))); placing.y = Math.max(0, Math.min(ROWS - placing.h, Math.floor(py / T - placing.h / 2 + 0.5))); }
+
+function tap(px, py) {
+  const now = Date.now();
+  // 젖소
+  for (let i = 0; i < S.cows.length; i++) {
+    const w = cowPos[i]; if (!w) continue;
+    if (Math.abs(px - w.x) < 20 && py > w.y - 52 && py < w.y + 4) {
+      const cw = S.cows[i];
+      if (now - cw.at >= MILK_MS) { cw.at = now; S.food += MILK_FOOD; addXp(2); floatXY(w.x, w.y - 40, `+${MILK_FOOD} 🍖`, '#ffe9b0'); changed(); }
+      else toast(`🐄 우유까지 ${fmtT(MILK_MS - (now - cw.at))}`);
+      return;
+    }
+  }
+  const tx = Math.floor(px / T), ty = Math.floor(py / T);
+  const o = S.objs.find((o) => { const [w, h] = dims(o); return tx >= o.x && tx < o.x + w && ty >= o.y && ty < o.y + h; });
+  if (!o) return;
+  if (o.t === 'nest') {
+    const lx = px - o.x * T, ly = py - o.y * T;
+    const si = o.scales.findIndex(([sx, sy]) => Math.abs(lx - sx - 3) < 10 && Math.abs(ly - sy - 3) < 10);
+    if (si >= 0) { o.scales.splice(si, 1); S.gold += 5; addXp(1); floatXY(px, py - 6, '+5 🪙 ✨', '#c8fff5'); changed(); return; }
+    const p = pending(o);
+    if (p >= 1) { const n = Math.floor(p); o.bank = p - n; o.gAt = now; S.gold += n; addXp(Math.max(1, Math.floor(n / 40))); floatXY(o.x * T + 48, o.y * T + 10, `+${fmt(n)} 🪙`, '#ffe066'); changed(); return; }
+    openNest(o); return;
+  }
+  if (o.t === 'field') {
+    if (o.crop && now - o.at >= CROP[o.crop].time * 1000) { const cr = CROP[o.crop]; S.food += cr.food; addXp(cr.xp); floatXY(o.x * T + 16, o.y * T + 6, `+${cr.food} 🍖`, '#ffe9b0'); o.crop = null; changed(); return; }
+    openField(o); return;
+  }
+  if (o.t === 'love') {
+    if (o.a && now >= o.done) { hatchFromLove(o); return; }
+    openLove(o);
+  }
+}
+
+/* ───────── 배치 ───────── */
+function startPlace(obj, isNew, onDone) {
+  const [w, h] = dims(obj);
+  let x = obj.x, y = obj.y;
+  if (isNew) { const s = findSpot(w, h); if (!s) { toast('빈 땅이 없어요. 다른 시설을 옮기거나 팔아 주세요'); return; } [x, y] = s; }
+  placing = { obj, id: isNew ? null : obj.id, w, h, x, y, isNew, onDone };
+  closeSheet(); $('placeBar').hidden = false; document.querySelector('.tabbar').hidden = true;
+}
+$('placeNo').onclick = () => { placing = null; $('placeBar').hidden = true; document.querySelector('.tabbar').hidden = false; };
+$('placeOk').onclick = () => {
+  if (!placing) return;
+  if (occupied(placing.x, placing.y, placing.w, placing.h, placing.id)) { toast('여기에는 놓을 수 없어요'); return; }
+  const p = placing; placing = null; $('placeBar').hidden = true; document.querySelector('.tabbar').hidden = false;
+  if (p.isNew) { p.onDone(p.x, p.y); }
+  else { const o = objById(p.id); o.x = p.x; o.y = p.y; for (const d of S.dragons) if (d.home === o.id) walk.delete(d.id); changed(); }
+};
+
+/* ───────── 시트 ───────── */
+let sheetFn = null;
+function openSheet(fn) { sheetFn = fn; $('dim').hidden = false; renderSheet(); }
+function closeSheet() { sheetFn = null; $('dim').hidden = true; }
+function renderSheet() { if (!sheetFn) return; const st = $('sheet').scrollTop; $('sheet').innerHTML = ''; sheetFn($('sheet')); $('sheet').scrollTop = st; }
+$('dim').addEventListener('click', (e) => { if (e.target === $('dim')) closeSheet(); });
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  for (const k in props || {}) { if (k === 'on') el.onclick = props.on; else if (k === 'cls') el.className = props.cls; else if (k === 'html') el.innerHTML = props.html; else el.setAttribute(k, props[k]); }
+  for (const k of kids.flat()) if (k != null && k !== false) el.append(k.nodeType ? k : document.createTextNode(k));
+  return el;
+}
+function head(title) { return h('div', { cls: 'sh-h' }, h('h3', {}, title), h('button', { cls: 'x', on: closeSheet }, '✕')); }
+function icon(fn, size = 48) { const c = document.createElement('canvas'); c.width = size; c.height = size; const q = c.getContext('2d'); q.imageSmoothingEnabled = false; fn(q, size); return c; }
+function dragonIcon(sp, st, size = 48, shadow) {
+  return icon((q, z) => {
+    if (st === 'egg') { drawEgg(q, z / 2, z - 6, sp, z >= 64 ? 4 : 3, 0); return; }
+    const [row] = st === 'adult' ? SP[sp].a : SP[sp].b; if (!IMG.dr) return;
+    if (shadow) { q.drawImage(IMG.dr, 0, row * 16, 16, 16, 0, 0, z, z); q.globalCompositeOperation = 'source-in'; q.fillStyle = '#5b4a35'; q.fillRect(0, 0, z, z); return; }
+    q.drawImage(IMG.dr, 0, row * 16, 16, 16, 0, 0, z, z);
+  }, size);
+}
+function elTags(sp) { return SP[sp].els.map((e) => h('span', { cls: 'tag', style: `background:${ELS[e].c}` }, ELS[e].name)); }
+
+function openNest(o) {
+  openSheet((el) => {
+    const now = Date.now(), list = S.dragons.filter((d) => d.home === o.id);
+    el.append(head(`${ELS[o.el].name} 둥지`));
+    el.append(h('div', { cls: 'note' }, `용 ${list.length}/${NEST_CAP}마리 · 생산 ${fmt(nestRate(o))}🪙/분 · 최대 ${GOLD_CAP_MIN / 60}시간치까지 쌓여요`));
+    const L = h('div', { cls: 'list' });
+    if (!list.length) L.append(h('div', { cls: 'note' }, '아직 용이 없어요. 상점에서 알을 사 보세요.'));
+    for (const d of list) {
+      const s = SP[d.sp];
+      let sub, btns = [];
+      if (d.love) sub = '💞 짝짓기 중';
+      else if (d.st === 'egg') sub = `🥚 부화까지 ${fmtT(d.at - now)}`;
+      else if (d.st === 'baby') { sub = `아기 · 먹이 ${d.fed}/${MEALS_TO_ADULT}번 먹으면 어른이 돼요`; btns.push(h('button', { cls: 'btn g', on: () => feed(d) }, `먹이 🍖${s.meal}`)); }
+      else { sub = `어른 Lv.${d.lv} · ${fmt(dRate(d))}🪙/분`; if (d.lv < MAX_DLV) btns.push(h('button', { cls: 'btn g', on: () => feed(d) }, `레벨업 🍖${lvCost(d)}`)); }
+      if (!d.love && d.st !== 'egg') btns.push(h('button', { cls: 'btn w', on: () => sell(d) }, `팔기`));
+      L.append(h('div', { cls: 'row' }, dragonIcon(d.sp, d.st), h('div', { cls: 't' }, h('b', {}, s.name, ' ', ...elTags(d.sp)), h('small', {}, sub)), ...btns));
+    }
+    el.append(L);
+    el.append(h('div', { cls: 'acts' },
+      h('button', { cls: 'btn w', on: () => startPlace(o, false) }, '↔ 옮기기'),
+      h('button', { cls: 'btn r', on: () => removeObj(o) }, '철거'),
+    ));
+  });
+}
+const lvCost = (d) => SP[d.sp].meal * d.lv * 3;
+function feed(d) {
+  const s = SP[d.sp], cost = d.st === 'baby' ? s.meal : lvCost(d);
+  if (S.food < cost) { toast('먹이가 부족해요. 밭에서 작물을 길러 보세요 🌱'); return; }
+  const o = objById(d.home); settle(o);
+  S.food -= cost; addXp(1);
+  if (d.st === 'baby') { d.fed++; if (d.fed >= MEALS_TO_ADULT) { d.st = 'adult'; walk.delete(d.id); d.lv = 1; addXp(s.tier === 2 ? 30 : 8); toast(`🐉 ${s.name}가 어른이 됐어요! 이제 골드를 만들어요`); } }
+  else { d.lv++; toast(`⬆ ${s.name} Lv.${d.lv}`); }
+  changed(); renderSheet();
+}
+function sell(d) {
+  const s = SP[d.sp], price = Math.floor((s.sell || s.price / 2) * (d.st === 'adult' ? 1 : 0.5));
+  if (!confirm(`${s.name}를 ${fmt(price)}골드에 팔까요?`)) return;
+  const o = objById(d.home); settle(o);
+  S.dragons = S.dragons.filter((x) => x !== d); S.gold += price; walk.delete(d.id); changed(); renderSheet();
+}
+function removeObj(o) {
+  if (o.t === 'nest' && S.dragons.some((d) => d.home === o.id)) { toast('용이 있는 둥지는 철거할 수 없어요'); return; }
+  if (o.t === 'love' && o.a) { toast('짝짓기가 끝난 뒤에 철거할 수 있어요'); return; }
+  const price = o.t === 'nest' ? NESTS[o.el].price : BUILD[o.t].price, back = Math.floor(price / 4);
+  if (!confirm(`철거하면 ${fmt(back)}골드를 돌려받아요. 철거할까요?`)) return;
+  S.objs = S.objs.filter((x) => x !== o); S.gold += back; closeSheet(); changed();
+}
+
+function openField(o) {
+  openSheet((el) => {
+    const now = Date.now();
+    el.append(head('밭'));
+    if (o.crop) {
+      const cr = CROP[o.crop];
+      el.append(h('div', { cls: 'note' }, `${cr.name} 자라는 중 · 수확까지 ${fmtT(cr.time * 1000 - (now - o.at))}`));
+      el.append(h('div', { cls: 'acts' }, h('button', { cls: 'btn w', on: () => startPlace(o, false) }, '↔ 옮기기')));
+      return;
+    }
+    el.append(h('div', { cls: 'note' }, '심을 작물을 고르세요. 다 자라면 밭을 눌러 먹이를 받아요.'));
+    const L = h('div', { cls: 'list' });
+    for (const cr of CROPS) {
+      const lock = S.lv < cr.lv;
+      L.append(h('div', { cls: 'row' }, icon((q) => { rect(q, 8, 8, 32, 32, '#8a5a32'); rect(q, 14, 14, 20, 18, cr.c); rect(q, 16, 16, 5, 5, 'rgba(255,255,255,.5)'); rect(q, 22, 8, 4, 8, '#3f9a36'); }),
+        h('div', { cls: 't' }, h('b', {}, cr.name), h('small', {}, lock ? `🔒 레벨 ${cr.lv}에 열려요` : `${fmtT(cr.time * 1000)} · 씨앗 🪙${cr.cost} → 🍖${cr.food}`)),
+        h('button', { cls: 'btn g', on: () => plant(o, cr), ...(lock || S.gold < cr.cost ? { disabled: '' } : {}) }, '심기')));
+    }
+    el.append(L);
+    el.append(h('div', { cls: 'acts' }, h('button', { cls: 'btn w', on: () => startPlace(o, false) }, '↔ 옮기기'), h('button', { cls: 'btn r', on: () => removeObj(o) }, '철거')));
+  });
+}
+function plant(o, cr) {
+  if (S.gold < cr.cost) return;
+  S.gold -= cr.cost; o.crop = cr.id; o.at = Date.now(); closeSheet(); changed();
+}
+
+/* 짝짓기 */
+let pickA = null, pickB = null;
+function breedResult(a, b) {
+  if (a === b) return a;
+  const hy = SPECIES.find((s) => s.tier === 2 && s.els.length === 2 && ((SP[a].els[0] === s.els[0] && SP[b].els[0] === s.els[1]) || (SP[a].els[0] === s.els[1] && SP[b].els[0] === s.els[0])));
+  if (hy && Math.random() < HYBRID_P) return hy.id;
+  return Math.random() < 0.5 ? a : b;
+}
+function openLove(o) {
+  pickA = pickB = null;
+  openSheet((el) => {
+    const now = Date.now();
+    el.append(head('짝짓기 둥지'));
+    if (o.a) {
+      const A = S.dragons.find((d) => d.id === o.a), B = S.dragons.find((d) => d.id === o.b);
+      el.append(h('div', { cls: 'note' }, `${A ? SP[A.sp].name : '?'} 💞 ${B ? SP[B.sp].name : '?'} — 알이 나오기까지 ${fmtT(o.done - now)}`));
+      return;
+    }
+    el.append(h('div', { cls: 'note' }, '어른 용 두 마리를 고르세요. 서로 다른 속성끼리 짝지으면 가끔 새로운 용이 태어나요. (예: 불 + 땅)'));
+    const adults = S.dragons.filter((d) => d.st === 'adult' && !d.love);
+    if (adults.length < 2) { el.append(h('div', { cls: 'note' }, '🐉 어른 용이 2마리 이상 있어야 해요.')); }
+    const L = h('div', { cls: 'list' });
+    for (const d of adults) {
+      const on = d.id === pickA || d.id === pickB;
+      L.append(h('div', { cls: 'row pick' + (on ? ' on' : ''), on: () => { if (on) { if (pickA === d.id) pickA = pickB, pickB = null; else pickB = null; } else if (!pickA) pickA = d.id; else if (!pickB) pickB = d.id; else { pickA = pickB; pickB = d.id; } renderSheet(); } },
+        dragonIcon(d.sp, 'adult'), h('div', { cls: 't' }, h('b', {}, SP[d.sp].name, ' ', ...elTags(d.sp)), h('small', {}, `Lv.${d.lv}`)), on ? h('b', {}, '✔') : null));
+    }
+    el.append(L);
+    const A = S.dragons.find((d) => d.id === pickA), B = S.dragons.find((d) => d.id === pickB);
+    let info = '';
+    if (A && B) {
+      const tier = SP[A.sp].tier === 2 || SP[B.sp].tier === 2 ? 2 : 1;
+      const hy = A.sp !== B.sp && SPECIES.find((s) => s.tier === 2 && s.els.includes(SP[A.sp].els[0]) && s.els.includes(SP[B.sp].els[0]) && SP[A.sp].els[0] !== SP[B.sp].els[0]);
+      info = hy ? (S.dex[hy.id] ? `💡 ${hy.name}가 나올 수 있어요!` : '💡 무언가 새로운 용이 나올 것 같은 예감…') : '';
+      void tier;
+    }
+    if (info) el.append(h('div', { cls: 'note' }, info));
+    el.append(h('div', { cls: 'acts' },
+      h('button', { cls: 'btn g', on: () => startBreed(o), ...(A && B ? {} : { disabled: '' }) }, '💞 짝짓기 시작'),
+      h('button', { cls: 'btn w', on: () => startPlace(o, false) }, '↔ 옮기기'),
+      h('button', { cls: 'btn r', on: () => removeObj(o) }, '철거')));
+  });
+}
+function startBreed(o) {
+  const A = S.dragons.find((d) => d.id === pickA), B = S.dragons.find((d) => d.id === pickB);
+  if (!A || !B) return;
+  const res = breedResult(A.sp, B.sp), dur = SP[res].hatch * 1000;
+  settle(objById(A.home)); settle(objById(B.home));
+  A.love = B.love = o.id; o.a = A.id; o.b = B.id; o.res = res; o.dur = dur; o.done = Date.now() + dur;
+  closeSheet(); toast(`💞 짝짓기 시작! ${fmtT(dur)} 뒤에 알이 나와요`); changed();
+}
+function hatchFromLove(o) {
+  const nest = homeFor(o.res);
+  if (!nest) { toast(`${SP[o.res].els.map((e) => ELS[e].name).join('·')} 둥지에 빈자리가 필요해요`); return; }
+  for (const id of [o.a, o.b]) { const d = S.dragons.find((x) => x.id === id); if (d) { delete d.love; walk.delete(d.id); } }
+  const d = { id: ++S.nid, sp: o.res, home: nest.id, st: 'egg', at: Date.now() + SP[o.res].hatch * 1000, fed: 0, lv: 1 };
+  S.dragons.push(d); register(o.res);
+  floatXY(o.x * T + 32, o.y * T + 20, '🥚 알 획득!', '#ffd6e4'); addXp(5);
+  delete o.a; delete o.b; delete o.res; delete o.done; delete o.dur;
+  changed();
+}
+function register(sp) {
+  if (!S.dex[sp]) { S.dex[sp] = 1; if (SP[sp].tier === 2) { addXp(50); setTimeout(() => toast(`📖 새로운 용 발견! ${SP[sp].name}`), 400); } }
+  else S.dex[sp]++;
+}
+
+/* ───────── 상점 ───────── */
+let shopTab = 'egg';
+function openShop() {
+  openSheet((el) => {
+    el.append(head('상점'));
+    el.append(h('div', { cls: 'tabs' }, ...[['egg', '🥚 알'], ['nest', '🏡 둥지'], ['build', '🌾 시설']].map(([k, n]) => h('button', { cls: shopTab === k ? 'on' : '', on: () => { shopTab = k; renderSheet(); } }, n))));
+    const L = h('div', { cls: 'list' });
+    if (shopTab === 'egg') {
+      el.append(h('div', { cls: 'note' }, '알은 같은 속성 둥지에 바로 들어가 부화해요. 이중 속성 용은 짝짓기로만 얻을 수 있어요.'));
+      for (const s of SPECIES.filter((s) => s.tier === 1)) {
+        const nl = NESTS[s.els[0]].lv, lock = S.lv < nl, home = homeFor(s.id);
+        const why = lock ? `🔒 레벨 ${nl}` : !home ? `${ELS[s.els[0]].name} 둥지 빈자리 필요` : `부화 ${fmtT(s.hatch * 1000)} · 어른이 되면 ${s.rate}🪙/분`;
+        L.append(h('div', { cls: 'row' }, dragonIcon(s.id, 'adult'), h('div', { cls: 't' }, h('b', {}, s.name, ' ', ...elTags(s.id)), h('small', {}, why)),
+          h('button', { cls: 'btn', on: () => buyEgg(s), ...(lock || !home || S.gold < s.price ? { disabled: '' } : {}) }, `🪙${fmt(s.price)}`)));
+      }
+    } else if (shopTab === 'nest') {
+      el.append(h('div', { cls: 'note' }, `둥지 하나에 용 ${NEST_CAP}마리까지 살 수 있어요. 용은 자기 속성 둥지에서만 살아요.`));
+      for (const [k, n] of Object.entries(NESTS)) {
+        const lock = S.lv < n.lv;
+        L.append(h('div', { cls: 'row' }, icon((q) => { q.scale(0.5, 0.5); drawNest(q, { id: 1, el: k, x: 0, y: 0, scales: [] }, 0); }, 48),
+          h('div', { cls: 't' }, h('b', {}, `${ELS[k].name} 둥지`), h('small', {}, lock ? `🔒 레벨 ${n.lv}에 열려요` : '3×3 칸')),
+          h('button', { cls: 'btn', on: () => buyNest(k), ...(lock || S.gold < n.price ? { disabled: '' } : {}) }, `🪙${fmt(n.price)}`)));
+      }
+    } else {
+      for (const [k, b] of Object.entries(BUILD)) {
+        const lock = S.lv < b.lv, cnt = k === 'cow' ? S.cows.length : 0, full = b.max && cnt >= b.max;
+        L.append(h('div', { cls: 'row' }, icon((q) => {
+          if (k === 'field') { q.scale(1.5, 1.5); drawField(q, { x: 0, y: 0, crop: 'fruit', at: 0 }, 0, Date.now()); }
+          else if (k === 'love') { q.scale(0.75, 0.75); drawLove(q, { x: 0, y: 0 }, 0, 0); }
+          else if (IMG.cowI) q.drawImage(IMG.cowI, 0, 128, 64, 64, -8, -14, 64, 64);
+        }), h('div', { cls: 't' }, h('b', {}, b.name), h('small', {}, lock ? `🔒 레벨 ${b.lv}에 열려요` : full ? `최대 ${b.max}마리` : b.desc)),
+          h('button', { cls: 'btn', on: () => buyBuild(k), ...(lock || full || S.gold < b.price ? { disabled: '' } : {}) }, `🪙${fmt(b.price)}`)));
+      }
+    }
+    el.append(L);
+  });
+}
+function buyEgg(s) {
+  const home = homeFor(s.id); if (!home || S.gold < s.price) return;
+  S.gold -= s.price; settle(home);
+  S.dragons.push({ id: ++S.nid, sp: s.id, home: home.id, st: 'egg', at: Date.now() + s.hatch * 1000, fed: 0, lv: 1 });
+  register(s.id); addXp(2); toast(`🥚 ${ELS[home.el].name} 둥지에 알을 놓았어요`); changed(); renderSheet();
+}
+function buyNest(k) {
+  const n = NESTS[k]; if (S.gold < n.price) return;
+  startPlace({ t: 'nest', el: k, x: 0, y: 0, scales: [] }, true, (x, y) => {
+    if (S.gold < n.price) return; S.gold -= n.price; const now = Date.now();
+    S.objs.push({ id: ++S.nid, t: 'nest', el: k, x, y, bank: 0, gAt: now, scales: [], sAt: now }); addXp(5); changed();
+  });
+}
+function buyBuild(k) {
+  const b = BUILD[k]; if (S.gold < b.price) return;
+  if (k === 'cow') { S.gold -= b.price; S.cows.push({ at: Date.now() - MILK_MS }); addXp(5); toast('🐄 젖소가 목장에 왔어요! 우유 아이콘이 뜨면 눌러 주세요'); closeSheet(); changed(); return; }
+  startPlace({ t: k, x: 0, y: 0 }, true, (x, y) => { if (S.gold < b.price) return; S.gold -= b.price; S.objs.push({ id: ++S.nid, t: k, x, y }); addXp(2); changed(); });
+}
+
+/* ───────── 도감 ───────── */
+function openDex() {
+  openSheet((el) => {
+    const got = SPECIES.filter((s) => S.dex[s.id]).length;
+    el.append(head(`도감 ${got}/${SPECIES.length}`));
+    const D = h('div', { cls: 'dex' });
+    for (const s of SPECIES) {
+      const has = !!S.dex[s.id];
+      D.append(h('div', {}, dragonIcon(s.id, 'adult', 64, !has), h('b', {}, has ? s.name : '???'), h('small', {}, has ? s.els.map((e) => ELS[e].name).join(' · ') : s.tier === 2 ? `힌트: ${HINT[s.id]}` : '상점에서 살 수 있어요')));
+    }
+    el.append(D);
+  });
+}
+function openHelp() {
+  openSheet((el) => {
+    el.append(head('어떻게 하나요?'));
+    const tips = [
+      '🥚 알은 시간이 지나면 부화해요. 둥지를 눌러 확인하세요.',
+      '🍖 아기 용은 먹이를 3번 먹으면 어른이 되고, 어른 용은 골드를 만들어요.',
+      '🪙 둥지 위에 골드가 쌓이면 둥지를 눌러 걷어요. 최대 3시간치까지 쌓여요.',
+      '🌱 밭에 작물을 심고, 다 자라면 밭을 눌러 먹이를 받아요.',
+      '✨ 어른 용은 가끔 반짝이는 비늘을 떨어뜨려요. 눌러서 주우면 골드를 줘요.',
+      '💞 레벨 2부터 짝짓기 둥지를 지을 수 있어요. 속성이 다른 두 용을 짝지으면 새로운 용이 태어날 수 있어요.',
+      '⏰ 게임을 꺼 두어도 시간은 흘러가요.',
+    ];
+    el.append(h('div', { cls: 'list' }, ...tips.map((t) => h('div', { cls: 'row' }, h('div', { cls: 't' }, h('small', { style: 'font-size:13.5px;color:var(--ink)' }, t))))));
+    el.append(h('div', { cls: 'acts' }, h('button', { cls: 'btn r', on: resetGame }, '처음부터 다시 하기')));
+  });
+}
+function resetGame() {
+  if (!confirm('목장을 처음 상태로 되돌릴까요? 모든 용과 골드가 사라져요.')) return;
+  S = defaultState(); walk.clear(); cowPos.length = 0; closeSheet(); changed();
+}
+$('tShop').onclick = openShop; $('tDex').onclick = openDex; $('tHelp').onclick = openHelp;
+
+/* ───────── 저장 ───────── */
+let owner = null, cloudAt = null, saveT = null, saving = false, again = false;
+const setSave = (t) => { $('save').textContent = t; };
+function hud() {
+  $('gold').textContent = fmt(S.gold); $('food').textContent = fmt(S.food);
+  $('lv').textContent = `Lv ${S.lv}`; $('xp').style.width = `${Math.min(100, (S.xp / needXp(S.lv)) * 100)}%`;
+}
+function changed() {
+  hud();
+  try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {}
+  if (owner) { clearTimeout(saveT); setSave('저장 대기…'); saveT = setTimeout(cloudStore, 1500); }
+}
+async function cloudStore() {
+  if (!owner || !MG || !MG.save) return;
+  if (saving) { again = true; return; }
+  saving = true; setSave('저장 중…');
+  try {
+    let r = await MG.save.store({ ...S, owner }, cloudAt || undefined);
+    if (r && r.conflict) { cloudAt = r.updatedAt; r = await MG.save.store({ ...S, owner }, cloudAt); }
+    if (r && r.updatedAt) cloudAt = r.updatedAt;
+    setSave('☁️ 저장됨');
+  } catch (e) { setSave('저장 실패'); }
+  saving = false;
+  if (again) { again = false; cloudStore(); }
+}
+function setupAuth() {
+  const btn = $('loginBtn');
+  if (!MG || !MG.save || !MG.embedded) { setSave('이 기기에 자동 저장돼요'); return; }
+  btn.textContent = '로그인하고 저장';
+  btn.onclick = () => MG.save.login();
+  MG.save.onAuth(async (u) => {
+    owner = u ? u.id : null; btn.hidden = !!u;
+    if (!u) { setSave('이 기기에 자동 저장돼요'); btn.hidden = false; return; }
+    setSave('불러오는 중…');
+    try {
+      const r = await MG.save.load();
+      if (r && r.data && Array.isArray(r.data.objs)) { S = sanitize(r.data); cloudAt = r.updatedAt || null; walk.clear(); cowPos.length = 0; hud(); try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} setSave('☁️ 불러옴'); }
+      else await cloudStore();
+    } catch (e) { setSave('불러오기 실패'); }
+  });
+}
+
+let toastT = null;
+function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2200); }
+
+/* ───────── 시작 ───────── */
+function loop(t) { draw(t); requestAnimationFrame(loop); }
+Promise.all([loadImg('dr', 'img/dragons.png'), loadImg('cowI', 'img/cow-idle.png'), loadImg('cowW', 'img/cow-walk.png')]).then(() => {
+  hud(); setupAuth(); tick(); setInterval(() => { tick(); if (sheetFn && !$('dim').hidden) renderSheet(); }, 1000);
+  requestAnimationFrame(loop);
+  if (!S.tut) { S.tut = 1; changed(); setTimeout(() => toast('🥚 첫 알이 곧 부화해요! 둥지를 눌러 보세요'), 600); }
+});
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { tick(); hud(); } });
+</script>
+</body>
+</html>
