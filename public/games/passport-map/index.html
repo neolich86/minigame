@@ -293,6 +293,9 @@ input,button,select,textarea{box-sizing:border-box}
   .save:not([data-s="error"]) span{display:none} /* 저장 상태는 색 점으로만 (문제가 있을 때만 글자) */
   .save{padding:0 2px}
   .btn .tx{display:none}
+  #themeBtn .tx,#listBtn .tx{display:inline;font-size:13px} /* 휴대폰에서도 '테마'·'목록' 글자 표시 (검색칸은 그만큼 줄어듦) */
+  #themeBtn,#listBtn{gap:5px;padding-inline:10px}
+  .search input{padding:0 6px 0 30px}.search input::placeholder{font-size:13px}.search svg{left:9px}
   .panel{top:auto;left:0;right:0;bottom:0;width:auto;max-width:none;max-height:72%;border-radius:16px 16px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)}
   .legend{display:none}
   .drop{min-height:104px}
