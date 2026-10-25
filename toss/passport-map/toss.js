@@ -1,5 +1,5 @@
 // 앱인토스 전용 연결: 공유 이미지를 기기에 저장 (웹뷰에서는 a[download] 가 동작하지 않음)
-import { File } from "@apps-in-toss/web-framework";
+import { File, openURL } from "@apps-in-toss/web-framework";
 
 function hookSave() {
   const btn = document.getElementById("shSave");
@@ -17,5 +17,14 @@ function hookSave() {
     }
   };
 }
-if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", hookSave);
-else hookSave();
+function hookPlay() {
+  const a = document.getElementById("gpLink");
+  if (!a) return;
+  a.addEventListener("click", (e) => {
+    e.preventDefault();
+    openURL(a.href).catch(() => window.open(a.href, "_blank", "noopener"));
+  });
+}
+function init() { hookSave(); hookPlay(); }
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+else init();
