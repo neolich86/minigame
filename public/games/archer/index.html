@@ -833,7 +833,7 @@ function reset(){
   meteors=[]; blackholes=[]; zones=[]; mines=[]; booms=[];
   cam={x:0,y:0};
   game = {
-    t:0, kills:0, bossKills:0, spawnT:0, over:false, paused:false,
+    t:0, kills:0, bossKills:0, fury:0, spawnT:0, over:false, paused:false,
     picking:false, boss:null, bossTier:0, nextBossT:BOSS_INTERVAL, shakeT:0, shakeM:0, dead:false
   };
   hpBossEl.classList.remove('on');
@@ -871,6 +871,8 @@ function trapR(l){ return 46 + 12*l }   // 가시 장판 반경: 레벨 1=58 …
 function lateL(){ return Math.max(0,(game.t-900)/60) }   // 15분 이후 경과 분
 // 15분(900초) 이후: 1분에 걸쳐 체력이 1.5배로 뛰고, 이후에도 가파르게 계속 강해진다
 function lateMul(){ const L=lateL(); return (1+0.5*Math.min(L,1))*(1+0.30*L+0.03*L*L) }
+// 10분 보스(2번째)부터 보스를 잡을 때마다 일반 몬스터가 한 단계씩 강해진다 (체력·공격·속도·출현량)
+function furyMul(){ const f = game.fury||0; return {hp:1+0.45*f, dmg:1+0.25*f, spd:1+Math.min(0.28,0.07*f), rate:1+0.15*f}; }
 function timeScale(){ const m = game.t/60; return (1 + m*0.30 + Math.pow(m,1.85)*0.030) * lateMul() }
 function elemForTime(){
   const t = game.t;
@@ -889,14 +891,15 @@ function spawnEnemy(){
   const M = avail[mi];
   const el = ELEM[elemForTime()];
   const ts = timeScale();
+  const F = furyMul();
   const ang = rnd(TAU);
   const rad = Math.hypot(W,H)*0.5/1 + 70;
   enemies.push({
     k:M.k, name:M.name, el:el.key,
     x:P.x+Math.cos(ang)*rad, y:P.y+Math.sin(ang)*rad,
-    hp:M.hp*ts*el.hp, hpMax:M.hp*ts*el.hp,
-    spd:M.spd*el.spd*(1+Math.min(0.55,game.t/700)+Math.min(0.3,lateL()*0.03))*rnd(1.08,0.92),
-    dmg:M.dmg*el.dmg*(1+game.t/380)*(1+(lateMul()-1)*0.35), r:M.r, xp:M.xp*(0.7+ts*0.22),
+    hp:M.hp*ts*el.hp*F.hp, hpMax:M.hp*ts*el.hp*F.hp,
+    spd:M.spd*el.spd*(1+Math.min(0.55,game.t/700)+Math.min(0.3,lateL()*0.03))*F.spd*rnd(1.08,0.92),
+    dmg:M.dmg*el.dmg*(1+game.t/380)*(1+(lateMul()-1)*0.35)*F.dmg, r:M.r, xp:M.xp*(0.7+ts*0.22),
     size:M.size, face:1, ph:rnd(TAU), flash:0, kx:0, ky:0, boss:false, hitT:0, trapT:0,
     freezeT:0, chill:0, slowT:0
   });
@@ -1054,6 +1057,7 @@ function update(dt){
   /* --- 스폰 --- */
   let rate = Math.min(11, 0.70 + game.t/95 + Math.pow(Math.max(0,game.t)/60,1.35)*0.28) * (1+Math.min(0.7,lateL()*0.12));
   if(!(game.spawnT>=0)) game.spawnT=0;   // 방어: NaN 이 되면 스폰이 영구 중단되므로 복구
+  rate *= furyMul().rate;
   if(game.boss) rate *= 0.05;          // 보스전 동안 잡몹 압박 대폭 완화 (몬스터 벽에 화살이 막히는 문제 방지)
   game.spawnT += dt*rate;
   const cap = game.boss? 12 : (game.t>900 ? 200 : 160);
@@ -1485,6 +1489,15 @@ function killEnemy(e, idx){
     P.hp = Math.min(P.hpMax, P.hp + P.hpMax*0.3);
     popText(P.x,P.y-40,'+체력 회복','#7fe08a',true);
     for(let i=0;i<14;i++) dropGem(e.x+rnd(70,-70), e.y+rnd(70,-70), e.xp/14);
+    if((e.tier||1) >= 2){   // 10분 보스부터: 잡을 때마다 일반 몬스터 강화
+      game.fury = (game.fury||0) + 1;
+      setTimeout(()=>{
+        if(game.over) return;
+        bossWord.textContent = (window.MGH&&MGH.L) ? MGH.L('몬스터 강화','MONSTERS ENRAGED') : '몬스터 강화';
+        bossSub.textContent = (window.MGH&&MGH.L) ? MGH.L(`분노 ${game.fury}단계 · 더 단단하고 빨라진다`, `Rage ${game.fury} · tougher and faster`) : `분노 ${game.fury}단계 · 더 단단하고 빨라진다`;
+        bossEl.classList.remove('play'); void bossEl.offsetWidth; bossEl.classList.add('play');
+      }, 1600);
+    }
   } else {
     dropGem(e.x,e.y,e.xp);
     const r = Math.random();
