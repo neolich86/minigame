@@ -23,7 +23,7 @@ export const TAROT_CAT_ORDER: TarotCat[] = ["year", "love", "reunion", "money", 
 export const cardSlug = (c: TarotCard) => c.name.en.toLowerCase().replace(/^the\s+/, "").replace(/[^a-z]+/g, "-").replace(/(^-|-$)/g, "");
 export const cardBySlug = (slug: string) => TAROT_CARDS.find((c) => cardSlug(c) === slug);
 export const cardPath = (c: TarotCard) => `/apps/tarot/cards/${cardSlug(c)}`;
-export const cardImg = (c: TarotCard, size: 300 | 600) => `/games/tarot/cards/${size}/${c.img}`;
+export const cardImg = (c: TarotCard, size: 300 | 600) => `/games/tarot/cards/${size}/${c.img}?v=2`;
 
 export const STAGE: Record<1 | 2 | 3, LT> = {
   1: { ko: "시작과 의지 (0~7번)", en: "Beginnings & will (0–7)" },

@@ -327,7 +327,7 @@ const CATALOG: Game[] = [
       en: "Pick what's on your mind and draw from the 22 Major Arcana yourself — year ahead, love, reunion, money, business, career, study and relationships",
     },
     genre: "casual",
-    thumb: "/thumbs/tarot.jpg",
+    thumb: "/thumbs/tarot.jpg?v=2",
     src: "/games/tarot/index.html",
   },
   {
