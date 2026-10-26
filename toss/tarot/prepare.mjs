@@ -28,6 +28,11 @@ must("loadKakao().then(", "Promise.resolve(false).then(");
 must('  x.fillStyle = "#e6c47a"; roundRect(x, W / 2 - 300, H - 250, 600, 104, 52); x.fill();\n', "");
 must('  x.fillStyle = "#1a1433"; x.font = `700 40px ${sans}`; x.fillText(t("kBtnMine"), W / 2, H - 184);\n', "");
 must("x.fillText(`${location.host}/apps/tarot`, W / 2, H - 92);", 'x.fillText("✦ 귀여운 타로 ✦", W / 2, H - 120);');
+// 토스 내비게이션 바에 뒤로가기가 있으므로, 화면 안의 ← 버튼은 홈(처음 화면) 버튼으로 바꾼다 (중복 뒤로가기 반려 대응)
+const HOME_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg>';
+must('<button class="ibtn" id="drawBack" aria-label="back">←</button>', `<button class="ibtn" id="drawBack" aria-label="home">${HOME_SVG}</button>`);
+must('<button class="ibtn" id="resBack" aria-label="home">←</button>', `<button class="ibtn" id="resBack" aria-label="home">${HOME_SVG}</button>`);
+must("</style>", ".ibtn svg{display:block;margin:auto}\n</style>");
 must("</body>", '<script type="module" src="./toss.js"></script>\n</body>');
 fs.writeFileSync(path.join(out, "index.html"), html);
 
