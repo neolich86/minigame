@@ -181,7 +181,7 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       tips: [
         "멈춰 서 있지 말고 몬스터 무리를 크게 원을 그리며 돌아 한쪽으로 모으세요. 자동 공격이 모인 적을 더 많이 맞힙니다.",
         "초반에는 멀티샷·관통처럼 화살 수와 범위를 늘리는 스킬이 생존에 가장 도움이 돼요.",
-        "5분마다 보스가 나와요. 보스 직전에는 경험치를 모아 레벨업 스킬을 하나 더 확보해 두세요.",
+        "3분마다 보스가 나와요. 보스 직전에는 경험치를 모아 레벨업 스킬을 하나 더 확보해 두세요.",
         "운석 낙하·블랙홀 같은 광역 스킬은 몬스터가 많아지는 후반에 효과가 커요.",
       ],
       faq: [
@@ -194,7 +194,7 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       tips: [
         "Keep moving in wide circles to bunch enemies together — auto-attacks hit more of them.",
         "Early on, Multishot and Pierce help survival the most.",
-        "A boss arrives every 5 minutes — bank XP for one more skill before it.",
+        "A boss arrives every 3 minutes — bank XP for one more skill before it.",
         "Area skills like Meteor and Black Hole shine late when hordes grow.",
       ],
       faq: [

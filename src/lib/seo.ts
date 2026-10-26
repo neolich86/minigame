@@ -244,7 +244,7 @@ export const GAME_SEO: SeoMap = {
       keywords: ["뱀서", "뱀서라이크", "뱀서류", "뱀파이어 서바이버 같은 게임", "서바이벌", "서바이벌 게임", "로그라이크", "로그라이트", "무료 게임", "웹게임"],
       about: [
         "궁수 서바이버는 뱀파이어 서바이버류(뱀서) 로그라이크입니다. 이동만 하면 화살이 자동으로 발사되고, 레벨업할 때마다 멀티샷·관통·운석 낙하·블랙홀 같은 스킬을 골라 강해져요.",
-        "5분마다 강력한 보스가 등장하고, 몬스터는 시간이 갈수록 점점 늘어납니다. 로그인하면 생존 시간이 랭킹에 기록됩니다.",
+        "3분마다 강력한 보스가 등장하고, 몬스터는 시간이 갈수록 점점 늘어납니다. 로그인하면 생존 시간이 랭킹에 기록됩니다.",
       ],
       howTo: ["WASD·방향키 또는 화면을 끌어서 이동합니다.", "공격은 자동 — 몬스터를 피하며 경험치를 모으세요.", "레벨업마다 스킬 1개를 골라 조합을 만듭니다.", "최대한 오래 살아남으세요!"],
       tags: ["뱀서", "서바이벌", "로그라이크", "액션", "랭킹", "무료"],
@@ -254,7 +254,7 @@ export const GAME_SEO: SeoMap = {
       h1: "Archer Survivor — Free Survivor-like Survival Game",
       description: "Auto-fire at monster hordes from every side, pick skills on every level-up and survive as long as you can in this free survivor-like roguelite. Climb the survival-time leaderboard.",
       keywords: ["survivor-like", "vampire survivors like", "survival game", "roguelite", "roguelike", "bullet heaven", "free game", "browser game"],
-      about: ["Archer Survivor is a survivor-like roguelite. Just move — arrows fire automatically — and choose skills like Multishot, Pierce, Meteor Fall and Black Hole each time you level up.", "A powerful boss appears every 5 minutes and the hordes keep growing. Signed-in players are ranked by survival time."],
+      about: ["Archer Survivor is a survivor-like roguelite. Just move — arrows fire automatically — and choose skills like Multishot, Pierce, Meteor Fall and Black Hole each time you level up.", "A powerful boss appears every 3 minutes and the hordes keep growing. Signed-in players are ranked by survival time."],
       howTo: ["Move with WASD / arrow keys or drag on mobile.", "Attacks are automatic — dodge and collect XP.", "Pick one skill per level-up to build your combo.", "Survive as long as you can!"],
       tags: ["Survivor-like", "Survival", "Roguelite", "Action", "Leaderboard", "Free"],
     },

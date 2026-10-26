@@ -9,7 +9,7 @@
 <meta name="description" content="사방에서 몰려오는 몬스터를 자동 사격으로 처치하고, 레벨업마다 스킬을 골라 성장하는 뱀서라이크 로그라이트.">
 <meta name="theme-color" content="#12161c">
 <meta property="og:title" content="궁수 서바이버">
-<meta property="og:description" content="자동 사격 궁수로 끝없이 몰려오는 몬스터를 버텨내세요. 5분마다 보스 등장.">
+<meta property="og:description" content="자동 사격 궁수로 끝없이 몰려오는 몬스터를 버텨내세요. 3분마다 보스 등장.">
 <meta property="og:type" content="website">
 <style>
 :root{
@@ -202,7 +202,7 @@ canvas{display:block;image-rendering:auto}
   <div class="sub">
     사방에서 몰려오는 몬스터를 처치하세요.<br>
     레벨업마다 스킬을 고르고<br>
-    <b style="color:var(--blood)">5분마다 등장하는 보스</b>를 처치하세요.
+    <b style="color:var(--blood)">3분마다 등장하는 보스</b>를 처치하세요.
   </div>
   <button class="btn" id="btnStart">사냥 시작</button>
   <div class="sub" style="margin-top:18px;font-size:11px;opacity:.8">
@@ -865,14 +865,14 @@ const BOSSES = [
   {k:'boss4', name:'탐욕의 미믹', hp:56,  spd:74,  dmg:20, r:31, xp:720, size:186},
   {k:'boss5', name:'홍염의 아룡', hp:68,  spd:78,  dmg:23, r:32, xp:800, size:180}
 ];
-const BOSS_INTERVAL = 300; // 5분마다 보스 출현
+const BOSS_INTERVAL = 180; // 3분마다 보스 출현
 
 function trapR(l){ return 46 + 12*l }   // 가시 장판 반경: 레벨 1=58 … 레벨 5=106
 function lateL(){ return Math.max(0,(game.t-900)/60) }   // 15분 이후 경과 분
 // 15분(900초) 이후: 1분에 걸쳐 체력이 1.5배로 뛰고, 이후에도 가파르게 계속 강해진다
 function lateMul(){ const L=lateL(); return (1+0.5*Math.min(L,1))*(1+0.30*L+0.03*L*L) }
-// 10분 보스(2번째)부터 보스를 잡을 때마다 일반 몬스터가 한 단계씩 강해진다 (체력·공격·속도·출현량)
-function furyMul(){ const f = game.fury||0; return {hp:1+0.45*f, dmg:1+0.25*f, spd:1+Math.min(0.28,0.07*f), rate:1+0.15*f}; }
+// 보스를 잡을 때마다 일반 몬스터가 한 단계씩 강해진다 (체력은 단계마다 1.45배씩 곱으로 불어남·공격·속도·출현량)
+function furyMul(){ const f = game.fury||0; return {hp:Math.pow(1.45,f), dmg:1+0.30*f, spd:1+Math.min(0.35,0.06*f), rate:1+0.12*f}; }
 function timeScale(){ const m = game.t/60; return (1 + m*0.30 + Math.pow(m,1.85)*0.030) * lateMul() }
 function elemForTime(){
   const t = game.t;
@@ -1489,7 +1489,7 @@ function killEnemy(e, idx){
     P.hp = Math.min(P.hpMax, P.hp + P.hpMax*0.3);
     popText(P.x,P.y-40,'+체력 회복','#7fe08a',true);
     for(let i=0;i<14;i++) dropGem(e.x+rnd(70,-70), e.y+rnd(70,-70), e.xp/14);
-    if((e.tier||1) >= 2){   // 10분 보스부터: 잡을 때마다 일반 몬스터 강화
+    {   // 보스를 잡을 때마다 일반 몬스터 강화
       game.fury = (game.fury||0) + 1;
       setTimeout(()=>{
         if(game.over) return;
