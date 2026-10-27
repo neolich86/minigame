@@ -111,7 +111,7 @@ button:disabled{opacity:.45;cursor:default}
     <button id="hintBtn">💡 힌트 <small>✨1</small></button>
   </div>
   <div class="sub"><span id="save"></span><span class="sp"></span><button class="sbtn" id="loginBtn" hidden></button></div>
-  <div class="credit">Interior: Pixel 16 Interiors (zedpxl) · Characters: Tiny RPG Character Pack (Zerie), The Adventurer (Sscary) · Potions: 16x16 Assorted RPG Icons (Shade, CC0)</div>
+  <div class="credit">Interior: Pixel 16 Interiors (zedpxl) · Characters: Tiny RPG Character Pack (Zerie), Mana Seed Farmer (Seliel the Shaper), The Adventurer (Sscary) · Potions: 16x16 Assorted RPG Icons (Shade, CC0)</div>
 </div>
 <div class="dim" id="dim" hidden><div class="modal" id="modal"></div></div>
 <div class="toast" id="toast"></div>
@@ -135,10 +135,19 @@ const BASE_UNDO = 3;
 const UNDO_COST = [60, 150, 350, 800];
 const TUBE_COST = [400, 1500];
 const DUST_PACK = { n: 3, cost: 100 };
+// 손님: img 시트, 한 칸 크기 fw, 줄 row, 서 있기·걷기 칸 번호, 발 위치(ox, oy), 오기 시작하는 공방 등급
+const VIL = ['은발 상인', '민트머리 아가씨', '밀짚모자 농부', '꽃집 아가씨', '빵집 청년', '양치기 소녀', '어부 청년', '분홍머리 견습생'];
 const CUSTS = [
-  { id: 'soldier', name: '병사', idle: 'soldierI', walk: 'soldierW', ox: 50, oy: 60, idleN: 6 },
-  { id: 'orc', name: '오크 전사', idle: 'orcI', walk: 'orcW', ox: 55, oy: 57, idleN: 6 },
-];
+  { id: 'soldier', name: '병사', idle: 'soldierI', walk: 'soldierW', fw: 100, row: 0, idleF: [0, 1, 2, 3, 4, 5], walkF: [0, 1, 2, 3, 4, 5, 6, 7], ox: 50, oy: 60, h: 22, tier: 0 },
+  { id: 'orc', name: '오크 전사', idle: 'orcI', walk: 'orcW', fw: 100, row: 0, idleF: [0, 1, 2, 3, 4, 5], walkF: [0, 1, 2, 3, 4, 5, 6, 7], ox: 55, oy: 57, h: 16, tier: 1 },
+].concat(VIL.map((name, i) => ({ id: 'vil' + i, name, idle: 'vil', walk: 'vil', fw: 64, row: i, idleF: [0], walkF: [1, 2, 3, 4, 5, 6], ox: 32, oy: 44, h: 29, tier: 0 })));
+function custFor(seed, tier) {
+  const pool = CUSTS.filter((c) => c.tier <= tier);
+  const r = E.rng(seed * 31 + 7);
+  let c = pool[Math.floor(r() * pool.length)];
+  if (cust && cust.c && c.id === cust.c.id) c = pool[(pool.indexOf(c) + 1) % pool.length]; // 같은 손님 연속 방지
+  return c;
+}
 // 장식: 공방 장면에 놓이는 소품 (interior.png 좌표 → 장면 좌표), 팁 보너스 %
 const DECO = [
   { id: 'plantL', name: '화분 (왼쪽)', src: [49, 140, 12, 20], at: [2, 20], price: 40, tip: 3, layer: 0 },
@@ -180,7 +189,7 @@ const fmt = (n) => Math.floor(n).toLocaleString('ko-KR');
 
 /* ───────── 이미지 ───────── */
 const IMG = {};
-const IMG_SRC = { tiles: 'img/interior.png', soldierI: 'img/soldier-idle.png', soldierW: 'img/soldier-walk.png', orcI: 'img/orc-idle.png', orcW: 'img/orc-walk.png', keeper: 'img/keeper.png', potions: 'img/potions.png' };
+const IMG_SRC = { tiles: 'img/interior.png', soldierI: 'img/soldier-idle.png', soldierW: 'img/soldier-walk.png', orcI: 'img/orc-idle.png', orcW: 'img/orc-walk.png', keeper: 'img/keeper.png', potions: 'img/potions.png', vil: 'img/villagers.png' };
 const imgP = Promise.all(Object.entries(IMG_SRC).map(([k, src]) => new Promise((res) => { const i = new Image(); i.onload = () => { IMG[k] = i; res(); }; i.onerror = res; i.src = src; })));
 function piStyle(c, row, size = 32) { const k = size / 16; return `background-position:${-ICON[c] * 16 * k}px ${-(row % 13) * 16 * k}px`; }
 function piHTML(c, row, small) { return `<span class="pi${small ? ' s' : ''}" style="${piStyle(c, row, small ? 24 : 32)}"></span>`; }
@@ -216,7 +225,8 @@ const sparks = [];
 /* ───────── 공방 장면 ───────── */
 const sc = $('sc'), sg = sc.getContext('2d');
 sg.imageSmoothingEnabled = false;
-const cust = { c: CUSTS[0], x: -20, target: 66, state: 'away', flip: false, t0: 0 };
+let cust = null;
+cust = { c: CUSTS[0], x: -20, target: 66, state: 'away', flip: false, t0: 0 };
 const FEET = 62;
 function S_(sx, sy, w, h, x, y) { if (IMG.tiles) sg.drawImage(IMG.tiles, sx, sy, w, h, x, y, w, h); }
 function R_(x, y, w, h, c) { sg.fillStyle = c; sg.fillRect(x, y, w, h); }
@@ -240,13 +250,13 @@ function drawScene(t) {
   // 손님
   if (cust.state !== 'away') {
     const c = cust.c, walking = cust.state === 'in' || cust.state === 'out';
-    const img = IMG[walking ? c.walk : c.idle], n = walking ? 8 : c.idleN;
+    const img = IMG[walking ? c.walk : c.idle], F = walking ? c.walkF : c.idleF;
     if (img) {
-      const fr = ((t / (walking ? 100 : 160)) | 0) % n;
+      const fr = F[((t / (walking ? 110 : 160)) | 0) % F.length];
       sg.save();
       sg.translate(Math.round(cust.x), FEET);
       if (cust.flip) sg.scale(-1, 1);
-      sg.drawImage(img, fr * 100, 0, 100, 100, -c.ox, -c.oy, 100, 100);
+      sg.drawImage(img, fr * c.fw, c.row * c.fw, c.fw, c.fw, -c.ox, -c.oy, c.fw, c.fw);
       sg.restore();
     }
   }
@@ -257,7 +267,7 @@ function custStep(dt) {
   else if (cust.state === 'out') { cust.x -= sp * dt; if (cust.x < -24) { cust.state = 'away'; onLeft(); } }
   // 말풍선 위치
   const b = $('bubble');
-  if (!b.hidden) { b.style.left = (cust.x / 130 * 100) + '%'; b.style.top = ((FEET - 24) / 84 * 100) + '%'; }
+  if (!b.hidden) { b.style.left = (cust.x / 130 * 100) + '%'; b.style.top = ((FEET - cust.c.h - 2) / 84 * 100) + '%'; }
 }
 
 /* ───────── 퍼즐 그리기 ───────── */
@@ -458,7 +468,7 @@ function nextCustomer() {
   L = null; tubes = []; layout(); renderOrder(); renderBubble(); renderCtrl();
   busy = true; won = false;
   const tier = tierOf(S.rep);
-  cust.c = CUSTS[S.seed % CUSTS.length]; cust.x = -20; cust.flip = false; cust.state = 'in'; cust.target = 66;
+  cust.c = custFor(S.seed, tier); cust.x = -20; cust.flip = false; cust.state = 'in'; cust.target = 66;
   pendingLevel = levelFor(S.seed, tier);
   levelFor(S.seed + 1, tier); // 다음 손님 미리 준비
 }
