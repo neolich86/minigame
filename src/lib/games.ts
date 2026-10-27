@@ -16,7 +16,8 @@ export interface Board {
   label: { ko: string; en: string };
   unit: { ko: string; en: string };
   /** 점수 표시 포맷 — roundtime: 점수 = 라운드×1,000,000 + (999,999−초) */
-  format?: "number" | "time" | "won" | "level" | "roundtime";
+  format?: "number" | "time" | "won" | "level" | "roundtime" | "daily";
+  /* daily: 점수 = 날짜(YYYYMMDD, 한국 시간)×1,000,000 + (999,999 − (이동×1000 + 초)) — 오늘 기록만 랭킹에 보인다 */
   /** roundtime 에서 이 라운드를 넘으면 '클리어'로 표시 */
   maxRound?: number;
   /** 친구에게 도전하기 — 경쟁 방식 문구 (도전장 페이지·미리보기 이미지) */
@@ -176,6 +177,10 @@ const CATALOG: Game[] = [
     thumb: "/thumbs/potion-atelier.jpg",
     src: "/games/potion-atelier/index.html",
     saves: true, // 골드·평판·장식을 계정에 저장
+    boards: [
+      { id: "potion-daily", label: { ko: "오늘의 포션", en: "Daily Potion" }, unit: { ko: "", en: "" }, format: "daily" },
+      { id: "potion-rep", label: { ko: "공방 평판", en: "Shop fame" }, unit: { ko: "⭐", en: "⭐" }, vs: { label: { ko: "평판", en: "fame" }, question: { ko: "누구 공방이 더 유명할까?", en: "Whose shop is more famous?" } } },
+    ],
     hidden: true, // 시험판 — 주소로만 열림
   },
   {
@@ -454,9 +459,23 @@ export function formatScore(board: Board, score: number, lang: Lang): string {
       if (board.maxRound && round > board.maxRound) return (lang === "ko" ? "클리어 · " : "Clear · ") + t;
       return (lang === "ko" ? `${round}라운드 · ` : `Round ${round} · `) + t;
     }
+    case "daily": {
+      const day = Math.floor(score / 1000000);
+      const rest = 999999 - (score % 1000000);
+      const mv = Math.floor(rest / 1000), sec = rest % 1000;
+      const t = `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+      const past = day !== kstDayKey() ? (lang === "ko" ? " (지난 기록)" : " (past)") : "";
+      return (lang === "ko" ? `${mv}수 · ` : `${mv} moves · `) + t + past;
+    }
     default: {
       const u = board.unit[lang];
       return score.toLocaleString(lang === "ko" ? "ko-KR" : "en-US") + (u ? ` ${u}` : "");
     }
   }
+}
+
+/** 한국 시간 기준 오늘 (YYYYMMDD) — 오늘의 퍼즐 랭킹용 */
+export function kstDayKey(now = Date.now()): number {
+  const d = new Date(now + 9 * 3600e3);
+  return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate();
 }

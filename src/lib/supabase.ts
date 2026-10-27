@@ -161,13 +161,15 @@ export async function submitScore(gameId: string, score: number, meta: unknown):
   return data as SubmitResult;
 }
 
-export async function fetchLeaderboard(gameId: string, limit = 50): Promise<ScoreRow[]> {
+export async function fetchLeaderboard(gameId: string, limit = 50, minScore?: number): Promise<ScoreRow[]> {
   const c = sb();
   if (!c) return [];
-  const { data, error } = await c
+  let q = c
     .from("leaderboard")
     .select("game_id,user_id,nickname,best_score,meta,plays,achieved_at")
-    .eq("game_id", gameId)
+    .eq("game_id", gameId);
+  if (minScore !== undefined) q = q.gte("best_score", minScore);
+  const { data, error } = await q
     .order("best_score", { ascending: false })
     .order("achieved_at", { ascending: true })
     .limit(limit);

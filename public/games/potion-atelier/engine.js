@@ -209,6 +209,7 @@
     self.onmessage = (e) => {
       const d = e.data || {};
       if (d.cmd === 'level') self.postMessage({ id: d.id, level: makeLevel(d.seed, d.tier, { extraTubes: d.extraTubes || 0 }) });
+      else if (d.cmd === 'exact') { const r = solve(d.tubes, d.order, { budget: d.budget || 600000, maxDepth: 40 }); self.postMessage({ id: d.id, depth: r ? r.depth : null }); }
       else if (d.cmd === 'hint') self.postMessage({ id: d.id, sol: solveAny(d.tubes, d.order, { exactBudget: 20000, fastBudget: 40000 }) });
     };
   }

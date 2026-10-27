@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useApp } from "./AppProvider";
-import { formatScore, type Board } from "@/lib/games";
+import { formatScore, kstDayKey, type Board } from "@/lib/games";
 import { cloudEnabled, fetchLeaderboard, type ScoreRow } from "@/lib/supabase";
 
 export function Leaderboard({ board, limit = 20, refreshKey = 0 }: { board: Board; limit?: number; refreshKey?: number }) {
@@ -15,13 +15,14 @@ export function Leaderboard({ board, limit = 20, refreshKey = 0 }: { board: Boar
       setRows([]);
       return;
     }
-    fetchLeaderboard(board.id, limit)
+    // 오늘의 퍼즐은 오늘(한국 시간) 기록만
+    fetchLeaderboard(board.id, limit, board.format === "daily" ? kstDayKey() * 1000000 : undefined)
       .then((r) => {
         setRows(r);
         setErr(false);
       })
       .catch(() => setErr(true));
-  }, [board.id, limit]);
+  }, [board.id, board.format, limit]);
 
   useEffect(() => {
     load();

@@ -34,6 +34,10 @@ button:disabled{opacity:.45;cursor:default}
 .bar .order b{font-size:12px;color:var(--dim);font-weight:700}
 .chip{display:flex;align-items:center;gap:2px;font-weight:900;font-size:14px}
 .chip.ok{color:var(--good)}
+.dtag{background:#4a2f6b;color:#e9d6ff;font-size:11.5px;font-weight:800;padding:3px 8px;border-radius:8px}
+.dexit{height:26px;padding:0 9px;border-radius:8px;background:rgba(255,255,255,.12);font-size:12px;font-weight:800}
+.app.daily .board{background:linear-gradient(#3a2752,#22163a)}
+.app.daily .bar{background:#2e2142;border-top-color:#5a3f80}
 .mv{text-align:right;font-size:12px;color:var(--dim);line-height:1.35;white-space:nowrap}
 .mv b{color:var(--ink);font-size:16px}
 .rules{display:flex;justify-content:center;gap:10px;padding:5px 8px;background:#33221a;font-size:11.5px;color:var(--dim);flex-wrap:wrap}
@@ -82,12 +86,13 @@ button:disabled{opacity:.45;cursor:default}
 </style>
 </head>
 <body>
-<div class="app">
+<div class="app" id="app">
   <div class="hud">
     <div class="pill">🪙 <span id="gold">0</span></div>
     <div class="pill">⭐ <span id="rep">0</span></div>
     <div class="pill">✨ <span id="dust">0</span></div>
     <span class="sp"></span>
+    <button class="ib" id="dailyBtn" aria-label="오늘의 포션" title="오늘의 포션">🌙</button>
     <button class="ib" id="shopBtn" aria-label="상점">🛒</button>
     <button class="ib" id="helpBtn" aria-label="도움말">❔</button>
   </div>
@@ -115,7 +120,7 @@ button:disabled{opacity:.45;cursor:default}
 </div>
 <div class="dim" id="dim" hidden><div class="modal" id="modal"></div></div>
 <div class="toast" id="toast"></div>
-<script src="engine.js"></script>
+<script src="engine.js?v=3"></script>
 <script>
 'use strict';
 const E = window.PotionEngine;
@@ -178,6 +183,7 @@ function sanitize(s) {
     seed: Math.max(1, n(s.seed, 1) | 0), served: n(s.served, 0) | 0,
     shelf: Array.isArray(s.shelf) ? s.shelf.filter((c) => ICON[c] != null).slice(0, 4) : d.shelf,
     tut: n(s.tut, 0, 9) | 0, mixTut: n(s.mixTut, 0, 9) | 0, best: s.best && typeof s.best === 'object' ? s.best : {},
+    daily: s.daily && Number.isFinite(s.daily.day) && Number.isFinite(s.daily.moves) ? { day: s.daily.day, moves: s.daily.moves, sec: Number(s.daily.sec) || 0 } : null,
   };
 }
 let S;
@@ -198,12 +204,12 @@ function piHTML(c, row, small) { return `<span class="pi${small ? ' s' : ''}" st
 let worker = null, wid = 0;
 const wwait = new Map();
 try {
-  worker = new Worker('engine.js');
+  worker = new Worker('engine.js?v=3');
   worker.onmessage = (e) => { const f = wwait.get(e.data.id); if (f) { wwait.delete(e.data.id); f(e.data); } };
   worker.onerror = () => { worker = null; for (const f of wwait.values()) f(null); wwait.clear(); };
 } catch (e) { worker = null; }
 function ask(msg) {
-  if (worker) return new Promise((res) => { const id = ++wid; wwait.set(id, res); worker.postMessage(Object.assign({ id }, msg)); });
+  if (worker) return new Promise((res) => { const id = ++wid; wwait.set(id, res); worker.postMessage(Object.assign({ id }, msg)); if (msg.cmd === 'exact') setTimeout(() => { if (wwait.has(id)) { wwait.delete(id); res(null); } }, 25000); });
   return new Promise((res) => setTimeout(() => {
     if (msg.cmd === 'level') res({ level: E.makeLevel(msg.seed, msg.tier, { extraTubes: msg.extraTubes }) });
     else res({ sol: E.solveAny(msg.tubes, msg.order, { exactBudget: 15000, fastBudget: 25000 }) });
@@ -218,6 +224,9 @@ function levelFor(seed, tier) {
 
 /* ───────── 퍼즐 상태 ───────── */
 let L = null;          // { tubes, order, opt, tier, seed }
+let mode = 'shop', shopSnap = null, needArrive = false, dLevel = null, dT0 = 0;
+function dayKey() { const d = new Date(Date.now() + 9 * 3600e3); return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate(); }
+const DAILY_TIER = 3;
 let tubes = [], hist = [], moves = 0, undos = 0, sel = -1, busy = true, won = false;
 let anim = null, hintMv = null, hintT = 0, shakeI = -1, shakeT = 0;
 const sparks = [];
@@ -265,7 +274,7 @@ function drawScene(t) {
 /* 손님 감정 표현 (emotes.png: 16px, 3프레임 애니메이션, 12행 = 말풍선 부풀기) */
 const EMO = { wow: [8, 0], what: [8, 3], note: [0, 6], heart: [6, 0], angry: [6, 9], sweat: [2, 6], shock: [10, 0], dots: [10, 3], good: [2, 0], sun: [10, 6], blush: [6, 6] };
 let emo = null;
-function emote(name, dur = 1500) { if (cust.state === 'away' || !EMO[name]) return; emo = { k: EMO[name], t0: performance.now(), dur }; }
+function emote(name, dur = 1500) { if (mode !== 'shop' || cust.state === 'away' || !EMO[name]) return; emo = { k: EMO[name], t0: performance.now(), dur }; }
 function drawEmote(t) {
   if (!emo || !IMG.emo || cust.state === 'away') return;
   const e = t - emo.t0, x = Math.round(cust.x) - 8, y = FEET - cust.c.h - 17 + (e < 300 ? 0 : Math.round(Math.sin(e / 140) * 0.6));
@@ -405,6 +414,7 @@ pz.addEventListener('pointerdown', (e) => {
 function shake(i) { shakeI = i; shakeT = 0.3; }
 function push() { hist.push(tubes.slice()); }
 function afterMove() {
+  if (mode === 'daily' && !dT0) dT0 = performance.now();
   moves++; $('moves').textContent = moves; hintMv = null; hintT = 0; $('coach').hidden = true;
   if (!S.tut) { S.tut = 1; changed(); }
   renderOrder();
@@ -435,8 +445,8 @@ function doTrash(from) {
 }
 $('undoBtn').onclick = () => {
   if (busy || anim || won || !hist.length) return;
-  if (undos <= 0) { toast('되돌리기를 다 썼어요. 상점에서 늘리거나 처음부터 해 보세요'); return; }
-  tubes = hist.pop(); undos--; moves = Math.max(0, moves - 1); sel = -1; $('moves').textContent = moves; renderCtrl(); renderOrder();
+  if (mode !== 'daily' && undos <= 0) { toast('되돌리기를 다 썼어요. 상점에서 늘리거나 처음부터 해 보세요'); return; }
+  tubes = hist.pop(); if (mode !== 'daily') undos--; moves = Math.max(0, moves - 1); sel = -1; $('moves').textContent = moves; renderCtrl(); renderOrder();
 };
 $('resetBtn').onclick = () => {
   if (busy || anim || won || !L) return;
@@ -445,6 +455,7 @@ $('resetBtn').onclick = () => {
 };
 $('hintBtn').onclick = async () => {
   if (busy || anim || won || !L) return;
+  if (mode === 'daily') { toast('오늘의 포션은 모두 같은 조건으로 겨뤄서 힌트를 쓸 수 없어요'); return; }
   if (S.dust < 1) { toast('마법 가루 ✨가 부족해요. 별 3개로 납품하면 받을 수 있어요'); return; }
   const b = $('hintBtn'); b.disabled = true;
   const d = await ask({ cmd: 'hint', tubes, order: L.order });
@@ -462,11 +473,12 @@ function renderOrder() {
   if (!L) { el.innerHTML = '<b>손님을 기다리는 중…</b>'; return; }
   const have = {};
   E.doneTubes(tubes, L.order).forEach((i) => { const c = tubes[i][0]; have[c] = (have[c] || 0) + 1; });
-  el.innerHTML = '<b>주문</b>' + orderList(L.order).map(({ c, n }, k) => `<span class="chip${(have[c] || 0) >= n ? ' ok' : ''}">${piHTML(c, L.seed + k * 3, true)}${NAME[c]} ${Math.min(have[c] || 0, n)}/${n}</span>`).join('');
+  const head = mode === 'daily' ? '<span class="dtag">🌙 오늘의 포션</span>' : '<b>주문</b>';
+  el.innerHTML = head + orderList(L.order).map(({ c, n }, k) => `<span class="chip${(have[c] || 0) >= n ? ' ok' : ''}">${piHTML(c, L.seed + k * 3, true)}${NAME[c]} ${Math.min(have[c] || 0, n)}/${n}</span>`).join('') + (mode === 'daily' ? '<button class="dexit" id="dExit">공방으로</button>' : '');
 }
 function renderBubble() {
   const b = $('bubble');
-  if (!L) { b.hidden = true; return; }
+  if (!L || mode !== 'shop') { b.hidden = true; return; }
   b.innerHTML = orderList(L.order).map(({ c, n }, k) => `<span class="it">${piHTML(c, L.seed + k * 3)}${n > 1 ? '×' + n : ''}</span>`).join('');
   b.hidden = false;
 }
@@ -478,7 +490,7 @@ function renderRules() {
   el.innerHTML = [['R', 'B', 'P'], ['R', 'Y', 'O'], ['B', 'Y', 'G']].map(([a, b, r]) => `<span><i class="dot" style="background:${COL[a]}"></i>+<i class="dot" style="background:${COL[b]}"></i>=<i class="dot" style="background:${COL[r]}"></i>${NAME[r]}</span>`).join('') + `<span>섞은 색 + 다른 색 = <i class="dot" style="background:${COL.X}"></i></span>`;
 }
 function renderCtrl() {
-  $('undoN').textContent = `${undos}/${undoMax()}`;
+  $('undoN').textContent = mode === 'daily' ? '∞' : `${undos}/${undoMax()}`;
   $('opt').textContent = L ? L.opt : '-';
 }
 let pendingLevel = null;
@@ -493,6 +505,7 @@ function nextCustomer() {
 async function onArrive() {
   const lv = await pendingLevel;
   if (cust.state !== 'wait') return;
+  if (mode !== 'shop') { needArrive = true; return; }
   L = lv; tubes = L.tubes.slice(); hist = []; moves = 0; undos = undoMax(); sel = -1; won = false; busy = false;
   emote('wow', 900);
   $('moves').textContent = 0;
@@ -504,6 +517,7 @@ function onLeft() { nextCustomer(); }
 function stars() { return moves <= L.opt + 2 ? 3 : moves <= L.opt + 6 ? 2 : 1; }
 function win() {
   won = true; busy = true;
+  if (mode === 'daily') { E.doneTubes(tubes, L.order).forEach((i) => burst(slots[i].x, slots[i].y + 20, COL[tubes[i][0]], 22)); setTimeout(showDailyResult, 800); return; }
   { const st = stars(); emote(st === 3 ? 'heart' : st === 2 ? 'good' : 'sweat', 1400); }
   E.doneTubes(tubes, L.order).forEach((i) => burst(slots[i].x, slots[i].y + 20, COL[tubes[i][0]], 22));
   setTimeout(showResult, 800);
@@ -534,6 +548,7 @@ function showResult() {
     S.gold += total; S.rep += repGain; S.dust += dustGain; S.served++; S.seed++;
     S.shelf = list.map(({ c }) => c).concat(S.shelf).slice(0, 4);
     changed(); hud();
+    if (MG && MG.submitScore) MG.submitScore('potion-rep', S.rep, { served: S.served, tier: tierOf(S.rep) }, { debounce: 1500 });
     L = null; $('bubble').hidden = true; renderOrder();
     cust.state = 'out'; cust.flip = true;
     emote(st === 3 ? 'blush' : 'note', 1200);
@@ -541,6 +556,77 @@ function showResult() {
     if (after > before) setTimeout(() => showTierUp(after), 500);
   };
 }
+/* ───────── 오늘의 포션 (모두 같은 판, 최소 이동으로 랭킹) ───────── */
+async function enterDaily() {
+  if (mode === 'daily') return;
+  if (anim || won || !$('dim').hidden) { toast('지금 만드는 포션을 끝낸 뒤에 가 주세요'); return; }
+  const day = dayKey();
+  const b = $('dailyBtn'); b.disabled = true;
+  if (!dLevel || dLevel.day !== day) {
+    try { const c = JSON.parse(localStorage.getItem(LS + ':daily')); if (c && c.day === day && c.level && c.exact) dLevel = c; } catch (e) {}
+  }
+  if (!dLevel || dLevel.day !== day) {
+    toast('오늘의 포션을 준비하는 중…');
+    const d = await ask({ cmd: 'level', seed: day, tier: DAILY_TIER, extraTubes: 0 });
+    const level = (d && d.level) || E.makeLevel(day, DAILY_TIER);
+    // 랭킹 판은 정확한 최단 수를 따로 계산한다 (조금 걸려도 하루 한 번)
+    let exact = false;
+    if (worker) { const r = await ask({ cmd: 'exact', tubes: level.tubes, order: level.order }); if (r && r.depth) { level.opt = r.depth; exact = true; } }
+    dLevel = { day, level, exact };
+    try { localStorage.setItem(LS + ':daily', JSON.stringify(dLevel)); } catch (e) {}
+  }
+  b.disabled = false;
+  if (anim || won) return;
+  shopSnap = { L, tubes, hist, moves, undos, busy, sel };
+  mode = 'daily'; $('app').classList.add('daily');
+  startDaily();
+}
+function startDaily() {
+  L = dLevel.level; tubes = L.tubes.slice(); hist = []; moves = 0; sel = -1; won = false; busy = false; dT0 = 0;
+  $('moves').textContent = 0; hintMv = null;
+  layout(); renderOrder(); renderBubble(); renderRules(); renderCtrl();
+  const best = S.daily && S.daily.day === dLevel.day ? S.daily : null;
+  $('coach').hidden = false;
+  $('coach').innerHTML = `🌙 <b>오늘의 포션</b> — 모두가 같은 판을 풀어요. <b>적게 움직일수록</b> 높은 순위! (같으면 빠른 시간)<br>되돌리기는 마음껏, 힌트와 도구 효과는 없어요.${best ? ` 내 최고: <b>${best.moves}수</b>` : ''}`;
+}
+function exitDaily() {
+  if (mode !== 'daily' || anim) return;
+  mode = 'shop'; $('app').classList.remove('daily'); $('coach').hidden = true; closeModal();
+  const sn = shopSnap; shopSnap = null;
+  if (sn) { L = sn.L; tubes = sn.tubes; hist = sn.hist; moves = sn.moves; undos = sn.undos; busy = sn.busy; sel = -1; won = false; }
+  $('moves').textContent = moves;
+  layout(); renderOrder(); renderBubble(); renderRules(); renderCtrl();
+  if (needArrive) { needArrive = false; onArrive(); }
+}
+function showDailyResult() {
+  const sec = Math.min(999, Math.round((performance.now() - (dT0 || performance.now())) / 1000));
+  const day = dLevel.day, first = !(S.daily && S.daily.day === day);
+  const prev = !first ? S.daily : null;
+  const better = !prev || moves < prev.moves || (moves === prev.moves && sec < prev.sec);
+  if (better) S.daily = { day, moves, sec };
+  if (first) S.dust += 2;
+  changed(); hud();
+  const score = day * 1e6 + (999999 - (Math.min(999, moves) * 1000 + sec));
+  if (MG && MG.submitScore) MG.submitScore('potion-daily', score, { moves, sec, opt: L.opt });
+  const mm = String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0');
+  openModal(`
+    <h3>🌙 오늘의 포션 완성!</h3>
+    <div class="stars">${moves <= L.opt ? '🏆' : moves <= L.opt + 2 ? '✨' : '🧪'}</div>
+    <div class="rows">
+      <div><span>이동</span><b>${moves}수</b></div>
+      <div><span>최단 기록 (컴퓨터)</span><b>${L.opt}수</b></div>
+      <div><span>걸린 시간</span><b>${mm}</b></div>
+      ${prev ? `<div><span>내 오늘 최고</span><b>${S.daily.moves}수 · ${String(Math.floor(S.daily.sec / 60)).padStart(2, '0')}:${String(S.daily.sec % 60).padStart(2, '0')}</b></div>` : ''}
+      ${first ? '<div class="tot"><span>오늘 첫 완성 보상</span><b>✨ +2</b></div>' : ''}
+    </div>
+    <div class="note">${moves < L.opt ? '컴퓨터 기록보다 짧아요! 대단해요.' : moves === L.opt ? '최단 기록과 같아요! 더 줄일 수는 없어요.' : `최단 ${L.opt}수까지 줄여 보세요.`} 랭킹은 로그인하면 자동으로 올라가요.</div>
+    <button class="cta" id="againD">다시 도전</button>
+    <button class="cta w" id="backD">공방으로 돌아가기</button>`);
+  $('againD').onclick = () => { closeModal(); startDaily(); };
+  $('backD').onclick = exitDaily;
+}
+$('dailyBtn').onclick = () => (mode === 'daily' ? exitDaily() : enterDaily());
+document.querySelector('.bar').addEventListener('click', (e) => { if (e.target && e.target.id === 'dExit') exitDaily(); });
 function showTierUp(t) {
   const msg = ['', '이제 <b>섞은 포션</b> 주문이 들어와요!', '포션 <b>2병</b>짜리 주문이 들어와요.', '포션 <b>2~3병</b>짜리 큰 주문이 들어와요.', '가장 까다로운 <b>3병</b> 주문까지 들어와요.'][t];
   openModal(`<h3>🎉 ${TIER_NAME[t]}</h3><div class="note">평판이 올라 공방 등급이 올랐어요.<br>${msg}<br>주문이 클수록 포션 값도 커져요.</div><button class="cta" id="okBtn">좋아요</button>`);
@@ -598,6 +684,8 @@ $('helpBtn').onclick = () => {
     <p>✅ 주문한 색을 <b>한 병에 4칸</b> 가득 채우면 완성이에요.</p>
     <p>🗑 필요 없는 맨 위 액체는 버림통에 버릴 수 있어요 (이동 1번).</p>
     <p>⭐ 목표 이동 수에 가깝게 풀수록 별이 많고, 골드·평판을 더 받아요. 평판이 오르면 더 큰 주문이 들어와요.</p>
+    <p>🌙 <b>오늘의 포션</b>: 하루 한 판, 모두 같은 판을 풀어요. 적게 움직일수록(같으면 빠를수록) 순위가 높아요. 오늘 처음 완성하면 ✨2개.</p>
+    <p>🏆 랭킹은 <b>오늘의 포션</b>과 <b>공방 평판</b> 두 가지예요. 로그인하면 자동으로 올라가요.</p>
   </div><button class="cta" id="okBtn">닫기</button>`);
   $('okBtn').onclick = closeModal;
 };
