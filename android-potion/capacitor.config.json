@@ -1,0 +1,21 @@
+{
+  "appId": "kr.minigame.potion",
+  "appName": "포션 공방",
+  "webDir": "www",
+  "backgroundColor": "#2a1b12",
+  "server": {
+    "url": "https://playwithme.kr/potion-app",
+    "errorPath": "error.html",
+    "cleartext": false,
+    "allowNavigation": [
+      "playwithme.kr",
+      "*.playwithme.kr",
+      "*.kakao.com",
+      "*.kakaocdn.net",
+      "*.supabase.co"
+    ]
+  },
+  "android": {
+    "backgroundColor": "#2a1b12"
+  }
+}

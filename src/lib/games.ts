@@ -177,11 +177,11 @@ const CATALOG: Game[] = [
     thumb: "/thumbs/potion-atelier.jpg",
     src: "/games/potion-atelier/index.html",
     saves: true, // 골드·평판·장식을 계정에 저장
+    // playStore: "kr.minigame.potion", // 구글 플레이 출시 승인 뒤 주석 해제 (웹에 "앱으로 받기" 버튼)
     boards: [
       { id: "potion-daily", label: { ko: "오늘의 포션", en: "Daily Potion" }, unit: { ko: "", en: "" }, format: "daily" },
       { id: "potion-rep", label: { ko: "공방 평판", en: "Shop fame" }, unit: { ko: "⭐", en: "⭐" }, vs: { label: { ko: "평판", en: "fame" }, question: { ko: "누구 공방이 더 유명할까?", en: "Whose shop is more famous?" } } },
     ],
-    hidden: true, // 시험판 — 주소로만 열림
   },
   {
     id: "dragon-ranch",

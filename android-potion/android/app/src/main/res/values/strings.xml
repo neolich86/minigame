@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">포션 공방</string>
+    <string name="title_activity_main">포션 공방</string>
+    <string name="package_name">kr.minigame.potion</string>
+    <string name="custom_url_scheme">kr.minigame.potion</string>
+</resources>

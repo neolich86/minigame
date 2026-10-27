@@ -338,6 +338,33 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       ],
     },
   },
+  "potion-atelier": {
+    ko: {
+      tips: [
+        "주문한 색이 섞은 색(보라·주황·초록)이면, 재료 두 색을 먼저 각자 모아 두고 마지막에 한 번에 부으면 이동을 아낄 수 있어요.",
+        "섞은 색 위에 또 다른 색을 부으면 탁한 물이 돼요. 실수했다면 되돌리기를 먼저 써 보세요.",
+        "빈 병은 아껴 두세요. 빈 병이 하나 남아 있으면 거의 언제든 정리할 수 있어요.",
+        "오늘의 포션은 모두 같은 판이에요. 되돌리기는 이동 수에 들어가지 않으니 여러 번 시도해 최단 수에 도전해 보세요.",
+      ],
+      faq: [
+        { q: "게임이 끝나나요?", a: "아니요. 손님을 계속 받으며 공방을 키우는 게임이에요. 모든 판은 반드시 풀 수 있게 만들어져요." },
+        { q: "랭킹은 어떻게 정해지나요?", a: "오늘의 포션은 적은 이동 수(같으면 빠른 시간), 공방 평판은 쌓인 ⭐ 순이에요. 로그인하면 자동으로 올라가요." },
+        { q: "진행이 저장되나요?", a: "이 기기에 자동 저장되고, 로그인하면 계정에도 저장돼 다른 기기에서 이어서 할 수 있어요." },
+      ],
+    },
+    en: {
+      tips: [
+        "For mixed orders (purple, orange, green), gather each base color first and pour them together at the end to save moves.",
+        "Pouring another color onto a mixed color makes muddy water — undo right away if that happens.",
+        "Keep an empty bottle free; with one spare you can almost always sort things out.",
+        "Undo doesn't count as a move in the Daily Potion, so retry freely to hit the shortest solution.",
+      ],
+      faq: [
+        { q: "Does the game end?", a: "No — keep serving customers and growing your shop. Every puzzle is guaranteed solvable." },
+        { q: "How are rankings decided?", a: "Daily Potion ranks by fewest moves (then time); Shop fame by total stars. Sign in to be ranked." },
+      ],
+    },
+  },
   "my-room": {
     ko: {
       tips: [

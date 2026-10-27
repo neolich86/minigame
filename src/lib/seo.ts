@@ -40,6 +40,31 @@ export const HOME_SEO: Record<Lang, { title: string; description: string; keywor
 };
 
 export const GAME_SEO: SeoMap = {
+  "potion-atelier": {
+    ko: {
+      title: "포션 공방 - 물약 섞기 퍼즐 · 워터 소트 가게 게임",
+      h1: "포션 공방 — 물약을 붓고 섞는 퍼즐 가게",
+      description:
+        "병 속 물약을 붓고 섞어 손님이 주문한 포션을 만드는 무료 퍼즐 게임. 빨강과 파랑을 섞으면 보라! 적게 움직일수록 별과 골드를 더 받고, 공방을 꾸며 키워 보세요. 매일 바뀌는 오늘의 포션 랭킹.",
+      keywords: ["워터 소트", "물약 정렬", "색깔 정렬 퍼즐", "물 붓기 퍼즐", "포션 게임", "퍼즐 게임", "타이쿤", "가게 게임", "무료 게임", "웹게임"],
+      about: [
+        "포션 공방은 워터 소트(색깔 물 정렬) 퍼즐에 '색 섞기' 규칙을 더한 가게 게임입니다. 빨강+파랑=보라, 빨강+노랑=주황, 파랑+노랑=초록처럼 다른 색을 부으면 섞여 새 색이 돼요.",
+        "손님이 원하는 포션을 한 병에 4칸 채워 납품하면 골드와 평판을 받고, 장식을 사서 공방을 꾸밀 수 있어요. 평판이 오르면 더 크고 어려운 주문이 들어옵니다.",
+        "하루 한 번 모두가 같은 판을 푸는 '오늘의 포션'에서 최소 이동 수로 순위를 겨뤄 보세요.",
+      ],
+      howTo: ["병을 눌러 고른 뒤 부을 병을 누르세요.", "같은 색이나 빈 병 위에 쌓이고, 다른 기본색 위에 부으면 섞여요.", "주문한 색을 한 병에 4칸 가득 채우면 완성!", "필요 없는 액체는 버림통에 버리고, 막히면 되돌리기·처음부터를 쓰세요."],
+      tags: ["퍼즐", "워터 소트", "색 섞기", "타이쿤", "랭킹", "무료"],
+    },
+    en: {
+      title: "Potion Atelier - Pour & Mix Potion Puzzle Shop Game",
+      h1: "Potion Atelier — A Pour-and-Mix Potion Puzzle Shop",
+      description: "Pour and mix liquids to brew the potions your customers order in this free water-sort puzzle shop. Red and blue make purple! Fewer moves earn more stars and gold. Daily puzzle leaderboard.",
+      keywords: ["water sort", "color sort puzzle", "potion game", "liquid sort", "puzzle game", "shop tycoon", "free game", "browser game"],
+      about: ["Potion Atelier adds color mixing to the classic water-sort puzzle: red + blue = purple, red + yellow = orange, blue + yellow = green.", "Fill one bottle with four units of each ordered color to deliver, earn gold and fame, and decorate your shop. Higher fame brings bigger orders.", "Everyone gets the same Daily Potion each day — compete for the fewest moves."],
+      howTo: ["Tap a bottle, then tap where to pour.", "Liquid stacks on the same color or an empty bottle; pouring on a different base color mixes it.", "Fill one bottle with four units of the ordered color.", "Trash unwanted liquid, and use undo or restart when stuck."],
+      tags: ["Puzzle", "Water sort", "Color mixing", "Tycoon", "Leaderboard", "Free"],
+    },
+  },
   catan: {
     ko: {
       title: "헥사 아일랜드 - 무료 온라인 보드게임 · 친구와 멀티플레이 전략 보드게임",
@@ -627,6 +652,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
       { title: "뱀서 · 서바이벌", text: "몰려오는 몬스터 속에서 스킬을 골라 성장하는 뱀서류 서바이벌 로그라이크. 생존 시간 랭킹에 도전하세요.", games: ["archer"] },
       { title: "슈팅 · 타워디펜스", text: "아케이드 종스크롤 비행기 슈팅과 원소 조합 전략 타워디펜스.", games: ["raiden", "element-td"] },
       { title: "카드 뽑기 · 타자 연습", text: "포켓몬·원피스 카드 오리파 시뮬레이터와 세계 지도 타자 연습 게임.", games: ["oripa", "world-typing"] },
+      { title: "퍼즐 · 가게", text: "물약을 붓고 섞어 손님의 주문을 채우는 워터 소트 퍼즐 가게. 매일 바뀌는 오늘의 포션으로 최소 이동 랭킹을 겨뤄 보세요.", games: ["potion-atelier"] },
       { title: "카지노", text: "0이 하나뿐인 유럽식 룰렛, 출목표가 있는 8덱 바카라, 기본 전략 힌트가 있는 6덱 블랙잭. 100만 원으로 시작해 최고 잔액 랭킹에 도전하세요. 실제 돈은 쓰지 않아요.", games: ["roulette", "baccarat", "blackjack"] },
     ],
   },
@@ -638,6 +664,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
       { title: "Survivor-like · Survival", text: "A survivor-like roguelite — grow your skills amid endless hordes and chase the survival-time leaderboard.", games: ["archer"] },
       { title: "Shooter · Tower defense", text: "An arcade vertical shooter and an elemental strategy tower defense.", games: ["raiden", "element-td"] },
       { title: "Card pulls · Typing", text: "A Pokémon / One Piece oripa card-pull simulator and a world-map typing practice game.", games: ["oripa", "world-typing"] },
+      { title: "Puzzle · Shop", text: "A water-sort puzzle shop where you pour and mix potions for customers, with a daily fewest-moves leaderboard.", games: ["potion-atelier"] },
       { title: "Casino", text: "Single-zero European roulette, 8-deck baccarat with full scoreboards and 6-deck blackjack with basic-strategy hints — start with ₩1,000,000 and chase the peak-balance leaderboard. No real money.", games: ["roulette", "baccarat", "blackjack"] },
     ],
   },
