@@ -67,6 +67,9 @@ button:disabled{opacity:.45;cursor:default}
 .rows div.tot{background:rgba(255,209,102,.14);font-weight:900;color:var(--gold)}
 .cta{width:100%;height:48px;border-radius:12px;background:var(--acc);color:#2a1606;font-weight:900;font-size:16px;margin-top:6px}
 .cta.w{background:rgba(255,255,255,.1);color:var(--ink)}
+.cta.kakao{background:#fee500;color:#191600}
+.cta.ghost{background:none;color:var(--dim);height:40px;font-size:14px}
+.ib.on{background:rgba(108,196,106,.25)}
 .note{font-size:12.5px;color:var(--dim);line-height:1.55;margin:4px 0 10px;text-align:center}
 .tabs{display:flex;gap:6px;margin-bottom:10px}
 .tabs button{flex:1;height:34px;border-radius:10px;background:rgba(255,255,255,.06);font-weight:800;font-size:13px}
@@ -93,6 +96,7 @@ button:disabled{opacity:.45;cursor:default}
     <div class="pill">⭐ <span id="rep">0</span></div>
     <div class="pill">✨ <span id="dust">0</span></div>
     <span class="sp"></span>
+    <button class="ib" id="acctBtn" aria-label="로그인" title="로그인·저장">👤</button>
     <button class="ib" id="dailyBtn" aria-label="오늘의 포션" title="오늘의 포션">🌙</button>
     <button class="ib" id="shopBtn" aria-label="상점">🛒</button>
     <button class="ib" id="helpBtn" aria-label="도움말">❔</button>
@@ -183,7 +187,7 @@ function sanitize(s) {
     deco: s.deco && typeof s.deco === 'object' ? Object.fromEntries(DECO.filter((x) => s.deco[x.id]).map((x) => [x.id, 1])) : {},
     seed: Math.max(1, n(s.seed, 1) | 0), served: n(s.served, 0) | 0,
     shelf: Array.isArray(s.shelf) ? s.shelf.filter((c) => ICON[c] != null).slice(0, 4) : d.shelf,
-    tut: n(s.tut, 0, 9) | 0, mixTut: n(s.mixTut, 0, 9) | 0, best: s.best && typeof s.best === 'object' ? s.best : {},
+    tut: n(s.tut, 0, 9) | 0, asked: s.asked && typeof s.asked === 'object' ? { first: !!s.asked.first, daily: !!s.asked.daily, tier: n(s.asked.tier, 0, 9) | 0 } : {}, mixTut: n(s.mixTut, 0, 9) | 0, best: s.best && typeof s.best === 'object' ? s.best : {},
     daily: s.daily && Number.isFinite(s.daily.day) && Number.isFinite(s.daily.moves) ? { day: s.daily.day, moves: s.daily.moves, sec: Number(s.daily.sec) || 0 } : null,
   };
 }
@@ -555,6 +559,7 @@ function showResult() {
     emote(st === 3 ? 'blush' : 'note', 1200);
     const after = tierOf(S.rep);
     if (after > before) setTimeout(() => showTierUp(after), 500);
+    else if (S.served >= 3 && !(S.asked && S.asked.first) && canAsk()) setTimeout(() => askLogin('first'), 700);
   };
 }
 /* ───────── 오늘의 포션 (모두 같은 판, 최소 이동으로 랭킹) ───────── */
@@ -621,8 +626,11 @@ function showDailyResult() {
       ${first ? '<div class="tot"><span>오늘 첫 완성 보상</span><b>✨ +2</b></div>' : ''}
     </div>
     <div class="note">${moves < L.opt ? '컴퓨터 기록보다 짧아요! 대단해요.' : moves === L.opt ? '최단 기록과 같아요! 더 줄일 수는 없어요.' : `최단 ${L.opt}수까지 줄여 보세요.`} 랭킹은 로그인하면 자동으로 올라가요.</div>
+    ${canAsk() ? '<button class="cta kakao" id="loginD">카카오로 로그인하고 랭킹 올리기</button>' : ''}
     <button class="cta" id="againD">다시 도전</button>
     <button class="cta w" id="backD">공방으로 돌아가기</button>`);
+  if ($('loginD')) $('loginD').onclick = () => { S.asked = Object.assign({}, S.asked, { daily: true }); changed(); MG.save.login('kakao'); };
+  if (first && canAsk()) { S.asked = Object.assign({}, S.asked, { daily: true }); changed(); }
   $('againD').onclick = () => { closeModal(); startDaily(); };
   $('backD').onclick = exitDaily;
 }
@@ -631,7 +639,7 @@ document.querySelector('.bar').addEventListener('click', (e) => { if (e.target &
 function showTierUp(t) {
   const msg = ['', '이제 <b>섞은 포션</b> 주문이 들어와요!', '포션 <b>2병</b>짜리 주문이 들어와요.', '포션 <b>2~3병</b>짜리 큰 주문이 들어와요.', '가장 까다로운 <b>3병</b> 주문까지 들어와요.'][t];
   openModal(`<h3>🎉 ${TIER_NAME[t]}</h3><div class="note">평판이 올라 공방 등급이 올랐어요.<br>${msg}<br>주문이 클수록 포션 값도 커져요.</div><button class="cta" id="okBtn">좋아요</button>`);
-  $('okBtn').onclick = closeModal;
+  $('okBtn').onclick = () => { closeModal(); if (canAsk() && ((S.asked && S.asked.tier) || 0) < t) setTimeout(() => askLogin('tier', t), 300); };
 }
 function showMixHelp() {
   openModal(`<h3>🧪 색 섞기</h3>
@@ -718,13 +726,39 @@ async function cloudStore() {
   saving = false;
   if (again) { again = false; cloudStore(); }
 }
+/* ───────── 로그인 권유 (강제하지 않음) ───────── */
+let authKnown = false;
+const canAsk = () => !!(MG && MG.save && MG.embedded && authKnown && !owner);
+function askLogin(reason, tier) {
+  if (!canAsk() || !$('dim').hidden) return;
+  S.asked = Object.assign({}, S.asked);
+  S.asked.first = true; // 어떤 이유로든 한 번 물었으면 '손님 3명' 권유는 생략
+  if (reason === 'tier') S.asked.tier = tier;
+  changed();
+  const lead = reason === 'tier' ? `${TIER_NAME[tier]}까지 키운 공방, 잃어버리면 아깝잖아요!` : reason === 'first' ? '공방이 자리를 잡기 시작했어요!' : '로그인하면 더 안전하게 즐길 수 있어요.';
+  openModal(`<h3>🔐 공방을 저장해 둘까요?</h3>
+    <div class="note">${lead}<br>로그인하면 <b>골드·평판·장식</b>이 계정에 저장돼 앱을 다시 깔거나 폰을 바꿔도 이어서 할 수 있고,<br><b>오늘의 포션·공방 평판 랭킹</b>에도 이름이 올라가요.</div>
+    <button class="cta kakao" id="loginK">카카오로 시작하기</button>
+    <button class="cta w" id="loginE">이메일·다른 방법으로</button>
+    <button class="cta ghost" id="loginL">나중에 할게요</button>`);
+  $('loginK').onclick = () => { closeModal(); MG.save.login('kakao'); };
+  $('loginE').onclick = () => { closeModal(); MG.save.login(); };
+  $('loginL').onclick = closeModal;
+}
+$('acctBtn').onclick = () => {
+  if (!MG || !MG.save || !MG.embedded) { toast('이 기기에 자동 저장되고 있어요'); return; }
+  if (owner) { toast('로그인되어 있어요 · 계정에 자동 저장 중 ☁️'); return; }
+  if (!authKnown) { toast('잠시 뒤에 다시 눌러 주세요'); return; }
+  askLogin('manual');
+};
 function setupAuth() {
   const btn = $('loginBtn');
   if (!MG || !MG.save || !MG.embedded) { setSave('이 기기에 자동 저장돼요'); return; }
   btn.textContent = '로그인하고 저장';
   btn.onclick = () => MG.save.login();
   MG.save.onAuth(async (u) => {
-    owner = u ? u.id : null; btn.hidden = !!u;
+    owner = u ? u.id : null; btn.hidden = !!u; authKnown = true;
+    $('acctBtn').classList.toggle('on', !!u); $('acctBtn').textContent = u ? '☁️' : '👤';
     if (!u) { setSave('이 기기에 자동 저장돼요'); return; }
     setSave('불러오는 중…');
     try {
