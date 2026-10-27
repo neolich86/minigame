@@ -111,7 +111,7 @@ button:disabled{opacity:.45;cursor:default}
     <button id="hintBtn">💡 힌트 <small>✨1</small></button>
   </div>
   <div class="sub"><span id="save"></span><span class="sp"></span><button class="sbtn" id="loginBtn" hidden></button></div>
-  <div class="credit">Interior: Pixel 16 Interiors (zedpxl) · Characters: Tiny RPG Character Pack (Zerie), Mana Seed Farmer (Seliel the Shaper), The Adventurer (Sscary) · Potions: 16x16 Assorted RPG Icons (Shade, CC0)</div>
+  <div class="credit">Interior: Pixel 16 Interiors (zedpxl) · Characters: Tiny RPG Character Pack (Zerie), Mana Seed Farmer (Seliel the Shaper), The Adventurer (Sscary) · Potions: 16x16 Assorted RPG Icons (Shade, CC0) · Emotes: Emoticons by kicked-in-teeth (CC BY-SA)</div>
 </div>
 <div class="dim" id="dim" hidden><div class="modal" id="modal"></div></div>
 <div class="toast" id="toast"></div>
@@ -189,7 +189,7 @@ const fmt = (n) => Math.floor(n).toLocaleString('ko-KR');
 
 /* ───────── 이미지 ───────── */
 const IMG = {};
-const IMG_SRC = { tiles: 'img/interior.png', soldierI: 'img/soldier-idle.png', soldierW: 'img/soldier-walk.png', orcI: 'img/orc-idle.png', orcW: 'img/orc-walk.png', keeper: 'img/keeper.png', potions: 'img/potions.png', vil: 'img/villagers.png' };
+const IMG_SRC = { tiles: 'img/interior.png', soldierI: 'img/soldier-idle.png', soldierW: 'img/soldier-walk.png', orcI: 'img/orc-idle.png', orcW: 'img/orc-walk.png', keeper: 'img/keeper.png', potions: 'img/potions.png', vil: 'img/villagers.png', emo: 'img/emotes.png' };
 const imgP = Promise.all(Object.entries(IMG_SRC).map(([k, src]) => new Promise((res) => { const i = new Image(); i.onload = () => { IMG[k] = i; res(); }; i.onerror = res; i.src = src; })));
 function piStyle(c, row, size = 32) { const k = size / 16; return `background-position:${-ICON[c] * 16 * k}px ${-(row % 13) * 16 * k}px`; }
 function piHTML(c, row, small) { return `<span class="pi${small ? ' s' : ''}" style="${piStyle(c, row, small ? 24 : 32)}"></span>`; }
@@ -260,6 +260,21 @@ function drawScene(t) {
       sg.restore();
     }
   }
+  drawEmote(t);
+}
+/* 손님 감정 표현 (emotes.png: 16px, 3프레임 애니메이션, 12행 = 말풍선 부풀기) */
+const EMO = { wow: [8, 0], what: [8, 3], note: [0, 6], heart: [6, 0], angry: [6, 9], sweat: [2, 6], shock: [10, 0], dots: [10, 3], good: [2, 0], sun: [10, 6], blush: [6, 6] };
+let emo = null;
+function emote(name, dur = 1500) { if (cust.state === 'away' || !EMO[name]) return; emo = { k: EMO[name], t0: performance.now(), dur }; }
+function drawEmote(t) {
+  if (!emo || !IMG.emo || cust.state === 'away') return;
+  const e = t - emo.t0, x = Math.round(cust.x) - 8, y = FEET - cust.c.h - 17 + (e < 300 ? 0 : Math.round(Math.sin(e / 140) * 0.6));
+  let sx, sy;
+  if (e < 180) { sx = [5, 4, 3][Math.min(2, (e / 60) | 0)]; sy = 12; }
+  else if (e < emo.dur) { sx = emo.k[1] + Math.min(2, ((e - 180) / 150) | 0); sy = emo.k[0]; }
+  else if (e < emo.dur + 180) { sx = [3, 4, 5][Math.min(2, ((e - emo.dur) / 60) | 0)]; sy = 12; }
+  else { emo = null; return; }
+  sg.drawImage(IMG.emo, sx * 16, sy * 16, 16, 16, x, y, 16, 16);
 }
 function custStep(dt) {
   const sp = 34;
@@ -267,6 +282,7 @@ function custStep(dt) {
   else if (cust.state === 'out') { cust.x -= sp * dt; if (cust.x < -24) { cust.state = 'away'; onLeft(); } }
   // 말풍선 위치
   const b = $('bubble');
+  b.style.opacity = emo ? 0 : 1;
   if (!b.hidden) { b.style.left = (cust.x / 130 * 100) + '%'; b.style.top = ((FEET - cust.c.h - 2) / 84 * 100) + '%'; }
 }
 
@@ -392,7 +408,9 @@ function afterMove() {
   moves++; $('moves').textContent = moves; hintMv = null; hintT = 0; $('coach').hidden = true;
   if (!S.tut) { S.tut = 1; changed(); }
   renderOrder();
-  if (E.fulfilled(tubes, L.order)) win();
+  if (E.fulfilled(tubes, L.order)) { win(); return; }
+  if (moves === L.opt + 3) emote('dots');
+  else if (moves === L.opt + 7) emote('sweat');
 }
 function doPour(from, to, r) {
   const color = E.top(tubes[from]);
@@ -402,8 +420,8 @@ function doPour(from, to, r) {
     apply: () => {
       tubes = r.tubes;
       const s = slots[to];
-      if (r.mixed && r.mixed !== 'X') { burst(s.x, s.y + 10, COL[r.mixed], 18); toast(`${mixText(color, r.mixed)} 완성!`); }
-      if (r.mixed === 'X') { burst(s.x, s.y + 10, '#6b4a2b', 10); toast('섞은 색에 다른 색을 부으면 탁해져요 — 버림통에 버리세요'); }
+      if (r.mixed && r.mixed !== 'X') { emote('note'); burst(s.x, s.y + 10, COL[r.mixed], 18); toast(`${mixText(color, r.mixed)} 완성!`); }
+      if (r.mixed === 'X') { emote('angry'); burst(s.x, s.y + 10, '#6b4a2b', 10); toast('섞은 색에 다른 색을 부으면 탁해져요 — 버림통에 버리세요'); }
     },
     end: afterMove,
   };
@@ -476,6 +494,7 @@ async function onArrive() {
   const lv = await pendingLevel;
   if (cust.state !== 'wait') return;
   L = lv; tubes = L.tubes.slice(); hist = []; moves = 0; undos = undoMax(); sel = -1; won = false; busy = false;
+  emote('wow', 900);
   $('moves').textContent = 0;
   layout(); renderOrder(); renderBubble(); renderRules(); renderCtrl();
   if (L.tier >= 1 && !S.mixTut) { S.mixTut = 1; changed(); showMixHelp(); }
@@ -485,6 +504,7 @@ function onLeft() { nextCustomer(); }
 function stars() { return moves <= L.opt + 2 ? 3 : moves <= L.opt + 6 ? 2 : 1; }
 function win() {
   won = true; busy = true;
+  { const st = stars(); emote(st === 3 ? 'heart' : st === 2 ? 'good' : 'sweat', 1400); }
   E.doneTubes(tubes, L.order).forEach((i) => burst(slots[i].x, slots[i].y + 20, COL[tubes[i][0]], 22));
   setTimeout(showResult, 800);
 }
@@ -516,6 +536,7 @@ function showResult() {
     changed(); hud();
     L = null; $('bubble').hidden = true; renderOrder();
     cust.state = 'out'; cust.flip = true;
+    emote(st === 3 ? 'blush' : 'note', 1200);
     const after = tierOf(S.rep);
     if (after > before) setTimeout(() => showTierUp(after), 500);
   };
