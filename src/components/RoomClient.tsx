@@ -5,6 +5,7 @@
 //   방장 → 모두: 상태(state)   참가자 → 방장: 행동(intent)
 // 을 중계한다. 방장은 진행 스냅샷을 DB(mg_room_states)에 저장해 새로고침·방장 교체 시 이어서 진행한다.
 import Link from "next/link";
+import { LoginLink } from "@/components/LoginLink";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -309,9 +310,9 @@ export function RoomClient({ gameId, code }: { gameId: string; code: string }) {
     return (
       <div className="wrap narrow" style={{ textAlign: "center" }}>
         <p>{t("loginNeeded")}</p>
-        <Link className="btn primary" href={`/login?next=${encodeURIComponent(`/online/${gameId}/${code}`)}`}>
+        <LoginLink className="btn primary" next={`/online/${gameId}/${code}`}>
           {t("navLogin")}
-        </Link>
+        </LoginLink>
       </div>
     );
   }

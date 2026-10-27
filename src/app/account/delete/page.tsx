@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LoginLink } from "@/components/LoginLink";
 import { useState } from "react";
 import { useApp } from "@/components/AppProvider";
 import { deleteMyAccount } from "@/lib/saves";
@@ -43,9 +44,9 @@ export default function DeleteAccountPage() {
         ) : !user ? (
           <>
             <p>{en ? "Sign in with the account you want to delete." : "삭제할 계정으로 먼저 로그인해 주세요."}</p>
-            <Link className="btn primary" href="/login?next=/account/delete">
+            <LoginLink className="btn primary" next="/account/delete">
               {en ? "Sign in" : "로그인"}
-            </Link>
+            </LoginLink>
           </>
         ) : (
           <>

@@ -3,6 +3,7 @@
 // 타일러쉬(구 렉시오) 온라인 방 — 대기실 + 게임 화면. 규칙 판정은 전부 서버(DB 함수)가 하고,
 // 이 화면은 game_public(공개 상태)과 내 손패(get_my_hand)만 받아서 그린다.
 import Link from "next/link";
+import { LoginLink } from "@/components/LoginLink";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "./AppProvider";
@@ -178,7 +179,7 @@ export function LexioRoomClient({ code }: { code: string }) {
     return (
       <div className="wrap narrow" style={{ textAlign: "center" }}>
         <p>{t("loginNeeded")}</p>
-        <Link className="btn primary" href={`/login?next=${encodeURIComponent(`/online/lexio/${code}`)}`}>{t("navLogin")}</Link>
+        <LoginLink className="btn primary" next={`/online/lexio/${code}`}>{t("navLogin")}</LoginLink>
       </div>
     );
   }

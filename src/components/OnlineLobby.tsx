@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LoginLink } from "@/components/LoginLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { LikeButton } from "./LikeButton";
@@ -113,7 +114,6 @@ export function OnlineLobby({ gameId }: { gameId: string }) {
     }
   }
 
-  const loginHref = `/login?next=${encodeURIComponent(`/online/${gameId}`)}`;
 
   return (
     <div className="wrap mid">
@@ -160,9 +160,9 @@ export function OnlineLobby({ gameId }: { gameId: string }) {
       ) : !user ? (
         <div className="panel" style={{ textAlign: "center" }}>
           <p style={{ marginTop: 0 }}>{t("loginNeeded")}</p>
-          <Link href={loginHref} className="btn primary">
+          <LoginLink next={`/online/${gameId}`} className="btn primary">
             {t("navLogin")}
-          </Link>
+          </LoginLink>
         </div>
       ) : (
         <>

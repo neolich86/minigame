@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LoginLink } from "@/components/LoginLink";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useApp } from "./AppProvider";
@@ -17,7 +18,6 @@ export function SiteHeader() {
   }, [path]);
   const inGame = ["/play/", "/online/", "/tools/", "/apps/"].some((p) => path?.startsWith(p));
   const section = path?.startsWith("/tools") ? "tool" : path?.startsWith("/apps") ? "app" : path === "/" || path?.startsWith("/play/") || path?.startsWith("/online/") ? "game" : "";
-  const loginHref = `/login?next=${encodeURIComponent(path || "/")}`;
   // 앱(구글 플레이) 전용 화면과, 앱에서 들어온 로그인 화면은 포털 머리글 없이
   if (isAppPath(path) || appLogin) return null;
 
@@ -62,9 +62,9 @@ export function SiteHeader() {
               <span className="hide-sm">{profile?.nickname ?? "…"}</span>
             </Link>
           ) : (
-            <Link href={loginHref} className="nav-login">
+            <LoginLink next={path || "/"} className="nav-login">
               {t("navLogin")}
-            </Link>
+            </LoginLink>
           ))}
       </nav>
     </header>

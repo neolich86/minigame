@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LoginLink } from "@/components/LoginLink";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useApp } from "./AppProvider";
@@ -315,9 +316,9 @@ export function GamePlayer({ gameId, app }: { gameId: string; app?: string }) {
                 </div>
               ) : (
                 !loading && (
-                  <Link href={loginHref} className="btn primary block" style={{ marginBottom: 14 }}>
+                  <LoginLink next={app ?? itemPath(game)} className="btn primary block" style={{ marginBottom: 14 }}>
                     {t("loginToRank")}
-                  </Link>
+                  </LoginLink>
                 )
               ))}
             <Leaderboard board={board} refreshKey={refresh} />
