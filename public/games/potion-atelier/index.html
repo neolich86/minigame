@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<link rel="canonical" href="/play/potion-atelier">
+<script src="/mgh/bridge.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>포션 공방 - 미니게임천국</title>
+<meta name="description" content="병 속 물약을 붓고 섞어 손님이 주문한 포션을 만드는 퍼즐 가게 게임. 빨강과 파랑을 섞으면 보라! 적은 이동으로 만들수록 별과 골드를 더 받아요.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233b2416'/%3E%3Crect x='27' y='8' width='10' height='10' fill='%23c9a26b'/%3E%3Ccircle cx='32' cy='38' r='18' fill='%23e8f0ff'/%3E%3Cpath d='M15 40a17 17 0 0 0 34 0z' fill='%239b45e6'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#2a1b12;--panel:#3b2719;--line:#5e3f28;--ink:#fbecd6;--dim:#c8ad8b;--gold:#ffd166;--acc:#f0a63c;--good:#6cc46a;--bad:#e2604f}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;overscroll-behavior:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:disabled{opacity:.45;cursor:default}
+[hidden]{display:none!important}
+.app{max-width:480px;margin:0 auto;padding:0 0 16px;user-select:none;-webkit-user-select:none}
+.hud{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#1f140d}
+.pill{display:flex;align-items:center;gap:4px;height:30px;padding:0 10px;border-radius:999px;background:rgba(255,255,255,.08);font-weight:800;font-size:14px;white-space:nowrap}
+.pill small{font-size:11px;color:var(--dim);font-weight:700}
+.hud .sp{flex:1}
+.ib{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.1);font-size:17px;display:grid;place-items:center}
+.scene{position:relative;line-height:0}
+#sc{width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+.bubble{position:absolute;transform:translate(-50%,-100%);background:#fff;color:#3a2614;border-radius:12px;padding:6px 8px;line-height:1;display:flex;align-items:center;gap:6px;box-shadow:0 3px 8px rgba(0,0,0,.35);white-space:nowrap;font-weight:900;font-size:14px;transition:opacity .2s}
+.bubble:after{content:'';position:absolute;left:50%;bottom:-8px;margin-left:-6px;border:8px solid transparent;border-top-color:#fff;border-bottom:0}
+.bubble .it{display:flex;align-items:center;gap:2px}
+.pi{display:inline-block;width:32px;height:32px;background:url(img/potions.png) no-repeat;background-size:672px 480px;image-rendering:pixelated;flex:none}
+.pi.s{width:24px;height:24px;background-size:504px 360px}
+.tierbadge{position:absolute;left:8px;top:8px;background:rgba(20,12,6,.7);color:var(--gold);font-size:11px;font-weight:800;padding:4px 8px;border-radius:8px;line-height:1.2}
+.bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--panel);border-top:3px solid #6b4426;border-bottom:1px solid var(--line)}
+.bar .order{display:flex;align-items:center;gap:8px;flex:1;min-width:0;flex-wrap:wrap}
+.bar .order b{font-size:12px;color:var(--dim);font-weight:700}
+.chip{display:flex;align-items:center;gap:2px;font-weight:900;font-size:14px}
+.chip.ok{color:var(--good)}
+.mv{text-align:right;font-size:12px;color:var(--dim);line-height:1.35;white-space:nowrap}
+.mv b{color:var(--ink);font-size:16px}
+.rules{display:flex;justify-content:center;gap:10px;padding:5px 8px;background:#33221a;font-size:11.5px;color:var(--dim);flex-wrap:wrap}
+.rules span{display:flex;align-items:center;gap:3px}
+.dot{width:11px;height:11px;border-radius:50%;display:inline-block;box-shadow:inset 0 -2px 0 rgba(0,0,0,.25)}
+.board{position:relative;background:linear-gradient(#5a3820,#3f2715);}
+#pz{display:block;width:100%;touch-action:manipulation}
+.coach{background:rgba(20,12,6,.6);border-bottom:1px solid var(--acc);padding:8px 12px;font-size:13px;line-height:1.5;text-align:center}
+.coach b{color:var(--gold)}
+.ctrl{display:flex;gap:8px;padding:10px 12px}
+.ctrl button{flex:1;height:46px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;gap:5px}
+.ctrl button small{font-size:11.5px;color:var(--dim);font-weight:700}
+.sub{display:flex;align-items:center;gap:8px;padding:0 12px;font-size:12px;color:var(--dim)}
+.sub .sp{flex:1}
+.sbtn{height:28px;padding:0 10px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:12px;font-weight:700}
+.credit{font-size:10.5px;color:#8a7258;text-align:center;margin:12px 12px 0;line-height:1.5}
+.dim{position:fixed;inset:0;background:rgba(10,6,3,.62);z-index:20;display:flex;align-items:center;justify-content:center;padding:14px}
+.modal{width:100%;max-width:400px;max-height:88vh;overflow:auto;background:#3b2719;border:2px solid #7a5232;border-radius:18px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.5);animation:pop .2s ease-out}
+@keyframes pop{from{transform:scale(.92);opacity:.4}}
+.modal h3{margin:0 0 8px;font-size:18px;text-align:center}
+.stars{text-align:center;font-size:38px;letter-spacing:4px;margin:4px 0}
+.stars i{font-style:normal;color:#5e4632}
+.stars i.on{color:var(--gold);text-shadow:0 0 12px rgba(255,209,102,.6)}
+.rows{display:grid;gap:4px;margin:10px 0;font-size:14px}
+.rows div{display:flex;justify-content:space-between;padding:6px 10px;background:rgba(0,0,0,.18);border-radius:8px}
+.rows div.tot{background:rgba(255,209,102,.14);font-weight:900;color:var(--gold)}
+.cta{width:100%;height:48px;border-radius:12px;background:var(--acc);color:#2a1606;font-weight:900;font-size:16px;margin-top:6px}
+.cta.w{background:rgba(255,255,255,.1);color:var(--ink)}
+.note{font-size:12.5px;color:var(--dim);line-height:1.55;margin:4px 0 10px;text-align:center}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tabs button{flex:1;height:34px;border-radius:10px;background:rgba(255,255,255,.06);font-weight:800;font-size:13px}
+.tabs button.on{background:var(--acc);color:#2a1606}
+.list{display:grid;gap:8px}
+.it2{display:flex;align-items:center;gap:10px;padding:8px;border-radius:12px;background:rgba(0,0,0,.18)}
+.it2 .ic{width:40px;height:40px;border-radius:10px;background:#2a1b12;display:grid;place-items:center;font-size:20px;flex:none;overflow:hidden}
+.it2 .ic canvas{width:40px;height:40px;image-rendering:pixelated}
+.it2 .t{flex:1;min-width:0}
+.it2 .t b{display:block;font-size:14px}
+.it2 .t small{display:block;font-size:12px;color:var(--dim);margin-top:2px}
+.buy{height:36px;min-width:72px;padding:0 10px;border-radius:10px;background:var(--acc);color:#2a1606;font-weight:900;font-size:13px}
+.buy.own{background:rgba(108,196,106,.2);color:var(--good)}
+.help p{font-size:13.5px;line-height:1.6;margin:6px 0}
+.mixrow{display:flex;justify-content:center;gap:6px;align-items:center;font-weight:800;margin:6px 0}
+.toast{position:fixed;left:50%;top:12px;transform:translate(-50%,-30px);opacity:0;background:rgba(20,12,6,.94);border:1px solid var(--line);color:#fff;padding:9px 14px;border-radius:12px;font-size:13.5px;font-weight:700;z-index:40;transition:.2s;pointer-events:none;max-width:92vw;text-align:center}
+.toast.on{transform:translate(-50%,0);opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hud">
+    <div class="pill">🪙 <span id="gold">0</span></div>
+    <div class="pill">⭐ <span id="rep">0</span></div>
+    <div class="pill">✨ <span id="dust">0</span></div>
+    <span class="sp"></span>
+    <button class="ib" id="shopBtn" aria-label="상점">🛒</button>
+    <button class="ib" id="helpBtn" aria-label="도움말">❔</button>
+  </div>
+  <div class="scene">
+    <canvas id="sc" width="130" height="84"></canvas>
+    <div class="tierbadge" id="tier"></div>
+    <div class="bubble" id="bubble" hidden></div>
+  </div>
+  <div class="bar">
+    <div class="order" id="order"><b>손님을 기다리는 중…</b></div>
+    <div class="mv">이동 <b id="moves">0</b><br>목표 <span id="opt">-</span></div>
+  </div>
+  <div class="rules" id="rules" hidden></div>
+  <div class="coach" id="coach" hidden></div>
+  <div class="board">
+    <canvas id="pz"></canvas>
+  </div>
+  <div class="ctrl">
+    <button id="undoBtn">↩ 되돌리기 <small id="undoN"></small></button>
+    <button id="resetBtn">↺ 처음부터</button>
+    <button id="hintBtn">💡 힌트 <small>✨1</small></button>
+  </div>
+  <div class="sub"><span id="save"></span><span class="sp"></span><button class="sbtn" id="loginBtn" hidden></button></div>
+  <div class="credit">Interior: Pixel 16 Interiors (zedpxl) · Characters: Tiny RPG Character Pack (Zerie), The Adventurer (Sscary) · Potions: 16x16 Assorted RPG Icons (Shade, CC0)</div>
+</div>
+<div class="dim" id="dim" hidden><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+<script src="engine.js"></script>
+<script>
+'use strict';
+const E = window.PotionEngine;
+const MG = window.MGH || null;
+const $ = (id) => document.getElementById(id);
+
+/* ───────── 데이터 ───────── */
+const COL = { R: '#e8344a', B: '#2f7fe8', Y: '#f5c518', P: '#9b45e6', O: '#f5862a', G: '#36b94a', X: '#6b4a2b' };
+const COL_D = { R: '#a8182e', B: '#1a4fa8', Y: '#b88a08', P: '#64209e', O: '#b0560f', G: '#1d7a2c', X: '#3e2a17' };
+const NAME = { R: '빨강', B: '파랑', Y: '노랑', P: '보라', O: '주황', G: '초록', X: '탁한 물' };
+const ICON = { R: 3, O: 5, Y: 6, G: 8, B: 12, P: 13, X: 19 };
+const TIER_REP = [0, 8, 25, 60, 120];
+const TIER_NAME = ['견습 공방', '마을 공방', '이름난 공방', '왕실 납품 공방', '전설의 공방'];
+const PRICE = { base: 12, mixed: 30 };
+const STAR_MUL = [0, 1, 1.3, 1.6];
+const BASE_UNDO = 3;
+const UNDO_COST = [60, 150, 350, 800];
+const TUBE_COST = [400, 1500];
+const DUST_PACK = { n: 3, cost: 100 };
+const CUSTS = [
+  { id: 'soldier', name: '병사', idle: 'soldierI', walk: 'soldierW', ox: 50, oy: 60, idleN: 6 },
+  { id: 'orc', name: '오크 전사', idle: 'orcI', walk: 'orcW', ox: 55, oy: 57, idleN: 6 },
+];
+// 장식: 공방 장면에 놓이는 소품 (interior.png 좌표 → 장면 좌표), 팁 보너스 %
+const DECO = [
+  { id: 'plantL', name: '화분 (왼쪽)', src: [49, 140, 12, 20], at: [2, 20], price: 40, tip: 3, layer: 0 },
+  { id: 'plantR', name: '화분 (오른쪽)', src: [49, 140, 12, 20], at: [116, 20], price: 40, tip: 3, layer: 0 },
+  { id: 'window2', name: '창문 하나 더', src: [144, 54, 16, 10], at: [100, 10], price: 80, tip: 4, layer: 0 },
+  { id: 'rugO', name: '환영 러그', src: [128, 80, 32, 16], at: [50, 54], price: 70, tip: 4, layer: 0 },
+  { id: 'rugG', name: '초록 러그', src: [133, 101, 36, 22], at: [6, 42], price: 90, tip: 5, layer: 0 },
+  { id: 'lamp', name: '카운터 램프', src: [68, 148, 9, 12], at: [90, 32], price: 50, tip: 3, layer: 2 },
+  { id: 'books', name: '마법서', src: [68, 131, 7, 12], at: [108, 33], price: 30, tip: 2, layer: 2 },
+  { id: 'night', name: '작은 수납장', src: [99, 115, 12, 13], at: [117, 44], price: 60, tip: 3, layer: 1 },
+  { id: 'stool', name: '나무 스툴', src: [84, 103, 9, 9], at: [10, 70], price: 30, tip: 2, layer: 1 },
+  { id: 'chair', name: '손님 의자', src: [146, 142, 12, 18], at: [26, 62], price: 60, tip: 3, layer: 1 },
+  { id: 'sofa', name: '대기 소파', src: [82, 131, 44, 26], at: [2, 58], price: 220, tip: 8, layer: 1 },
+];
+
+/* ───────── 저장 상태 ───────── */
+const LS = 'mgh:potion-atelier:v1';
+function defaultState() {
+  return { v: 1, gold: 0, rep: 0, dust: 3, undoLv: 0, tubeLv: 0, deco: {}, seed: 1, served: 0, shelf: ['P', 'G', 'R', 'B'], tut: 0, mixTut: 0, best: {} };
+}
+function sanitize(s) {
+  const d = defaultState();
+  if (!s || typeof s !== 'object') return d;
+  const n = (v, def, max = 1e12) => (Number.isFinite(v) && v >= 0 ? Math.min(max, v) : def);
+  return {
+    v: 1, gold: n(s.gold, 0), rep: n(s.rep, 0), dust: n(s.dust, 3, 9999), undoLv: n(s.undoLv, 0, UNDO_COST.length) | 0, tubeLv: n(s.tubeLv, 0, TUBE_COST.length) | 0,
+    deco: s.deco && typeof s.deco === 'object' ? Object.fromEntries(DECO.filter((x) => s.deco[x.id]).map((x) => [x.id, 1])) : {},
+    seed: Math.max(1, n(s.seed, 1) | 0), served: n(s.served, 0) | 0,
+    shelf: Array.isArray(s.shelf) ? s.shelf.filter((c) => ICON[c] != null).slice(0, 4) : d.shelf,
+    tut: n(s.tut, 0, 9) | 0, mixTut: n(s.mixTut, 0, 9) | 0, best: s.best && typeof s.best === 'object' ? s.best : {},
+  };
+}
+let S;
+try { S = sanitize(JSON.parse(localStorage.getItem(LS))); } catch (e) { S = defaultState(); }
+const tierOf = (rep) => { let t = 0; TIER_REP.forEach((r, i) => { if (rep >= r) t = i; }); return t; };
+const decoTip = () => DECO.filter((d) => S.deco[d.id]).reduce((a, d) => a + d.tip, 0);
+const undoMax = () => BASE_UNDO + S.undoLv;
+const fmt = (n) => Math.floor(n).toLocaleString('ko-KR');
+
+/* ───────── 이미지 ───────── */
+const IMG = {};
+const IMG_SRC = { tiles: 'img/interior.png', soldierI: 'img/soldier-idle.png', soldierW: 'img/soldier-walk.png', orcI: 'img/orc-idle.png', orcW: 'img/orc-walk.png', keeper: 'img/keeper.png', potions: 'img/potions.png' };
+const imgP = Promise.all(Object.entries(IMG_SRC).map(([k, src]) => new Promise((res) => { const i = new Image(); i.onload = () => { IMG[k] = i; res(); }; i.onerror = res; i.src = src; })));
+function piStyle(c, row, size = 32) { const k = size / 16; return `background-position:${-ICON[c] * 16 * k}px ${-(row % 13) * 16 * k}px`; }
+function piHTML(c, row, small) { return `<span class="pi${small ? ' s' : ''}" style="${piStyle(c, row, small ? 24 : 32)}"></span>`; }
+
+/* ───────── 판 만들기 (웹 워커, 안 되면 바로 계산) ───────── */
+let worker = null, wid = 0;
+const wwait = new Map();
+try {
+  worker = new Worker('engine.js');
+  worker.onmessage = (e) => { const f = wwait.get(e.data.id); if (f) { wwait.delete(e.data.id); f(e.data); } };
+  worker.onerror = () => { worker = null; for (const f of wwait.values()) f(null); wwait.clear(); };
+} catch (e) { worker = null; }
+function ask(msg) {
+  if (worker) return new Promise((res) => { const id = ++wid; wwait.set(id, res); worker.postMessage(Object.assign({ id }, msg)); });
+  return new Promise((res) => setTimeout(() => {
+    if (msg.cmd === 'level') res({ level: E.makeLevel(msg.seed, msg.tier, { extraTubes: msg.extraTubes }) });
+    else res({ sol: E.solveAny(msg.tubes, msg.order, { exactBudget: 15000, fastBudget: 25000 }) });
+  }, 30));
+}
+const levelCache = new Map();
+function levelFor(seed, tier) {
+  const k = `${seed}:${tier}:${S.tubeLv}`;
+  if (!levelCache.has(k)) levelCache.set(k, ask({ cmd: 'level', seed, tier, extraTubes: S.tubeLv }).then((d) => (d && d.level) || E.makeLevel(seed, 0)));
+  return levelCache.get(k);
+}
+
+/* ───────── 퍼즐 상태 ───────── */
+let L = null;          // { tubes, order, opt, tier, seed }
+let tubes = [], hist = [], moves = 0, undos = 0, sel = -1, busy = true, won = false;
+let anim = null, hintMv = null, hintT = 0, shakeI = -1, shakeT = 0;
+const sparks = [];
+
+/* ───────── 공방 장면 ───────── */
+const sc = $('sc'), sg = sc.getContext('2d');
+sg.imageSmoothingEnabled = false;
+const cust = { c: CUSTS[0], x: -20, target: 66, state: 'away', flip: false, t0: 0 };
+const FEET = 62;
+function S_(sx, sy, w, h, x, y) { if (IMG.tiles) sg.drawImage(IMG.tiles, sx, sy, w, h, x, y, w, h); }
+function R_(x, y, w, h, c) { sg.fillStyle = c; sg.fillRect(x, y, w, h); }
+function drawDeco(layer) { for (const d of DECO) if (d.layer === layer && S.deco[d.id]) S_(d.src[0], d.src[1], d.src[2], d.src[3], d.at[0], d.at[1]); }
+function drawScene(t) {
+  // 벽·바닥
+  for (let x = 0; x < 130; x += 16) S_(48, 32, 16, 32, x, 2);
+  R_(0, 0, 130, 3, '#9a5a5a'); R_(0, 2, 130, 1, '#4a1f2a');
+  for (let y = 34; y < 84; y += 16) for (let x = 0; x < 130; x += 16) S_(96, 48, 16, 16, x, y);
+  R_(0, 33, 130, 2, '#5e3a2a');
+  S_(144, 54, 16, 10, 20, 12); // 기본 창문
+  // 포션 선반 (최근 만든 포션)
+  R_(40, 27, 52, 3, '#8a5a32'); R_(40, 30, 52, 1, '#4a2d18'); R_(43, 31, 2, 3, '#5e3a20'); R_(87, 31, 2, 3, '#5e3a20');
+  S.shelf.forEach((c, i) => { if (IMG.potions) sg.drawImage(IMG.potions, ICON[c] * 16, ((i * 4 + 2) % 13) * 16, 16, 16, 38 + i * 13, 13, 16, 16); });
+  drawDeco(0);
+  // 주인 (카운터 뒤)
+  if (IMG.keeper) sg.drawImage(IMG.keeper, (((t / 140) | 0) % 8) * 48, 0, 48, 64, 79, 0, 48, 64);
+  S_(49, 107, 30, 21, 88, 40); // 카운터
+  drawDeco(2);
+  drawDeco(1);
+  // 손님
+  if (cust.state !== 'away') {
+    const c = cust.c, walking = cust.state === 'in' || cust.state === 'out';
+    const img = IMG[walking ? c.walk : c.idle], n = walking ? 8 : c.idleN;
+    if (img) {
+      const fr = ((t / (walking ? 100 : 160)) | 0) % n;
+      sg.save();
+      sg.translate(Math.round(cust.x), FEET);
+      if (cust.flip) sg.scale(-1, 1);
+      sg.drawImage(img, fr * 100, 0, 100, 100, -c.ox, -c.oy, 100, 100);
+      sg.restore();
+    }
+  }
+}
+function custStep(dt) {
+  const sp = 34;
+  if (cust.state === 'in') { cust.x += sp * dt; if (cust.x >= cust.target) { cust.x = cust.target; cust.state = 'wait'; onArrive(); } }
+  else if (cust.state === 'out') { cust.x -= sp * dt; if (cust.x < -24) { cust.state = 'away'; onLeft(); } }
+  // 말풍선 위치
+  const b = $('bubble');
+  if (!b.hidden) { b.style.left = (cust.x / 130 * 100) + '%'; b.style.top = ((FEET - 24) / 84 * 100) + '%'; }
+}
+
+/* ───────── 퍼즐 그리기 ───────── */
+const pz = $('pz'), pg = pz.getContext('2d');
+const PW = 360, TW = 40, CELL = 30, TH = E.CAP * CELL + 18;
+let PH = 300, slots = [];
+function layout() {
+  const n = tubes.length + 1; // + 버림통
+  const per = n <= 6 ? n : Math.ceil(n / 2);
+  const rows = Math.ceil(n / per);
+  PH = 30 + rows * (TH + 40);
+  slots = [];
+  for (let i = 0; i < n; i++) {
+    const r = Math.floor(i / per), inRow = r === rows - 1 ? n - per * (rows - 1) : per;
+    const gap = PW / per, x0 = (PW - gap * inRow) / 2;
+    slots.push({ x: x0 + gap * ((i % per) + 0.5), y: 30 + r * (TH + 40) });
+  }
+  const dpr = Math.min(3, window.devicePixelRatio || 1);
+  pz.width = PW * dpr; pz.height = PH * dpr;
+  pz.style.aspectRatio = `${PW} / ${PH}`;
+  pg.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function rr(g, x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }
+function drawTube(g, t, x, y, opts = {}) {
+  const lx = x - TW / 2;
+  g.save();
+  if (opts.rot) { g.translate(x, y + TH / 2); g.rotate(opts.rot); g.translate(-x, -(y + TH / 2)); }
+  // 완성 빛
+  if (opts.done) { g.shadowColor = '#ffd166'; g.shadowBlur = 18; g.fillStyle = 'rgba(255,209,102,.18)'; rr(g, lx - 4, y - 4, TW + 8, TH + 8, [8, 8, 24, 24]); g.fill(); g.shadowBlur = 0; }
+  // 유리
+  g.fillStyle = 'rgba(255,255,255,.10)'; rr(g, lx, y, TW, TH, [5, 5, 20, 20]); g.fill();
+  // 액체
+  g.save(); rr(g, lx + 3, y + 10, TW - 6, TH - 13, [2, 2, 17, 17]); g.clip();
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i], cy = y + TH - 3 - (i + 1) * CELL;
+    const gr = g.createLinearGradient(lx, 0, lx + TW, 0); gr.addColorStop(0, COL_D[c]); gr.addColorStop(0.35, COL[c]); gr.addColorStop(1, COL_D[c]);
+    g.fillStyle = gr; g.fillRect(lx + 3, cy, TW - 6, CELL + 0.5);
+    if (i === t.length - 1 || t[i + 1] !== c) { g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(lx + 3, cy, TW - 6, 3); }
+    if (c === 'X') { g.fillStyle = 'rgba(0,0,0,.25)'; for (let k = 0; k < 3; k++) { g.beginPath(); g.arc(lx + 10 + k * 9, cy + 10 + (k % 2) * 8, 2.5, 0, 7); g.fill(); } }
+  }
+  g.fillStyle = 'rgba(255,255,255,.22)'; g.fillRect(lx + 8, y + 14, 4, TH - 34);
+  g.restore();
+  g.strokeStyle = opts.sel ? '#ffd166' : 'rgba(255,255,255,.7)'; g.lineWidth = opts.sel ? 3 : 2.2;
+  rr(g, lx, y, TW, TH, [5, 5, 20, 20]); g.stroke();
+  g.fillStyle = 'rgba(255,255,255,.85)'; g.fillRect(lx - 3, y - 2, TW + 6, 5);
+  g.restore();
+}
+function drawBin(g, x, y, hot) {
+  const w = 46, h = 58, by = y + TH - h;
+  g.fillStyle = hot ? '#6b4a2b' : '#4a3020'; rr(g, x - w / 2, by, w, h, [4, 4, 10, 10]); g.fill();
+  g.fillStyle = '#7a5232'; g.fillRect(x - w / 2 - 4, by - 6, w + 8, 9);
+  g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 2; for (let k = 1; k < 3; k++) { g.beginPath(); g.moveTo(x - w / 2, by + k * 18); g.lineTo(x + w / 2, by + k * 18); g.stroke(); }
+  g.fillStyle = '#e8d3b0'; g.font = '700 11px sans-serif'; g.textAlign = 'center'; g.fillText('버림통', x, by + h + 16);
+  g.font = '18px sans-serif'; g.fillText('🗑', x, by + 34);
+}
+function drawPuzzle(t) {
+  pg.clearRect(0, 0, PW, PH);
+  if (!L) { pg.fillStyle = 'rgba(255,255,255,.5)'; pg.font = '700 14px sans-serif'; pg.textAlign = 'center'; pg.fillText('손님이 주문을 고르는 중…', PW / 2, PH / 2); return; }
+  const done = new Set(E.doneTubes(tubes, L.order));
+  const binI = tubes.length;
+  drawBin(pg, slots[binI].x, slots[binI].y, sel >= 0 || (hintMv && hintMv.type === 'trash'));
+  tubes.forEach((tb, i) => {
+    if (anim && anim.from === i) return;
+    let { x, y } = slots[i];
+    if (i === sel) y -= 16;
+    if (i === shakeI && shakeT > 0) x += Math.sin(shakeT * 50) * 4;
+    drawTube(pg, tb, x, y, { sel: i === sel, done: done.has(i) });
+  });
+  // 힌트 화살표
+  if (hintMv && hintT > 0) {
+    const a = slots[hintMv.from], b = slots[hintMv.type === 'trash' ? binI : hintMv.to];
+    const pulse = 0.6 + Math.sin(t / 150) * 0.4;
+    pg.strokeStyle = `rgba(255,209,102,${pulse})`; pg.lineWidth = 4; pg.setLineDash([7, 6]);
+    pg.beginPath(); pg.moveTo(a.x, a.y - 8); pg.quadraticCurveTo((a.x + b.x) / 2, Math.min(a.y, b.y) - 34, b.x, b.y - 8); pg.stroke(); pg.setLineDash([]);
+    pg.fillStyle = `rgba(255,209,102,${pulse})`; pg.beginPath(); pg.arc(b.x, b.y - 8, 6, 0, 7); pg.fill();
+  }
+  // 붓는 중
+  if (anim) {
+    const p = Math.min(1, (t - anim.t0) / anim.dur);
+    const a = slots[anim.from], b = slots[anim.to];
+    const dir = b.x >= a.x ? 1 : -1;
+    const ROT = 1.15, tx = b.x - dir * Math.sin(ROT) * TH / 2, ty = b.y - 16 - (TH / 2) * (1 - Math.cos(ROT));
+    const k = p < 0.3 ? p / 0.3 : p > 0.75 ? (1 - p) / 0.25 : 1;
+    const e = k * k * (3 - 2 * k);
+    const x = a.x + (tx - a.x) * e, y = a.y + (ty - a.y) * e, rot = dir * ROT * e;
+    if (p > 0.3 && p < 0.78) {
+      const sx = x + Math.sin(rot) * TH / 2, sy = y + TH / 2 - Math.cos(rot) * TH / 2;
+      pg.strokeStyle = COL[anim.color]; pg.lineWidth = 6; pg.lineCap = 'round';
+      pg.beginPath(); pg.moveTo(sx, sy); pg.lineTo(b.x, b.y + TH - 6 - (anim.toLen || 0) * CELL); pg.stroke();
+    }
+    drawTube(pg, p >= 0.55 ? anim.after : anim.before, x, y, { rot });
+    if (!anim.applied && p >= 0.55) { anim.applied = true; anim.apply(); }
+    if (p >= 1) { const f = anim.end; anim = null; f && f(); }
+  }
+  // 반짝이
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const s = sparks[i]; s.life -= 1 / 60; if (s.life <= 0) { sparks.splice(i, 1); continue; }
+    s.x += s.vx; s.y += s.vy; s.vy += 0.12;
+    pg.globalAlpha = Math.min(1, s.life * 2); pg.fillStyle = s.c; pg.beginPath(); pg.arc(s.x, s.y, s.r, 0, 7); pg.fill(); pg.globalAlpha = 1;
+  }
+}
+function burst(x, y, c, n = 14) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, v = 1 + Math.random() * 3; sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 2, r: 2 + Math.random() * 2.5, c, life: 0.6 + Math.random() * 0.5 }); } }
+
+/* ───────── 입력 ───────── */
+pz.addEventListener('pointerdown', (e) => {
+  if (busy || anim || won || !L) return;
+  const r = pz.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * PW, y = (e.clientY - r.top) / r.height * PH;
+  let hit = -1;
+  slots.forEach((s, i) => { if (Math.abs(x - s.x) < 30 && y > s.y - 30 && y < s.y + TH + 24) hit = i; });
+  if (hit < 0) { sel = -1; return; }
+  const bin = hit === tubes.length;
+  if (sel < 0) { if (!bin && tubes[hit].length) sel = hit; return; }
+  if (hit === sel) { sel = -1; return; }
+  if (bin) { doTrash(sel); return; }
+  const r2 = E.pour(tubes, sel, hit);
+  if (!r2) { shake(hit); if (tubes[hit].length) sel = hit; return; }
+  doPour(sel, hit, r2);
+});
+function shake(i) { shakeI = i; shakeT = 0.3; }
+function push() { hist.push(tubes.slice()); }
+function afterMove() {
+  moves++; $('moves').textContent = moves; hintMv = null; hintT = 0; $('coach').hidden = true;
+  if (!S.tut) { S.tut = 1; changed(); }
+  renderOrder();
+  if (E.fulfilled(tubes, L.order)) win();
+}
+function doPour(from, to, r) {
+  const color = E.top(tubes[from]);
+  push(); sel = -1;
+  anim = {
+    from, to, color, toLen: tubes[to].length, t0: performance.now(), dur: 560, before: tubes[from], after: r.tubes[from], applied: false,
+    apply: () => {
+      tubes = r.tubes;
+      const s = slots[to];
+      if (r.mixed && r.mixed !== 'X') { burst(s.x, s.y + 10, COL[r.mixed], 18); toast(`${mixText(color, r.mixed)} 완성!`); }
+      if (r.mixed === 'X') { burst(s.x, s.y + 10, '#6b4a2b', 10); toast('섞은 색에 다른 색을 부으면 탁해져요 — 버림통에 버리세요'); }
+    },
+    end: afterMove,
+  };
+}
+function mixText(c, r) { const [a, b] = E.RECIPE[r] || []; return a ? `${NAME[a]} + ${NAME[b]} → ${NAME[r]}` : NAME[r]; }
+function doTrash(from) {
+  const r = E.trash(tubes, from); if (!r) return;
+  const color = E.top(tubes[from]);
+  push(); sel = -1;
+  anim = { from, to: tubes.length, color, toLen: 0.6, t0: performance.now(), dur: 480, before: tubes[from], after: r.tubes[from], applied: false, apply: () => { tubes = r.tubes; burst(slots[tubes.length].x, slots[tubes.length].y + TH - 50, COL[color], 8); }, end: afterMove };
+}
+$('undoBtn').onclick = () => {
+  if (busy || anim || won || !hist.length) return;
+  if (undos <= 0) { toast('되돌리기를 다 썼어요. 상점에서 늘리거나 처음부터 해 보세요'); return; }
+  tubes = hist.pop(); undos--; moves = Math.max(0, moves - 1); sel = -1; $('moves').textContent = moves; renderCtrl(); renderOrder();
+};
+$('resetBtn').onclick = () => {
+  if (busy || anim || won || !L) return;
+  if (!moves) return;
+  tubes = L.tubes.slice(); hist = []; moves = 0; undos = undoMax(); sel = -1; $('moves').textContent = 0; renderCtrl(); renderOrder();
+};
+$('hintBtn').onclick = async () => {
+  if (busy || anim || won || !L) return;
+  if (S.dust < 1) { toast('마법 가루 ✨가 부족해요. 별 3개로 납품하면 받을 수 있어요'); return; }
+  const b = $('hintBtn'); b.disabled = true;
+  const d = await ask({ cmd: 'hint', tubes, order: L.order });
+  b.disabled = false;
+  const sol = d && d.sol;
+  if (!sol || !sol.path.length) { toast('지금 상태에선 힌트를 찾지 못했어요 — ↺ 처음부터 해 보세요'); return; }
+  S.dust--; changed(); hud();
+  hintMv = sol.path[0]; hintT = 4;
+};
+
+/* ───────── 손님·주문 흐름 ───────── */
+function orderList(order) { return Object.keys(order).map((c) => ({ c, n: order[c] })); }
+function renderOrder() {
+  const el = $('order');
+  if (!L) { el.innerHTML = '<b>손님을 기다리는 중…</b>'; return; }
+  const have = {};
+  E.doneTubes(tubes, L.order).forEach((i) => { const c = tubes[i][0]; have[c] = (have[c] || 0) + 1; });
+  el.innerHTML = '<b>주문</b>' + orderList(L.order).map(({ c, n }, k) => `<span class="chip${(have[c] || 0) >= n ? ' ok' : ''}">${piHTML(c, L.seed + k * 3, true)}${NAME[c]} ${Math.min(have[c] || 0, n)}/${n}</span>`).join('');
+}
+function renderBubble() {
+  const b = $('bubble');
+  if (!L) { b.hidden = true; return; }
+  b.innerHTML = orderList(L.order).map(({ c, n }, k) => `<span class="it">${piHTML(c, L.seed + k * 3)}${n > 1 ? '×' + n : ''}</span>`).join('');
+  b.hidden = false;
+}
+function renderRules() {
+  const t = L ? L.tier : tierOf(S.rep);
+  const el = $('rules');
+  if (t < 1) { el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = [['R', 'B', 'P'], ['R', 'Y', 'O'], ['B', 'Y', 'G']].map(([a, b, r]) => `<span><i class="dot" style="background:${COL[a]}"></i>+<i class="dot" style="background:${COL[b]}"></i>=<i class="dot" style="background:${COL[r]}"></i>${NAME[r]}</span>`).join('') + `<span>섞은 색 + 다른 색 = <i class="dot" style="background:${COL.X}"></i></span>`;
+}
+function renderCtrl() {
+  $('undoN').textContent = `${undos}/${undoMax()}`;
+  $('opt').textContent = L ? L.opt : '-';
+}
+let pendingLevel = null;
+function nextCustomer() {
+  L = null; tubes = []; layout(); renderOrder(); renderBubble(); renderCtrl();
+  busy = true; won = false;
+  const tier = tierOf(S.rep);
+  cust.c = CUSTS[S.seed % CUSTS.length]; cust.x = -20; cust.flip = false; cust.state = 'in'; cust.target = 66;
+  pendingLevel = levelFor(S.seed, tier);
+  levelFor(S.seed + 1, tier); // 다음 손님 미리 준비
+}
+async function onArrive() {
+  const lv = await pendingLevel;
+  if (cust.state !== 'wait') return;
+  L = lv; tubes = L.tubes.slice(); hist = []; moves = 0; undos = undoMax(); sel = -1; won = false; busy = false;
+  $('moves').textContent = 0;
+  layout(); renderOrder(); renderBubble(); renderRules(); renderCtrl();
+  if (L.tier >= 1 && !S.mixTut) { S.mixTut = 1; changed(); showMixHelp(); }
+  if (!S.tut) { const c = $('coach'); c.hidden = false; c.innerHTML = `① 병을 눌러 고르고 ② 부을 병을 누르세요.<br>주문한 <b>${NAME[Object.keys(L.order)[0]]}</b>을 <b>한 병에 4칸</b> 가득 채우면 완성!`; }
+}
+function onLeft() { nextCustomer(); }
+function stars() { return moves <= L.opt + 2 ? 3 : moves <= L.opt + 6 ? 2 : 1; }
+function win() {
+  won = true; busy = true;
+  E.doneTubes(tubes, L.order).forEach((i) => burst(slots[i].x, slots[i].y + 20, COL[tubes[i][0]], 22));
+  setTimeout(showResult, 800);
+}
+function showResult() {
+  const st = stars(), list = orderList(L.order);
+  let base = 0, mixedN = 0;
+  for (const { c, n } of list) { const mixed = E.MIXED.includes(c); base += n * (mixed ? PRICE.mixed : PRICE.base); if (mixed) mixedN += n; }
+  const starBonus = Math.round(base * (STAR_MUL[st] - 1));
+  const tip = Math.round((base + starBonus) * decoTip() / 100);
+  const total = base + starBonus + tip, repGain = st + mixedN, dustGain = st === 3 ? 1 : 0;
+  openModal(`
+    <h3>${cust.c.name}: "고마워요!"</h3>
+    <div class="stars">${[1, 2, 3].map((i) => `<i class="${i <= st ? 'on' : ''}">★</i>`).join('')}</div>
+    <div class="note">이동 ${moves}번 · 목표 ${L.opt}번${st < 3 ? ` (별 3개: ${L.opt + 2}번 이하)` : ''}</div>
+    <div class="rows">
+      <div><span>포션 값 ${list.map(({ c, n }) => NAME[c] + (n > 1 ? '×' + n : '')).join(' · ')}</span><b>🪙 ${fmt(base)}</b></div>
+      ${starBonus ? `<div><span>별 보너스</span><b>🪙 ${fmt(starBonus)}</b></div>` : ''}
+      ${tip ? `<div><span>공방 장식 팁 (+${decoTip()}%)</span><b>🪙 ${fmt(tip)}</b></div>` : ''}
+      <div class="tot"><span>합계</span><b>🪙 ${fmt(total)}</b></div>
+      <div><span>평판</span><b>⭐ +${repGain}</b></div>
+      ${dustGain ? '<div><span>마법 가루</span><b>✨ +1</b></div>' : ''}
+    </div>
+    <button class="cta" id="okBtn">납품하기</button>`);
+  $('okBtn').onclick = () => {
+    closeModal();
+    const before = tierOf(S.rep);
+    S.gold += total; S.rep += repGain; S.dust += dustGain; S.served++; S.seed++;
+    S.shelf = list.map(({ c }) => c).concat(S.shelf).slice(0, 4);
+    changed(); hud();
+    L = null; $('bubble').hidden = true; renderOrder();
+    cust.state = 'out'; cust.flip = true;
+    const after = tierOf(S.rep);
+    if (after > before) setTimeout(() => showTierUp(after), 500);
+  };
+}
+function showTierUp(t) {
+  const msg = ['', '이제 <b>섞은 포션</b> 주문이 들어와요!', '포션 <b>2병</b>짜리 주문이 들어와요.', '포션 <b>2~3병</b>짜리 큰 주문이 들어와요.', '가장 까다로운 <b>3병</b> 주문까지 들어와요.'][t];
+  openModal(`<h3>🎉 ${TIER_NAME[t]}</h3><div class="note">평판이 올라 공방 등급이 올랐어요.<br>${msg}<br>주문이 클수록 포션 값도 커져요.</div><button class="cta" id="okBtn">좋아요</button>`);
+  $('okBtn').onclick = closeModal;
+}
+function showMixHelp() {
+  openModal(`<h3>🧪 색 섞기</h3>
+    <div class="note">다른 기본색 위에 부으면 <b>섞여서 새 색</b>이 돼요.</div>
+    <div class="mixrow"><i class="dot" style="background:${COL.R}"></i>빨강 + <i class="dot" style="background:${COL.B}"></i>파랑 = <i class="dot" style="background:${COL.P}"></i>보라</div>
+    <div class="mixrow"><i class="dot" style="background:${COL.R}"></i>빨강 + <i class="dot" style="background:${COL.Y}"></i>노랑 = <i class="dot" style="background:${COL.O}"></i>주황</div>
+    <div class="mixrow"><i class="dot" style="background:${COL.B}"></i>파랑 + <i class="dot" style="background:${COL.Y}"></i>노랑 = <i class="dot" style="background:${COL.G}"></i>초록</div>
+    <div class="note">맨 위 같은 색 덩어리와 부은 양이 모두 섞인 색이 돼요.<br>예) 파랑 2칸 위에 빨강 2칸 → 보라 4칸<br>섞은 색에 또 다른 색을 부으면 <b>탁한 물</b>이 되니 버림통에 버리세요.</div>
+    <button class="cta" id="okBtn">알겠어요</button>`);
+  $('okBtn').onclick = closeModal;
+}
+
+/* ───────── 상점 ───────── */
+let shopTab = 'tool';
+function openShop() {
+  const decoIcon = (d) => { const c = document.createElement('canvas'); c.width = 40; c.height = 40; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; const s = Math.min(40 / d.src[2], 40 / d.src[3], 3); if (IMG.tiles) g.drawImage(IMG.tiles, d.src[0], d.src[1], d.src[2], d.src[3], (40 - d.src[2] * s) / 2, (40 - d.src[3] * s) / 2, d.src[2] * s, d.src[3] * s); return c; };
+  const render = () => {
+    let body = '';
+    if (shopTab === 'tool') {
+      const uc = UNDO_COST[S.undoLv], tc = TUBE_COST[S.tubeLv];
+      body = `
+        <div class="it2"><div class="ic">↩</div><div class="t"><b>되돌리기 +1</b><small>판마다 ${undoMax()}번 → ${undoMax() + 1}번</small></div>${uc ? `<button class="buy" data-b="undo" ${S.gold < uc ? 'disabled' : ''}>🪙${fmt(uc)}</button>` : '<button class="buy own">최대</button>'}</div>
+        <div class="it2"><div class="ic">🧪</div><div class="t"><b>예비 병</b><small>판마다 빈 병 +1 (지금 +${S.tubeLv}) · 다음 손님부터</small></div>${tc ? `<button class="buy" data-b="tube" ${S.gold < tc ? 'disabled' : ''}>🪙${fmt(tc)}</button>` : '<button class="buy own">최대</button>'}</div>
+        <div class="it2"><div class="ic">✨</div><div class="t"><b>마법 가루 ${DUST_PACK.n}개</b><small>힌트 1번에 1개</small></div><button class="buy" data-b="dust" ${S.gold < DUST_PACK.cost ? 'disabled' : ''}>🪙${fmt(DUST_PACK.cost)}</button></div>`;
+    } else {
+      body = DECO.map((d) => `<div class="it2"><div class="ic" data-ic="${d.id}"></div><div class="t"><b>${d.name}</b><small>팁 +${d.tip}%</small></div>${S.deco[d.id] ? '<button class="buy own">설치됨</button>' : `<button class="buy" data-b="deco:${d.id}" ${S.gold < d.price ? 'disabled' : ''}>🪙${fmt(d.price)}</button>`}</div>`).join('');
+    }
+    openModal(`<h3>🛒 상점 <small style="font-size:13px;color:var(--gold)">🪙 ${fmt(S.gold)}</small></h3>
+      <div class="tabs"><button data-t="tool" class="${shopTab === 'tool' ? 'on' : ''}">도구</button><button data-t="deco" class="${shopTab === 'deco' ? 'on' : ''}">장식 (팁 +${decoTip()}%)</button></div>
+      <div class="list">${body}</div><button class="cta w" id="okBtn" style="margin-top:12px">닫기</button>`);
+    document.querySelectorAll('[data-ic]').forEach((el) => el.appendChild(decoIcon(DECO.find((d) => d.id === el.dataset.ic))));
+    document.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { shopTab = b.dataset.t; render(); }));
+    document.querySelectorAll('[data-b]').forEach((b) => (b.onclick = () => { buy(b.dataset.b); render(); }));
+    $('okBtn').onclick = closeModal;
+  };
+  render();
+}
+function buy(k) {
+  if (k === 'undo') { const c = UNDO_COST[S.undoLv]; if (!c || S.gold < c) return; S.gold -= c; S.undoLv++; if (L && !won) undos++; renderCtrl(); }
+  else if (k === 'tube') { const c = TUBE_COST[S.tubeLv]; if (!c || S.gold < c) return; S.gold -= c; S.tubeLv++; levelCache.clear(); }
+  else if (k === 'dust') { if (S.gold < DUST_PACK.cost) return; S.gold -= DUST_PACK.cost; S.dust += DUST_PACK.n; }
+  else if (k.startsWith('deco:')) { const d = DECO.find((x) => x.id === k.slice(5)); if (!d || S.deco[d.id] || S.gold < d.price) return; S.gold -= d.price; S.deco[d.id] = 1; toast(`${d.name} 설치! 팁 +${d.tip}%`); }
+  changed(); hud();
+}
+$('shopBtn').onclick = openShop;
+$('helpBtn').onclick = () => {
+  openModal(`<h3>❔ 포션 공방</h3><div class="help">
+    <p>🧙 손님이 원하는 포션을 말풍선으로 주문해요.</p>
+    <p>🧪 병을 눌러 고른 뒤 부을 병을 누르면, 맨 위 같은 색 덩어리가 옮겨가요. 같은 색이나 빈 병 위에만 쌓여요.</p>
+    <p>🎨 다른 기본색 위에 부으면 섞여요: 빨강+파랑=보라, 빨강+노랑=주황, 파랑+노랑=초록. 섞은 색에 또 다른 색을 부으면 탁해져요.</p>
+    <p>✅ 주문한 색을 <b>한 병에 4칸</b> 가득 채우면 완성이에요.</p>
+    <p>🗑 필요 없는 맨 위 액체는 버림통에 버릴 수 있어요 (이동 1번).</p>
+    <p>⭐ 목표 이동 수에 가깝게 풀수록 별이 많고, 골드·평판을 더 받아요. 평판이 오르면 더 큰 주문이 들어와요.</p>
+  </div><button class="cta" id="okBtn">닫기</button>`);
+  $('okBtn').onclick = closeModal;
+};
+function openModal(html) { $('modal').innerHTML = html; $('dim').hidden = false; }
+function closeModal() { $('dim').hidden = true; }
+
+/* ───────── 저장 ───────── */
+let owner = null, cloudAt = null, saveT = null, saving = false, again = false;
+const setSave = (t) => { $('save').textContent = t; };
+function hud() {
+  $('gold').textContent = fmt(S.gold); $('rep').textContent = fmt(S.rep); $('dust').textContent = fmt(S.dust);
+  const t = tierOf(S.rep), nx = TIER_REP[t + 1];
+  $('tier').textContent = `${TIER_NAME[t]}${nx ? ` · 다음 등급까지 ⭐${nx - S.rep}` : ''}`;
+}
+function changed() {
+  try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {}
+  if (owner) { clearTimeout(saveT); setSave('저장 대기…'); saveT = setTimeout(cloudStore, 1500); }
+}
+async function cloudStore() {
+  if (!owner || !MG || !MG.save) return;
+  if (saving) { again = true; return; }
+  saving = true; setSave('저장 중…');
+  try {
+    let r = await MG.save.store({ ...S, owner }, cloudAt || undefined);
+    if (r && r.conflict) { cloudAt = r.updatedAt; r = await MG.save.store({ ...S, owner }, cloudAt); }
+    if (r && r.updatedAt) cloudAt = r.updatedAt;
+    setSave('☁️ 저장됨');
+  } catch (e) { setSave('저장 실패'); }
+  saving = false;
+  if (again) { again = false; cloudStore(); }
+}
+function setupAuth() {
+  const btn = $('loginBtn');
+  if (!MG || !MG.save || !MG.embedded) { setSave('이 기기에 자동 저장돼요'); return; }
+  btn.textContent = '로그인하고 저장';
+  btn.onclick = () => MG.save.login();
+  MG.save.onAuth(async (u) => {
+    owner = u ? u.id : null; btn.hidden = !!u;
+    if (!u) { setSave('이 기기에 자동 저장돼요'); return; }
+    setSave('불러오는 중…');
+    try {
+      const r = await MG.save.load();
+      if (r && r.data && Number.isFinite(r.data.rep)) {
+        const cloud = sanitize(r.data);
+        // 더 많이 진행한 쪽을 쓴다 (손님 수 기준)
+        if (cloud.served >= S.served) { S = cloud; levelCache.clear(); hud(); if (L && !won) { /* 진행 중인 판은 그대로 */ } }
+        else await cloudStore();
+        cloudAt = r.updatedAt || null;
+        try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {}
+        setSave('☁️ 불러옴');
+      } else await cloudStore();
+    } catch (e) { setSave('불러오기 실패'); }
+  });
+}
+
+let toastT = null;
+function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2200); }
+
+/* ───────── 시작 ───────── */
+let lastT = performance.now();
+function loop(t) {
+  const dt = Math.min(0.1, (t - lastT) / 1000); lastT = t;
+  custStep(dt);
+  if (shakeT > 0) shakeT -= dt;
+  if (hintT > 0) { hintT -= dt; if (hintT <= 0) hintMv = null; }
+  drawScene(t);
+  drawPuzzle(t);
+  requestAnimationFrame(loop);
+}
+imgP.then(() => {
+  hud(); setupAuth(); layout(); nextCustomer();
+  requestAnimationFrame(loop);
+});
+</script>
+</body>
+</html>

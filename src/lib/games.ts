@@ -166,6 +166,19 @@ const CATALOG: Game[] = [
     saves: true, // 방 꾸미기·캐릭터를 계정에 저장
   },
   {
+    id: "potion-atelier",
+    title: { ko: "포션 공방", en: "Potion Atelier" },
+    desc: {
+      ko: "병 속 물약을 붓고 섞어 손님이 주문한 포션을 만드는 퍼즐 가게. 빨강과 파랑을 섞으면 보라! 적게 움직일수록 별과 골드를 더 받아요",
+      en: "A puzzle shop where you pour and mix liquids to brew the potions customers order — red and blue make purple!",
+    },
+    genre: "casual",
+    thumb: "/thumbs/potion-atelier.jpg",
+    src: "/games/potion-atelier/index.html",
+    saves: true, // 골드·평판·장식을 계정에 저장
+    hidden: true, // 시험판 — 주소로만 열림
+  },
+  {
     id: "dragon-ranch",
     title: { ko: "드래곤 목장", en: "Dragon Ranch" },
     desc: {
