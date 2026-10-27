@@ -82,8 +82,12 @@ button:disabled{opacity:.45;cursor:default}
 .it2 .t{flex:1;min-width:0}
 .it2 .t b{display:block;font-size:14px}
 .it2 .t small{display:block;font-size:12px;color:var(--dim);margin-top:2px}
-.buy{height:36px;min-width:72px;padding:0 10px;border-radius:10px;background:var(--acc);color:#2a1606;font-weight:900;font-size:13px}
-.buy.own{background:rgba(108,196,106,.2);color:var(--good)}
+.buy{height:36px;min-width:78px;padding:0 10px;border-radius:10px;background:#2f6f8f;border:1px solid #5fa8c8;color:#fff;font-weight:900;font-size:13px;box-shadow:0 2px 0 rgba(0,0,0,.25)}
+.buy:disabled{background:#3a3a44;border-color:#55556a;color:#b8b8c8;opacity:1}
+.buy.own{background:rgba(108,196,106,.15);border-color:rgba(108,196,106,.5);color:var(--good);box-shadow:none}
+.mh{position:sticky;top:-16px;margin:-16px -16px 10px;padding:14px 12px 10px 16px;background:#3b2719;border-bottom:1px solid #5e3f28;display:flex;align-items:center;gap:8px;z-index:2}
+.mh h3{margin:0;flex:1;text-align:left}
+.mx{height:34px;padding:0 12px;border-radius:10px;background:rgba(255,255,255,.12);font-weight:800;font-size:13px;white-space:nowrap}
 .help p{font-size:13.5px;line-height:1.6;margin:6px 0}
 .mixrow{display:flex;justify-content:center;gap:6px;align-items:center;font-weight:800;margin:6px 0}
 .toast{position:fixed;left:50%;top:12px;transform:translate(-50%,-30px);opacity:0;background:rgba(20,12,6,.94);border:1px solid var(--line);color:#fff;padding:9px 14px;border-radius:12px;font-size:13.5px;font-weight:700;z-index:40;transition:.2s;pointer-events:none;max-width:92vw;text-align:center}
@@ -682,9 +686,9 @@ function openShop() {
     } else {
       body = DECO.map((d) => `<div class="it2"><div class="ic" data-ic="${d.id}"></div><div class="t"><b>${d.name}</b><small>팁 +${d.tip}%</small></div>${S.deco[d.id] ? '<button class="buy own">설치됨</button>' : `<button class="buy" data-b="deco:${d.id}" ${S.gold < d.price ? 'disabled' : ''}>🪙${fmt(d.price)}</button>`}</div>`).join('');
     }
-    openModal(`<h3>🛒 상점 <small style="font-size:13px;color:var(--gold)">🪙 ${fmt(S.gold)}</small></h3>
+    openModal(`<div class="mh"><h3>🛒 상점 <small style="font-size:13px;color:var(--gold)">🪙 ${fmt(S.gold)}</small></h3><button class="mx" id="okBtn">✕ 닫기</button></div>
       <div class="tabs"><button data-t="tool" class="${shopTab === 'tool' ? 'on' : ''}">도구</button><button data-t="deco" class="${shopTab === 'deco' ? 'on' : ''}">장식 (팁 +${decoTip()}%)</button></div>
-      <div class="list">${body}</div><button class="cta w" id="okBtn" style="margin-top:12px">닫기</button>`);
+      <div class="list">${body}</div>`);
     document.querySelectorAll('[data-ic]').forEach((el) => el.appendChild(decoIcon(DECO.find((d) => d.id === el.dataset.ic))));
     document.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { shopTab = b.dataset.t; render(); }));
     document.querySelectorAll('[data-b]').forEach((b) => (b.onclick = () => { buy(b.dataset.b); render(); }));
