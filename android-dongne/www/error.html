@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>동네쪽지</title>
+<style>
+  html,body{margin:0;height:100%;background:#fbf6ea;color:#3a2e24;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif}
+  body{display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;box-sizing:border-box}
+  h1{margin:0 0 10px;font-size:28px;color:#3a2e24}
+  p{margin:0 0 20px;font-size:15px;color:#8b7b69;line-height:1.6}
+  button{font-size:16px;font-weight:800;padding:13px 30px;border:0;border-radius:12px;background:#ff6b4a;color:#fff;border:2px solid #3a2e24}
+</style></head><body>
+<div>
+  <h1>동네쪽지</h1>
+  <p id="msg">인터넷에 연결되어 있지 않아요.<br>연결을 확인한 뒤 다시 시도해 주세요.</p>
+  <button id="retry">다시 시도</button>
+</div>
+<script>
+  var SITE = "https://playwithme.kr/dongne-app";
+  document.getElementById("retry").onclick = function(){ location.href = SITE; };
+  window.addEventListener('online', function(){ location.href = SITE; });
+</script>
+</body></html>

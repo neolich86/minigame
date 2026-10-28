@@ -13,5 +13,7 @@ export const GAME_RPC: Record<string, readonly string[]> = {
     "dn_add_comment",
     "dn_delete_comment",
     "dn_report",
+    "dn_block",
+    "dn_unblock_all",
   ],
 };

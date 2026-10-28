@@ -1,0 +1,21 @@
+{
+  "appId": "kr.minigame.dongnenote",
+  "appName": "동네쪽지",
+  "webDir": "www",
+  "backgroundColor": "#fbf6ea",
+  "server": {
+    "url": "https://playwithme.kr/dongne-app",
+    "errorPath": "error.html",
+    "cleartext": false,
+    "allowNavigation": [
+      "playwithme.kr",
+      "*.playwithme.kr",
+      "*.kakao.com",
+      "*.kakaocdn.net",
+      "*.supabase.co"
+    ]
+  },
+  "android": {
+    "backgroundColor": "#fbf6ea"
+  }
+}

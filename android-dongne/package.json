@@ -1,0 +1,14 @@
+{
+  "name": "dongne-note-android",
+  "version": "1.0.0",
+  "description": "동네쪽지 - Android(Capacitor) 앱 (playwithme.kr/dongne-app 을 여는 방식)",
+  "scripts": {
+    "sync": "npx cap sync android"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@capacitor/android": "^6.2.1",
+    "@capacitor/cli": "^6.2.1",
+    "@capacitor/core": "^6.2.1"
+  }
+}

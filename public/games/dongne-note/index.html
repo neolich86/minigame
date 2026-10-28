@@ -56,7 +56,7 @@ body.night #map,body.night .leaflet-container{background:#2b2620}
 .mk .bub{position:absolute;left:14px;bottom:14px;width:max-content;max-width:180px;min-width:96px;background:var(--nc,#fff3a8);border-radius:3px;padding:12px 11px 8px;box-shadow:1px 4px 10px rgba(58,46,36,.28);cursor:pointer;transform:rotate(var(--rot,-2deg));transform-origin:0 100%}
 .mk .bub:before{content:'';position:absolute;left:50%;top:-7px;width:46px;height:15px;margin-left:-23px;background:rgba(255,255,255,.6);border-left:1px dashed rgba(0,0,0,.08);border-right:1px dashed rgba(0,0,0,.08);transform:rotate(-4deg)}
 .mk .bub .h{font-size:11px;font-weight:800;color:rgba(58,46,36,.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mk .bub .b{font-family:var(--hand);font-size:18px;line-height:1.15;margin-top:2px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-all}
+.mk .bub .b{font-family:var(--hand);font-size:18px;line-height:1.15;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-all}
 .mk .bub .f{display:flex;gap:8px;font-size:10.5px;color:rgba(58,46,36,.6);margin-top:5px;font-weight:700}
 .mk.pop .bub:before{background:rgba(255,107,74,.75)}
 .mk .hot{position:absolute;right:-8px;top:-10px;background:var(--acc);color:#fff;font-size:10px;font-weight:900;border-radius:999px;padding:2px 6px;border:2px solid var(--ink);transform:rotate(8deg)}
@@ -122,6 +122,9 @@ textarea.inp{height:120px;resize:none;font-family:var(--hand);font-size:21px;lin
 .cm .t{flex:1;min-width:0;font-size:14px;line-height:1.45;word-break:break-all}
 .cm .t i{font-style:normal;font-size:11px;color:var(--sub);margin-left:6px}
 .cm .del{font-size:11px;color:var(--sub)}
+.tos{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--sub);line-height:1.45;margin:0 2px 12px}
+.tos input{margin-top:2px;width:18px;height:18px;accent-color:var(--acc);flex:none}
+.tos a{color:var(--acc2)}
 .menu{display:flex;flex-direction:column;gap:6px}
 .menu button{background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:13px;text-align:left;font-weight:700}
 .list .it{display:flex;gap:10px;padding:10px 2px;border-bottom:1.5px dashed var(--line);text-align:left;width:100%;align-items:center}
@@ -200,6 +203,8 @@ const ANIMALS = ['dog','cat','fox','bear','panda','rabbit','hamster','koala','ti
 const ANAME = { dog:['강아지','Dog'], cat:['고양이','Cat'], fox:['여우','Fox'], bear:['곰','Bear'], panda:['판다','Panda'], rabbit:['토끼','Rabbit'], hamster:['햄스터','Hamster'], koala:['코알라','Koala'], tiger:['호랑이','Tiger'], lion:['사자','Lion'], cow:['소','Cow'], pig:['돼지','Pig'], frog:['개구리','Frog'], monkey:['원숭이','Monkey'], penguin:['펭귄','Penguin'], chicken:['닭','Chicken'], unicorn:['유니콘','Unicorn'], octopus:['문어','Octopus'], owl:['부엉이','Owl'], wolf:['늑대','Wolf'] };
 const aImg = (a) => `img/animals/${ANIMALS.includes(a) ? a : 'dog'}.webp`;
 const DAY = 864e5, LIFE = 7 * DAY;
+// 이용약관 링크 (토스 빌드는 외부 이동 금지라 prepare 단계에서 빈 문자열로 바꾼다)
+const TERMS_LINK = `<a href="/terms" target="_blank" rel="noopener">${L_('이용약관', 'Terms')}</a>`;
 
 /* ---------- 상태 ---------- */
 let user;                 // undefined: 모름, null: 비로그인, {id,name}
@@ -334,15 +339,17 @@ function render() {
     return;
   }
   // 가까이: 말풍선은 반응 많은·최신 순으로 화면에 겹치지 않게 최대 25개
-  const taken = [], maxB = z >= 16 ? 25 : 10, W = map.getSize().x;
+  const taken = [], maxB = z >= 16 ? 25 : 10, W = map.getSize().x, H = map.getSize().y;
+  const topSafe = ($('chips').getBoundingClientRect().bottom || 90) + 4;
   let nb = 0;
   const plan = list.map((m) => {
     const p = map.latLngToContainerPoint([m.lat, m.lng]);
     let bubble = false;
     const bw = W < 420 ? 165 : 200, leftSide = p.x > W * 0.55; // 화면 오른쪽 절반이면 말풍선을 왼쪽으로
     if (nb < maxB) {
-      const box = leftSide ? { x1: p.x - bw, y1: p.y - 115, x2: p.x + 6, y2: p.y - 10 } : { x1: p.x - 6, y1: p.y - 115, x2: p.x + bw, y2: p.y - 10 };
-      if (!taken.some((t) => box.x1 < t.x2 && box.x2 > t.x1 && box.y1 < t.y2 && box.y2 > t.y1)) { taken.push(box); bubble = true; nb++; }
+      const box = leftSide ? { x1: p.x - bw, y1: p.y - 135, x2: p.x + 24, y2: p.y + 22 } : { x1: p.x - 24, y1: p.y - 135, x2: p.x + bw, y2: p.y + 22 };
+      const free = box.y1 > topSafe && box.y2 < H - 80;
+      if (free && !taken.some((t) => box.x1 < t.x2 && box.x2 > t.x1 && box.y1 < t.y2 && box.y2 > t.y1)) { taken.push(box); bubble = true; nb++; }
     }
     return { m, bubble, leftSide };
   });
@@ -505,15 +512,19 @@ function setDraft(d) {
     <div class="cnt"><span id="wCnt">0</span>/140</div>
     ${myAnimal ? '' : `<div style="font-weight:800;margin-top:4px">${L_('나를 나타낼 동물을 골라 주세요', 'Pick your animal')}</div><p class="hint" style="margin-top:2px">${L_('지도에서 내 쪽지는 이 동물로 보여요. 나중에 [내 쪽지]에서 바꿀 수 있어요.', 'Your notes show this animal. Change it later in My notes.')}</p>${animalGrid(null)}`}
     <p class="hint">${L_('쪽지는 7일 뒤 사라져요. 다른 사람이 좋아요(+6시간)·댓글(+12시간)을 남기면 최대 30일까지 더 오래 남아요.', 'Notes vanish after 7 days — likes (+6h) and comments (+12h) keep them up to 30 days.')}</p>
+    ${lsGet('tos', false) ? '' : `<label class="tos"><input type="checkbox" id="wTos"> <span>${L_('욕설·광고·음란물·개인정보(연락처·주소) 노출을 하지 않을게요. 어기면 쪽지가 삭제되고 이용이 제한될 수 있어요.', 'No abuse, ads, sexual content or personal info. Violations are removed and may lead to a ban.')} ${TERMS_LINK}</span></label>`}
     <button class="btn g" id="wGo" style="width:100%" disabled>${L_('남기기', 'Post')}</button>`, () => { if (draftMarker) { map.removeLayer(draftMarker); draftMarker = null; } });
   const body = $('wBody'), go = $('wGo');
-  const upd = () => { $('wCnt').textContent = body.value.length; go.disabled = !body.value.trim() || !pickA; };
+  const tos = $('wTos');
+  const upd = () => { $('wCnt').textContent = body.value.length; go.disabled = !body.value.trim() || !pickA || (tos && !tos.checked); };
+  if (tos) tos.onchange = upd;
   body.oninput = upd;
   bindGrid($('sheetBody'), (a) => { pickA = a; showDraftMarker(a); upd(); });
   $('wLoc').onclick = () => { closeSheet(); startWrite(); };
   go.onclick = async () => {
     go.disabled = true;
     try {
+      if (tos) lsSet('tos', true);
       if (!myAnimal) await rpc('dn_set_animal', { p_animal: pickA });
       myAnimal = pickA; lsSet('animal', myAnimal); updateMe();
       const id = await rpc('dn_post_memo', { p_lat: d.lat, p_lng: d.lng, p_place: d.place || '', p_area: d.area || '', p_body: body.value.trim(), p_animal: pickA });
@@ -570,9 +581,13 @@ async function loadComments(m) {
   try {
     const list = await rpc('dn_comments', { p_id: m.id });
     if (openId !== m.id) return;
-    $('cList').innerHTML = list && list.length ? list.map((c) => `<div class="cm"><div class="av"><img src="${aImg(c.animal)}" alt=""></div><div class="t"><b>${esc(c.nickname)}</b><i>${ago(c.created_at)}</i><br>${esc(c.body)}</div>${c.mine ? `<button class="del" data-c="${c.id}">${L_('삭제', 'Delete')}</button>` : ''}</div>`).join('')
+    $('cList').innerHTML = list && list.length ? list.map((c) => `<div class="cm"><div class="av"><img src="${aImg(c.animal)}" alt=""></div><div class="t"><b>${esc(c.nickname)}</b><i>${ago(c.created_at)}</i><br>${esc(c.body)}</div>${c.mine ? `<button class="del" data-c="${c.id}">${L_('삭제', 'Delete')}</button>` : `<button class="del blk" data-c="${c.id}" data-n="${esc(c.nickname)}">${L_('차단', 'Block')}</button>`}</div>`).join('')
       : `<p class="hint">${L_('첫 댓글을 남겨 보세요. 댓글이 달리면 쪽지가 12시간 더 남아요.', 'Be the first — each new commenter adds 12 hours.')}</p>`;
-    $('cList').querySelectorAll('.del').forEach((b) => b.onclick = async () => {
+    $('cList').querySelectorAll('.blk').forEach((b) => b.onclick = () => {
+      if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = L_('정말 차단?', 'Sure?'); return; }
+      blockUser({ p_comment: b.dataset.c }, m.id);
+    });
+    $('cList').querySelectorAll('.del:not(.blk)').forEach((b) => b.onclick = async () => {
       try { await rpc('dn_delete_comment', { p_comment: b.dataset.c }); await refreshMemo(m.id); loadComments(memos.get(m.id) || m); } catch (e) { toast(errMsg(e)); }
     });
   } catch (e) { if (openId === m.id) $('cList').innerHTML = `<p class="hint">${errMsg(e)}</p>`; }
@@ -612,7 +627,7 @@ async function addComment(m) {
 }
 function shareUrl(m) {
   let base = location.origin + '/apps/dongne-note';
-  try { if (MGH.embedded) base = window.parent.location.origin + window.parent.location.pathname; } catch (e) {}
+  try { if (MGH.embedded) base = window.parent.location.origin + '/apps/dongne-note'; } catch (e) {}
   return `${base}?memo=${m.id}`;
 }
 async function share(m) {
@@ -627,9 +642,12 @@ function more(m) {
   openSheet(`<h3>${L_('쪽지 메뉴', 'Note menu')}</h3><div class="menu">
     ${m.mine ? `<button id="oDel" style="color:var(--red)">🗑️ ${L_('내 쪽지 삭제', 'Delete my note')}</button>` : `
     <div style="font-weight:800;margin:4px 0">🚨 ${L_('신고하기', 'Report')}</div>
-    ${[['spam', '스팸·광고', 'Spam'], ['sexual', '음란·선정적', 'Sexual'], ['hate', '욕설·혐오', 'Abuse / hate'], ['privacy', '개인정보 노출', 'Personal info'], ['etc', '기타', 'Other']].map(([k, ko, en]) => `<button data-r="${k}">${L_(ko, en)}</button>`).join('')}`}
+    ${[['spam', '스팸·광고', 'Spam'], ['sexual', '음란·선정적', 'Sexual'], ['hate', '욕설·혐오', 'Abuse / hate'], ['privacy', '개인정보 노출', 'Personal info'], ['etc', '기타', 'Other']].map(([k, ko, en]) => `<button data-r="${k}">${L_(ko, en)}</button>`).join('')}
+    <div style="font-weight:800;margin:10px 0 4px">🙈 ${L_('차단하기', 'Block')}</div>
+    <button id="oBlock">${L_(`${esc(m.nickname)} 님의 쪽지·댓글 안 보기`, `Hide all from ${esc(m.nickname)}`)}</button>`}
     <button id="oBack">${L_('돌아가기', 'Back')}</button></div>`);
   $('oBack').onclick = () => openMemo(m.id);
+  if ($('oBlock')) $('oBlock').onclick = () => blockUser({ p_memo: m.id });
   if ($('oDel')) $('oDel').onclick = async () => {
     if ($('oDel').dataset.armed !== '1') { $('oDel').dataset.armed = '1'; $('oDel').textContent = L_('한 번 더 누르면 삭제돼요', 'Tap again to delete'); return; }
     try { await rpc('dn_delete_memo', { p_id: m.id }); memos.delete(m.id); closeSheet(); render(); toast(L_('삭제했어요', 'Deleted')); } catch (e) { toast(errMsg(e)); }
@@ -638,6 +656,17 @@ function more(m) {
     if (!user) return needLogin();
     try { await rpc('dn_report', { p_id: m.id, p_reason: b.dataset.r }); closeSheet(); toast(L_('신고했어요. 확인 후 처리할게요', 'Reported. Thank you')); } catch (e) { toast(errMsg(e)); }
   });
+}
+
+async function blockUser(target, reopen) {
+  if (!user) return needLogin();
+  try {
+    await rpc('dn_block', Object.assign({ p_memo: null, p_comment: null }, target));
+    memos.clear(); closeSheet();
+    toast(L_('차단했어요. 이제 그 이웃의 쪽지·댓글은 안 보여요', 'Blocked. You will no longer see their notes'));
+    await load();
+    if (reopen && memos.has(reopen)) openMemo(reopen);
+  } catch (e) { toast(errMsg(e)); }
 }
 
 /* ---------- 지금의 이야기 ---------- */
@@ -699,7 +728,9 @@ $('bMe').onclick = async () => {
     <div style="font-weight:800">${L_('내 동물', 'My animal')}</div>${animalGrid(myAnimal)}
     <div style="font-weight:800;margin-bottom:4px">${L_('내가 남긴 쪽지', 'My notes')}</div>
     <div class="list">${list.length ? list.map((m) => `<button class="it" data-id="${m.id}" ${m.alive ? '' : 'disabled style="opacity:.5"'}><div class="t" style="--nc:${nc(m)}"><b>${esc(m.place || m.area || '')}</b><p>${esc(m.body)}</p><span>${ago(m.created_at)} · ${m.alive ? left(m.expires_at) : L_('사라진 쪽지', 'Gone')}${m.likes ? ` · ❤️ ${m.likes}` : ''}${m.comments ? ` · 💬 ${m.comments}` : ''}</span></div></button>`).join('')
-      : `<div class="empty">${L_('아직 남긴 쪽지가 없어요', 'No notes yet')}</div>`}</div>`);
+      : `<div class="empty">${L_('아직 남긴 쪽지가 없어요', 'No notes yet')}</div>`}</div>
+    <button class="btn s" id="unblk" style="width:100%;margin-top:14px">🙈 ${L_('차단한 이웃 모두 풀기', 'Unblock everyone')}</button>`);
+  $('unblk').onclick = async () => { try { const n = await rpc('dn_unblock_all'); toast(L_(`차단 ${n || 0}명을 풀었어요`, `Unblocked ${n || 0}`)); memos.clear(); load(); } catch (e) { toast(errMsg(e)); } };
   bindGrid($('sheetBody'), async (a) => {
     try { await rpc('dn_set_animal', { p_animal: a }); myAnimal = a; lsSet('animal', a); updateMe(); toast(L_(`이제 ${ANAME[a][0]}(으)로 보여요 (새 쪽지부터)`, `You are now a ${ANAME[a][1]} (new notes)`)); } catch (e) { toast(errMsg(e)); }
   });
