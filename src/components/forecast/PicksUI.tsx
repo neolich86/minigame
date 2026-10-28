@@ -1,5 +1,6 @@
 "use client";
 // 스포츠 승부 예측 — 내 승부 예측(픽) 선택·공유 UI
+import { logShare } from "@/lib/shareEvent";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useApp } from "@/components/AppProvider";
@@ -313,6 +314,7 @@ export function ShareBox({
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl());
+      logShare("sports-forecast", "copy");
       flash(t.copied);
     } catch {
       window.prompt(t.copy, shareUrl());
@@ -329,10 +331,12 @@ export function ShareBox({
         { title: t.btnMake, link: { mobileWebUrl: `${origin()}/apps/sports-forecast`, webUrl: `${origin()}/apps/sports-forecast` } },
       ],
     });
+    logShare("sports-forecast", "kakao");
   };
   const native = async () => {
     try {
       await navigator.share({ title, text: t.kakaoDesc, url: shareUrl() });
+      logShare("sports-forecast", "native");
     } catch {}
   };
 

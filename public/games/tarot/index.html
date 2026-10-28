@@ -826,6 +826,7 @@ $("againBtn").onclick = () => goHome(true);
 $("recvCta").onclick = () => goHome(true);
 /* ───── 공유 ───── */
 function track(event, extra) {
+  if (event === "tarot_share") window.MGH?.shared?.((extra && extra.method) || "other");
   try { const w = window.parent !== window ? window.parent : window; (w.dataLayer = w.dataLayer || []).push(Object.assign({ event, tarot_cat: current && current.cat }, extra || {})); } catch (e) {}
 }
 const KAKAO_SDK = "https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js";

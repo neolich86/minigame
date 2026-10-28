@@ -1208,9 +1208,10 @@ function renderCard(el, st){
 function copyText(txt){
   const input=$('#bragLink');
   if(navigator.clipboard && window.isSecureContext){
-    return navigator.clipboard.writeText(txt).then(()=>true).catch(()=>legacyCopy(input));
+    return navigator.clipboard.writeText(txt).then(()=>true).catch(()=>legacyCopy(input)).then(ok=>{ if(ok) window.MGH?.shared?.('copy'); return ok; });
   }
-  return Promise.resolve(legacyCopy(input));
+  const ok=legacyCopy(input); if(ok) window.MGH?.shared?.('copy');
+  return Promise.resolve(ok);
 }
 function legacyCopy(input){
   try{ input.focus(); input.select(); input.setSelectionRange(0,99999);
@@ -1234,7 +1235,7 @@ $('#bragCopy').onclick=()=>copyText($('#bragLink').value).then(ok=>{
 $('#bragShare').onclick=()=>{
   if(!navigator.share) return;
   navigator.share({ title:'무기 강화 - 미니게임천국',
-    text:`${WEAPONS[S.key].name} Lv.${S.lv} 달성!`, url:$('#bragLink').value }).catch(()=>{});
+    text:`${WEAPONS[S.key].name} Lv.${S.lv} 달성!`, url:$('#bragLink').value }).then(()=>window.MGH?.shared?.('native')).catch(()=>{});
 };
 $('#bragClose').onclick=()=>$('#bragModal').classList.remove('open');
 $('#bragModal').onclick=e=>{ if(e.target.id==='bragModal') $('#bragModal').classList.remove('open'); };
@@ -1346,13 +1347,14 @@ async function copyLink(url){
   let ok = false;
   try{ if(navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(url); ok = true; } }catch(e){}
   if(!ok){ $('#bragLink').value = url; ok = legacyCopy($('#bragLink')); }
+  if(ok) window.MGH?.shared?.('copy');
   $('#resLink').textContent = url;
   toast(ok ? L('링크 복사 완료!','Link copied!') : L('아래 링크를 길게 눌러 복사하세요','Long-press the link below to copy'), ok?'#8fd0ff':'#ff9b34');
 }
 $('#resChallenge').onclick = ()=> withBusy($('#resChallenge'), async ()=>{
   const url = await resultLink();
   if(navigator.share){
-    try{ await navigator.share({ title:L('무기 강화 도전장','Weapon Enhance challenge'), text:challengeText(RES.lv), url }); $('#resLink').textContent = url; return; }
+    try{ await navigator.share({ title:L('무기 강화 도전장','Weapon Enhance challenge'), text:challengeText(RES.lv), url }); $('#resLink').textContent = url; window.MGH?.shared?.('native'); return; }
     catch(e){ if(e && e.name==='AbortError') return; }
   }
   await copyLink(url);
@@ -1362,13 +1364,14 @@ $('#resShare').onclick = ()=> withBusy($('#resShare'), async ()=>{
   const blob = await resultImage(RES);
   const file = new File([blob], `weapon-lv${RES.lv}.png`, {type:'image/png'});
   if(navigator.canShare && navigator.canShare({files:[file]})){
-    try{ await navigator.share({ files:[file], title:L('무기 강화','Weapon Enhance'), text:challengeText(RES.lv) }); return; }
+    try{ await navigator.share({ files:[file], title:L('무기 강화','Weapon Enhance'), text:challengeText(RES.lv) }); window.MGH?.shared?.('image'); return; }
     catch(e){ if(e && e.name==='AbortError') return; }
   }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = file.name;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  window.MGH?.shared?.('image_save');
   toast(L('이미지를 저장했어요','Image saved'), '#8fd0ff');
 });
 

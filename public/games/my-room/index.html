@@ -1164,8 +1164,8 @@ $('dlBtn').onclick = () => {
   g.setTransform(3, 0, 0, 3, 0, 0); g.imageSmoothingEnabled = false; drawAll(g, false);
   c.toBlob(async (blob) => {
     const file = new File([blob], 'my-room.png', { type: 'image/png' });
-    try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: L_('마이룸', 'My Room') }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'my-room.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: L_('마이룸', 'My Room') }); window.MGH?.shared?.('image'); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'my-room.png'; a.click(); window.MGH?.shared?.('image_save'); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   });
 };
 

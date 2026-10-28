@@ -196,7 +196,7 @@
   }
   function copy(url) {
     $("mghrLink").textContent = url;
-    var done = function (ok) { toast(ok ? L("링크 복사 완료!", "Link copied!") : L("아래 링크를 길게 눌러 복사하세요", "Long-press the link below to copy")); };
+    var done = function (ok) { if (ok) window.MGH?.shared?.("copy"); toast(ok ? L("링크 복사 완료!", "Link copied!") : L("아래 링크를 길게 눌러 복사하세요", "Long-press the link below to copy")); };
     if (navigator.clipboard && W.isSecureContext) return navigator.clipboard.writeText(url).then(function () { done(true); }, function () { done(legacyCopy(url)); });
     done(legacyCopy(url));
   }
@@ -213,7 +213,7 @@
   function challenge() {
     return link().then(function (url) {
       if (navigator.share) {
-        return navigator.share({ title: R.o.game, text: shareText(), url: url }).then(function () { $("mghrLink").textContent = url; }, function (e) {
+        return navigator.share({ title: R.o.game, text: shareText(), url: url }).then(function () { $("mghrLink").textContent = url; window.MGH?.shared?.("native"); }, function (e) {
           if (e && e.name === "AbortError") return;
           return copy(url);
         });
@@ -266,7 +266,7 @@
       var file;
       try { file = new File([blob], name, { type: "image/png" }); } catch (e) { file = null; }
       if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-        return navigator.share({ files: [file], title: R.o.game, text: shareText() }).catch(function (e) {
+        return navigator.share({ files: [file], title: R.o.game, text: shareText() }).then(function () { window.MGH?.shared?.("image"); }, function (e) {
           if (e && e.name === "AbortError") return;
           download(blob, name);
         });
@@ -279,6 +279,7 @@
     a.href = URL.createObjectURL(blob); a.download = name;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    window.MGH?.shared?.("image_save");
     toast(L("이미지를 저장했어요", "Image saved"));
   }
 

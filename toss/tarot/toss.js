@@ -29,6 +29,7 @@ function hookSave() {
       if (!File.saveBase64.isSupported()) throw new Error("unsupported");
       const data = await toBase64(await window.storyBlob());
       await File.saveBase64({ data, fileName: `tarot-${Date.now()}.png`, mimeType: "image/png" });
+      try { window.MGH && MGH.shared("image_save"); } catch (e) {}
       window.toast(ko ? "사진첩에 저장했어요" : "Saved to your photos");
     } catch (e) {
       window.toast(ko ? "저장하지 못했어요. 토스 앱을 최신 버전으로 업데이트해 주세요" : "Couldn't save. Please update the Toss app.");

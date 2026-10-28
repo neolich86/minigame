@@ -229,6 +229,29 @@
     });
   }
 
+  /* 공유 횟수: 플랫폼 = toss(앱인토스 빌드가 MGH_PLATFORM 지정) / app(구글플레이 Capacitor 앱) / web */
+  function platform() {
+    if (W.MGH_PLATFORM) return W.MGH_PLATFORM;
+    try { if (W.Capacitor && W.Capacitor.isNativePlatform && W.Capacitor.isNativePlatform()) return "app"; } catch (e) {}
+    try { var pc = embedded && W.parent.Capacitor; if (pc && pc.isNativePlatform && pc.isNativePlatform()) return "app"; } catch (e) {}
+    return "web";
+  }
+  var lastShare = {};
+  function logShare(method, game) {
+    try {
+      game = game || W.MGH_GAME || ((/\/games\/([a-z0-9-]+)\//.exec(location.pathname) || [])[1]);
+      method = String(method || "other").toLowerCase().replace(/[^a-z_]/g, "").slice(0, 20) || "other";
+      if (!game) return;
+      var k = game + ":" + method, now = Date.now();
+      if (lastShare[k] && now - lastShare[k] < 3000) return; // 연타 한 번으로
+      lastShare[k] = now;
+      var url = (W.MGH_API || "") + "/api/share-event";
+      var body = JSON.stringify({ game: game, platform: platform(), method: method });
+      if (navigator.sendBeacon && navigator.sendBeacon(url, body)) return;
+      fetch(url, { method: "POST", body: body, keepalive: true, mode: "no-cors" }).catch(function () {});
+    } catch (e) {}
+  }
+
   var sessionBest = {};
   var timers = {};
 
@@ -292,6 +315,8 @@
       onTarget: function (fn) { chalTargetFns.push(fn); if (chalTarget) fn(chalTarget); },
       target: function () { return chalTarget; },
     },
+    /** 결과 공유 횟수 기록 — 공유(링크 복사·카카오·공유 시트·이미지 저장)가 끝났을 때 MGH.shared('copy') */
+    shared: function (method, game) { logShare(method, game); },
     net: {
       send: function (msg) { return toParent(msg); },
       on: function (fn) { netHandlers.push(fn); },

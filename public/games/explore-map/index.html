@@ -925,15 +925,16 @@ $('shKakao').onclick = () => {
       content: { title: t.title, description: t.desc, imageUrl: cardUrl(x), imageWidth: 1200, imageHeight: 630, link: { mobileWebUrl: url, webUrl: url } },
       buttons: [{ title: L_('나도 탐험하기', 'Start exploring'), link: { mobileWebUrl: url, webUrl: url } }],
     });
+    window.MGH?.shared?.('kakao');
   } catch (e) { toast(L_('카카오톡 공유를 열지 못했어요', 'Could not open KakaoTalk')); }
 };
 $('shNative').onclick = async () => {
   const x = withHoney(shareData()), t = shareTexts(x);
-  try { await navigator.share({ title: t.title, text: t.desc, url: shareUrl(x) }); } catch (e) {}
+  try { await navigator.share({ title: t.title, text: t.desc, url: shareUrl(x) }); window.MGH?.shared?.('native'); } catch (e) {}
 };
 $('shCopy').onclick = async () => {
   const x = withHoney(shareData()), t = shareTexts(x), text = `${t.title}\n${shareUrl(x)}`;
-  try { await navigator.clipboard.writeText(text); toast(L_('링크를 복사했어요', 'Link copied')); }
+  try { await navigator.clipboard.writeText(text); window.MGH?.shared?.('copy'); toast(L_('링크를 복사했어요', 'Link copied')); }
   catch (e) { window.prompt(L_('아래 링크를 복사하세요', 'Copy this link'), shareUrl(x)); }
 };
 

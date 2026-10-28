@@ -472,9 +472,9 @@ $('bStory').onclick=()=>{
   $('modal').hidden=false;$('bClose').focus()};
 $('bSave').onclick=async()=>{
   try{const b=await (await fetch(STORY_URL)).blob();const f=new File([b],'my-post-2026.png',{type:'image/png'});
-    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}}
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});window.MGH?.shared?.('image');return}}
   catch(e){if(e&&e.name==='AbortError')return}
-  const a=document.createElement('a');a.href=STORY_URL;a.target='_blank';a.rel='noopener';document.body.append(a);a.click();a.remove();
+  window.MGH?.shared?.('image_save');const a=document.createElement('a');a.href=STORY_URL;a.target='_blank';a.rel='noopener';document.body.append(a);a.click();a.remove();
   toast('새 탭에서 이미지를 길게 눌러(또는 우클릭) 저장하세요.')};
 $('bClose').onclick=()=>{$('modal').hidden=true;$('bStory').focus()};
 $('modal').onclick=e=>{if(e.target===$('modal'))$('modal').hidden=true};
@@ -482,14 +482,14 @@ const SHARE_TEXT='내 인스타 2026년을 분석해봤습니다';
 // 클립보드 복사 — 버튼을 누른 그 순간에 호출해야 브라우저가 허용한다
 function copyShare(){const t=SHARE_TEXT+' 👉 '+SHARE_URL;
   const p=navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject();
-  return p.then(()=>true,()=>{toast('아래 주소를 길게 눌러 복사하세요: '+SHARE_URL,9000);return false})}
+  return p.then(()=>(window.MGH?.shared?.('copy'),true),()=>{toast('아래 주소를 길게 눌러 복사하세요: '+SHARE_URL,9000);return false})}
 $('bCopy').onclick=()=>{copyShare().then(ok=>{if(ok)toast('링크를 복사했어요. 카톡이나 DM에 붙여넣어 보내세요.')})};
 // 휴대폰: 공유 창(카톡·DM·인스타)을 연다. PC·앱 내 브라우저: 공유 창이 안 뜨거나 멈추는 경우가 많아 링크 복사로 처리
 const MOBILE=matchMedia('(pointer:coarse)').matches&&/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const IN_APP=/KAKAOTALK|Instagram|FBAN|FBAV|NAVER|Line\//i.test(navigator.userAgent);
 $('bKakao').onclick=()=>{
   if(MOBILE&&!IN_APP&&navigator.share){
-    navigator.share({title:'My Post 2026',text:SHARE_TEXT,url:SHARE_URL}).catch(e=>{if(!e||e.name!=='AbortError')copyShare().then(ok=>{if(ok)toast('링크를 복사했어요. 카톡이나 DM에 붙여넣어 보내세요.')})});
+    navigator.share({title:'My Post 2026',text:SHARE_TEXT,url:SHARE_URL}).then(()=>window.MGH?.shared?.('native')).catch(e=>{if(!e||e.name!=='AbortError')copyShare().then(ok=>{if(ok)toast('링크를 복사했어요. 카톡이나 DM에 붙여넣어 보내세요.')})});
     return}
   copyShare().then(ok=>{if(ok)toast('링크를 복사했어요. 카톡이나 DM에 붙여넣어 보내세요.')})};
 let delArmed=false;

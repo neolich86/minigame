@@ -13,6 +13,8 @@ const must = (from, to) => {
   if (!html.includes(from)) throw new Error("not found: " + from.slice(0, 60));
   html = html.split(from).join(to);
 };
+// 공유 횟수 집계: 토스 플랫폼으로 우리 API 에 기록 (fetch 만, 페이지 이동 아님)
+must('<script src="/mgh/bridge.js"', '<script>window.MGH_PLATFORM="toss";window.MGH_API="https://playwithme.kr";window.MGH_GAME="passport-map"</script><script src="/mgh/bridge.js"');
 must('src="/mgh/bridge.js"', 'src="./mgh/bridge.js"');
 must('src="/mgh/i18n/passport-map.js"', 'src="./mgh/i18n/passport-map.js"');
 html = html.replace(/<link rel="canonical"[^>]*>/, "");

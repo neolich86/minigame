@@ -15,7 +15,8 @@ const must = (from, to) => {
   if (!html.includes(from)) throw new Error("not found: " + from.slice(0, 60));
   html = html.split(from).join(to);
 };
-must('<script src="/mgh/bridge.js"></script>', '<script src="./mgh/bridge.js"></script>');
+// 공유 횟수 집계: 토스 플랫폼으로 우리 API 에 기록 (fetch 만, 페이지 이동 아님)
+must('<script src="/mgh/bridge.js"></script>', '<script>window.MGH_PLATFORM="toss";window.MGH_API="https://playwithme.kr";window.MGH_GAME="tarot"</script><script src="./mgh/bridge.js"></script>');
 html = html.replace(/<link rel="canonical"[^>]*>/, "");
 // 공유 팝업: 카카오·링크 복사·공유 시트 숨기고 이미지 저장만
 must("</style>", "#shKakao,#shNative,#shCopy{display:none!important}.sheet .prev{aspect-ratio:1080/1920;width:52%;margin:4px auto 0;object-fit:contain}.sbtns{grid-template-columns:1fr}\n</style>");

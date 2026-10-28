@@ -11,6 +11,7 @@ function hookSave() {
       if (!File.saveBase64.isSupported()) throw new Error("unsupported");
       const data = cv.toDataURL("image/png").split(",")[1];
       await File.saveBase64({ data, fileName: `passport-map-${Date.now()}.png`, mimeType: "image/png" });
+      try { window.MGH && MGH.shared("image_save"); } catch (e) {}
       if (msg) msg.textContent = document.documentElement.lang === "en" ? "Saved to your photos." : "사진첩에 저장했어요.";
     } catch (e) {
       if (msg) msg.textContent = document.documentElement.lang === "en" ? "Couldn't save. Please update the Toss app." : "저장하지 못했어요. 토스 앱을 최신 버전으로 업데이트해 주세요.";

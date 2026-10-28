@@ -1257,12 +1257,12 @@ const getBlob=()=>shBlob?Promise.resolve(shBlob):new Promise(r=>$('#shareCv').to
 if(EMB){$('#shNote').textContent='인스타그램·카카오톡에는 이미지를 저장한 뒤 앱에서 올려 주세요. 내 지도 링크를 만들면 링크 복사·X·페이스북·앱 공유가 모두 내 지도 주소로 공유돼요.'}
 const shFile=b=>new File([b],'passport-map.png',{type:'image/png'});
 try{if(navigator.canShare&&navigator.canShare({files:[new File([new Blob(['x'],{type:'image/png'})],'t.png',{type:'image/png'})]}))$('#shNative').hidden=false}catch(e){}
-$('#shNative').onclick=async()=>{try{const b=await getBlob();await navigator.share({files:[shFile(b)],title:shTitleText(),text:'My Passport Map',url:EMB?shareURL():undefined})}catch(e){if(e&&e.name!=='AbortError')shMsg('공유하지 못했어요. ‘이미지 저장’을 이용해 주세요.')}};
-$('#shSave').onclick=async()=>{if(!DL){try{const b=await getBlob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=shFile(b).name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);shMsg('이미지를 저장했어요.')}catch(e){shMsg('저장하지 못했어요. ‘이미지 복사’를 이용해 주세요.')}return}
-  try{const b=await getBlob();await DL.save({filename:`passport-map-${({sq:'정사각',pt:'세로',ls:'가로'})[SH.f]}.png`,data:b});shMsg('이미지를 저장했어요.')}
+$('#shNative').onclick=async()=>{try{const b=await getBlob();await navigator.share({files:[shFile(b)],title:shTitleText(),text:'My Passport Map',url:EMB?shareURL():undefined});window.MGH?.shared?.('native')}catch(e){if(e&&e.name!=='AbortError')shMsg('공유하지 못했어요. ‘이미지 저장’을 이용해 주세요.')}};
+$('#shSave').onclick=async()=>{if(!DL){try{const b=await getBlob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=shFile(b).name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);window.MGH?.shared?.('image_save');shMsg('이미지를 저장했어요.')}catch(e){shMsg('저장하지 못했어요. ‘이미지 복사’를 이용해 주세요.')}return}
+  try{const b=await getBlob();await DL.save({filename:`passport-map-${({sq:'정사각',pt:'세로',ls:'가로'})[SH.f]}.png`,data:b});window.MGH?.shared?.('image_save');shMsg('이미지를 저장했어요.')}
   catch(err){const c=err&&err.code;shMsg(c==='declined'?'저장을 취소했어요.':c==='rate_limited'?'저장 창이 이미 열려 있어요.':'저장하지 못했어요. ‘이미지 복사’를 이용해 주세요.')}};
-$('#shCopyImg').onclick=()=>{try{const item=new ClipboardItem({'image/png':getBlob()});navigator.clipboard.write([item]).then(()=>shMsg('이미지를 복사했어요. SNS 글쓰기 창에 붙여넣으세요.'),()=>shMsg('이 브라우저에서는 이미지 복사가 막혀 있어요. ‘이미지 저장’을 이용해 주세요.'))}catch(e){shMsg('이 브라우저에서는 이미지 복사가 막혀 있어요. ‘이미지 저장’을 이용해 주세요.')}};
-$('#shCopyLink').onclick=()=>{const done=()=>shMsg(EMB?(PUB&&PUB.slug?'내 지도 링크를 복사했어요.':'게임 링크를 복사했어요. 내 지도를 보여주려면 위에서 내 지도 링크를 만드세요.'):'링크를 복사했어요. 공유 설정에서 링크를 공개해야 다른 사람이 열 수 있어요.');
+$('#shCopyImg').onclick=()=>{try{const item=new ClipboardItem({'image/png':getBlob()});navigator.clipboard.write([item]).then(()=>(window.MGH?.shared?.('image_copy'),shMsg('이미지를 복사했어요. SNS 글쓰기 창에 붙여넣으세요.')),()=>shMsg('이 브라우저에서는 이미지 복사가 막혀 있어요. ‘이미지 저장’을 이용해 주세요.'))}catch(e){shMsg('이 브라우저에서는 이미지 복사가 막혀 있어요. ‘이미지 저장’을 이용해 주세요.')}};
+$('#shCopyLink').onclick=()=>{const done=()=>(window.MGH?.shared?.('copy'),shMsg(EMB?(PUB&&PUB.slug?'내 지도 링크를 복사했어요.':'게임 링크를 복사했어요. 내 지도를 보여주려면 위에서 내 지도 링크를 만드세요.'):'링크를 복사했어요. 공유 설정에서 링크를 공개해야 다른 사람이 열 수 있어요.'));
   const U=shareURL();try{navigator.clipboard.writeText(U).then(done,()=>shMsg('복사가 막혀 있어요. 이 주소를 복사하세요: '+U))}catch(e){shMsg('이 주소를 복사하세요: '+U)}};
 
 /* ---------- boot ---------- */
