@@ -1,0 +1,19 @@
+{
+  "name": "dongnenote-toss",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "동네쪽지 — 앱인토스 미니앱 (익명 계정, Supabase 직접 연결)",
+  "scripts": {
+    "prepare-web": "node prepare.mjs",
+    "build": "node prepare.mjs && vite build && ait build",
+    "deploy": "ait deploy"
+  },
+  "dependencies": {
+    "@apps-in-toss/web-framework": "3.8.1",
+    "@supabase/supabase-js": "2.117.1"
+  },
+  "devDependencies": {
+    "vite": "6.3.5"
+  }
+}
