@@ -391,6 +391,34 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       ],
     },
   },
+  "dongne-note": {
+    ko: {
+      tips: [
+        "장소 이름으로 검색해서 남기면 쪽지에 장소 이름이 함께 붙어요. 지도에서 직접 고르면 동네 이름만 표시돼요.",
+        "다른 사람이 좋아요를 누르면 6시간, 댓글을 달면 12시간 더 남아요. 반응이 많은 쪽지는 보라색 빛기둥이 올라와요.",
+        "📅 버튼으로 오늘 · 3일 · 전체 쪽지를 골라 볼 수 있어요.",
+        "만료가 가까운 쪽지일수록 아이콘이 흐려져요. 사라지기 전에 좋아요로 살려 주세요!",
+      ],
+      faq: [
+        { q: "내 위치가 다른 사람에게 보이나요?", a: "아니요. 동네쪽지는 GPS를 쓰지 않아요. 쪽지는 내가 검색하거나 지도에서 고른 장소에만 남고, 지도에서 직접 고른 곳은 약 100m 단위로 표시돼요." },
+        { q: "쪽지는 언제 사라지나요?", a: "기본 7일이에요. 다른 사람의 좋아요 1개마다 6시간, 댓글 단 사람 1명마다 12시간 늘어나고 최대 30일까지 남아요." },
+        { q: "쪽지를 남기려면 로그인해야 하나요?", a: "구경은 로그인 없이 돼요. 쪽지·좋아요·댓글은 카카오나 이메일로 로그인한 뒤 할 수 있어요." },
+        { q: "이상한 쪽지를 봤어요.", a: "쪽지의 ⋯ 메뉴에서 신고해 주세요. 여러 명이 신고하면 바로 숨겨지고 운영자가 확인해요." },
+      ],
+    },
+    en: {
+      tips: [
+        "Search a place by name and its name is attached to your note; picking on the map shows only the area name.",
+        "Each like adds 6 hours and each commenter 12 hours. Popular notes glow with a purple beam.",
+        "Use 📅 to show today's, 3-day or all notes.",
+      ],
+      faq: [
+        { q: "Is my location shown?", a: "No. GPS is never used — notes only go where you put them, and spots picked on the map are rounded to about 100m." },
+        { q: "When do notes disappear?", a: "After 7 days, extended by likes (+6h) and comments (+12h), up to 30 days." },
+        { q: "Do I need an account?", a: "Browsing is free. Writing, likes and comments need a Kakao or email login." },
+      ],
+    },
+  },
   "explore-map": {
     ko: {
       tips: [

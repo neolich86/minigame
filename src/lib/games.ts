@@ -197,6 +197,20 @@ const CATALOG: Game[] = [
     hidden: true, // 시험판 — 주소로만 열림
   },
   {
+    id: "dongne-note",
+    kind: "app",
+    title: { ko: "동네쪽지", en: "Neighborhood Notes" },
+    desc: {
+      ko: "지도에서 장소를 골라 동물 친구와 함께 쪽지를 남기고, 이웃들의 이야기에 좋아요·댓글을 다는 동네 지도 (쪽지는 7일 뒤 사라져요)",
+      en: "Leave notes on places around Korea with your animal avatar, and like or comment on your neighbors' notes — notes vanish after 7 days",
+    },
+    genre: "casual",
+    thumb: "/thumbs/dongne-note.jpg",
+    src: "/games/dongne-note/index.html",
+    saves: true, // 로그인 상태 전달 + MGH.rpc (src/lib/gameRpc.ts)
+    hidden: true, // supabase/migrations/0025_dongne_note.sql 실행 후 공개
+  },
+  {
     id: "explore-map",
     kind: "app",
     title: { ko: "동네 정복", en: "Town Conquest" },

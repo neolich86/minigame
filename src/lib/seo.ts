@@ -440,6 +440,42 @@ export const GAME_SEO: SeoMap = {
       tags: ["Mini room", "Decorating", "Pixel art", "Avatar", "Cozy", "Free"],
     },
   },
+  "dongne-note": {
+    ko: {
+      title: "동네쪽지 - 지도에 남기는 동네 쪽지·메모",
+      h1: "동네쪽지 — 장소에 쪽지를 남기고 이웃의 이야기를 보는 지도",
+      description: "지도에서 장소를 골라 동물 아이콘과 함께 쪽지를 남기면 다른 사람들이 보고 좋아요·댓글을 남겨요. 쪽지는 7일 뒤 사라지고, 반응이 많으면 최대 30일까지 남아요.",
+      keywords: ["동네쪽지", "동네 메모", "지도 메모", "장소 쪽지", "익명 쪽지", "동네 이야기", "지도 커뮤니티", "맛집 메모", "산책 기록", "무료"],
+      about: [
+        "동네쪽지는 지도 위 장소에 짧은 쪽지를 남기는 서비스예요. 장소를 검색하거나 지도에서 직접 고르면 그 자리에 내가 고른 동물 아이콘과 함께 쪽지가 떠요. 다른 사람들은 지도를 둘러보며 쪽지를 읽고 좋아요와 댓글을 남길 수 있어요.",
+        "쪽지는 7일 뒤 사라져요. 다른 사람이 좋아요를 누르면 6시간, 댓글을 달면 12시간씩 더 남고, 사랑받은 쪽지는 최대 30일까지 그 동네의 명소처럼 남아요. 내 위치(GPS)는 사용하지 않고, 쪽지는 내가 고른 장소에만 남아요.",
+      ],
+      howTo: [
+        "지도를 움직이거나 🔍로 장소를 찾아 이웃들이 남긴 쪽지를 구경해요.",
+        "초록색 ＋를 눌러 장소를 검색하거나 지도에서 직접 고르고, 140자 쪽지를 남겨요.",
+        "처음 남길 때 나를 나타낼 동물을 골라요. 지도에서 내 쪽지는 이 동물로 보여요.",
+        "마음에 드는 쪽지에 ❤️ 좋아요나 💬 댓글을 남기면 그 쪽지가 더 오래 남아요.",
+      ],
+      tags: ["지도", "쪽지", "동네", "커뮤니티", "무료"],
+    },
+    en: {
+      title: "Neighborhood Notes - Leave Notes on a Map of Korea",
+      h1: "Neighborhood Notes — Leave Notes on Places, Read Your Neighbors' Stories",
+      description: "Pick a place on the map and leave a short note with your animal avatar. Others can like and comment. Notes vanish after 7 days — popular ones last up to 30.",
+      keywords: ["neighborhood notes", "map notes", "place notes", "local stories", "map community", "Korea map", "free"],
+      about: [
+        "Neighborhood Notes lets you leave short notes on places. Search for a place or pick a spot on the map, and your note appears there with the animal you chose. Others browse the map, read notes, and leave likes and comments.",
+        "Notes disappear after 7 days. Each new like adds 6 hours and each new commenter 12 hours, up to 30 days. Your GPS location is never used — notes only go where you put them.",
+      ],
+      howTo: [
+        "Move the map or use 🔍 to find a place and read notes.",
+        "Tap the green ＋, search or pick a spot, and write up to 140 characters.",
+        "Pick your animal the first time — your notes show it on the map.",
+        "Like ❤️ or comment 💬 on notes you enjoy to keep them around longer.",
+      ],
+      tags: ["Map", "Notes", "Local", "Community", "Free"],
+    },
+  },
   "explore-map": {
     ko: {
       title: "동네 정복 - 지하철역·버스정류장 체크인 땅따먹기",

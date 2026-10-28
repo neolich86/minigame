@@ -304,6 +304,8 @@
       /** method: "kakao" 면 바로 카카오 로그인, 아니면 로그인 화면(이메일·카카오) */
       login: function (method) { toParent({ type: "save:login", method: method === "kakao" ? "kakao" : "page" }); },
     },
+    /** 서버 기능 호출 — 포털(src/lib/gameRpc.ts)에 허용된 Supabase RPC 만. 로그인 사용자 세션으로 실행. Promise */
+    rpc: function (name, params) { return saveCall("rpc", { name: name, params: params || {} }); },
     /** 친구에게 도전하기 — 포털 안에서만 동작 (단독 실행이면 reject)
      *  info(board, score) → {pct, user, cloud}   pct: 랭킹 상위 % (기록 없으면 null), user: 로그인 닉네임|null
      *  create(board, score, meta, name) → {code, url, nickname, pct}

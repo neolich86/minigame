@@ -9,7 +9,8 @@ import { Leaderboard } from "./Leaderboard";
 import { LikeButton } from "./LikeButton";
 import { useToasts } from "./Toasts";
 import { formatScore, formatVs, gameById, itemPath, playStoreUrl } from "@/lib/games";
-import { cloudEnabled, displayName, fetchMyRank, fetchMyScores, signInKakao, submitScore, type ScoreRow } from "@/lib/supabase";
+import { GAME_RPC } from "@/lib/gameRpc";
+import { cloudEnabled, displayName, sb, fetchMyRank, fetchMyScores, signInKakao, submitScore, type ScoreRow } from "@/lib/supabase";
 import { deleteFiles, deleteShare, fileUrls, loadSave, publishShare, putFile, shareInfo, storeSave } from "@/lib/saves";
 import { errorKey } from "@/lib/i18n";
 import { createChallenge, fetchChallenge, fetchTopPct, type Challenge } from "@/lib/challenge";
@@ -165,6 +166,16 @@ export function GamePlayer({ gameId, app }: { gameId: string; app?: string }) {
           return deleteShare(game.id);
         case "urls":
           return fileUrls(game.id, Array.isArray(args.names) ? args.names.filter((n): n is string => typeof n === "string") : []);
+        case "rpc": {
+          const name = String(args.name);
+          if (!GAME_RPC[game.id]?.includes(name)) throw new Error("rpc_not_allowed");
+          const db = sb();
+          if (!db) throw new Error("cloud_disabled");
+          const params = args.params && typeof args.params === "object" ? (args.params as Record<string, unknown>) : {};
+          const { data, error } = await db.rpc(name, params);
+          if (error) throw new Error(error.message);
+          return data;
+        }
       }
       throw new Error("bad_op");
     }
