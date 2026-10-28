@@ -9,6 +9,10 @@
 <link rel="stylesheet" href="vendor/leaflet-1.9.4.css">
 <link rel="stylesheet" href="fonts/gaegu.css">
 <script src="vendor/leaflet-1.9.4.js"></script>
+<link rel="stylesheet" href="vendor/maplibre-gl-4.7.1.css">
+<script src="vendor/maplibre-gl-4.7.1.js"></script>
+<script src="vendor/leaflet-maplibre-gl-0.1.4.js"></script>
+<script src="mapstyle.js"></script>
 <style>
 :root{--paper:#fbf6ea;--paper2:#f2e9d5;--card:#fffdf7;--ink:#3a2e24;--sub:#8b7b69;--line:#e3d6bd;--acc:#ff6b4a;--acc2:#e5553a;--mus:#f2b632;--mint:#4dbf9c;--hand:'Gaegu','Nanum Pen Script','Pretendard',cursive}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -17,8 +21,8 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 input,textarea{font:inherit;color:var(--ink)}
 #map{position:fixed;inset:0;background:#efe7d6}
 .leaflet-container{font:inherit;background:#efe7d6}
-.leaflet-tile-pane{filter:grayscale(.55) sepia(.32) saturate(1.15) brightness(1.04) contrast(.9)}
-body.night .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) grayscale(.5) sepia(.35) brightness(.72) contrast(1.05)}
+body.raster .leaflet-tile-pane{filter:grayscale(.55) sepia(.32) saturate(1.15) brightness(1.04) contrast(.9)}
+body.raster.night .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) grayscale(.5) sepia(.35) brightness(.72) contrast(1.05)}
 body.night #map,body.night .leaflet-container{background:#2b2620}
 .leaflet-control-attribution{background:rgba(251,246,234,.8)!important;color:#8b7b69!important;font-size:10px;margin-bottom:calc(74px + env(safe-area-inset-bottom))!important}
 .leaflet-control-attribution a{color:#6b5a48!important}
@@ -180,7 +184,7 @@ body.picking .hd,body.picking .chips,body.picking .tabbar{display:none}
   <h2 id="inTitle"></h2><div id="inDesc" style="color:var(--sub);font-size:14px;line-height:1.5"></div>
   <ul id="inList"></ul>
   <button class="btn g" id="inGo" style="width:100%"></button>
-  <p style="margin:12px 0 0;font-size:10px;color:#6f6990;line-height:1.5">동물 아이콘: Noto Emoji (Google, Apache License 2.0) · 지도·장소 검색: © OpenStreetMap 기여자 (ODbL) · 글씨: Gaegu (OFL)</p>
+  <p style="margin:12px 0 0;font-size:10px;color:#6f6990;line-height:1.5">동물 아이콘: Noto Emoji (Google, Apache License 2.0) · 지도: OpenFreeMap · © OpenMapTiles · 장소 검색: © OpenStreetMap 기여자 (ODbL) · 글씨: Gaegu (OFL)</p>
 </div></div>
 
 <script>
@@ -243,9 +247,36 @@ const score = (m) => m.likes + m.comments * 2;
 const start = lsGet('view', null);
 const map = L.map('map', { zoomControl: false, attributionControl: true, minZoom: 7, maxZoom: 19, maxBounds: [[32, 123], [40, 133]], tap: true })
   .setView(start ? [start.lat, start.lng] : [37.5759, 126.9768], start ? start.z : 15);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
-}).addTo(map);
+/* 바탕 지도: OpenFreeMap 벡터 타일을 종이 테마로 단순하게 (mapstyle.js). WebGL 이 없거나 못 불러오면 OSM 기본 지도 */
+let gl = null, raster = null, glNight = lsGet('night', false);
+function useRaster() {
+  if (raster) return;
+  if (gl) { try { map.removeLayer(gl); } catch (e) {} gl = null; }
+  document.body.classList.add('raster');
+  raster = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
+  }).addTo(map);
+}
+function hasWebGL() { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } }
+if (window.maplibregl && L.maplibreGL && window.DN_MAP_STYLE && hasWebGL()) {
+  try {
+    gl = L.maplibreGL({
+      style: DN_MAP_STYLE(lsGet('night', false)),
+      localIdeographFontFamily: "'Pretendard','Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif",
+      attribution: '<a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
+    }).addTo(map);
+    const mm = gl.getMaplibreMap();
+    let ready = false;
+    mm.on('load', () => { ready = true; });
+    mm.on('error', (e) => {
+      const er = (e && e.error) || {};
+      console.warn('[dongne-note map]', er.message);
+      // 스타일·타일 정보를 못 받은 경우만 기본 지도로 (타일 몇 장 실패는 무시)
+      if (!ready && (er.status || /fetch|network|load/i.test(er.message || ''))) useRaster();
+    });
+    setTimeout(() => { if (!ready) useRaster(); }, 9000);
+  } catch (e) { useRaster(); }
+} else useRaster();
 map.attributionControl.setPrefix(false);
 const layer = L.layerGroup().addTo(map);
 let draftMarker = null;
@@ -255,6 +286,7 @@ function setTheme(night) {
   $('bTheme').querySelector('.ic').textContent = night ? '☀️' : '🌙';
   $('bTheme').querySelector('.lb').textContent = night ? L_('낮 지도', 'Day map') : L_('밤 지도', 'Night map');
   lsSet('night', night);
+  if (gl && glNight !== night) try { glNight = night; gl.getMaplibreMap().setStyle(DN_MAP_STYLE(night)); } catch (e) {}
 }
 setTheme(lsGet('night', false));
 $('bTheme').onclick = () => setTheme(!document.body.classList.contains('night'));
