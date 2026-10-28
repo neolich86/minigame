@@ -663,7 +663,7 @@ function more(m) {
   openSheet(`<h3>${L_('쪽지 메뉴', 'Note menu')}</h3><div class="menu">
     ${m.mine ? `<button id="oDel" style="color:var(--red)">🗑️ ${L_('내 쪽지 삭제', 'Delete my note')}</button>` : `
     <div style="font-weight:800;margin:4px 0">🚨 ${L_('신고하기', 'Report')}</div>
-    ${[['spam', '스팸·광고', 'Spam'], ['sexual', '음란·선정적', 'Sexual'], ['hate', '욕설·혐오', 'Abuse / hate'], ['privacy', '개인정보 노출', 'Personal info'], ['etc', '기타', 'Other']].map(([k, ko, en]) => `<button data-r="${k}">${L_(ko, en)}</button>`).join('')}
+    ${[['child', '🧒 아동 안전 (아동 대상 성적 콘텐츠·그루밍)', 'Child safety (child sexual abuse, grooming)'], ['spam', '스팸·광고', 'Spam'], ['sexual', '음란·선정적', 'Sexual'], ['hate', '욕설·혐오', 'Abuse / hate'], ['privacy', '개인정보 노출', 'Personal info'], ['etc', '기타', 'Other']].map(([k, ko, en]) => `<button data-r="${k}">${L_(ko, en)}</button>`).join('')}
     <div style="font-weight:800;margin:10px 0 4px">🙈 ${L_('차단하기', 'Block')}</div>
     <button id="oBlock">${L_(`${esc(m.nickname)} 님의 쪽지·댓글 안 보기`, `Hide all from ${esc(m.nickname)}`)}</button>`}
     <button id="oBack">${L_('돌아가기', 'Back')}</button></div>`);
@@ -675,7 +675,7 @@ function more(m) {
   };
   $('sheetBody').querySelectorAll('[data-r]').forEach((b) => b.onclick = async () => {
     if (!user && !(await ensureUser())) return;
-    try { await rpc('dn_report', { p_id: m.id, p_reason: b.dataset.r }); closeSheet(); toast(L_('신고했어요. 확인 후 처리할게요', 'Reported. Thank you')); } catch (e) { toast(errMsg(e)); }
+    try { await rpc('dn_report', { p_id: m.id, p_reason: b.dataset.r }); if (b.dataset.r === 'child') { memos.delete(m.id); render(); } closeSheet(); toast(b.dataset.r === 'child' ? L_('신고했어요. 이 쪽지는 바로 숨겼어요', 'Reported and hidden right away') : L_('신고했어요. 확인 후 처리할게요', 'Reported. Thank you')); } catch (e) { toast(errMsg(e)); }
   });
 }
 
