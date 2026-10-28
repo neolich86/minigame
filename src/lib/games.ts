@@ -208,7 +208,6 @@ const CATALOG: Game[] = [
     thumb: "/thumbs/dongne-note.jpg",
     src: "/games/dongne-note/index.html",
     saves: true, // 로그인 상태 전달 + MGH.rpc (src/lib/gameRpc.ts)
-    hidden: true, // supabase/migrations/0025_dongne_note.sql 실행 후 공개
   },
   {
     id: "explore-map",
