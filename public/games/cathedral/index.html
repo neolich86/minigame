@@ -24,6 +24,29 @@ canvas{display:block;touch-action:none}
 .loading{margin-top:12px;font-size:12px;color:#bba98a;min-height:16px}
 .credit{position:fixed;right:10px;bottom:6px;font-size:9px;color:rgba(243,233,214,.35);pointer-events:none}
 .timer{font-variant-numeric:tabular-nums}
+.bottom button{padding:8px 9px;min-width:56px}
+.bottom button b{font-weight:700}
+.bottom button.ready{background:rgba(232,211,162,.22);box-shadow:inset 0 0 0 1px rgba(232,211,162,.5)}
+.bottom,.top .pill:last-child{opacity:0;transition:opacity 1s}
+body.in .bottom,body.in .top .pill:last-child{opacity:1}
+.sunpick{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);display:none;gap:6px;background:rgba(20,14,10,.75);backdrop-filter:blur(8px);border:1px solid rgba(243,233,214,.18);border-radius:16px;padding:6px}
+.sunpick.show{display:flex}
+.sunpick button{background:none;border:0;color:#f3e9d6;font:inherit;font-size:13px;font-weight:700;padding:9px 10px;border-radius:10px;cursor:pointer;white-space:nowrap}
+.sunpick button.on{background:#e8d3a2;color:#2a1c0e}
+.toast{position:fixed;left:50%;top:calc(70px + env(safe-area-inset-top));transform:translate(-50%,-10px);background:rgba(20,14,10,.75);border:1px solid rgba(255,190,110,.4);color:#ffe2b0;padding:10px 16px;border-radius:999px;font-size:13px;font-weight:700;opacity:0;transition:.4s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.joy{position:fixed;left:22px;bottom:calc(100px + env(safe-area-inset-bottom));width:110px;height:110px;border-radius:50%;background:rgba(20,14,10,.35);border:1px solid rgba(243,233,214,.25);display:none;touch-action:none}
+.joy i{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px;border-radius:50%;background:rgba(243,233,214,.35)}
+@media (pointer:coarse){body.in .joy{display:block}}
+body.sitting .joy{opacity:.45}
+.pickT{font-size:12px;color:#bba98a;margin:-6px 0 8px}
+.picker{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:20px}
+.intro .picker button{background:rgba(243,233,214,.06);color:#e8d9bb;box-shadow:none;border:1px solid rgba(243,233,214,.15);border-radius:12px;padding:4px 4px 5px;width:72px;display:flex;flex-direction:column;align-items:center;font-size:10px;font-weight:600}
+.intro .picker button.on{border-color:#e8d3a2;background:rgba(232,211,162,.18)}
+.picker canvas{image-rendering:pixelated;width:56px;height:56px}
+.intro .box{max-width:360px}
+.hint{opacity:0}
+
 </style>
 
 </head>
@@ -32,16 +55,23 @@ canvas{display:block;touch-action:none}
   <div class="pill">⛪ 빛의 성당 <small>샘플</small></div>
   <div class="pill">👥 <span id="ppl">12</span> · <span class="timer" id="timer">00:00</span></div>
 </div>
-<div class="hint" id="hint">화면을 끌어서 스테인드글라스를 둘러보세요</div>
+<div class="hint" id="hint"></div>
+<div class="toast" id="toast"></div>
+<div class="joy" id="joy"><i></i></div>
+<div class="sunpick" id="sunPick"><button data-s="left">◀ 왼쪽</button><button data-s="front">▲ 앞(제단)</button><button data-s="right">오른쪽 ▶</button><button data-s="back">▼ 뒤(입구)</button></div>
 <div class="bottom">
   <button id="bMusic" class="on"><span>🎹</span>오르간</button>
-  <button id="bLook"><span>🌀</span>천천히 둘러보기</button>
+  <button id="bSun"><span>☀️</span><b id="sunLbl">햇빛</b></button>
   <button id="bCandle"><span>🕯️</span>촛불 켜기</button>
+  <button id="bSit"><span>🪑</span>앉기</button>
+  <button id="bLook"><span>🌀</span>둘러보기</button>
 </div>
-<div class="credit">성당 모델: Gothic Like Structures by Loafbrr (CC0)</div>
+<div class="credit">성당 모델: Gothic Like Structures by Loafbrr (CC0) · 캐릭터: elie automata</div>
 <div class="intro" id="intro"><div class="box">
   <h1>빛의 성당</h1>
-  <p>오래된 성당 의자에 앉아<br>스테인드글라스 사이로 들어오는 빛을 바라보며<br>잠시 아무 생각 없이 쉬어 가세요.</p>
+  <p>마음에 드는 자리를 찾아 앉아<br>스테인드글라스 사이로 들어오는 빛을 바라보며<br>잠시 아무 생각 없이 쉬어 가세요.</p>
+  <div class="pickT">내 모습 고르기</div>
+  <div class="picker" id="picker"></div>
   <button id="enter" disabled>불러오는 중…</button>
   <div class="loading" id="loading">성당을 짓는 중…</div>
 </div></div>
@@ -56,6 +86,8 @@ import { RenderPass } from './vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from './vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from './vendor/jsm/postprocessing/OutputPass.js';
 import { makeGlassMaterials, remapGlass } from './glass.js';
+import { NavGrid } from './navgrid.js';
+import { Actor, loadCharMeta, thumb } from './chars.js';
 
 /* ───────── 기본 ───────── */
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -103,7 +135,7 @@ const woodM = new THREE.MeshStandardMaterial({ map: tex('wood.webp'), color: 0xd
 
 /* ───────── 로딩 ───────── */
 const loadEl = document.getElementById('loading'), enterBtn = document.getElementById('enter');
-const glassWorld = []; // 창 위치 계산용
+const glassWorld = [], churchMeshes = []; // 창 위치 계산용 · 걷기 격자용
 const ready = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('assets/church.glb', (e) => {
   if (e.total) loadEl.textContent = `성당을 짓는 중… ${Math.round(e.loaded / e.total * 100)}%`;
 }).then((g) => {
@@ -112,12 +144,13 @@ const ready = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('asse
     const n = o.material && o.material.name;
     o.frustumCulled = true;
     if (n === 'StainedGlass') glassWorld.push(o); else o.material = MATS[n] || MATS.Wall;
+    if (n !== 'Floor') churchMeshes.push(o);
   });
   scene.add(g.scene);
   g.scene.updateMatrixWorld(true);
   for (const m of glassWorld) remapGlass(m, GLASS);
-  findWindows();
-  loadEl.textContent = ''; enterBtn.disabled = false; enterBtn.textContent = '자리에 앉기';
+  findWindows(); setSun(sunSide);
+  buildNav(churchMeshes);
 }).catch((e) => { loadEl.textContent = '성당을 불러오지 못했어요. 새로고침해 주세요.'; console.error(e); });
 
 /* ───────── 창 위치 찾기 → 빛줄기 ───────── */
@@ -126,7 +159,7 @@ const spotTex = (() => { const c = document.createElement('canvas'); c.width = c
 const beams = [];
 const BEAM_COLS = [0x9db8ff, 0xffb0a0, 0xffe2a0, 0xa8f0c0, 0xd8b0ff];
 function findWindows() {
-  // 스테인드글라스 정점들을 2m 칸으로 묶어 창 중심을 구한다 → 해가 드는 쪽(+x) 측랑 창에 빛줄기
+  // 스테인드글라스 정점들을 2m 칸으로 묶어 창 중심을 구한다 (햇빛 방향별 빛줄기에 사용)
   const cells = new Map(), v = new THREE.Vector3();
   for (const m of glassWorld) {
     const p = m.geometry.attributes.position;
@@ -136,35 +169,48 @@ function findWindows() {
       const c = cells.get(k) || { x: 0, y: 0, z: 0, n: 0 }; c.x += v.x; c.y += v.y; c.z += v.z; c.n++; cells.set(k, c);
     }
   }
-  const wins = [...cells.values()].filter((c) => c.n > 6).map((c) => ({ x: c.x / c.n, y: c.y / c.n, z: c.z / c.n }))
-    .filter((w) => w.x > CX + 9 && w.y < FLOOR + 12 && w.z > -9 && w.z < 12);
-  // 같은 창(z 가 가까운 것) 하나로
-  wins.sort((a, b) => a.z - b.z);
-  const uniq = []; for (const w of wins) if (!uniq.length || Math.abs(uniq[uniq.length - 1].z - w.z) > 2.5) uniq.push(w);
-  uniq.forEach((w, i) => {
-    const col = new THREE.Color(BEAM_COLS[i % BEAM_COLS.length]);
-    const from = new THREE.Vector3(w.x - .3, w.y + 1.5, w.z), to = new THREE.Vector3(CX + 1.5, FLOOR + .02, w.z + 2.2);
-    for (const rot of [0, Math.PI / 2]) {
-      const m = new THREE.MeshBasicMaterial({ map: beamTex, color: col, transparent: true, opacity: .2, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false, fog: false });
-      const beam = new THREE.Mesh(new THREE.PlaneGeometry(2.4, from.distanceTo(to)), m);
-      beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), from.clone().sub(to).normalize()); beam.rotateY(rot);
-      beam.position.copy(from).lerp(to, .5); scene.add(beam); beams.push({ m, base: .2, ph: i });
-    }
-    const spot = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2.4), new THREE.MeshBasicMaterial({ map: spotTex, color: col, transparent: true, opacity: .7, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
-    spot.rotation.x = -Math.PI / 2; spot.position.copy(to); scene.add(spot); beams.push({ m: spot.material, base: .7, ph: i + .5 });
-  });
+  allWins = [...cells.values()].filter((c) => c.n > 6).map((c) => ({ x: c.x / c.n, y: c.y / c.n, z: c.z / c.n }));
 }
-
 /* ───────── 장의자 ───────── */
 const pewSeat = new THREE.BoxGeometry(4.4, .1, .5), pewBack = new THREE.BoxGeometry(4.4, .5, .08), pewEnd = new THREE.BoxGeometry(.09, .95, .62);
-const pews = [];
+const pews = [], slots = [];
 for (let z = 9.5; z > -5.5; z -= 1.2) for (const s of [-1, 1]) {
   const gp = new THREE.Group();
-  const seat = new THREE.Mesh(pewSeat, woodM); seat.position.y = .46; gp.add(seat);
+  const seatM = new THREE.Mesh(pewSeat, woodM); seatM.position.y = .46; gp.add(seatM);
   const back = new THREE.Mesh(pewBack, woodM); back.position.set(0, .76, .25); back.rotation.x = .12; gp.add(back);
   for (const ex of [-2.2, 2.2]) { const e = new THREE.Mesh(pewEnd, woodM); e.position.set(ex, .48, .03); gp.add(e); }
   gp.position.set(CX + s * 3.1, FLOOR, z); scene.add(gp); pews.push(gp.position.clone());
+  for (let dx = -1.8; dx <= 1.81; dx += .6) slots.push({ x: CX + s * 3.1 + dx, z, taken: null });
 }
+
+/* ───────── 나무 출입문 (뾰족 아치) ───────── */
+const doorM = new THREE.MeshStandardMaterial({ map: tex('wood.webp'), color: 0xd09060, emissive: 0x2a160a, roughness: .75, side: THREE.DoubleSide });
+const ironM = new THREE.MeshStandardMaterial({ color: 0x1c1814, roughness: .5, metalness: .6, side: THREE.DoubleSide });
+const DOORS = [
+  { x: 2.1, z: 13.15, w: 5.0, ax: 'z' }, { x: 8.9, z: 13.15, w: 5.0, ax: 'z' },   // 정문 둘
+  { x: -9.65, z: -11.0, w: 4.6, ax: 'x' }, { x: 20.65, z: -11.0, w: 4.6, ax: 'x' }, // 양쪽 날개 끝
+];
+function makeDoor(d) {
+  const w = d.w, H = 5.6, rise = Math.min(w * .866, H * .55), spring = H - rise, r = (w * w / 4 + rise * rise) / w;
+  const sh = new THREE.Shape(); sh.moveTo(-w / 2, 0); sh.lineTo(w / 2, 0); sh.lineTo(w / 2, spring);
+  sh.absarc(w / 2 - r, spring, r, 0, Math.asin(rise / r), false);
+  sh.absarc(-w / 2 + r, spring, r, Math.PI - Math.asin(rise / r), Math.PI, false); sh.lineTo(-w / 2, 0);
+  const geo = new THREE.ShapeGeometry(sh, 24);
+  const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getY(i) / 2.4, uv.getX(i) / 1.2); // 판자를 세로로
+  const gp = new THREE.Group(); gp.add(new THREE.Mesh(geo, doorM));
+  // 쇠 띠 · 가운데 이음매 · 문고리
+  for (const side of [-1, 1]) { // 안팎 양쪽에
+    for (const y of [.7, 2.2, 3.6]) { const b = new THREE.Mesh(new THREE.BoxGeometry(w - .1, .12, .05), ironM); b.position.set(0, y, side * .04); gp.add(b); }
+    const seam = new THREE.Mesh(new THREE.BoxGeometry(.07, H - .2, .05), ironM); seam.position.set(0, (H - .2) / 2, side * .045); gp.add(seam);
+    for (const s of [-1, 1]) { const ring = new THREE.Mesh(new THREE.TorusGeometry(.13, .025, 8, 20), ironM); ring.position.set(s * .32, 1.25, side * .1); gp.add(ring); }
+  }
+  gp.position.set(d.x, FLOOR, d.z);
+  if (d.ax === 'x') gp.rotation.y = Math.PI / 2;
+  scene.add(gp);
+}
+DOORS.forEach(makeDoor);
+// 문 앞을 비추는 등불
+for (const d of DOORS) { const l = new THREE.PointLight(0xffc488, 5, 9, 1.6); l.position.set(d.x + (d.ax === 'x' ? Math.sign(CX - d.x) * 2 : 0), FLOOR + 4.5, d.z + (d.ax === 'z' ? -2 : 0)); scene.add(l); }
 
 /* ───────── 제단과 촛불 ───────── */
 const ALTAR_Z = -22;
@@ -173,39 +219,40 @@ const altar = new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.05, 1.3), MATS.WallTri
 const cloth = new THREE.Mesh(new THREE.BoxGeometry(3.7, .05, 1.4), new THREE.MeshStandardMaterial({ color: 0x7a1020, roughness: .9 })); cloth.position.set(CX, FLOOR + 1.47, ALTAR_Z); scene.add(cloth);
 const candles = [];
 const flameTex = (() => { const c = document.createElement('canvas'); c.width = 64; c.height = 128; const g = c.getContext('2d'); const gr = g.createRadialGradient(32, 80, 2, 32, 70, 32); gr.addColorStop(0, 'rgba(255,250,220,1)'); gr.addColorStop(.35, 'rgba(255,190,80,.9)'); gr.addColorStop(1, 'rgba(255,120,20,0)'); g.fillStyle = gr; g.beginPath(); g.ellipse(32, 74, 26, 54, 0, 0, 7); g.fill(); return new THREE.CanvasTexture(c); })();
-function addCandle(x, y, z, h) {
-  const c = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, h, 10), new THREE.MeshStandardMaterial({ color: 0xf2ead8, roughness: .5 }));
+const waxM = new THREE.MeshStandardMaterial({ color: 0xf2ead8, roughness: .5, emissive: 0x3a2a10 });
+function addCandle(x, y, z, h, s = 1) {
+  const c = new THREE.Mesh(new THREE.CylinderGeometry(.045 * s, .045 * s, h, 10), waxM);
   c.position.set(x, y + h / 2, z); scene.add(c);
-  const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: flameTex, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
-  f.scale.set(.12, .24, 1); f.position.set(x, y + h + .1, z); scene.add(f); candles.push({ f, ph: Math.random() * 10 });
+  const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: flameTex, blending: THREE.AdditiveBlending, depthWrite: false }));
+  f.position.set(x, y + h + .1 * s, z); scene.add(f);
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: spotTex, color: 0xffa040, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: .45 }));
+  glow.scale.set(.6 * s, .6 * s, 1); glow.position.copy(f.position); scene.add(glow);
+  const o = { f, glow, body: c, s, ph: Math.random() * 10, born: performance.now() }; candles.push(o); return o;
 }
-[-1.4, -.9, .9, 1.4].forEach((dx) => addCandle(CX + dx, FLOOR + 1.5, ALTAR_Z, Math.abs(dx) > 1 ? .5 : .7));
+[-1.4, -.9, .9, 1.4].forEach((dx) => addCandle(CX + dx, FLOOR + 1.5, ALTAR_Z, Math.abs(dx) > 1 ? .5 : .7, 1.3));
 const candleLight = new THREE.PointLight(0xffb060, 14, 18, 2); candleLight.position.set(CX, FLOOR + 2.6, ALTAR_Z + .4); scene.add(candleLight);
-// 봉헌 촛대 (사람들이 켜는 초) — 오른쪽 통로 앞
-const RACK = new THREE.Vector3(CX + 4.9, FLOOR, -7.4);
-const rack = new THREE.Mesh(new THREE.BoxGeometry(.5, .9, 2.2), new THREE.MeshStandardMaterial({ color: 0x2b2018, roughness: .7, metalness: .3 }));
-rack.position.set(RACK.x, RACK.y + .45, RACK.z); scene.add(rack);
-const rackLight = new THREE.PointLight(0xffa850, 0, 7, 2); rackLight.position.set(RACK.x - .3, RACK.y + 1.5, RACK.z); scene.add(rackLight);
-let rackN = 0;
-function lightRackCandle() {
-  if (rackN >= 14) return;
-  const i = rackN++, col = i % 7, row = Math.floor(i / 7);
-  addCandle(RACK.x + (row ? .12 : -.12), RACK.y + .9, RACK.z - .9 + col * .3, .18 + Math.random() * .08);
-  rackLight.intensity = Math.min(6, 1.2 + rackN * .4);
-}
-for (let i = 0; i < 6; i++) lightRackCandle();
 
-/* ───────── 다른 방문객 (실루엣) ───────── */
-const visitorM = new THREE.MeshStandardMaterial({ color: 0x2a201c, roughness: 1 });
-const others = [];
-for (let i = 0; i < 11; i++) {
-  const free = pews.filter((q) => !(q.x > CX && Math.abs(q.z - 2.3) < 1.3));
-  const p = free[Math.floor(Math.random() * free.length)];
-  const v = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(.2, .45, 4, 8), visitorM); body.position.y = .9; v.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(.13, 12, 10), visitorM); head.position.y = 1.42; v.add(head);
-  v.position.set(p.x + rnd(-1.7, 1.7), p.y, p.z + .02); scene.add(v); others.push({ v, ph: Math.random() * 6 });
+// 봉헌 촛대: 장의자 앞 오른쪽, 3단 쇠 받침 (걸어가서 볼 수 있음)
+const RACK = new THREE.Vector3(CX + 3.6, FLOOR, -8.2);
+const rackGrp = new THREE.Group(); rackGrp.position.copy(RACK); scene.add(rackGrp);
+const RACK_ROWS = [{ y: .78, z: .32 }, { y: .98, z: 0 }, { y: 1.18, z: -.32 }], RACK_W = 2.4, PER_ROW = 9;
+RACK_ROWS.forEach((r) => { const shelf = new THREE.Mesh(new THREE.BoxGeometry(RACK_W, .05, .26), ironM); shelf.position.set(0, r.y, r.z); rackGrp.add(shelf); });
+for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const leg = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, 1.2, 6), ironM); leg.position.set(sx * RACK_W / 2, .6, sz * .4); rackGrp.add(leg); }
+const sandTray = new THREE.Mesh(new THREE.BoxGeometry(RACK_W + .1, .08, 1.0), new THREE.MeshStandardMaterial({ color: 0x3a2c22, roughness: .9 })); sandTray.position.set(0, .5, 0); rackGrp.add(sandTray);
+const rackLight = new THREE.PointLight(0xffa850, 0, 9, 1.8); rackLight.position.set(RACK.x, RACK.y + 2, RACK.z + .6); scene.add(rackLight);
+const rackCandles = []; let rackNext = 0;
+function lightRackCandle() {
+  const MAX = RACK_ROWS.length * PER_ROW, i = rackNext++ % MAX;
+  if (rackCandles[i]) { const o = rackCandles[i]; [o.f, o.glow, o.body].forEach((m) => scene.remove(m)); candles.splice(candles.indexOf(o), 1); }
+  const r = RACK_ROWS[i % 3], col = Math.floor(i / 3);
+  const x = RACK.x - RACK_W / 2 + .14 + col * (RACK_W - .28) / (PER_ROW - 1) + (Math.random() - .5) * .06;
+  const o = addCandle(x, RACK.y + r.y + .025, RACK.z + r.z, .16 + Math.random() * .08, 1);
+  o.fresh = true; rackCandles[i] = o;
+  rackLight.intensity = Math.min(9, 1.5 + rackCandles.filter(Boolean).length * .3);
+  return rackCandles.filter(Boolean).length;
 }
+for (let i = 0; i < 7; i++) lightRackCandle();
+candles.forEach((c) => { c.fresh = false; });
 
 /* ───────── 조명 ───────── */
 scene.add(new THREE.HemisphereLight(0xd8ccb8, 0x6a5848, .3));
@@ -220,22 +267,62 @@ dg.setAttribute('position', new THREE.BufferAttribute(dp, 3));
 const dust = new THREE.Points(dg, new THREE.PointsMaterial({ size: .035, map: spotTex, color: 0xfff0d0, transparent: true, opacity: .55, blending: THREE.AdditiveBlending, depthWrite: false }));
 scene.add(dust);
 
-/* ───────── 카메라: 장의자에 앉은 시선 ───────── */
-const SEAT_PEW = pews.filter((p) => p.x > CX)[6];
-const seat = new THREE.Vector3(SEAT_PEW.x - 1.0, FLOOR + 1.32, SEAT_PEW.z + .05);
-camera.position.copy(seat);
-let yaw = 0, pitch = .18, tYaw = 0, tPitch = .18, auto = false, lastInput = performance.now();
-const el = renderer.domElement; let drag = null;
-el.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, yaw: tYaw, pitch: tPitch }; el.setPointerCapture(e.pointerId); });
-el.addEventListener('pointermove', (e) => {
-  if (!drag) return;
-  tYaw = drag.yaw + (e.clientX - drag.x) * .004; tPitch = Math.max(-.35, Math.min(1.2, drag.pitch + (e.clientY - drag.y) * .003));
-  lastInput = performance.now(); document.getElementById('hint').style.opacity = 0;
+/* ───────── 걷기 격자 ───────── */
+let nav = null;
+const SPAWN = { x: CX, z: 11.3 };
+function buildNav(churchMeshes) {
+  nav = new NavGrid(-18, -40, 26, 22, .25);
+  nav.sliceMeshes(churchMeshes, [FLOOR + .5, FLOOR + 1.2, FLOOR + 1.9]);
+  for (const d of DOORS) { const hw = d.w / 2 + .3; d.ax === 'z' ? nav.segment(d.x - hw, d.z, d.x + hw, d.z) : nav.segment(d.x, d.z - hw, d.x, d.z + hw); }
+  nav.wall = nav.block.slice(); // 카메라 충돌은 벽·문만
+  for (const p of pews) nav.box(p.x, p.z + .03, 2.25, .32);
+  nav.box(CX, ALTAR_Z, 4, 2.5); // 제단 단
+  nav.box(RACK.x, RACK.z, RACK_W / 2 + .05, .5);
+  nav.box(RACK.x + RACK_W / 2 + 1.0, RACK.z + .2, .45, .35); nav.box(-3.4, 10.8, .9, .6); // 연금술사 · 상인
+  nav.flood(SPAWN.x, SPAWN.z, 1);
+}
+function nearestWalkable(x, z) {
+  if (nav.ok(x, z)) return { x, z };
+  for (let r = .25; r < 4; r += .25) for (let a = 0; a < 16; a++) { const px = x + Math.cos(a / 16 * Math.PI * 2) * r, pz = z + Math.sin(a / 16 * Math.PI * 2) * r; if (nav.ok(px, pz)) return { x: px, z: pz }; }
+  return { ...SPAWN };
+}
+
+/* ───────── 사람들 (내 캐릭터 + 방문객) ───────── */
+let CHARS = [], player = null, myChar = null;
+const npcs = [];
+const SIT_Y = FLOOR - .18; // 앉은 모습: 의자 등받이 위로 상반신만
+const charsReady = loadCharMeta().then((list) => {
+  CHARS = list;
+  let saved = null; try { saved = localStorage.getItem('cathedral:char'); } catch {}
+  myChar = list.find((c) => c.id === saved && !NPC_ONLY.includes(c.id)) || list.find((c) => c.id === 'golden-cross-novice-priestess') || list[0];
+  buildPicker();
 });
-addEventListener('pointerup', () => { drag = null; });
-const bLook = document.getElementById('bLook');
-bLook.onclick = () => { auto = !auto; bLook.classList.toggle('on', auto); };
-window.__look = (y, p) => { tYaw = yaw = y; tPitch = pitch = p; lastInput = performance.now(); };
+const NPC_ONLY = ['sapphire-alchemist', 'woodland-caravan-merchant'];
+function spawnPeople() {
+  player = new Actor(myChar, scene, { height: 1.7 });
+  player.place(SPAWN.x, FLOOR, SPAWN.z, Math.PI);
+  // 앉아 있는 방문객
+  const seatable = CHARS.filter((c) => !NPC_ONLY.includes(c.id) && c.id !== myChar.id && !c.anims.walk);
+  const free = slots.filter((s) => !(Math.abs(s.z - 9.5) < .1 && Math.abs(s.x - CX) < 3)); // 맨 앞(입구 쪽) 줄 가운데는 비워 둠
+  for (let i = 0; i < 9 && free.length; i++) {
+    const meta = seatable[i % seatable.length];
+    const s = free.splice(Math.floor(Math.random() * free.length), 1)[0];
+    for (const o of slots) if (Math.abs(o.z - s.z) < .1 && Math.abs(o.x - s.x) < .65) o.taken = o.taken || 'npc';
+    const a = new Actor(meta, scene, { height: 1.7 }); a.place(s.x, SIT_Y, s.z + .02, Math.PI);
+    npcs.push({ a, kind: 'sit', ph: Math.random() * 6 });
+  }
+  // 걷는 방문객 (걷기 동작이 있는 캐릭터)
+  const walkers = CHARS.filter((c) => c.anims.walk && c.id !== myChar.id);
+  const ROUTES = [[[14.5, 9.5], [14.5, -6]], [[-3.5, -6], [-3.5, 9.5]]];
+  walkers.forEach((meta, i) => {
+    const a = new Actor(meta, scene, { height: 1.7 }); const r = ROUTES[i % 2];
+    a.place(r[0][0], FLOOR, r[0][1]); npcs.push({ a, kind: 'walk', route: r, leg: 1, wait: 0 });
+  });
+  // 촛대 옆 연금술사, 입구 옆 상인
+  const alc = CHARS.find((c) => c.id === 'sapphire-alchemist'); if (alc) { const a = new Actor(alc, scene, { height: 1.75 }); a.place(RACK.x + RACK_W / 2 + 1.0, FLOOR, RACK.z + .2, -Math.PI / 2); npcs.push({ a, kind: 'stand' }); }
+  const mer = CHARS.find((c) => c.id === 'woodland-caravan-merchant'); if (mer) { const a = new Actor(mer, scene, { height: 2.1 }); a.place(-3.4, FLOOR, 10.8, Math.PI * .8); npcs.push({ a, kind: 'stand' }); }
+  document.getElementById('ppl').textContent = 1 + npcs.length;
+}
 
 /* ───────── 파이프오르간 (직접 합성한 느린 화음 · 저작권 없는 자작 진행) ───────── */
 let ac = null, master = null, musicOn = true;
@@ -292,43 +379,219 @@ bMusic.onclick = () => {
   bMusic.classList.toggle('on', musicOn);
 };
 
+/* ───────── 햇빛 방향 ───────── */
+let allWins = [];
+const SUN_DIRS = {
+  left: { label: '왼쪽', pick: (w) => w.x < CX - 9 && w.z > -9 && w.z < 12 && w.y < FLOOR + 12, in: [1, 0], sun: [-40, 30, 5] },
+  front: { label: '앞', pick: (w) => w.z < -24 && w.y < FLOOR + 14, in: [0, 1], sun: [5, 30, -80], reach: 1.7, extra: [[5.5, 12, -30]] },
+  right: { label: '오른쪽', pick: (w) => w.x > CX + 9 && w.z > -9 && w.z < 12 && w.y < FLOOR + 12, in: [-1, 0], sun: [40, 30, 5] },
+  back: { label: '뒤', pick: (w) => w.z > 10.5 && w.y < FLOOR + 16, in: [0, -1], sun: [5, 30, 60], reach: 1.3, extra: [[2.1, 12.2, 12.8], [8.9, 12.2, 12.8], [5.5, 18, 12.8]] },
+};
+let sunSide = 'right'; try { sunSide = localStorage.getItem('cathedral:sun') || 'right'; } catch {}
+if (!SUN_DIRS[sunSide]) sunSide = 'right';
+const beamObjs = [];
+function setSun(side) {
+  sunSide = side; try { localStorage.setItem('cathedral:sun', side); } catch {}
+  for (const o of beamObjs) { scene.remove(o); o.geometry.dispose(); o.material.dispose(); }
+  beamObjs.length = 0; beams.length = 0;
+  const D = SUN_DIRS[side]; sun.position.set(...D.sun);
+  const wins = allWins.filter(D.pick).concat((D.extra || []).map(([x, y, z]) => ({ x, y, z }))).sort((a, b) => a.y - b.y);
+  const uniq = []; for (const w of wins) if (!uniq.some((u) => Math.hypot(u.x - w.x, u.z - w.z) < 2.5)) uniq.push(w);
+  uniq.slice(0, 9).forEach((w, i) => {
+    const col = new THREE.Color(BEAM_COLS[i % BEAM_COLS.length]);
+    const drop = w.y + 1.2 - FLOOR;
+    const from = new THREE.Vector3(w.x, w.y + 1.2, w.z);
+    const k = D.reach || .9, to = new THREE.Vector3(w.x + D.in[0] * drop * k + D.in[1] * .8, FLOOR + .02, w.z + D.in[1] * drop * k + D.in[0] * 1.2);
+    for (const rot of [0, Math.PI / 2]) {
+      const m = new THREE.MeshBasicMaterial({ map: beamTex, color: col, transparent: true, opacity: .2, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
+      const beam = new THREE.Mesh(new THREE.PlaneGeometry(2.8, from.distanceTo(to)), m); m.opacity = .42;
+      beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), from.clone().sub(to).normalize()); beam.rotateY(rot);
+      beam.position.copy(from).lerp(to, .5); scene.add(beam); beamObjs.push(beam); beams.push({ m, base: .42, ph: i });
+    }
+    const spot = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 2.2), new THREE.MeshBasicMaterial({ map: spotTex, color: col, transparent: true, opacity: .7, blending: THREE.AdditiveBlending, depthWrite: false }));
+    spot.rotation.x = -Math.PI / 2; spot.rotation.z = D.in[0] ? Math.PI / 2 : 0; spot.position.copy(to); scene.add(spot); beamObjs.push(spot); beams.push({ m: spot.material, base: .9, ph: i + .5 });
+  });
+  document.querySelectorAll('#sunPick button').forEach((b) => b.classList.toggle('on', b.dataset.s === side));
+  document.getElementById('sunLbl').textContent = '햇빛 ' + D.label;
+}
+const sunPick = document.getElementById('sunPick');
+document.getElementById('bSun').onclick = () => sunPick.classList.toggle('show');
+sunPick.querySelectorAll('button').forEach((b) => { b.onclick = () => { setSun(b.dataset.s); sunPick.classList.remove('show'); }; });
 
-document.getElementById('bCandle').onclick = () => { lightRackCandle(); tYaw = -.3; tPitch = -.08; lastInput = performance.now(); };
+/* ───────── 조작: 걷기 / 앉기 / 시점 ───────── */
+let mode = 'walk', mySlot = null;
+let yaw = 0, pitch = -.18, tYaw = 0, tPitch = -.18, auto = false, lastInput = performance.now(), autoPause = 0;
+const seatEye = new THREE.Vector3();
+const keys = {}, joy = { x: 0, y: 0 };
+const el = renderer.domElement; let drag = null;
+const hintEl = document.getElementById('hint');
+function hint(t) { hintEl.textContent = t; hintEl.style.opacity = .9; clearTimeout(hint.h); hint.h = setTimeout(() => { hintEl.style.opacity = 0; }, 6000); }
+el.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, yaw: tYaw, pitch: tPitch }; el.setPointerCapture(e.pointerId); sunPick.classList.remove('show'); });
+el.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const lo = mode === 'sit' ? -.35 : -.7, hi = mode === 'sit' ? 1.2 : .45;
+  tYaw = drag.yaw + (e.clientX - drag.x) * .004; tPitch = Math.max(lo, Math.min(hi, drag.pitch + (e.clientY - drag.y) * .003));
+  lastInput = performance.now();
+});
+addEventListener('pointerup', () => { drag = null; });
+addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  const k = e.key.toLowerCase(); keys[k] = true;
+  if (k === 'e' || k === ' ') { e.preventDefault(); toggleSit(); }
+  if (mode === 'sit' && ['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) standUp();
+});
+addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+// 모바일 조이스틱
+const joyEl = document.getElementById('joy'), knob = joyEl.querySelector('i');
+let joyId = null, joyC = null;
+joyEl.addEventListener('pointerdown', (e) => { joyId = e.pointerId; const r = joyEl.getBoundingClientRect(); joyC = { x: r.left + r.width / 2, y: r.top + r.height / 2 }; joyEl.setPointerCapture(e.pointerId); moveJoy(e); if (mode === 'sit') standUp(); });
+joyEl.addEventListener('pointermove', (e) => { if (e.pointerId === joyId) moveJoy(e); });
+const endJoy = () => { joyId = null; joy.x = joy.y = 0; knob.style.transform = ''; };
+joyEl.addEventListener('pointerup', endJoy); joyEl.addEventListener('pointercancel', endJoy);
+function moveJoy(e) { let dx = e.clientX - joyC.x, dy = e.clientY - joyC.y; const L = Math.hypot(dx, dy), M = 42; if (L > M) { dx *= M / L; dy *= M / L; } joy.x = dx / M; joy.y = dy / M; knob.style.transform = `translate(${dx}px,${dy}px)`; }
 
-/* ───────── 시작·시간 ───────── */
+function nearestSlot() {
+  let best = null, bd = 2.8;
+  for (const s of slots) { if (s.taken) continue; const d = Math.hypot(s.x - player.pos.x, s.z - player.pos.z); if (d < bd) { bd = d; best = s; } }
+  return best;
+}
+const bSit = document.getElementById('bSit');
+function toggleSit() { if (!player) return; mode === 'sit' ? standUp() : sitDown(); }
+function sitDown() {
+  const s = nearestSlot();
+  if (!s) { hint('의자 가까이 가면 앉을 수 있어요'); return; }
+  mode = 'sit'; mySlot = s; s.taken = 'me';
+  seatEye.set(s.x, FLOOR + 1.32, s.z + .05);
+  player.sprite.visible = false;
+  tYaw = yaw = 0; tPitch = pitch = .18;
+  bSit.innerHTML = '<span>🚶</span>일어서기'; document.body.classList.add('sitting');
+  hint('화면을 끌어서 둘러보세요 · WASD로 일어나기');
+}
+function standUp() {
+  if (mode !== 'sit') return;
+  const p = nearestWalkable(CX, mySlot.z + .1);
+  mySlot.taken = null; mySlot = null; mode = 'walk';
+  player.place(p.x, FLOOR, p.z, Math.PI); player.sprite.visible = true;
+  tYaw = yaw = 0; tPitch = pitch = -.18; auto = false; bLook.classList.remove('on');
+  bSit.innerHTML = '<span>🪑</span>앉기'; document.body.classList.remove('sitting');
+}
+bSit.onclick = toggleSit;
+const bLook = document.getElementById('bLook');
+bLook.onclick = () => { auto = !auto; bLook.classList.toggle('on', auto); if (auto && mode === 'walk') sitDown(); };
+window.__look = (y, p) => { tYaw = yaw = y; tPitch = pitch = p; lastInput = performance.now(); };
+window.__goto = (x, z, f) => { player.place(x, FLOOR, z, f); };
+
+/* ───────── 촛불 켜기 ───────── */
+const toastEl = document.getElementById('toast');
+function toast(t) { toastEl.textContent = t; toastEl.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => toastEl.classList.remove('show'), 4000); }
+document.getElementById('bCandle').onclick = () => {
+  const n = lightRackCandle();
+  // 촛대 쪽으로 고개 돌리기
+  const from = mode === 'sit' ? seatEye : player.pos;
+  const dx = RACK.x - from.x, dz = RACK.z - from.z, dy = RACK.y + 1 - (mode === 'sit' ? seatEye.y : FLOOR + 1.5);
+  tYaw = Math.atan2(-dx, -dz); tPitch = mode === 'sit' ? Math.atan2(dy, Math.hypot(dx, dz)) : -.25;
+  while (tYaw - yaw > Math.PI) tYaw -= Math.PI * 2; while (tYaw - yaw < -Math.PI) tYaw += Math.PI * 2;
+  lastInput = performance.now(); autoPause = performance.now() + 9000;
+  toast(`🕯️ 봉헌 촛대에 촛불을 밝혔어요 · 지금 ${n}개`);
+};
+
+/* ───────── 시작 ───────── */
 let t0 = null;
+function buildPicker() {
+  const box = document.getElementById('picker'); box.innerHTML = '';
+  CHARS.filter((c) => !NPC_ONLY.includes(c.id)).forEach((c) => {
+    const b = document.createElement('button'); b.title = c.name; b.appendChild(thumb(c, 56));
+    const s = document.createElement('small'); s.textContent = c.name; b.appendChild(s);
+    b.classList.toggle('on', c.id === myChar.id);
+    b.onclick = () => { myChar = c; box.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); try { localStorage.setItem('cathedral:char', c.id); } catch {} };
+    box.appendChild(b);
+  });
+}
+Promise.all([ready, charsReady]).then(() => { loadEl.textContent = ''; enterBtn.disabled = false; enterBtn.textContent = '성당에 들어가기'; window.__ready = true; });
 enterBtn.onclick = () => {
   if (enterBtn.disabled) return;
   startMusic(); t0 = performance.now();
+  spawnPeople();
   const it = document.getElementById('intro'); it.style.opacity = 0; setTimeout(() => it.remove(), 1200);
+  document.body.classList.add('in');
+  hint(matchMedia('(pointer: coarse)').matches ? '왼쪽 아래 조이스틱으로 걷고, 의자 근처에서 🪑 앉기' : 'WASD로 걷기 · 화면을 끌어 시점 돌리기 · 의자 근처에서 E로 앉기');
 };
-document.getElementById('ppl').textContent = 1 + others.length;
 
 /* ───────── 그리기 ───────── */
 const clock = new THREE.Clock();
+const dirV = new THREE.Vector3(), tgt = new THREE.Vector3(), camPos = new THREE.Vector3();
+let camInit = false;
 function frame() {
-  const t = clock.getElapsedTime();
-  if (auto || performance.now() - lastInput > 25000) { tYaw = Math.sin(t * .05) * 1.2; tPitch = .45 + Math.sin(t * .037) * .4; }
-  yaw += (tYaw - yaw) * .04; pitch += (tPitch - pitch) * .04;
-  camera.position.set(seat.x, seat.y + Math.sin(t * .6) * .006, seat.z);
-  const dir = new THREE.Vector3(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
-  camera.lookAt(camera.position.clone().add(dir));
+  const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime;
+  if (mode === 'sit' && (auto || performance.now() - lastInput > 25000) && performance.now() > autoPause) { tYaw = Math.sin(t * .05) * 1.2; tPitch = .45 + Math.sin(t * .037) * .4; }
+  yaw += (tYaw - yaw) * Math.min(1, dt * 4); pitch += (tPitch - pitch) * Math.min(1, dt * 4);
+  dirV.set(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
+  let moving = false;
+  if (player && mode === 'walk' && nav) {
+    let f = 0, r = 0;
+    if (keys.w || keys.arrowup) f += 1; if (keys.s || keys.arrowdown) f -= 1;
+    if (keys.d || keys.arrowright) r += 1; if (keys.a || keys.arrowleft) r -= 1;
+    f -= joy.y; r += joy.x;
+    const L = Math.hypot(f, r);
+    if (L > .15) {
+      moving = true; f /= Math.max(1, L); r /= Math.max(1, L);
+      const fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
+      const vx = (fx * f + rx * r) * 2.1 * dt, vz = (fz * f + rz * r) * 2.1 * dt;
+      const p = player.pos;
+      if (nav.ok(p.x + vx, p.z)) p.x += vx;
+      if (nav.ok(p.x, p.z + vz)) p.z += vz;
+      const want = Math.atan2(vx, vz); let d = want - player.face; d = Math.atan2(Math.sin(d), Math.cos(d)); player.face += d * Math.min(1, dt * 10);
+      lastInput = performance.now();
+    }
+    const near = nearestSlot(); bSit.classList.toggle('ready', !!near);
+    // 3인칭 카메라: 벽에 막히면 당겨 온다
+    tgt.set(player.pos.x, FLOOR + 1.45, player.pos.z);
+    let dist = 3.4;
+    for (let d = .4; d <= 3.4; d += .2) { if (!nav.free(tgt.x - dirV.x * d, tgt.z - dirV.z * d)) { dist = Math.max(.6, d - .35); break; } }
+    camPos.copy(tgt).addScaledVector(dirV, -dist); camPos.y = Math.max(FLOOR + .35, camPos.y + .35);
+    if (!camInit) { camera.position.copy(camPos); camInit = true; } else camera.position.lerp(camPos, Math.min(1, dt * 8));
+    camera.lookAt(tgt.x + dirV.x * 2, tgt.y + .1 + dirV.y * 2, tgt.z + dirV.z * 2);
+  } else if (mode === 'sit') {
+    camera.position.set(seatEye.x, seatEye.y + Math.sin(t * .6) * .006, seatEye.z);
+    camera.lookAt(camera.position.x + dirV.x, camera.position.y + dirV.y, camera.position.z + dirV.z);
+  } else {
+    // 입장 전: 성당 안을 천천히 도는 장면
+    camera.position.set(CX + Math.sin(t * .05) * 2, FLOOR + 3, 6);
+    camera.lookAt(CX, FLOOR + 8 + Math.sin(t * .07) * 3, -20);
+  }
+  if (player) player.update(dt, camera, moving);
+  for (const n of npcs) {
+    let mv = false;
+    if (n.kind === 'walk') {
+      if (n.wait > 0) n.wait -= dt;
+      else {
+        const [tx, tz] = n.route[n.leg], p = n.a.pos, dx = tx - p.x, dz = tz - p.z, L = Math.hypot(dx, dz);
+        if (L < .1) { n.leg = 1 - n.leg; n.wait = 3 + Math.random() * 5; }
+        else { const s = Math.min(L, .9 * dt); p.x += dx / L * s; p.z += dz / L * s; n.a.face = Math.atan2(dx, dz); mv = true; }
+      }
+    }
+    n.a.update(dt, camera, mv);
+  }
   const cloud = .7 + .3 * Math.sin(t * .11) * Math.sin(t * .047 + 1);
   beams.forEach((b) => { b.m.opacity = b.base * (cloud + .08 * Math.sin(t * .5 + b.ph)); });
   sun.intensity = .5 * cloud;
-  candles.forEach((c) => { const k = 1 + .12 * Math.sin(t * 9 + c.ph) + .06 * Math.sin(t * 23 + c.ph * 2); c.f.scale.set(.12 * k, .24 * k, 1); });
+  const now = performance.now();
+  candles.forEach((c) => {
+    const k = 1 + .12 * Math.sin(t * 9 + c.ph) + .06 * Math.sin(t * 23 + c.ph * 2);
+    const grow = c.fresh ? Math.min(1, (now - c.born) / 900) : 1;
+    c.f.scale.set(.13 * c.s * k * grow, .26 * c.s * k * grow, 1);
+    c.glow.material.opacity = .4 * grow * (1 + .1 * Math.sin(t * 5 + c.ph)) + (c.fresh && now - c.born < 1500 ? (1 - (now - c.born) / 1500) * .8 : 0);
+  });
   candleLight.intensity = 14 * (1 + .08 * Math.sin(t * 7.3));
   const a = dust.geometry.attributes.position;
   for (let i = 0; i < DUST; i++) { let y = a.getY(i) + .0025 + Math.sin(t + i) * .001; if (y > FLOOR + 10) y = FLOOR + .3; a.setY(i, y); a.setX(i, a.getX(i) + Math.sin(t * .3 + i) * .0015); }
   a.needsUpdate = true;
-  others.forEach((o) => { o.v.rotation.z = Math.sin(t * .4 + o.ph) * .015; });
   if (t0) { const s = Math.floor((performance.now() - t0) / 1000); document.getElementById('timer').textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; }
   composer.render();
   requestAnimationFrame(frame);
 }
 frame();
-ready.then(() => { window.__ready = true; });
-
 </script>
 </body>
 </html>
