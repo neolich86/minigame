@@ -302,7 +302,7 @@
       shareDelete: function () { return saveCall("shareDelete"); },
       /** 포털 로그인 화면으로 이동 (로그인 후 이 게임으로 돌아온다) */
       /** method: "kakao" 면 바로 카카오 로그인, 아니면 로그인 화면(이메일·카카오) */
-      login: function (method) { toParent({ type: "save:login", method: method === "kakao" ? "kakao" : "page" }); },
+      login: function (method) { toParent({ type: "save:login", method: method === "kakao" || method === "google" ? method : "page" }); },
     },
     /** 서버 기능 호출 — 포털(src/lib/gameRpc.ts)에 허용된 Supabase RPC 만. 로그인 사용자 세션으로 실행. Promise */
     rpc: function (name, params) { return saveCall("rpc", { name: name, params: params || {} }); },

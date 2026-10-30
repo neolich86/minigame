@@ -64,6 +64,30 @@ export async function signInKakao(next = "/"): Promise<void> {
   if (error) throw error;
 }
 
+/** 구글 로그인 켜짐 여부 — Supabase 에서 Google 공급자를 설정한 뒤 Vercel 환경변수 NEXT_PUBLIC_GOOGLE_LOGIN=1 */
+export const googleLoginEnabled = process.env.NEXT_PUBLIC_GOOGLE_LOGIN === "1";
+/** 안드로이드 앱(Capacitor 웹뷰) 안인지 — 구글은 웹뷰 안의 로그인 창을 막는다(disallowed_useragent) */
+export function inNativeApp(): boolean {
+  try {
+    const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+    return !!cap?.isNativePlatform?.();
+  } catch {
+    return false;
+  }
+}
+/** 지금 이 화면에서 구글 로그인 버튼을 보여도 되는지 */
+export const googleLoginAvailable = () => googleLoginEnabled && !inNativeApp();
+
+export async function signInGoogle(next = "/"): Promise<void> {
+  const c = sb();
+  if (!c) return;
+  try {
+    localStorage.setItem(AUTH_NEXT_KEY, JSON.stringify({ next, at: Date.now() }));
+  } catch {}
+  const { error } = await c.auth.signInWithOAuth({ provider: "google", options: { redirectTo: callbackUrl(next) } });
+  if (error) throw error;
+}
+
 export async function signInEmail(email: string, password: string): Promise<void> {
   const c = sb();
   if (!c) return;

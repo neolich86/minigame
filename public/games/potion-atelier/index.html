@@ -69,6 +69,8 @@ button:disabled{opacity:.45;cursor:default}
 .cta{width:100%;height:48px;border-radius:12px;background:var(--acc);color:#2a1606;font-weight:900;font-size:16px;margin-top:6px}
 .cta.w{background:rgba(255,255,255,.1);color:var(--ink)}
 .cta.kakao{background:#fee500;color:#191600}
+.cta.google{background:#fff;color:#1f1f1f;border:1px solid #dadce0}
+.cta.google .g{font-weight:900;color:#4285f4;margin-right:4px}
 .cta.ghost{background:none;color:var(--dim);height:40px;font-size:14px}
 .ib.on{background:rgba(108,196,106,.25)}
 .note{font-size:12.5px;color:var(--dim);line-height:1.55;margin:4px 0 10px;text-align:center}
@@ -748,6 +750,7 @@ async function cloudStore() {
 /* ───────── 로그인 권유 (강제하지 않음) ───────── */
 let authKnown = false;
 const canAsk = () => !!(MG && MG.save && MG.embedded && authKnown && !owner);
+let googleOk = false; // 포털이 구글 로그인을 켰고, 앱(웹뷰) 안이 아닐 때만
 function askLogin(reason, tier) {
   if (!canAsk() || !$('dim').hidden) return;
   S.asked = Object.assign({}, S.asked);
@@ -758,9 +761,11 @@ function askLogin(reason, tier) {
   openModal(`<h3>🔐 공방을 저장해 둘까요?</h3>
     <div class="note">${lead}<br>로그인하면 <b>골드·평판·장식</b>이 계정에 저장돼 앱을 다시 깔거나 폰을 바꿔도 이어서 할 수 있고,<br><b>오늘의 포션·공방 평판 랭킹</b>에도 이름이 올라가요.</div>
     <button class="cta kakao" id="loginK">카카오로 시작하기</button>
+    ${googleOk ? '<button class="cta google" id="loginG"><span class="g">G</span> 구글로 시작하기</button>' : ''}
     <button class="cta w" id="loginE">이메일·다른 방법으로</button>
     <button class="cta ghost" id="loginL">나중에 할게요</button>`);
   $('loginK').onclick = () => { closeModal(); MG.save.login('kakao'); };
+  if ($('loginG')) $('loginG').onclick = () => { closeModal(); MG.save.login('google'); };
   $('loginE').onclick = () => { closeModal(); MG.save.login(); };
   $('loginL').onclick = closeModal;
 }
@@ -775,7 +780,8 @@ function setupAuth() {
   if (!MG || !MG.save || !MG.embedded) { setSave('이 기기에 자동 저장돼요'); return; }
   btn.textContent = '로그인하고 저장';
   btn.onclick = () => MG.save.login();
-  MG.save.onAuth(async (u) => {
+  MG.save.onAuth(async (u, d) => {
+    googleOk = !!(d && d.google);
     owner = u ? u.id : null; btn.hidden = !!u; authKnown = true;
     $('acctBtn').classList.toggle('on', !!u); $('acctBtn').textContent = u ? '☁️' : '👤';
     if (!u) { setSave('이 기기에 자동 저장돼요'); return; }

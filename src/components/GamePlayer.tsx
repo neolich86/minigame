@@ -10,7 +10,7 @@ import { LikeButton } from "./LikeButton";
 import { useToasts } from "./Toasts";
 import { formatScore, formatVs, gameById, itemPath, playStoreUrl } from "@/lib/games";
 import { GAME_RPC } from "@/lib/gameRpc";
-import { cloudEnabled, displayName, sb, fetchMyRank, fetchMyScores, signInKakao, submitScore, type ScoreRow } from "@/lib/supabase";
+import { cloudEnabled, displayName, googleLoginAvailable, sb, signInGoogle, fetchMyRank, fetchMyScores, signInKakao, submitScore, type ScoreRow } from "@/lib/supabase";
 import { deleteFiles, deleteShare, fileUrls, loadSave, publishShare, putFile, shareInfo, storeSave } from "@/lib/saves";
 import { errorKey } from "@/lib/i18n";
 import { createChallenge, fetchChallenge, fetchTopPct, type Challenge } from "@/lib/challenge";
@@ -134,6 +134,7 @@ export function GamePlayer({ gameId, app }: { gameId: string; app?: string }) {
     postToGame({
       type: "save:auth",
       cloud: cloudEnabled,
+      google: googleLoginAvailable(), // 게임이 '구글로 시작하기' 버튼을 보일지
       user: user ? { id: user.id, name: displayName(user) } : null,
     });
   }, [postToGame, user]);
@@ -186,6 +187,7 @@ export function GamePlayer({ gameId, app }: { gameId: string; app?: string }) {
       if (d.type === "ready" && !loading) sendAuth();
       else if (d.type === "save:login") {
         if (d.method === "kakao") signInKakao(app ?? itemPath(game)).catch(() => router.push(loginHref));
+        else if (d.method === "google" && googleLoginAvailable()) signInGoogle(app ?? itemPath(game)).catch(() => router.push(loginHref));
         else router.push(loginHref);
       }
       else if (d.type === "save:req") {
