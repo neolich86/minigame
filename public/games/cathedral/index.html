@@ -4,8 +4,8 @@
 <script src="/mgh/bridge.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>빛의 성당 - 온라인 성당</title>
-<meta name="description" content="성당 · 온라인 성당. 파이프오르간 소리를 듣고, 기도하고, 잠깐 쉬어가는 공간입니다. 스테인드글라스 빛이 드는 고딕 성당 의자에 앉아 멍하니 쉬어 가세요.">
+<title>온라인 명상 - 성당과 절</title>
+<meta name="description" content="온라인 명상 · 성당과 절. 파이프오르간 또는 목탁과 염불 소리를 들으며 기도하고, 잠깐 쉬어가는 공간입니다.">
 <style>
 html,body{margin:0;height:100%;background:#07060a;overflow:hidden;font-family:'Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;color:#f3e9d6}
 canvas{display:block;touch-action:none}
@@ -26,6 +26,11 @@ canvas{display:block;touch-action:none}
 .loading{margin-top:12px;font-size:12px;color:#bba98a;min-height:16px}
 .credit{position:fixed;right:10px;bottom:6px;font-size:9px;color:rgba(243,233,214,.35);pointer-events:none}
 .timer{font-variant-numeric:tabular-nums}
+.spacesw{pointer-events:auto;position:absolute;left:50%;top:0;transform:translateX(-50%);display:flex;gap:4px;background:rgba(20,14,10,.55);backdrop-filter:blur(8px);border:1px solid rgba(243,233,214,.18);border-radius:999px;padding:4px}
+.spacesw button{width:40px;height:32px;border:0;border-radius:999px;background:none;color:#f3e9d6;font-size:18px;font-weight:900;cursor:pointer;font-family:serif}
+.spacesw button.on{background:#e8d3a2;color:#2a1c0e}
+.top{position:fixed}
+@media (max-width:520px){.top .pill small{display:none}.top .pill{padding:8px 12px;font-size:13px}}
 .bottom button{padding:8px 9px;min-width:56px}
 .bottom button b{font-weight:700}
 .bottom button.ready{background:rgba(232,211,162,.22);box-shadow:inset 0 0 0 1px rgba(232,211,162,.5)}
@@ -55,7 +60,8 @@ body.sitting .joy{opacity:.45}
 </head>
 <body>
 <div class="top">
-  <div class="pill">⛪ 빛의 성당 <small>온라인 성당</small></div>
+  <div class="pill">🕯️ 온라인 명상 <small id="spaceName">성당</small></div>
+  <div class="spacesw" id="spaceSw"><button data-m="cathedral" class="on" title="성당">✝</button><button data-m="temple" title="절">卍</button></div>
   <div class="pill">👥 <span id="ppl">1</span> · <span class="timer" id="timer">00:00</span></div>
 </div>
 <div class="hint" id="hint"></div>
@@ -63,10 +69,10 @@ body.sitting .joy{opacity:.45}
 <div class="joy" id="joy"><i></i></div>
 <div class="sunpick" id="sunPick"><button data-s="left">◀ 왼쪽</button><button data-s="front">▲ 앞(제단)</button><button data-s="right">오른쪽 ▶</button><button data-s="back">▼ 뒤(입구)</button></div>
 <div class="bottom">
-  <button id="bMusic" class="on"><span>🎹</span>오르간</button>
+  <button id="bMusic" class="on"><span id="bMusicIco">🎹</span><b id="bMusicLbl">오르간</b></button>
   <button id="bChar"><span>👤</span>캐릭터</button>
   <button id="bSun"><span>☀️</span><b id="sunLbl">햇빛</b></button>
-  <button id="bCandle"><span>🕯️</span>촛불 켜기</button>
+  <button id="bCandle"><span>🕯️</span><b id="bCandleLbl">촛불 켜기</b></button>
   <button id="bSit"><span>🪑</span>앉기</button>
   <button id="bLook"><span>🌀</span>둘러보기</button>
 </div>
@@ -89,6 +95,7 @@ import { UnrealBloomPass } from './vendor/jsm/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from './vendor/jsm/postprocessing/OutputPass.js';
 import { makeGlassMaterials, remapGlass } from './glass.js';
 import { NavGrid } from './navgrid.js';
+import { buildTemple, templeAudio } from './temple.js';
 import { Actor, PEOPLE, loadPerson, loadAllPeople, makeThumbs } from './people.js';
 
 /* ───────── 기본 ───────── */
@@ -174,6 +181,7 @@ function findWindows() {
   allWins = [...cells.values()].filter((c) => c.n > 6).map((c) => ({ x: c.x / c.n, y: c.y / c.n, z: c.z / c.n }));
 }
 /* ───────── 장의자 ───────── */
+const CATH_ONLY = []; // 성당일 때만 보이는 것들
 const pewSeat = new THREE.BoxGeometry(4.4, .1, .5), pewBack = new THREE.BoxGeometry(4.4, .5, .08), pewEnd = new THREE.BoxGeometry(.09, .95, .62);
 const pews = [], slots = [];
 for (let z = 9.5; z > -5.5; z -= 1.2) for (const s of [-1, 1]) {
@@ -181,7 +189,7 @@ for (let z = 9.5; z > -5.5; z -= 1.2) for (const s of [-1, 1]) {
   const seatM = new THREE.Mesh(pewSeat, woodM); seatM.position.y = .46; gp.add(seatM);
   const back = new THREE.Mesh(pewBack, woodM); back.position.set(0, .76, .25); back.rotation.x = .12; gp.add(back);
   for (const ex of [-2.2, 2.2]) { const e = new THREE.Mesh(pewEnd, woodM); e.position.set(ex, .48, .03); gp.add(e); }
-  gp.position.set(CX + s * 3.1, FLOOR, z); scene.add(gp); pews.push(gp.position.clone());
+  gp.position.set(CX + s * 3.1, FLOOR, z); scene.add(gp); pews.push(gp.position.clone()); CATH_ONLY.push(gp);
   for (let dx = -1.8; dx <= 1.81; dx += .6) slots.push({ x: CX + s * 3.1 + dx, z, taken: null });
 }
 
@@ -233,6 +241,12 @@ function addCandle(x, y, z, h, s = 1) {
 }
 [-1.4, -.9, .9, 1.4].forEach((dx) => addCandle(CX + dx, FLOOR + 1.5, ALTAR_Z, Math.abs(dx) > 1 ? .5 : .7, 1.3));
 const candleLight = new THREE.PointLight(0xffb060, 14, 18, 2); candleLight.position.set(CX, FLOOR + 2.6, ALTAR_Z + .4); scene.add(candleLight);
+CATH_ONLY.push(step, altar, cloth, candleLight); candles.forEach((c) => CATH_ONLY.push(c.f, c.glow, c.body));
+// 절 모드 (처음엔 숨김)
+const TEMPLE = buildTemple(scene, { FLOOR, CX, ALTAR_Z, woodMap: tex('wood.webp') });
+const pewSlots = slots; let activeSlots = pewSlots;
+let space = 'cathedral'; // 'cathedral' | 'temple'
+const sitDY = () => (space === 'temple' ? .1 : .46);
 
 // 봉헌 촛대: 장의자 앞 오른쪽, 3단 쇠 받침 (걸어가서 볼 수 있음)
 const RACK = new THREE.Vector3(CX + 3.6, FLOOR, -8.2);
@@ -272,15 +286,22 @@ scene.add(dust);
 /* ───────── 걷기 격자 ───────── */
 let nav = null;
 const SPAWN = { x: CX, z: 10.7 };
+let navC = null, navT = null;
 function buildNav(churchMeshes) {
-  nav = new NavGrid(-18, -40, 26, 22, .25);
-  nav.sliceMeshes(churchMeshes, [FLOOR + .5, FLOOR + 1.2, FLOOR + 1.9]);
-  for (const d of DOORS) { const hw = d.w / 2 + .3; d.ax === 'z' ? nav.segment(d.x - hw, d.z, d.x + hw, d.z) : nav.segment(d.x, d.z - hw, d.x, d.z + hw); }
-  nav.wall = nav.block.slice(); // 카메라 충돌은 벽·문만
-  for (const p of pews) nav.box(p.x, p.z + .03, 2.25, .32);
-  nav.box(CX, ALTAR_Z, 4, 2.5); // 제단 단
-  nav.box(RACK.x, RACK.z, RACK_W / 2 + .05, .5);
-  nav.flood(SPAWN.x, SPAWN.z, 1);
+  const base = new NavGrid(-18, -40, 26, 22, .25);
+  base.sliceMeshes(churchMeshes, [FLOOR + .5, FLOOR + 1.2, FLOOR + 1.9]);
+  for (const d of DOORS) { const hw = d.w / 2 + .3; d.ax === 'z' ? base.segment(d.x - hw, d.z, d.x + hw, d.z) : base.segment(d.x, d.z - hw, d.x, d.z + hw); }
+  const copy = () => { const g = new NavGrid(-18, -40, 26, 22, .25); g.block = base.block.slice(); g.wall = base.block.slice(); return g; }; // 카메라 충돌은 벽·문만
+  navC = copy();
+  for (const p of pews) navC.box(p.x, p.z + .03, 2.25, .32);
+  navC.box(CX, ALTAR_Z, 4, 2.5); // 제단 단
+  navC.box(RACK.x, RACK.z, RACK_W / 2 + .05, .5);
+  navC.flood(SPAWN.x, SPAWN.z, 1);
+  navT = copy();
+  navT.box(CX, ALTAR_Z - .5, 4.4, 2.9); navT.box(CX, ALTAR_Z + 2.4, 1.3, .5); // 불단 · 앞 상
+  navT.box(RACK.x, RACK.z, RACK_W / 2 + .05, .5);
+  navT.flood(SPAWN.x, SPAWN.z, 1);
+  nav = space === 'temple' ? navT : navC;
 }
 function nearestWalkable(x, z) {
   if (nav.ok(x, z)) return { x, z };
@@ -290,7 +311,7 @@ function nearestWalkable(x, z) {
 
 /* ───────── 사람들 (내 캐릭터 + 방문객) — Kenney Mini Characters ───────── */
 let player = null, myId = null;
-const SIT_DY = .46, SIT_DZ = -.02; // 앉기 동작 위치 보정
+const SIT_DZ = -.02; // 앉기 동작 위치 보정
 const npcs = [];
 try { myId = localStorage.getItem('cathedral:person'); } catch {}
 if (!PEOPLE.some((p) => p.id === myId)) myId = PEOPLE[Math.floor(Math.random() * PEOPLE.length)].id;
@@ -313,7 +334,7 @@ async function changePerson(id) {
 }
 
 /* ───────── 파이프오르간 (직접 합성한 느린 화음 · 저작권 없는 자작 진행) ───────── */
-let ac = null, master = null, musicOn = true;
+let ac = null, master = null, musicOn = true, organBus = null, temple = null;
 const NOTE = (n) => 440 * Math.pow(2, (n - 69) / 12);
 // 라단조 느린 진행: Dm – B♭ – F – C – Gm – Dm/F – A – Dm  (각 9초)
 const PROG = [[50, 57, 62, 65, 69], [46, 58, 62, 65, 70], [41, 57, 60, 65, 69], [48, 55, 60, 64, 67], [43, 55, 58, 62, 67], [41, 57, 62, 65, 69], [45, 57, 61, 64, 69], [38, 57, 62, 65, 69]];
@@ -340,15 +361,19 @@ function startMusic() {
   const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400;
   master.connect(lp); lp.connect(dry); lp.connect(verb); verb.connect(wet); dry.connect(comp); wet.connect(comp); comp.connect(ac.destination);
   master.gain.linearRampToValueAtTime(.22, ac.currentTime + 4);
+  organBus = ac.createGain(); organBus.gain.value = space === 'cathedral' ? 1 : 0; organBus.connect(master);
+  temple = templeAudio(ac, master); temple.bus.gain.value = space === 'temple' ? 1 : 0;
   const vib = ac.createOscillator(); vib.frequency.value = 4.6; const vibG = ac.createGain(); vibG.gain.value = 1.2; vib.connect(vibG); vib.start();
   function voice(n, t0, dur, vol) {
     const o = ac.createOscillator(); o.setPeriodicWave(wave); o.frequency.value = NOTE(n); o.detune.value = rnd(-3, 3);
     if (n > 66) vibG.connect(o.detune);
     const g = ac.createGain(); g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + 1.4); g.gain.setValueAtTime(vol, t0 + dur - .2); g.gain.linearRampToValueAtTime(0, t0 + dur + 2.5);
-    o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + dur + 3);
+    o.connect(g); g.connect(organBus); o.start(t0); o.stop(t0 + dur + 3);
   }
   const CH = 9; let bar = 0, next = ac.currentTime + .3;
   function schedule() {
+    temple.schedule(space === 'temple');
+    if (space !== 'cathedral') { next = ac.currentTime + 1.5; return; }
     while (next < ac.currentTime + 12) {
       const ch = PROG[bar % PROG.length];
       ch.forEach((n, i) => voice(n, next, CH, i === 0 ? .1 : .055));
@@ -358,7 +383,7 @@ function startMusic() {
       bar++; next += CH;
     }
   }
-  schedule(); setInterval(schedule, 3000);
+  schedule(); setInterval(schedule, 1000);
 }
 const bMusic = document.getElementById('bMusic');
 bMusic.onclick = () => {
@@ -441,7 +466,7 @@ function moveJoy(e) { let dx = e.clientX - joyC.x, dy = e.clientY - joyC.y; cons
 
 function nearestSlot() {
   let best = null, bd = 2.8;
-  for (const s of slots) { if (s.taken) continue; const d = Math.hypot(s.x - player.pos.x, s.z - player.pos.z); if (d < bd) { bd = d; best = s; } }
+  for (const s of activeSlots) { if (s.taken) continue; const d = Math.hypot(s.x - player.pos.x, s.z - player.pos.z); if (d < bd) { bd = d; best = s; } }
   return best;
 }
 const bSit = document.getElementById('bSit');
@@ -450,7 +475,7 @@ function sitDown() {
   const s = nearestSlot();
   if (!s) { hint('의자 가까이 가면 앉을 수 있어요'); return; }
   mode = 'sit'; mySlot = s; s.taken = 'me';
-  seatEye.set(s.x, FLOOR + 1.25, s.z + .05);
+  seatEye.set(s.x, FLOOR + (space === 'temple' ? .95 : 1.25), s.z + .05);
   player.visible = false;
   tYaw = yaw = 0; tPitch = pitch = .18;
   bSit.innerHTML = '<span>🚶</span>일어서기'; document.body.classList.add('sitting'); netState(true);
@@ -516,7 +541,7 @@ function netState(force = false) {
   net.ch.send({ type: 'broadcast', event: 'p', payload: { k: net.key, ...st } });
   if (force || now - lastTrack > 3000) { net.ch.track(st); lastTrack = now; } // 새로 들어온 사람도 내 위치를 알 수 있게
 }
-function seatOf(r) { return slots.find((o) => Math.abs(o.x - r.x) < .05 && Math.abs(o.z - r.z) < .05); }
+function seatOf(r) { return activeSlots.find((o) => Math.abs(o.x - r.x) < .05 && Math.abs(o.z - r.z) < .05); }
 async function applyRemote(key, st) {
   if (!st || key === net.key) return;
   let r = remotes.get(key);
@@ -542,7 +567,7 @@ function updateRemotes(dt) {
   for (const r of remotes.values()) {
     if (!r.a) continue;
     if (r.s) {
-      r.a.place(r.tx, FLOOR + SIT_DY, r.tz + SIT_DZ, Math.PI);
+      r.a.place(r.tx, FLOOR + sitDY(), r.tz + SIT_DZ, Math.PI);
       if (!r.a.sitting) r.a.sit();
       r.a.update(dt, false);
     } else {
@@ -556,15 +581,22 @@ function updateRemotes(dt) {
     }
   }
 }
+let sbClient = null;
+async function leavePresence() {
+  if (net) { try { await net.ch.unsubscribe(); } catch {} net = null; }
+  for (const k of [...remotes.keys()]) dropRemote(k);
+  document.getElementById('ppl').textContent = 1;
+}
 async function joinPresence() {
   const el = document.getElementById('ppl');
   try {
     const cfg = await (await fetch('/api/public-config')).json();
     if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) return;
     if (!window.supabase) await new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'vendor/supabase.js'; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); });
-    const sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+    sbClient = sbClient || window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+    const sb = sbClient;
     const key = (crypto.randomUUID && crypto.randomUUID()) || String(Math.random()).slice(2);
-    const ch = sb.channel('cathedral:visitors', { config: { presence: { key }, broadcast: { self: false } } });
+    const ch = sb.channel(space === 'temple' ? 'temple:visitors' : 'cathedral:visitors', { config: { presence: { key }, broadcast: { self: false } } }); // 성당·절은 따로
     net = { ch, key, ready: false };
     ch.on('presence', { event: 'sync' }, () => {
       const state = ch.presenceState(), keys = Object.keys(state);
@@ -576,13 +608,33 @@ async function joinPresence() {
       .subscribe((st) => { if (st === 'SUBSCRIBED') { net.ready = true; netState(true); } });
   } catch (e) { console.warn('presence', e); }
 }
+// 성당 ↔ 절
+function setSpace(m) {
+  if (m === space) return;
+  if (mode === 'sit') standUp();
+  space = m;
+  const T = m === 'temple';
+  CATH_ONLY.forEach((o) => { o.visible = !T; });
+  TEMPLE.group.visible = T;
+  activeSlots = T ? TEMPLE.slots : pewSlots;
+  if (navC) { nav = T ? navT : navC; if (player && !nav.ok(player.pos.x, player.pos.z)) { const p = nearestWalkable(player.pos.x, player.pos.z); player.place(p.x, FLOOR, p.z); } }
+  if (ac) { const now = ac.currentTime; organBus.gain.cancelScheduledValues(now); temple.bus.gain.cancelScheduledValues(now); organBus.gain.setTargetAtTime(T ? 0 : 1, now, .6); temple.bus.gain.setTargetAtTime(T ? 1 : 0, now, .6); temple.schedule(T); }
+  document.querySelectorAll('#spaceSw button').forEach((b) => b.classList.toggle('on', b.dataset.m === m));
+  document.getElementById('spaceName').textContent = T ? '절' : '성당';
+  document.getElementById('bMusicLbl').textContent = T ? '목탁·염불' : '오르간';
+  document.getElementById('bMusicIco').textContent = T ? '🪘' : '🎹';
+  document.getElementById('bCandleLbl').textContent = T ? '촛불 공양' : '촛불 켜기';
+  if (player) { leavePresence().then(joinPresence); }
+  toast(T ? '卍 절로 들어왔어요 · 목탁 소리에 맞춰 잠시 쉬어 가세요' : '✝ 성당으로 들어왔어요');
+}
+document.querySelectorAll('#spaceSw button').forEach((b) => { b.onclick = () => setSpace(b.dataset.m); });
 // 버튼 없이 바로 입장 (오르간은 브라우저 정책상 첫 터치·키 입력 때 시작)
 Promise.all([ready, peopleReady]).then(async () => {
   await spawnPeople();
   t0 = performance.now();
   const it = document.getElementById('intro'); it.style.opacity = 0; setTimeout(() => it.remove(), 1200);
   document.body.classList.add('in'); window.__ready = true;
-  joinPresence();
+  if (new URLSearchParams(location.search).get('space') === 'temple') setSpace('temple'); else joinPresence();
   hint(matchMedia('(pointer: coarse)').matches ? '화면을 누르면 오르간이 울려요 · 조이스틱으로 걷기 · 의자 근처에서 🪑 앉기' : '클릭하면 오르간이 울려요 · WASD로 걷기 · 끌어서 시점 돌리기 · 의자 근처에서 E로 앉기');
 });
 const firstTouch = () => { if (musicOn) startMusic(); removeEventListener('pointerdown', firstTouch, true); removeEventListener('keydown', firstTouch, true); };
@@ -631,6 +683,7 @@ function frame() {
     camera.lookAt(CX, FLOOR + 8 + Math.sin(t * .07) * 3, -20);
   }
   if (player) player.update(dt, moving);
+  if (space === 'temple') TEMPLE.update(t);
   if (net) { updateRemotes(dt); netState(false); }
   for (const n of npcs) {
     let mv = false;

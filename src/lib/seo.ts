@@ -442,13 +442,13 @@ export const GAME_SEO: SeoMap = {
   },
   cathedral: {
     ko: {
-      title: "빛의 성당 - 온라인 성당 · 파이프오르간 기도·명상 공간",
-      h1: "빛의 성당 — 파이프오르간을 들으며 기도하고 쉬어 가는 온라인 성당",
-      description: "성당 · 온라인 성당. 파이프오르간 소리를 듣고, 기도하고, 잠깐 쉬어가는 공간입니다. 스테인드글라스 빛이 드는 고딕 성당 의자에 앉아 촛불을 켜고 조용히 머물러 보세요.",
-      keywords: ["온라인 성당", "성당", "빛의 성당", "온라인 기도", "기도", "파이프오르간", "오르간 음악", "스테인드글라스", "고딕 성당", "명상", "멍때리기", "힐링", "촛불 켜기", "마음 쉼", "무료"],
+      title: "온라인 명상 - 온라인 성당·절, 파이프오르간·목탁 소리 기도 공간",
+      h1: "온라인 명상 — 성당의 파이프오르간, 절의 목탁 소리와 함께 기도하고 쉬어 가는 곳",
+      description: "성당 · 온라인 성당. 파이프오르간 소리를 듣고, 기도하고, 잠깐 쉬어가는 공간입니다. 절로 바꾸면 불상과 연등 아래 방석에 앉아 목탁과 염불 소리를 들을 수 있어요.",
+      keywords: ["온라인 명상", "온라인 성당", "온라인 절", "성당", "절", "목탁 소리", "염불", "연등", "불상", "빛의 성당", "온라인 기도", "기도", "파이프오르간", "오르간 음악", "스테인드글라스", "고딕 성당", "명상", "멍때리기", "힐링", "촛불 켜기", "마음 쉼", "무료"],
       about: [
-        "빛의 성당은 웹에서 바로 들어가는 온라인 성당이에요. 오래된 유럽 고딕 성당 안을 천천히 걸어 원하는 장의자에 앉으면, 사방의 스테인드글라스 사이로 색색의 햇빛이 들어오고 파이프오르간이 느린 화음을 연주해요.",
-        "봉헌 촛대에 촛불을 밝히며 기도하거나, 아무 생각 없이 빛과 먼지를 바라보며 잠깐 쉬어 가세요. 앉아 있던 시간이 화면 위에 표시되고, 햇빛이 들어오는 방향(왼쪽·앞·오른쪽·뒤)도 고를 수 있어요. 설치나 회원가입 없이 무료로 이용할 수 있어요.",
+        "온라인 명상은 웹에서 바로 들어가는 온라인 성당이자 절이에요. 처음에는 성당에서 시작해요. 오래된 유럽 고딕 성당 안을 천천히 걸어 원하는 장의자에 앉으면, 사방의 스테인드글라스 사이로 색색의 햇빛이 들어오고 파이프오르간이 느린 화음을 연주해요.",
+        "봉헌 촛대에 촛불을 밝히며 기도하거나, 아무 생각 없이 빛과 먼지를 바라보며 잠깐 쉬어 가세요. 앉아 있던 시간이 화면 위에 표시되고, 햇빛이 들어오는 방향(왼쪽·앞·오른쪽·뒤)도 고를 수 있어요. 화면 위 卍 표시를 누르면 같은 자리가 절로 바뀌어요. 나무 마루에 동그란 방석이 깔리고, 정면에는 금빛 불상이, 천장에는 알록달록한 연등이 가득하고, 목탁과 염불 소리가 흘러요. 설치나 회원가입 없이 무료로 이용할 수 있어요.",
       ],
       howTo: [
         "접속하면 바로 성당 입구에서 시작해요. 화면을 한 번 누르면 파이프오르간이 울려요.",
@@ -456,11 +456,11 @@ export const GAME_SEO: SeoMap = {
         "앉으면 화면을 끌어 스테인드글라스를 둘러보거나 🌀 둘러보기로 시선을 천천히 맡겨요.",
         "🕯️ 촛불 켜기로 봉헌 촛대에 촛불을 밝히고, ☀️로 햇빛 방향, 👤로 내 모습을 바꿀 수 있어요.",
       ],
-      tags: ["성당", "기도", "파이프오르간", "명상", "힐링", "무료"],
+      tags: ["명상", "성당", "절", "기도", "힐링", "무료"],
     },
     en: {
-      title: "Cathedral of Light - Online Cathedral with Pipe Organ for Prayer & Rest",
-      h1: "Cathedral of Light — An Online Cathedral to Pray, Listen and Rest",
+      title: "Online Meditation - Virtual Cathedral & Buddhist Temple for Prayer and Rest",
+      h1: "Online Meditation — A Cathedral and a Temple to Pray, Listen and Rest",
       description: "An online cathedral: listen to a pipe organ, pray, and take a quiet moment. Walk a gothic nave, sit on a pew under stained glass light, and light a candle.",
       keywords: ["online cathedral", "virtual church", "online prayer", "pipe organ", "stained glass", "gothic cathedral", "meditation", "relaxing", "candle lighting", "free"],
       about: [
