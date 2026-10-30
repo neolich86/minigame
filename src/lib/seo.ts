@@ -440,6 +440,42 @@ export const GAME_SEO: SeoMap = {
       tags: ["Mini room", "Decorating", "Pixel art", "Avatar", "Cozy", "Free"],
     },
   },
+  cathedral: {
+    ko: {
+      title: "빛의 성당 - 온라인 성당 · 파이프오르간 기도·명상 공간",
+      h1: "빛의 성당 — 파이프오르간을 들으며 기도하고 쉬어 가는 온라인 성당",
+      description: "성당 · 온라인 성당. 파이프오르간 소리를 듣고, 기도하고, 잠깐 쉬어가는 공간입니다. 스테인드글라스 빛이 드는 고딕 성당 의자에 앉아 촛불을 켜고 조용히 머물러 보세요.",
+      keywords: ["온라인 성당", "성당", "빛의 성당", "온라인 기도", "기도", "파이프오르간", "오르간 음악", "스테인드글라스", "고딕 성당", "명상", "멍때리기", "힐링", "촛불 켜기", "마음 쉼", "무료"],
+      about: [
+        "빛의 성당은 웹에서 바로 들어가는 온라인 성당이에요. 오래된 유럽 고딕 성당 안을 천천히 걸어 원하는 장의자에 앉으면, 사방의 스테인드글라스 사이로 색색의 햇빛이 들어오고 파이프오르간이 느린 화음을 연주해요.",
+        "봉헌 촛대에 촛불을 밝히며 기도하거나, 아무 생각 없이 빛과 먼지를 바라보며 잠깐 쉬어 가세요. 앉아 있던 시간이 화면 위에 표시되고, 햇빛이 들어오는 방향(왼쪽·앞·오른쪽·뒤)도 고를 수 있어요. 설치나 회원가입 없이 무료로 이용할 수 있어요.",
+      ],
+      howTo: [
+        "접속하면 바로 성당 입구에서 시작해요. 화면을 한 번 누르면 파이프오르간이 울려요.",
+        "WASD(휴대폰은 조이스틱)로 걸어 마음에 드는 자리로 가서 🪑 앉기(E 키)를 눌러요.",
+        "앉으면 화면을 끌어 스테인드글라스를 둘러보거나 🌀 둘러보기로 시선을 천천히 맡겨요.",
+        "🕯️ 촛불 켜기로 봉헌 촛대에 촛불을 밝히고, ☀️로 햇빛 방향, 👤로 내 모습을 바꿀 수 있어요.",
+      ],
+      tags: ["성당", "기도", "파이프오르간", "명상", "힐링", "무료"],
+    },
+    en: {
+      title: "Cathedral of Light - Online Cathedral with Pipe Organ for Prayer & Rest",
+      h1: "Cathedral of Light — An Online Cathedral to Pray, Listen and Rest",
+      description: "An online cathedral: listen to a pipe organ, pray, and take a quiet moment. Walk a gothic nave, sit on a pew under stained glass light, and light a candle.",
+      keywords: ["online cathedral", "virtual church", "online prayer", "pipe organ", "stained glass", "gothic cathedral", "meditation", "relaxing", "candle lighting", "free"],
+      about: [
+        "Cathedral of Light is an online cathedral you can enter right from your browser. Walk through an old gothic nave, pick a pew, and watch colored sunlight pour through stained glass while a pipe organ plays slow chords.",
+        "Light a candle at the votive stand, say a prayer, or simply rest your mind. Choose where the sunlight comes from and see how long you have stayed. Free, no install or sign-up.",
+      ],
+      howTo: [
+        "You start at the entrance. Tap once to start the pipe organ.",
+        "Walk with WASD (joystick on phones) and press 🪑 Sit (E) near a pew.",
+        "While seated, drag to look around or use 🌀 to let your gaze drift.",
+        "🕯️ lights a candle, ☀️ changes the sunlight, 👤 changes your character.",
+      ],
+      tags: ["Cathedral", "Prayer", "Pipe organ", "Meditation", "Relaxing", "Free"],
+    },
+  },
   "dongne-note": {
     ko: {
       title: "동네쪽지 - 지도에 남기는 동네 쪽지·메모",

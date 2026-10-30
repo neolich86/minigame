@@ -391,6 +391,34 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       ],
     },
   },
+  cathedral: {
+    ko: {
+      tips: [
+        "의자 근처로 가면 🪑 앉기 버튼이 밝아져요. 컴퓨터에서는 E 키나 스페이스로도 앉고 일어날 수 있어요.",
+        "앉은 채로 25초 동안 가만히 있으면 시선이 저절로 천천히 성당을 둘러봐요.",
+        "☀️ 햇빛 방향을 바꾸면 빛이 들어오는 창과 바닥의 빛 얼룩이 달라져요.",
+        "봉헌 촛대는 장의자 맨 앞 오른쪽에 있어요. 걸어가서 가까이 보면 촛불이 하나씩 밝아지는 게 보여요.",
+      ],
+      faq: [
+        { q: "오르간 소리가 안 나요.", a: "브라우저 정책상 화면을 한 번 누르거나 키를 눌러야 소리가 시작돼요. 그래도 안 나면 🎹 오르간 버튼이 켜져 있는지, 기기 소리가 꺼져 있지 않은지 확인해 주세요." },
+        { q: "파이프오르간 음악은 어떤 곡인가요?", a: "저작권 걱정이 없도록 브라우저 안에서 직접 합성하는 자작 화음 진행이에요. 녹음된 음원이 아니라서 데이터도 거의 쓰지 않아요." },
+        { q: "특정 종교만을 위한 곳인가요?", a: "누구나 쉬어 가는 공간이에요. 기도하셔도 좋고, 그냥 빛과 소리를 즐기며 멍하니 쉬어 가셔도 좋아요." },
+        { q: "회원가입이 필요한가요?", a: "아니요. 접속하면 바로 들어가고, 내가 고른 캐릭터와 햇빛 방향은 이 기기에 기억돼요." },
+      ],
+    },
+    en: {
+      tips: [
+        "Near a pew the 🪑 button lights up — or press E / Space.",
+        "Stay still for 25 seconds while seated and your gaze drifts around the cathedral.",
+        "Change ☀️ sunlight to see different windows and light pools.",
+      ],
+      faq: [
+        { q: "I can't hear the organ.", a: "Browsers need one tap or key press before sound can start. Also check the 🎹 button and your device volume." },
+        { q: "What is the organ music?", a: "A slow chord progression synthesized live in your browser — original and copyright-free." },
+        { q: "Do I need an account?", a: "No. Your character and sunlight choice are remembered on this device." },
+      ],
+    },
+  },
   "dongne-note": {
     ko: {
       tips: [

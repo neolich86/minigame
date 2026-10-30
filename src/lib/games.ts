@@ -210,6 +210,18 @@ const CATALOG: Game[] = [
     saves: true, // 로그인 상태 전달 + MGH.rpc (src/lib/gameRpc.ts)
   },
   {
+    id: "cathedral",
+    kind: "app",
+    title: { ko: "빛의 성당", en: "Cathedral of Light" },
+    desc: {
+      ko: "성당 · 온라인 성당. 파이프오르간 소리를 듣고, 기도하고, 잠깐 쉬어가는 공간입니다.",
+      en: "An online cathedral — listen to the pipe organ, pray, and take a quiet moment under the stained glass.",
+    },
+    genre: "casual",
+    thumb: "/thumbs/cathedral.jpg",
+    src: "/games/cathedral/index.html",
+  },
+  {
     id: "explore-map",
     kind: "app",
     title: { ko: "동네 정복", en: "Town Conquest" },
