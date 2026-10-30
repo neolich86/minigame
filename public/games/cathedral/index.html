@@ -51,20 +51,30 @@ canvas{display:block;touch-action:none}
 import * as THREE from 'three';
 import { GLTFLoader } from './vendor/jsm/GLTFLoader.js';
 import { MeshoptDecoder } from './vendor/jsm/libs/meshopt_decoder.module.js';
+import { EffectComposer } from './vendor/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from './vendor/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from './vendor/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from './vendor/jsm/postprocessing/OutputPass.js';
+import { makeGlassMaterials, remapGlass } from './glass.js';
 
 /* ───────── 기본 ───────── */
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.25;
+renderer.toneMappingExposure = 1.0;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.body.prepend(renderer.domElement);
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xd9dfe6); // 열린 문 너머 바깥 하늘
+scene.background = new THREE.Color(0x7d8794); // 열린 문 너머 바깥 하늘
 scene.fog = new THREE.FogExp2(0x2a2220, 0.012);
 const camera = new THREE.PerspectiveCamera(64, innerWidth / innerHeight, 0.1, 300);
-addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
+// 빛나는 유리만 번지도록 블룸 (실내는 어둡게 두고 유리를 밝게)
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), .55, .5, .55);
+composer.addPass(bloom); composer.addPass(new OutputPass());
+addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); bloom.resolution.set(innerWidth / 2, innerHeight / 2); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
 const rnd = (a, b) => a + Math.random() * (b - a);
 
 // 에셋 성당(Church_B) 기준 좌표: 바닥 y=2, 신랑(중앙 통로) 중심 x=5.5, 입구 z≈+12, 교차부 z≈-10, 제단 쪽 -z
@@ -78,7 +88,6 @@ function tex(f, srgb = true, rep = 1) {
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); t.anisotropy = 8;
   return t;
 }
-const glassTex = tex('glass.webp');
 const MATS = {
   Wall: new THREE.MeshStandardMaterial({ map: tex('wall.webp'), normalMap: tex('wall_n.webp', false), color: 0xe6d6bd, roughness: .92 }),
   WallTrim: new THREE.MeshStandardMaterial({ map: tex('trim.webp'), normalMap: tex('trim_n.webp', false), color: 0xf0e2c8, roughness: .85 }),
@@ -87,9 +96,9 @@ const MATS = {
   Ceiling: new THREE.MeshStandardMaterial({ map: tex('wall.webp'), color: 0xb8ac98, roughness: .95 }),
   Roof: new THREE.MeshStandardMaterial({ map: tex('wall.webp'), color: 0x8a7c6a, emissive: 0x3a3028, emissiveMap: tex('wall.webp'), roughness: 1 }),
   WoodPlanks: new THREE.MeshStandardMaterial({ map: tex('wood.webp'), color: 0xc08a60, roughness: .7 }),
-  StainedGlass: new THREE.MeshBasicMaterial({ map: glassTex, color: 0xffffff, toneMapped: false, side: THREE.DoubleSide }),
 };
 for (const m of Object.values(MATS)) m.side = THREE.DoubleSide;
+const GLASS = makeGlassMaterials(1.25);
 const woodM = new THREE.MeshStandardMaterial({ map: tex('wood.webp'), color: 0xd09a6a, roughness: .55 });
 
 /* ───────── 로딩 ───────── */
@@ -101,12 +110,12 @@ const ready = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('asse
   g.scene.traverse((o) => {
     if (!o.isMesh) return;
     const n = o.material && o.material.name;
-    o.material = MATS[n] || MATS.Wall;
     o.frustumCulled = true;
-    if (n === 'StainedGlass') glassWorld.push(o);
+    if (n === 'StainedGlass') glassWorld.push(o); else o.material = MATS[n] || MATS.Wall;
   });
   scene.add(g.scene);
   g.scene.updateMatrixWorld(true);
+  for (const m of glassWorld) remapGlass(m, GLASS);
   findWindows();
   loadEl.textContent = ''; enterBtn.disabled = false; enterBtn.textContent = '자리에 앉기';
 }).catch((e) => { loadEl.textContent = '성당을 불러오지 못했어요. 새로고침해 주세요.'; console.error(e); });
@@ -199,10 +208,10 @@ for (let i = 0; i < 11; i++) {
 }
 
 /* ───────── 조명 ───────── */
-scene.add(new THREE.HemisphereLight(0xe8dcc8, 0x8a7460, 1.1));
-for (const x of [CX - 9, CX + 9]) for (const z of [6, -4]) { const l = new THREE.PointLight(0xffd8b0, 16, 22, 1.6); l.position.set(x, FLOOR + 9, z); scene.add(l); }
-const sun = new THREE.DirectionalLight(0xffe2b8, 1.4); sun.position.set(40, 30, 5); scene.add(sun);
-for (const z of [8, -2, -12, -22]) { const l = new THREE.PointLight(0xffe0bc, 28, 30, 1.6); l.position.set(CX, FLOOR + 12, z); scene.add(l); }
+scene.add(new THREE.HemisphereLight(0xd8ccb8, 0x6a5848, .3));
+for (const x of [CX - 9, CX + 9]) for (const z of [6, -4]) { const l = new THREE.PointLight(0xffd8b0, 5, 22, 1.6); l.position.set(x, FLOOR + 9, z); scene.add(l); }
+const sun = new THREE.DirectionalLight(0xffe2b8, .5); sun.position.set(40, 30, 5); scene.add(sun);
+for (const z of [8, -2, -12, -22]) { const l = new THREE.PointLight(0xffe0bc, 9, 30, 1.6); l.position.set(CX, FLOOR + 12, z); scene.add(l); }
 
 /* ───────── 먼지 ───────── */
 const DUST = 900, dg = new THREE.BufferGeometry(), dp = new Float32Array(DUST * 3);
@@ -306,7 +315,7 @@ function frame() {
   camera.lookAt(camera.position.clone().add(dir));
   const cloud = .7 + .3 * Math.sin(t * .11) * Math.sin(t * .047 + 1);
   beams.forEach((b) => { b.m.opacity = b.base * (cloud + .08 * Math.sin(t * .5 + b.ph)); });
-  sun.intensity = 1.4 * cloud;
+  sun.intensity = .5 * cloud;
   candles.forEach((c) => { const k = 1 + .12 * Math.sin(t * 9 + c.ph) + .06 * Math.sin(t * 23 + c.ph * 2); c.f.scale.set(.12 * k, .24 * k, 1); });
   candleLight.intensity = 14 * (1 + .08 * Math.sin(t * 7.3));
   const a = dust.geometry.attributes.position;
@@ -314,7 +323,7 @@ function frame() {
   a.needsUpdate = true;
   others.forEach((o) => { o.v.rotation.z = Math.sin(t * .4 + o.ph) * .015; });
   if (t0) { const s = Math.floor((performance.now() - t0) / 1000); document.getElementById('timer').textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; }
-  renderer.render(scene, camera);
+  composer.render();
   requestAnimationFrame(frame);
 }
 frame();
