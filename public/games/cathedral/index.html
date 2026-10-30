@@ -39,11 +39,12 @@ body.in .bottom,body.in .top .pill:last-child{opacity:1}
 .joy i{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px;border-radius:50%;background:rgba(243,233,214,.35)}
 @media (pointer:coarse){body.in .joy{display:block}}
 body.sitting .joy{opacity:.45}
-.pickT{font-size:12px;color:#bba98a;margin:-6px 0 8px}
-.picker{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:20px}
-.intro .picker button{background:rgba(243,233,214,.06);color:#e8d9bb;box-shadow:none;border:1px solid rgba(243,233,214,.15);border-radius:12px;padding:4px 4px 5px;width:72px;display:flex;flex-direction:column;align-items:center;font-size:10px;font-weight:600}
-.intro .picker button.on{border-color:#e8d3a2;background:rgba(232,211,162,.18)}
-.picker canvas{image-rendering:pixelated;width:56px;height:56px}
+.charpick{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);display:none;grid-template-columns:repeat(6,1fr);gap:4px;background:rgba(20,14,10,.8);backdrop-filter:blur(8px);border:1px solid rgba(243,233,214,.18);border-radius:16px;padding:8px;width:min(420px,calc(100vw - 32px));box-sizing:border-box}
+.charpick.show{display:grid}
+.charpick button{background:rgba(243,233,214,.05);border:1px solid transparent;border-radius:10px;padding:2px 0 4px;color:#e8d9bb;font:inherit;font-size:10px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center}
+.charpick button.on{border-color:#e8d3a2;background:rgba(232,211,162,.18)}
+.charpick img{width:100%;max-width:60px;aspect-ratio:1}
+.bottom button{min-width:50px;padding:8px 7px;font-size:11px}
 .intro .box{max-width:360px}
 .hint{opacity:0}
 
@@ -61,18 +62,17 @@ body.sitting .joy{opacity:.45}
 <div class="sunpick" id="sunPick"><button data-s="left">◀ 왼쪽</button><button data-s="front">▲ 앞(제단)</button><button data-s="right">오른쪽 ▶</button><button data-s="back">▼ 뒤(입구)</button></div>
 <div class="bottom">
   <button id="bMusic" class="on"><span>🎹</span>오르간</button>
+  <button id="bChar"><span>👤</span>캐릭터</button>
   <button id="bSun"><span>☀️</span><b id="sunLbl">햇빛</b></button>
   <button id="bCandle"><span>🕯️</span>촛불 켜기</button>
   <button id="bSit"><span>🪑</span>앉기</button>
   <button id="bLook"><span>🌀</span>둘러보기</button>
 </div>
-<div class="credit">성당 모델: Gothic Like Structures by Loafbrr (CC0) · 캐릭터: elie automata</div>
+<div class="credit">성당 모델: Gothic Like Structures by Loafbrr (CC0) · 사람들: Kenney Mini Characters (CC0)</div>
+<div class="charpick" id="charPick"></div>
 <div class="intro" id="intro"><div class="box">
   <h1>빛의 성당</h1>
   <p>마음에 드는 자리를 찾아 앉아<br>스테인드글라스 사이로 들어오는 빛을 바라보며<br>잠시 아무 생각 없이 쉬어 가세요.</p>
-  <div class="pickT">내 모습 고르기</div>
-  <div class="picker" id="picker"></div>
-  <button id="enter" disabled>불러오는 중…</button>
   <div class="loading" id="loading">성당을 짓는 중…</div>
 </div></div>
 
@@ -87,7 +87,7 @@ import { UnrealBloomPass } from './vendor/jsm/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from './vendor/jsm/postprocessing/OutputPass.js';
 import { makeGlassMaterials, remapGlass } from './glass.js';
 import { NavGrid } from './navgrid.js';
-import { Actor, loadCharMeta, thumb } from './chars.js';
+import { Actor, PEOPLE, loadPerson, loadAllPeople, makeThumbs } from './people.js';
 
 /* ───────── 기본 ───────── */
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -134,7 +134,7 @@ const GLASS = makeGlassMaterials(1.25);
 const woodM = new THREE.MeshStandardMaterial({ map: tex('wood.webp'), color: 0xd09a6a, roughness: .55 });
 
 /* ───────── 로딩 ───────── */
-const loadEl = document.getElementById('loading'), enterBtn = document.getElementById('enter');
+const loadEl = document.getElementById('loading');
 const glassWorld = [], churchMeshes = []; // 창 위치 계산용 · 걷기 격자용
 const ready = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('assets/church.glb', (e) => {
   if (e.total) loadEl.textContent = `성당을 짓는 중… ${Math.round(e.loaded / e.total * 100)}%`;
@@ -269,7 +269,7 @@ scene.add(dust);
 
 /* ───────── 걷기 격자 ───────── */
 let nav = null;
-const SPAWN = { x: CX, z: 11.3 };
+const SPAWN = { x: CX, z: 10.7 };
 function buildNav(churchMeshes) {
   nav = new NavGrid(-18, -40, 26, 22, .25);
   nav.sliceMeshes(churchMeshes, [FLOOR + .5, FLOOR + 1.2, FLOOR + 1.9]);
@@ -278,7 +278,7 @@ function buildNav(churchMeshes) {
   for (const p of pews) nav.box(p.x, p.z + .03, 2.25, .32);
   nav.box(CX, ALTAR_Z, 4, 2.5); // 제단 단
   nav.box(RACK.x, RACK.z, RACK_W / 2 + .05, .5);
-  nav.box(RACK.x + RACK_W / 2 + 1.0, RACK.z + .2, .45, .35); nav.box(-3.4, 10.8, .9, .6); // 연금술사 · 상인
+  nav.box(RACK.x + RACK_W / 2 + .9, RACK.z + .3, .35, .35); // 촛대 앞 기도하는 사람
   nav.flood(SPAWN.x, SPAWN.z, 1);
 }
 function nearestWalkable(x, z) {
@@ -287,41 +287,46 @@ function nearestWalkable(x, z) {
   return { ...SPAWN };
 }
 
-/* ───────── 사람들 (내 캐릭터 + 방문객) ───────── */
-let CHARS = [], player = null, myChar = null;
+/* ───────── 사람들 (내 캐릭터 + 방문객) — Kenney Mini Characters ───────── */
+let player = null, myId = null;
+const SIT_DY = .46, SIT_DZ = -.02; // 앉기 동작 위치 보정
 const npcs = [];
-const SIT_Y = FLOOR - .18; // 앉은 모습: 의자 등받이 위로 상반신만
-const charsReady = loadCharMeta().then((list) => {
-  CHARS = list;
-  let saved = null; try { saved = localStorage.getItem('cathedral:char'); } catch {}
-  myChar = list.find((c) => c.id === saved && !NPC_ONLY.includes(c.id)) || list.find((c) => c.id === 'golden-cross-novice-priestess') || list[0];
-  buildPicker();
-});
-const NPC_ONLY = ['sapphire-alchemist', 'woodland-caravan-merchant'];
-function spawnPeople() {
-  player = new Actor(myChar, scene, { height: 1.7 });
+try { myId = localStorage.getItem('cathedral:person'); } catch {}
+if (!PEOPLE.some((p) => p.id === myId)) myId = PEOPLE[Math.floor(Math.random() * PEOPLE.length)].id;
+const peopleReady = loadAllPeople();
+async function makeActor(id) { return new Actor(await loadPerson(id), scene, PEOPLE.find((p) => p.id === id)); }
+async function spawnPeople() {
+  player = await makeActor(myId);
   player.place(SPAWN.x, FLOOR, SPAWN.z, Math.PI);
+  const others = PEOPLE.filter((p) => p.id !== myId).sort(() => Math.random() - .5);
   // 앉아 있는 방문객
-  const seatable = CHARS.filter((c) => !NPC_ONLY.includes(c.id) && c.id !== myChar.id && !c.anims.walk);
-  const free = slots.filter((s) => !(Math.abs(s.z - 9.5) < .1 && Math.abs(s.x - CX) < 3)); // 맨 앞(입구 쪽) 줄 가운데는 비워 둠
-  for (let i = 0; i < 9 && free.length; i++) {
-    const meta = seatable[i % seatable.length];
+  const free = slots.filter((s) => !(Math.abs(s.z - 9.5) < .1 && Math.abs(s.x - CX) < 3)); // 맨 뒤(입구 쪽) 줄 가운데는 비워 둠
+  for (let i = 0; i < 8 && free.length; i++) {
     const s = free.splice(Math.floor(Math.random() * free.length), 1)[0];
     for (const o of slots) if (Math.abs(o.z - s.z) < .1 && Math.abs(o.x - s.x) < .65) o.taken = o.taken || 'npc';
-    const a = new Actor(meta, scene, { height: 1.7 }); a.place(s.x, SIT_Y, s.z + .02, Math.PI);
-    npcs.push({ a, kind: 'sit', ph: Math.random() * 6 });
+    const a = await makeActor(others[i % others.length].id); a.place(s.x, FLOOR + SIT_DY, s.z + SIT_DZ, Math.PI); a.sit();
+    npcs.push({ a, kind: 'sit' });
   }
-  // 걷는 방문객 (걷기 동작이 있는 캐릭터)
-  const walkers = CHARS.filter((c) => c.anims.walk && c.id !== myChar.id);
+  // 측랑을 천천히 걷는 방문객
   const ROUTES = [[[14.5, 9.5], [14.5, -6]], [[-3.5, -6], [-3.5, 9.5]]];
-  walkers.forEach((meta, i) => {
-    const a = new Actor(meta, scene, { height: 1.7 }); const r = ROUTES[i % 2];
+  for (let i = 0; i < 2; i++) {
+    const a = await makeActor(others[(8 + i) % others.length].id), r = ROUTES[i];
     a.place(r[0][0], FLOOR, r[0][1]); npcs.push({ a, kind: 'walk', route: r, leg: 1, wait: 0 });
-  });
-  // 촛대 옆 연금술사, 입구 옆 상인
-  const alc = CHARS.find((c) => c.id === 'sapphire-alchemist'); if (alc) { const a = new Actor(alc, scene, { height: 1.75 }); a.place(RACK.x + RACK_W / 2 + 1.0, FLOOR, RACK.z + .2, -Math.PI / 2); npcs.push({ a, kind: 'stand' }); }
-  const mer = CHARS.find((c) => c.id === 'woodland-caravan-merchant'); if (mer) { const a = new Actor(mer, scene, { height: 2.1 }); a.place(-3.4, FLOOR, 10.8, Math.PI * .8); npcs.push({ a, kind: 'stand' }); }
+  }
+  // 촛대 앞에서 기도하는 사람
+  { const a = await makeActor(others[10 % others.length].id); a.place(RACK.x + RACK_W / 2 + .9, FLOOR, RACK.z + .3, -Math.PI * .6); npcs.push({ a, kind: 'stand' }); }
   document.getElementById('ppl').textContent = 1 + npcs.length;
+}
+// 내 캐릭터 바꾸기 (자리·상태는 그대로)
+async function changePerson(id) {
+  if (id === myId && player) return;
+  myId = id; try { localStorage.setItem('cathedral:person', id); } catch {}
+  if (!player) return;
+  const old = player, n = await makeActor(id);
+  n.place(old.pos.x, old.pos.y, old.pos.z, old.face); n.visible = old.visible;
+  if (mode === 'sit') n.sit();
+  old.dispose(); player = n;
+  toast(`👤 ${n.meta.name}(으)로 바꿨어요`);
 }
 
 /* ───────── 파이프오르간 (직접 합성한 느린 화음 · 저작권 없는 자작 진행) ───────── */
@@ -374,7 +379,7 @@ function startMusic() {
 }
 const bMusic = document.getElementById('bMusic');
 bMusic.onclick = () => {
-  if (!ac) { startMusic(); musicOn = true; }
+  if (!ac) { musicOn = !musicOn; if (musicOn) startMusic(); }
   else { musicOn = !musicOn; master.gain.cancelScheduledValues(ac.currentTime); master.gain.linearRampToValueAtTime(musicOn ? .22 : 0, ac.currentTime + 1.5); }
   bMusic.classList.toggle('on', musicOn);
 };
@@ -420,7 +425,7 @@ sunPick.querySelectorAll('button').forEach((b) => { b.onclick = () => { setSun(b
 
 /* ───────── 조작: 걷기 / 앉기 / 시점 ───────── */
 let mode = 'walk', mySlot = null;
-let yaw = 0, pitch = -.18, tYaw = 0, tPitch = -.18, auto = false, lastInput = performance.now(), autoPause = 0;
+let yaw = 0, pitch = -.26, tYaw = 0, tPitch = -.26, auto = false, lastInput = performance.now(), autoPause = 0;
 const seatEye = new THREE.Vector3();
 const keys = {}, joy = { x: 0, y: 0 };
 const el = renderer.domElement; let drag = null;
@@ -462,8 +467,8 @@ function sitDown() {
   const s = nearestSlot();
   if (!s) { hint('의자 가까이 가면 앉을 수 있어요'); return; }
   mode = 'sit'; mySlot = s; s.taken = 'me';
-  seatEye.set(s.x, FLOOR + 1.32, s.z + .05);
-  player.sprite.visible = false;
+  seatEye.set(s.x, FLOOR + 1.25, s.z + .05);
+  player.visible = false;
   tYaw = yaw = 0; tPitch = pitch = .18;
   bSit.innerHTML = '<span>🚶</span>일어서기'; document.body.classList.add('sitting');
   hint('화면을 끌어서 둘러보세요 · WASD로 일어나기');
@@ -472,8 +477,8 @@ function standUp() {
   if (mode !== 'sit') return;
   const p = nearestWalkable(CX, mySlot.z + .1);
   mySlot.taken = null; mySlot = null; mode = 'walk';
-  player.place(p.x, FLOOR, p.z, Math.PI); player.sprite.visible = true;
-  tYaw = yaw = 0; tPitch = pitch = -.18; auto = false; bLook.classList.remove('on');
+  player.place(p.x, FLOOR, p.z, Math.PI); player.visible = true;
+  tYaw = yaw = 0; tPitch = pitch = -.26; auto = false; bLook.classList.remove('on');
   bSit.innerHTML = '<span>🪑</span>앉기'; document.body.classList.remove('sitting');
 }
 bSit.onclick = toggleSit;
@@ -498,25 +503,29 @@ document.getElementById('bCandle').onclick = () => {
 
 /* ───────── 시작 ───────── */
 let t0 = null;
-function buildPicker() {
-  const box = document.getElementById('picker'); box.innerHTML = '';
-  CHARS.filter((c) => !NPC_ONLY.includes(c.id)).forEach((c) => {
-    const b = document.createElement('button'); b.title = c.name; b.appendChild(thumb(c, 56));
-    const s = document.createElement('small'); s.textContent = c.name; b.appendChild(s);
-    b.classList.toggle('on', c.id === myChar.id);
-    b.onclick = () => { myChar = c; box.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); try { localStorage.setItem('cathedral:char', c.id); } catch {} };
-    box.appendChild(b);
-  });
-}
-Promise.all([ready, charsReady]).then(() => { loadEl.textContent = ''; enterBtn.disabled = false; enterBtn.textContent = '성당에 들어가기'; window.__ready = true; });
-enterBtn.onclick = () => {
-  if (enterBtn.disabled) return;
-  startMusic(); t0 = performance.now();
-  spawnPeople();
+// 캐릭터 고르기 메뉴
+const charPick = document.getElementById('charPick');
+document.getElementById('bChar').onclick = () => { charPick.classList.toggle('show'); sunPick.classList.remove('show'); };
+makeThumbs(96).then((th) => {
+  charPick.innerHTML = '';
+  for (const p of PEOPLE) {
+    const b = document.createElement('button'); b.dataset.id = p.id;
+    b.innerHTML = `<img src="${th[p.id]}" alt=""><small>${p.name}</small>`;
+    b.onclick = async () => { await changePerson(p.id); charPick.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x.dataset.id === myId)); charPick.classList.remove('show'); };
+    charPick.appendChild(b);
+  }
+  charPick.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x.dataset.id === myId));
+});
+// 버튼 없이 바로 입장 (오르간은 브라우저 정책상 첫 터치·키 입력 때 시작)
+Promise.all([ready, peopleReady]).then(async () => {
+  await spawnPeople();
+  t0 = performance.now();
   const it = document.getElementById('intro'); it.style.opacity = 0; setTimeout(() => it.remove(), 1200);
-  document.body.classList.add('in');
-  hint(matchMedia('(pointer: coarse)').matches ? '왼쪽 아래 조이스틱으로 걷고, 의자 근처에서 🪑 앉기' : 'WASD로 걷기 · 화면을 끌어 시점 돌리기 · 의자 근처에서 E로 앉기');
-};
+  document.body.classList.add('in'); window.__ready = true;
+  hint(matchMedia('(pointer: coarse)').matches ? '화면을 누르면 오르간이 울려요 · 조이스틱으로 걷기 · 의자 근처에서 🪑 앉기' : '클릭하면 오르간이 울려요 · WASD로 걷기 · 끌어서 시점 돌리기 · 의자 근처에서 E로 앉기');
+});
+const firstTouch = () => { if (musicOn) startMusic(); removeEventListener('pointerdown', firstTouch, true); removeEventListener('keydown', firstTouch, true); };
+addEventListener('pointerdown', firstTouch, true); addEventListener('keydown', firstTouch, true);
 
 /* ───────── 그리기 ───────── */
 const clock = new THREE.Clock();
@@ -546,10 +555,10 @@ function frame() {
     }
     const near = nearestSlot(); bSit.classList.toggle('ready', !!near);
     // 3인칭 카메라: 벽에 막히면 당겨 온다
-    tgt.set(player.pos.x, FLOOR + 1.45, player.pos.z);
+    tgt.set(player.pos.x, FLOOR + 1.15, player.pos.z);
     let dist = 3.4;
     for (let d = .4; d <= 3.4; d += .2) { if (!nav.free(tgt.x - dirV.x * d, tgt.z - dirV.z * d)) { dist = Math.max(.6, d - .35); break; } }
-    camPos.copy(tgt).addScaledVector(dirV, -dist); camPos.y = Math.max(FLOOR + .35, camPos.y + .35);
+    camPos.copy(tgt).addScaledVector(dirV, -dist); camPos.y = Math.max(FLOOR + .35, camPos.y + .35 + (3.4 - dist) * .45); // 뒤가 막히면 위에서 내려다보기
     if (!camInit) { camera.position.copy(camPos); camInit = true; } else camera.position.lerp(camPos, Math.min(1, dt * 8));
     camera.lookAt(tgt.x + dirV.x * 2, tgt.y + .1 + dirV.y * 2, tgt.z + dirV.z * 2);
   } else if (mode === 'sit') {
@@ -560,7 +569,7 @@ function frame() {
     camera.position.set(CX + Math.sin(t * .05) * 2, FLOOR + 3, 6);
     camera.lookAt(CX, FLOOR + 8 + Math.sin(t * .07) * 3, -20);
   }
-  if (player) player.update(dt, camera, moving);
+  if (player) player.update(dt, moving);
   for (const n of npcs) {
     let mv = false;
     if (n.kind === 'walk') {
@@ -571,7 +580,7 @@ function frame() {
         else { const s = Math.min(L, .9 * dt); p.x += dx / L * s; p.z += dz / L * s; n.a.face = Math.atan2(dx, dz); mv = true; }
       }
     }
-    n.a.update(dt, camera, mv);
+    n.a.update(dt, mv);
   }
   const cloud = .7 + .3 * Math.sin(t * .11) * Math.sin(t * .047 + 1);
   beams.forEach((b) => { b.m.opacity = b.base * (cloud + .08 * Math.sin(t * .5 + b.ph)); });
