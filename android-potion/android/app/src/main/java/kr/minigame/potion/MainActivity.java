@@ -4,10 +4,12 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
 import com.getcapacitor.BridgeActivity;
+import kr.minigame.auth.GoogleSignInPlugin;
 
 public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        registerPlugin(GoogleSignInPlugin.class); // 구글 로그인 (웹뷰 대신 휴대폰 계정 선택 창)
         super.onCreate(savedInstanceState);
         // 화면이 꺼지지 않도록 유지 (플레이 중 자동 잠금 방지)
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);

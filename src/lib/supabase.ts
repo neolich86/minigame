@@ -66,21 +66,54 @@ export async function signInKakao(next = "/"): Promise<void> {
 
 /** 구글 로그인 켜짐 여부 — Supabase 에서 Google 공급자를 설정한 뒤 Vercel 환경변수 NEXT_PUBLIC_GOOGLE_LOGIN=1 */
 export const googleLoginEnabled = process.env.NEXT_PUBLIC_GOOGLE_LOGIN === "1";
-/** 안드로이드 앱(Capacitor 웹뷰) 안인지 — 구글은 웹뷰 안의 로그인 창을 막는다(disallowed_useragent) */
-export function inNativeApp(): boolean {
+/** 구글 클라우드 '웹 애플리케이션' 클라이언트 ID — 안드로이드 앱의 네이티브 로그인에 쓴다 (공개 값) */
+const GOOGLE_WEB_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID || "";
+
+type NativeGoogle = { signIn(o: { webClientId: string; nonce?: string }): Promise<{ idToken: string }> };
+type Cap = { isNativePlatform?: () => boolean; Plugins?: { GoogleSignIn?: NativeGoogle } };
+function cap(): Cap | undefined {
   try {
-    const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
-    return !!cap?.isNativePlatform?.();
+    return (window as unknown as { Capacitor?: Cap }).Capacitor;
   } catch {
-    return false;
+    return undefined;
   }
 }
+/** 안드로이드 앱(Capacitor 웹뷰) 안인지 — 구글은 웹뷰 안의 로그인 창을 막는다(disallowed_useragent) */
+export function inNativeApp(): boolean {
+  return !!cap()?.isNativePlatform?.();
+}
+/** 앱에 네이티브 구글 로그인 플러그인(kr.minigame.auth.GoogleSignInPlugin)이 들어 있는지 — 예전 버전 앱에는 없다 */
+function nativeGoogle(): NativeGoogle | null {
+  const c = cap();
+  return c?.isNativePlatform?.() && c.Plugins?.GoogleSignIn && GOOGLE_WEB_CLIENT_ID ? c.Plugins.GoogleSignIn : null;
+}
 /** 지금 이 화면에서 구글 로그인 버튼을 보여도 되는지 */
-export const googleLoginAvailable = () => googleLoginEnabled && !inNativeApp();
+export const googleLoginAvailable = () => googleLoginEnabled && (!inNativeApp() || !!nativeGoogle());
+
+async function sha256Hex(s: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 export async function signInGoogle(next = "/"): Promise<void> {
   const c = sb();
   if (!c) return;
+  const native = nativeGoogle();
+  if (native) {
+    // 앱: 휴대폰 구글 계정 선택 창 → ID 토큰 → Supabase (구글에는 해시한 nonce, Supabase 에는 원래 nonce)
+    const raw = crypto.randomUUID();
+    let idToken: string;
+    try {
+      ({ idToken } = await native.signIn({ webClientId: GOOGLE_WEB_CLIENT_ID, nonce: await sha256Hex(raw) }));
+    } catch (e) {
+      if (String((e as { message?: string })?.message ?? e).includes("canceled")) return; // 사용자가 창을 닫음
+      throw e;
+    }
+    const { error } = await c.auth.signInWithIdToken({ provider: "google", token: idToken, nonce: raw });
+    if (error) throw error;
+    if (window.location.pathname + window.location.search !== next) window.location.href = next;
+    return;
+  }
   try {
     localStorage.setItem(AUTH_NEXT_KEY, JSON.stringify({ next, at: Date.now() }));
   } catch {}
