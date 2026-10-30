@@ -64,12 +64,122 @@ function buddha(gold) {
   return B;
 }
 
-export function buildTemple(scene, { FLOOR, CX, ALTAR_Z, woodMap }) {
+
+// ───────── 법당 건물 (대웅전 내부) ─────────
+function cv(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; }
+// 단청 보: 녹색 몸통 + 양 끝 머리초(동심 꽃무늬) + 가운데 금문
+const dancheongTex = () => cv(1024, 128, (g, w, h) => {
+  g.fillStyle = '#2f7d62'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#1d4f8a'; g.fillRect(0, 0, w, 10); g.fillRect(0, h - 10, w, 10);
+  g.fillStyle = '#f4ecd8'; g.fillRect(0, 10, w, 3); g.fillRect(0, h - 13, w, 3);
+  const flower = (cx) => {
+    const R = [[56, '#c8352b'], [46, '#f4ecd8'], [40, '#1d4f8a'], [30, '#f2b632'], [22, '#c8352b'], [12, '#f4ecd8']];
+    for (const [r, c] of R) { g.fillStyle = c; g.beginPath(); g.ellipse(cx, h / 2, r * .9, r * .95, 0, 0, 7); g.fill(); }
+    for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; g.fillStyle = k % 2 ? '#e86a3a' : '#7ac4a0'; g.beginPath(); g.ellipse(cx + Math.cos(a) * 60, h / 2 + Math.sin(a) * 40, 12, 7, a, 0, 7); g.fill(); }
+  };
+  for (const cx of [70, w - 70]) { g.fillStyle = '#1d4f8a'; g.fillRect(cx - 70, 13, 140, h - 26); flower(cx); }
+  for (const x of [150, 160, w - 160, w - 150]) { g.fillStyle = x % 20 ? '#c8352b' : '#f4ecd8'; g.fillRect(x - 3, 13, 6, h - 26); }
+  g.strokeStyle = '#f2b632'; g.lineWidth = 3; g.strokeRect(w / 2 - 120, 30, 240, h - 60);
+  g.fillStyle = '#c8352b'; for (let i = 0; i < 6; i++) { g.beginPath(); g.arc(w / 2 - 100 + i * 40, h / 2, 9, 0, 7); g.fill(); }
+});
+// 우물천장: 녹색 반자틀 + 가운데 연꽃
+const ceilingTex = () => cv(256, 256, (g, w) => {
+  g.fillStyle = '#25644e'; g.fillRect(0, 0, w, w);
+  g.fillStyle = '#c8352b'; for (const [x, y] of [[0, 0], [w, 0], [0, w], [w, w]]) { g.beginPath(); g.arc(x, y, 22, 0, 7); g.fill(); }
+  g.fillStyle = '#1d4f8a'; g.fillRect(26, 26, w - 52, w - 52);
+  g.strokeStyle = '#f2b632'; g.lineWidth = 4; g.strokeRect(34, 34, w - 68, w - 68);
+  for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; g.fillStyle = k % 2 ? '#f08aa8' : '#f6c2d0'; g.beginPath(); g.ellipse(w / 2 + Math.cos(a) * 40, w / 2 + Math.sin(a) * 40, 34, 15, a, 0, 7); g.fill(); }
+  g.fillStyle = '#f2b632'; g.beginPath(); g.arc(w / 2, w / 2, 20, 0, 7); g.fill();
+  g.fillStyle = '#c8352b'; g.beginPath(); g.arc(w / 2, w / 2, 9, 0, 7); g.fill();
+});
+// 꽃살문: 한지에 비친 빛 + 빗살 격자 + 테두리
+const latticeTex = () => cv(256, 512, (g, w, h) => {
+  const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#fff3d2'); gr.addColorStop(1, '#f3d9a0'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.strokeStyle = '#6a3a1e'; g.lineWidth = 7;
+  for (let d = -h; d < w + h; d += 34) { g.beginPath(); g.moveTo(d, 0); g.lineTo(d + h, h); g.stroke(); g.beginPath(); g.moveTo(d, h); g.lineTo(d + h, 0); g.stroke(); }
+  g.lineWidth = 4; for (let y = 0; y < h; y += 34) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+  g.fillStyle = '#5a2a14'; g.fillRect(0, 0, w, 18); g.fillRect(0, h - 18, w, 18); g.fillRect(0, 0, 18, h); g.fillRect(w - 18, 0, 18, h); g.fillRect(0, h * .62, w, 22);
+  g.fillStyle = '#6a3a1e'; g.fillRect(18, h * .62 + 22, w - 36, h * .38 - 40); // 아래 궁창판
+  g.strokeStyle = '#c8352b'; g.lineWidth = 3; g.strokeRect(34, h * .62 + 36, w - 68, h * .38 - 68);
+});
+// 후불벽: 붉은 바탕 + 금빛 구름 + 테두리
+const backTex = () => cv(512, 512, (g, w, h) => {
+  g.fillStyle = '#7a1a14'; g.fillRect(0, 0, w, h);
+  g.strokeStyle = '#e0a83a'; g.lineWidth = 12; g.strokeRect(14, 14, w - 28, h - 28); g.lineWidth = 4; g.strokeRect(36, 36, w - 72, h - 72);
+  g.strokeStyle = 'rgba(240,190,90,.55)'; g.lineWidth = 5;
+  for (let i = 0; i < 14; i++) { const x = 70 + (i * 97) % (w - 140), y = 80 + (i * 61) % (h - 160); for (let k = 0; k < 3; k++) { g.beginPath(); g.arc(x + k * 22, y, 14 + k * 4, Math.PI, 0); g.stroke(); } }
+});
+
+function buildHall(G, FLOOR, CX, TZ) {
+  const X0 = CX - 10, X1 = CX + 10, Z0 = 12.6, Z1 = TZ - 4.5, H = 10, POST = 7.4;
+  const W = X1 - X0, D = Z0 - Z1;
+  const plaster = new THREE.MeshStandardMaterial({ color: 0xe8dcc4, roughness: .95 });
+  const red = new THREE.MeshStandardMaterial({ color: 0x8a2a1c, roughness: .6 });
+  const wood = new THREE.MeshStandardMaterial({ color: 0x5a2e18, roughness: .7 });
+  const dTex = dancheongTex(), dM = new THREE.MeshStandardMaterial({ map: dTex, roughness: .7 });
+  const lat = latticeTex(), latM = new THREE.MeshStandardMaterial({ map: lat, emissive: 0xffe2a8, emissiveMap: lat, emissiveIntensity: .55, roughness: .9, side: THREE.DoubleSide });
+  const add = (geo, mat, x, y, z, ry = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.y = ry; G.add(m); return m; };
+  // 벽: 아래 머름(나무) · 문 · 위 회벽
+  const sides = [ // [가운데x, 가운데z, 길이, 회전]
+    [CX, Z0, W, Math.PI], [X0, (Z0 + Z1) / 2, D, Math.PI / 2], [X1, (Z0 + Z1) / 2, D, -Math.PI / 2],
+  ];
+  const sunWins = { left: [], right: [], back: [], front: [] };
+  for (const [cx, cz, len, ry] of sides) {
+    const n = Math.round(len / 2.5), seg = len / n;
+    add(new THREE.BoxGeometry(len, .7, .25), wood, cx, FLOOR + .35, cz, ry);
+    add(new THREE.BoxGeometry(len, H - 4.1, .25), plaster, cx, FLOOR + 4.1 + (H - 4.1) / 2, cz, ry);
+    const dir = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), ry);
+    for (let i = 0; i < n; i++) {
+      const o = -len / 2 + seg * (i + .5), x = cx + dir.x * o, z = cz + dir.z * o;
+      add(new THREE.PlaneGeometry(seg - .12, 3.4), latM, x, FLOOR + .7 + 1.7, z, ry);
+      add(new THREE.BoxGeometry(.14, 3.4, .3), wood, x + dir.x * seg / 2, FLOOR + 2.4, z + dir.z * seg / 2, ry);
+      const w = { x, y: FLOOR + 2.4, z };
+      if (cz === Z0) sunWins.back.push(w); else if (cx === X0) sunWins.left.push(w); else sunWins.right.push(w);
+    }
+    add(new THREE.BoxGeometry(len, .5, .4), dM, cx, FLOOR + 4.1, cz, ry); // 창방
+  }
+  // 뒤쪽(불상 뒤) 후불벽 + 위쪽 광창
+  add(new THREE.BoxGeometry(W, H, .3), plaster, CX, FLOOR + H / 2, Z1);
+  add(new THREE.PlaneGeometry(9, 7.2), new THREE.MeshStandardMaterial({ map: backTex(), roughness: .8 }), CX, FLOOR + 4.6, Z1 + .2);
+  for (const s of [-1, 1]) { add(new THREE.PlaneGeometry(2.6, 1.4), latM, CX + s * 6.8, FLOOR + 8.3, Z1 + .2); sunWins.front.push({ x: CX + s * 6.8, y: FLOOR + 8.3, z: Z1 + .3 }); }
+  // 기둥 (안쪽 고주 두 줄 + 벽 기둥)
+  const colGeo = new THREE.CylinderGeometry(.3, .34, POST, 20), baseGeo = new THREE.CylinderGeometry(.48, .55, .3, 8);
+  const stone = new THREE.MeshStandardMaterial({ color: 0x8a8478, roughness: .9 });
+  const posts = [];
+  for (let z = Z0 - 2.6; z > Z1 + 2; z -= 4.8) for (const x of [CX - 6.2, CX + 6.2]) posts.push([x, z]);
+  for (const [x, z] of posts) { add(colGeo, red, x, FLOOR + POST / 2, z); add(baseGeo, stone, x, FLOOR + .15, z); }
+  // 보 (기둥 줄을 따라) · 대들보 (가로)
+  for (const x of [CX - 6.2, CX + 6.2]) add(new THREE.BoxGeometry(.55, .7, D), dM, x, FLOOR + POST + .2, (Z0 + Z1) / 2, Math.PI / 2).rotation.y = 0;
+  const zs = [...new Set(posts.map((p) => p[1]))];
+  for (const z of zs) { const b = add(new THREE.BoxGeometry(W, .8, .6), dM, CX, FLOOR + POST + .7, z); b.rotation.y = 0; }
+  // 천장: 가운데는 높은 우물천장, 양쪽은 조금 낮게
+  const cT = ceilingTex(); cT.wrapS = cT.wrapT = THREE.RepeatWrapping;
+  const ceilMid = cT.clone(); ceilMid.repeat.set(12.4 / 1.6, D / 1.6); ceilMid.needsUpdate = true;
+  const cm = add(new THREE.PlaneGeometry(12.4, D), new THREE.MeshStandardMaterial({ map: ceilMid, roughness: .85, emissive: 0x111111 }), CX, FLOOR + H, (Z0 + Z1) / 2); cm.rotation.x = Math.PI / 2;
+  for (const s of [-1, 1]) {
+    const sm = cT.clone(); sm.repeat.set(3.8 / 1.6, D / 1.6); sm.needsUpdate = true;
+    const m = add(new THREE.PlaneGeometry(3.8, D), new THREE.MeshStandardMaterial({ map: sm, roughness: .85 }), CX + s * 8.1, FLOOR + POST + 1.1, (Z0 + Z1) / 2); m.rotation.x = Math.PI / 2;
+    add(new THREE.BoxGeometry(.3, H - POST - 1.1, D), plaster, CX + s * 6.2, FLOOR + (H + POST + 1.1) / 2, (Z0 + Z1) / 2);
+  }
+  // 조명: 한지문으로 들어오는 은은한 빛
+  const amb = new THREE.HemisphereLight(0xfff0d8, 0x6a4028, .9); G.add(amb);
+  for (const z of [8, 0, -8]) { const l = new THREE.PointLight(0xffd8a8, 9, 16, 1.6); l.position.set(CX, FLOOR + 6, z); G.add(l); }
+  // 걷기 격자에 넣을 벽·기둥
+  const navMark = (nav) => {
+    nav.segment(X0, Z0, X1, Z0); nav.segment(X0, Z1, X1, Z1); nav.segment(X0, Z0, X0, Z1); nav.segment(X1, Z0, X1, Z1);
+    for (const [x, z] of posts) nav.box(x, z, .4, .4);
+  };
+  return { sunWins, navMark, bounds: { X0, X1, Z0, Z1, H } };
+}
+
+export function buildTemple(scene, { FLOOR, CX, woodMap }) {
   const G = new THREE.Group(); G.visible = false; scene.add(G);
+  const ALTAR_Z = -12.5; // 법당 안 불상 자리
+  const HALL = buildHall(G, FLOOR, CX, ALTAR_Z);
   // 나무 마루
   const maru = woodMap.clone(); maru.repeat.set(12, 10); maru.rotation = Math.PI / 2; maru.needsUpdate = true;
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(25, 34), new THREE.MeshStandardMaterial({ map: maru, color: 0xb07a4a, roughness: .55 }));
-  floor.rotation.x = -Math.PI / 2; floor.position.set(CX, FLOOR + .03, -4); G.add(floor);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(20.4, 30), new THREE.MeshStandardMaterial({ map: maru, color: 0xb07a4a, roughness: .55 }));
+  floor.rotation.x = -Math.PI / 2; floor.position.set(CX, FLOOR + .03, -2.2); G.add(floor);
   // 방석 (가운데 통로를 두고 양쪽에 줄지어)
   const slots = [];
   const cushionCols = [0x8a1f2e, 0x5b2a7a, 0x7a3a12, 0x1f4a7a];
@@ -85,12 +195,12 @@ export function buildTemple(scene, { FLOOR, CX, ALTAR_Z, woodMap }) {
   const gold = new THREE.MeshStandardMaterial({ color: 0xe0a83a, metalness: .85, roughness: .32, emissive: 0x1a1004 });
   const dais = new THREE.Mesh(new THREE.BoxGeometry(8.5, 1.0, 5.5), new THREE.MeshStandardMaterial({ color: 0x6a1410, roughness: .6 }));
   dais.position.set(CX, FLOOR + .5, ALTAR_Z - .5); G.add(dais);
-  const S = 1.75; const bud = buddha(gold); bud.position.set(CX, FLOOR + 1.0, ALTAR_Z - .8); bud.scale.setScalar(S); G.add(bud);
+  const S = 1.3; const bud = buddha(gold); bud.position.set(CX, FLOOR + 1.0, ALTAR_Z - .8); bud.scale.setScalar(S); G.add(bud);
   const halo = new THREE.Mesh(new THREE.CircleGeometry(2.6, 48), new THREE.MeshBasicMaterial({ map: haloTex(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
   halo.position.set(CX, FLOOR + 1.0 + 4.0 * S, ALTAR_Z - 1.9); halo.scale.setScalar(S / 1.15); G.add(halo);
   const body = new THREE.Mesh(new THREE.CircleGeometry(3.6, 48), halo.material.clone()); body.material.opacity = .55;
   body.position.set(CX, FLOOR + 1.0 + 2.6 * S, ALTAR_Z - 2.0); body.scale.set(S / 1.15, 1.25 * S / 1.15, 1); G.add(body);
-  const spot = new THREE.SpotLight(0xffd9a0, 55, 34, .55, .6, 1.4); spot.position.set(CX, FLOOR + 11, ALTAR_Z + 9); spot.target = bud; G.add(spot);
+  const spot = new THREE.SpotLight(0xffd9a0, 55, 34, .55, .6, 1.4); spot.position.set(CX, FLOOR + 8.5, ALTAR_Z + 8); spot.target = bud; G.add(spot);
   const fill = new THREE.PointLight(0xffb070, 10, 10, 1.6); fill.position.set(CX, FLOOR + 3, ALTAR_Z + 2.5); G.add(fill);
   // 불단 앞 작은 상
   const table = new THREE.Mesh(new THREE.BoxGeometry(2.4, .55, .8), new THREE.MeshStandardMaterial({ color: 0x4a1a10, roughness: .5 }));
@@ -100,20 +210,20 @@ export function buildTemple(scene, { FLOOR, CX, ALTAR_Z, woodMap }) {
   const lgeo = new THREE.LatheGeometry([[0, -.32], [.18, -.3], [.3, -.18], [.34, 0], [.3, .16], [.2, .27], [.08, .32], [0, .33]].map(([x, y]) => new THREE.Vector2(x, y)), 18);
   const lmat = new THREE.MeshBasicMaterial({ map: petalTex() });
   const spots = [];
-  for (let z = 11; z > -32; z -= 1.15) for (let x = CX - 5.2; x <= CX + 5.21; x += 1.15) {
-    if (z < -14 && Math.abs(x - CX) < 4.6) continue; // 불상 머리 위는 비움
+  for (let z = 11.3; z > ALTAR_Z - 3; z -= 1.1) for (let x = CX - 8.8; x <= CX + 8.81; x += 1.1) {
+    if (z < ALTAR_Z + 6 && Math.abs(x - CX) < 4.4) continue; // 불상 머리 위는 비움
+    if (Math.abs(Math.abs(x - CX) - 6.2) < .5) continue; // 기둥 자리 // 불상 머리 위는 비움
     spots.push([x + (Math.random() - .5) * .3, z + (Math.random() - .5) * .3]);
   }
-  for (let z = 10; z > -8; z -= 1.6) for (const ax of [-3.5, 14.5]) for (const dx of [-1.2, 0, 1.2]) spots.push([ax + dx, z]); // 측랑에도
   const N = spots.length;
   const lan = new THREE.InstancedMesh(lgeo, lmat, N), col = new THREE.Color(), m4 = new THREE.Matrix4();
   const linePos = new Float32Array(N * 6), meta = [];
   spots.forEach(([x, z], i) => {
-    const y = FLOOR + 7.2 + Math.random() * 3.2 + Math.sin(x * .7 + z * .4) * .4;
+    const hi = Math.abs(x - CX) < 6 ? 8.6 : 6.8; const y = FLOOR + hi - 1.4 - Math.random() * 2.2;
     meta.push({ x, y, z, ph: Math.random() * 6 });
     m4.makeTranslation(x, y, z); lan.setMatrixAt(i, m4);
     col.setHex(LOTUS_COLS[Math.floor(Math.random() * LOTUS_COLS.length)]).multiplyScalar(1.5); lan.setColorAt(i, col);
-    linePos.set([x, y + .33, z, x, FLOOR + 17, z], i * 6);
+    linePos.set([x, y + .33, z, x, FLOOR + (Math.abs(x - CX) < 6 ? 10 : 8.5), z], i * 6);
   });
   G.add(lan);
   const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.BufferAttribute(linePos, 3));
@@ -122,14 +232,14 @@ export function buildTemple(scene, { FLOOR, CX, ALTAR_Z, woodMap }) {
   const tail = new THREE.InstancedMesh(new THREE.CylinderGeometry(.02, .05, .35, 6), new THREE.MeshBasicMaterial({ color: 0xffe9a0 }), N);
   meta.forEach((p, i) => { m4.makeTranslation(p.x, p.y - .5, p.z); tail.setMatrixAt(i, m4); }); G.add(tail);
   // 연등 빛이 아래로 번지도록 색 점광원 몇 개
-  [[0xff6a8a, -2], [0xffc040, -10], [0x7ab0ff, -16], [0xff8040, 4]].forEach(([c, z]) => { const l = new THREE.PointLight(c, 8, 16, 1.6); l.position.set(CX, FLOOR + 7, z); G.add(l); });
+  [[0xff6a8a, -2], [0xffc040, -8], [0x7ab0ff, 4], [0xff8040, 9]].forEach(([c, z]) => { const l = new THREE.PointLight(c, 6, 12, 1.6); l.position.set(CX, FLOOR + 6.5, z); G.add(l); });
 
   function update(t) {
     for (let i = 0; i < N; i++) { const p = meta[i], s = Math.sin(t * .6 + p.ph) * .025; m4.makeRotationZ(s).setPosition(p.x, p.y, p.z); lan.setMatrixAt(i, m4); }
     lan.instanceMatrix.needsUpdate = true;
     halo.rotation.z = t * .03;
   }
-  return { group: G, slots, update };
+  return { group: G, slots, update, sunWins: HALL.sunWins, navMark: HALL.navMark, ALTAR_Z, bounds: HALL.bounds };
 }
 
 // ───────── 목탁과 염불 (브라우저에서 합성) ─────────
