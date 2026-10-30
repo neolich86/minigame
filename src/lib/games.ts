@@ -299,6 +299,19 @@ const CATALOG: Game[] = [
     src: "/games/lotto/index.html",
   },
   {
+    id: "book-pick",
+    kind: "tool",
+    title: { ko: "오늘 뭐 읽지?", en: "What to Read Today" },
+    desc: {
+      ko: "장르·소재·분위기·시기 키워드를 고르면 어울리는 책을 뽑아 주는 책 추천 도구",
+      en: "Pick genres, themes, moods and eras — get a book that fits",
+    },
+    genre: "casual",
+    thumb: "/thumbs/book-pick.jpg",
+    src: "/games/book-pick/index.html",
+    hidden: true, // 정보나루 카탈로그 연결 전 (지금은 예시 책 목록)
+  },
+  {
     id: "pinball",
     kind: "tool",
     title: { ko: "핀볼 추첨기", en: "Pinball Lottery Machine" },
