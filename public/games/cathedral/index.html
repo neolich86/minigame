@@ -280,7 +280,6 @@ function buildNav(churchMeshes) {
   for (const p of pews) nav.box(p.x, p.z + .03, 2.25, .32);
   nav.box(CX, ALTAR_Z, 4, 2.5); // 제단 단
   nav.box(RACK.x, RACK.z, RACK_W / 2 + .05, .5);
-  nav.box(RACK.x + RACK_W / 2 + .9, RACK.z + .3, .35, .35); // 촛대 앞 기도하는 사람
   nav.flood(SPAWN.x, SPAWN.z, 1);
 }
 function nearestWalkable(x, z) {
@@ -300,23 +299,6 @@ async function makeActor(id) { return new Actor(await loadPerson(id), scene, PEO
 async function spawnPeople() {
   player = await makeActor(myId);
   player.place(SPAWN.x, FLOOR, SPAWN.z, Math.PI);
-  const others = PEOPLE.filter((p) => p.id !== myId).sort(() => Math.random() - .5);
-  // 앉아 있는 방문객
-  const free = slots.filter((s) => !(Math.abs(s.z - 9.5) < .1 && Math.abs(s.x - CX) < 3)); // 맨 뒤(입구 쪽) 줄 가운데는 비워 둠
-  for (let i = 0; i < 8 && free.length; i++) {
-    const s = free.splice(Math.floor(Math.random() * free.length), 1)[0];
-    for (const o of slots) if (Math.abs(o.z - s.z) < .1 && Math.abs(o.x - s.x) < .65) o.taken = o.taken || 'npc';
-    const a = await makeActor(others[i % others.length].id); a.place(s.x, FLOOR + SIT_DY, s.z + SIT_DZ, Math.PI); a.sit();
-    npcs.push({ a, kind: 'sit' });
-  }
-  // 측랑을 천천히 걷는 방문객
-  const ROUTES = [[[14.5, 9.5], [14.5, -6]], [[-3.5, -6], [-3.5, 9.5]]];
-  for (let i = 0; i < 2; i++) {
-    const a = await makeActor(others[(8 + i) % others.length].id), r = ROUTES[i];
-    a.place(r[0][0], FLOOR, r[0][1]); npcs.push({ a, kind: 'walk', route: r, leg: 1, wait: 0 });
-  }
-  // 촛대 앞에서 기도하는 사람
-  { const a = await makeActor(others[10 % others.length].id); a.place(RACK.x + RACK_W / 2 + .9, FLOOR, RACK.z + .3, -Math.PI * .6); npcs.push({ a, kind: 'stand' }); }
 }
 // 내 캐릭터 바꾸기 (자리·상태는 그대로)
 async function changePerson(id) {
@@ -326,7 +308,7 @@ async function changePerson(id) {
   const old = player, n = await makeActor(id);
   n.place(old.pos.x, old.pos.y, old.pos.z, old.face); n.visible = old.visible;
   if (mode === 'sit') n.sit();
-  old.dispose(); player = n;
+  old.dispose(); player = n; netState(true);
   toast(`👤 ${n.meta.name}(으)로 바꿨어요`);
 }
 
@@ -471,7 +453,7 @@ function sitDown() {
   seatEye.set(s.x, FLOOR + 1.25, s.z + .05);
   player.visible = false;
   tYaw = yaw = 0; tPitch = pitch = .18;
-  bSit.innerHTML = '<span>🚶</span>일어서기'; document.body.classList.add('sitting');
+  bSit.innerHTML = '<span>🚶</span>일어서기'; document.body.classList.add('sitting'); netState(true);
   hint('화면을 끌어서 둘러보세요 · WASD로 일어나기');
 }
 function standUp() {
@@ -480,7 +462,7 @@ function standUp() {
   mySlot.taken = null; mySlot = null; mode = 'walk';
   player.place(p.x, FLOOR, p.z, Math.PI); player.visible = true;
   tYaw = yaw = 0; tPitch = pitch = -.26; auto = false; bLook.classList.remove('on');
-  bSit.innerHTML = '<span>🪑</span>앉기'; document.body.classList.remove('sitting');
+  bSit.innerHTML = '<span>🪑</span>앉기'; document.body.classList.remove('sitting'); netState(true);
 }
 bSit.onclick = toggleSit;
 const bLook = document.getElementById('bLook');
@@ -517,7 +499,63 @@ makeThumbs(96).then((th) => {
   }
   charPick.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x.dataset.id === myId));
 });
-// 지금 성당에 있는 실제 접속자 수 (Supabase Realtime presence — 탭을 닫으면 빠진다)
+// 실제 접속자 — Supabase Realtime: presence 로 누가 있는지·접속자 수, broadcast 로 움직임을 주고받는다
+let net = null; const remotes = new Map();
+function myState() {
+  if (!player) return null;
+  if (mode === 'sit' && mySlot) return { c: myId, x: +mySlot.x.toFixed(2), z: +mySlot.z.toFixed(2), f: +Math.PI.toFixed(2), s: 1 };
+  return { c: myId, x: +player.pos.x.toFixed(2), z: +player.pos.z.toFixed(2), f: +player.face.toFixed(2), s: 0 };
+}
+let lastSent = 0, lastTrack = 0, sentKey = '';
+function netState(force = false) {
+  if (!net || !net.ready) return;
+  const st = myState(); if (!st) return;
+  const now = performance.now(), k = JSON.stringify(st);
+  if (!force && (k === sentKey || now - lastSent < 180)) { if (now - lastTrack > 15000) { net.ch.track(st); lastTrack = now; } return; }
+  sentKey = k; lastSent = now;
+  net.ch.send({ type: 'broadcast', event: 'p', payload: { k: net.key, ...st } });
+  if (force || now - lastTrack > 3000) { net.ch.track(st); lastTrack = now; } // 새로 들어온 사람도 내 위치를 알 수 있게
+}
+function seatOf(r) { return slots.find((o) => Math.abs(o.x - r.x) < .05 && Math.abs(o.z - r.z) < .05); }
+async function applyRemote(key, st) {
+  if (!st || key === net.key) return;
+  let r = remotes.get(key);
+  if (r && r.c !== st.c) { r.a.dispose(); r.a = null; }
+  if (!r) { r = { c: null, a: null, x: st.x, z: st.z }; remotes.set(key, r); }
+  if (r.slot && r.slot.taken === key) r.slot.taken = null;
+  Object.assign(r, { tx: st.x, tz: st.z, tf: st.f, s: st.s });
+  r.slot = st.s ? seatOf(st) : null;
+  if (r.slot) {
+    r.slot.taken = key;
+    if (mySlot === r.slot) standUp(); // 같은 자리에 겹치면 내가 비켜 준다
+  }
+  if (!r.a && !r.loading) {
+    r.loading = true; r.c = st.c;
+    const a = await makeActor(PEOPLE.some((p) => p.id === st.c) ? st.c : PEOPLE[0].id);
+    r.loading = false;
+    if (remotes.get(key) !== r) { a.dispose(); return; }
+    r.a = a; a.place(st.x, FLOOR, st.z, st.f);
+  }
+}
+function dropRemote(key) { const r = remotes.get(key); if (!r) return; if (r.slot && r.slot.taken === key) r.slot.taken = null; if (r.a) r.a.dispose(); remotes.delete(key); }
+function updateRemotes(dt) {
+  for (const r of remotes.values()) {
+    if (!r.a) continue;
+    if (r.s) {
+      r.a.place(r.tx, FLOOR + SIT_DY, r.tz + SIT_DZ, Math.PI);
+      if (!r.a.sitting) r.a.sit();
+      r.a.update(dt, false);
+    } else {
+      if (r.a.sitting) { r.a.stand(); r.a.place(r.tx, FLOOR, r.tz); }
+      const p = r.a.pos, dx = r.tx - p.x, dz = r.tz - p.z, L = Math.hypot(dx, dz);
+      const moving = L > .04;
+      if (L > 6) { p.x = r.tx; p.z = r.tz; } else if (moving) { const sp = Math.min(L, Math.max(2.2, L * 4) * dt); p.x += dx / L * sp; p.z += dz / L * sp; }
+      p.y = FLOOR;
+      let d = r.tf - r.a.face; d = Math.atan2(Math.sin(d), Math.cos(d)); r.a.face += d * Math.min(1, dt * 10);
+      r.a.update(dt, moving);
+    }
+  }
+}
 async function joinPresence() {
   const el = document.getElementById('ppl');
   try {
@@ -526,9 +564,16 @@ async function joinPresence() {
     if (!window.supabase) await new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'vendor/supabase.js'; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); });
     const sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
     const key = (crypto.randomUUID && crypto.randomUUID()) || String(Math.random()).slice(2);
-    const ch = sb.channel('cathedral:visitors', { config: { presence: { key } } });
-    ch.on('presence', { event: 'sync' }, () => { el.textContent = Math.max(1, Object.keys(ch.presenceState()).length); })
-      .subscribe((st) => { if (st === 'SUBSCRIBED') ch.track({ t: Date.now() }); });
+    const ch = sb.channel('cathedral:visitors', { config: { presence: { key }, broadcast: { self: false } } });
+    net = { ch, key, ready: false };
+    ch.on('presence', { event: 'sync' }, () => {
+      const state = ch.presenceState(), keys = Object.keys(state);
+      el.textContent = Math.max(1, keys.length);
+      for (const k of keys) if (k !== key) { const r = remotes.get(k), st = state[k][0]; if (!r || !r.a) applyRemote(k, st); }
+      for (const k of [...remotes.keys()]) if (!state[k]) dropRemote(k);
+    })
+      .on('broadcast', { event: 'p' }, ({ payload }) => { if (payload && payload.k) applyRemote(payload.k, payload); })
+      .subscribe((st) => { if (st === 'SUBSCRIBED') { net.ready = true; netState(true); } });
   } catch (e) { console.warn('presence', e); }
 }
 // 버튼 없이 바로 입장 (오르간은 브라우저 정책상 첫 터치·키 입력 때 시작)
@@ -586,6 +631,7 @@ function frame() {
     camera.lookAt(CX, FLOOR + 8 + Math.sin(t * .07) * 3, -20);
   }
   if (player) player.update(dt, moving);
+  if (net) { updateRemotes(dt); netState(false); }
   for (const n of npcs) {
     let mv = false;
     if (n.kind === 'walk') {

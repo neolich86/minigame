@@ -45,11 +45,12 @@ export class Actor {
   }
   place(x, y, z, face) { this.obj.position.set(x, y, z); if (face !== undefined) this.face = face; this.obj.rotation.y = this.face; }
   update(dt, moving = false) {
-    if (this.state !== 'sit') this.play(moving ? 'walk' : 'idle');
+    if (!this.sitting) this.play(moving ? 'walk' : 'idle');
     this.obj.rotation.y = this.face;
     this.mixer.update(dt);
   }
-  sit() { this.play('sit', .2); }
+  sit() { this.sitting = true; this.play('sit', .2); }
+  stand() { this.sitting = false; this.play('idle', .2); }
   dispose() { this.scene.remove(this.obj); this.mixer.stopAllAction(); }
 }
 
