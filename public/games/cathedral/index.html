@@ -375,11 +375,11 @@ const SUN_DIRS = {
   right: { label: '오른쪽', pick: (w) => w.x > CX + 9 && w.z > -9 && w.z < 12 && w.y < FLOOR + 12, in: [-1, 0], sun: [40, 30, 5] },
   back: { label: '뒤', pick: (w) => w.z > 10.5 && w.y < FLOOR + 16, in: [0, -1], sun: [5, 30, 60], reach: 1.3, extra: [[2.1, 12.2, 12.8], [8.9, 12.2, 12.8], [5.5, 18, 12.8]] },
 };
-let sunSide = 'right'; try { sunSide = localStorage.getItem('cathedral:sun') || 'right'; } catch {}
+let sunSide = 'right'; try { sunSide = sessionStorage.getItem('cathedral:sun') || 'right'; } catch {}
 if (!SUN_DIRS[sunSide]) sunSide = 'right';
 const beamObjs = [];
 function setSun(side) {
-  sunSide = side; try { localStorage.setItem('cathedral:sun', side); } catch {}
+  sunSide = side; try { sessionStorage.setItem('cathedral:sun', side); } catch {}
   for (const o of beamObjs) { scene.remove(o); o.geometry.dispose(); o.material.dispose(); }
   beamObjs.length = 0; beams.length = 0;
   const D = SUN_DIRS[side]; sun.position.set(...D.sun);
