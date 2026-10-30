@@ -56,7 +56,7 @@ body.sitting .joy{opacity:.45}
 <body>
 <div class="top">
   <div class="pill">⛪ 빛의 성당 <small>온라인 성당</small></div>
-  <div class="pill">👥 <span id="ppl">12</span> · <span class="timer" id="timer">00:00</span></div>
+  <div class="pill">👥 <span id="ppl">1</span> · <span class="timer" id="timer">00:00</span></div>
 </div>
 <div class="hint" id="hint"></div>
 <div class="toast" id="toast"></div>
@@ -317,7 +317,6 @@ async function spawnPeople() {
   }
   // 촛대 앞에서 기도하는 사람
   { const a = await makeActor(others[10 % others.length].id); a.place(RACK.x + RACK_W / 2 + .9, FLOOR, RACK.z + .3, -Math.PI * .6); npcs.push({ a, kind: 'stand' }); }
-  document.getElementById('ppl').textContent = 1 + npcs.length;
 }
 // 내 캐릭터 바꾸기 (자리·상태는 그대로)
 async function changePerson(id) {
@@ -518,12 +517,27 @@ makeThumbs(96).then((th) => {
   }
   charPick.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x.dataset.id === myId));
 });
+// 지금 성당에 있는 실제 접속자 수 (Supabase Realtime presence — 탭을 닫으면 빠진다)
+async function joinPresence() {
+  const el = document.getElementById('ppl');
+  try {
+    const cfg = await (await fetch('/api/public-config')).json();
+    if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) return;
+    if (!window.supabase) await new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'vendor/supabase.js'; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); });
+    const sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+    const key = (crypto.randomUUID && crypto.randomUUID()) || String(Math.random()).slice(2);
+    const ch = sb.channel('cathedral:visitors', { config: { presence: { key } } });
+    ch.on('presence', { event: 'sync' }, () => { el.textContent = Math.max(1, Object.keys(ch.presenceState()).length); })
+      .subscribe((st) => { if (st === 'SUBSCRIBED') ch.track({ t: Date.now() }); });
+  } catch (e) { console.warn('presence', e); }
+}
 // 버튼 없이 바로 입장 (오르간은 브라우저 정책상 첫 터치·키 입력 때 시작)
 Promise.all([ready, peopleReady]).then(async () => {
   await spawnPeople();
   t0 = performance.now();
   const it = document.getElementById('intro'); it.style.opacity = 0; setTimeout(() => it.remove(), 1200);
   document.body.classList.add('in'); window.__ready = true;
+  joinPresence();
   hint(matchMedia('(pointer: coarse)').matches ? '화면을 누르면 오르간이 울려요 · 조이스틱으로 걷기 · 의자 근처에서 🪑 앉기' : '클릭하면 오르간이 울려요 · WASD로 걷기 · 끌어서 시점 돌리기 · 의자 근처에서 E로 앉기');
 });
 const firstTouch = () => { if (musicOn) startMusic(); removeEventListener('pointerdown', firstTouch, true); removeEventListener('keydown', firstTouch, true); };
