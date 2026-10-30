@@ -268,6 +268,7 @@ input,button,select,textarea{box-sizing:border-box}
 .gate-btns{display:grid;gap:10px;margin-top:4px}
 .gate-btns button{height:50px;border-radius:12px;border:0;font-size:15.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
 .gate-kakao{background:#FEE500;color:#191919}
+.gate-google{background:#fff;color:#1f1f1f;border:1px solid #dadce0!important}
 .gate-mail{background:transparent;color:#F3ECDC;border:1px solid rgba(243,236,220,.4)!important}
 .gate-small{font-size:12px!important;color:rgba(243,236,220,.6)!important;margin-top:6px!important;word-break:keep-all}
 .gate-small a{color:rgba(242,211,138,.9)}
@@ -1267,12 +1268,14 @@ $('#shCopyLink').onclick=()=>{const done=()=>(window.MGH?.shared?.('copy'),shMsg
 
 /* ---------- boot ---------- */
 function showLogin(on){$('#login').hidden=!on}
+let googleOk=false; // 포털이 구글 로그인을 켰을 때만 (save:auth 의 google)
 function showGate(state){const g=$('#gate');if(!state){g.hidden=true;return}g.hidden=false;const b=$('#gateBody');
   if(state==='wait'){b.innerHTML=`<div class="gate-wait">${EN?'Checking sign-in…':'로그인 확인 중…'}</div>`;return}
   b.innerHTML=`<div class="gate-btns"><button class="gate-kakao" data-g="kakao"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#191919" d="M12 3C6.5 3 2 6.5 2 10.8c0 2.8 1.9 5.2 4.7 6.6l-1 3.7c-.1.4.3.7.6.5l4.4-2.9c.4 0 .9.1 1.3.1 5.5 0 10-3.5 10-7.8S17.5 3 12 3z"/></svg>카카오톡으로 시작하기</button>
+    ${googleOk?`<button class="gate-google" data-g="google"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>${EN?'Continue with Google':'구글로 시작하기'}</button>`:''}
     <button class="gate-mail" data-g="email">이메일로 시작하기</button></div>
     <p class="gate-small">로그인하면 휴대폰·PC 어디서든 같은 지도를 볼 수 있어요.<br><a href="/privacy" target="_top">개인정보처리방침</a></p>`}
-$('#gate').addEventListener('click',e=>{const b=e.target.closest('[data-g]');if(!b||!MG||!MG.save)return;b.disabled=true;MG.save.login(b.dataset.g==='kakao'?'kakao':'email');setTimeout(()=>{b.disabled=false},4000)});
+$('#gate').addEventListener('click',e=>{const b=e.target.closest('[data-g]');if(!b||!MG||!MG.save)return;b.disabled=true;MG.save.login(b.dataset.g==='kakao'||b.dataset.g==='google'?b.dataset.g:'email');setTimeout(()=>{b.disabled=false},4000)});
 $('#loginBtn').onclick=()=>{if(MG&&MG.save)MG.save.login()};
 function hasData(){return Object.keys(S.countries).length||S.cities.length}
 async function refreshUrls(){const names=[];const all=[...Object.values(S.countries).map(o=>o.photo),...S.cities.map(c=>c.photo)];
@@ -1285,6 +1288,7 @@ async function bootPortal(){
   $('#sample').hidden=true;mode='gate';showGate('wait');renderMap();resetView();setSave('idle','확인 중');
   let gen=0;
   MG.save.onAuth(async(u,info)=>{
+    const g=!!(info&&info.google);if(g!==googleOk){googleOk=g;if(mode==='gate'&&!$('#gate').hidden)showGate('login')}
     if(u&&cloudUser===u.id&&(mode==='cloud'||mode==='loading'))return; // 같은 계정 재전송(토큰 갱신·탭 복귀)은 무시
     const my=++gen;
     if(!u){cloudUser=null;if(mode==='cloud'||mode==='loading'){location.reload();return}

@@ -412,7 +412,9 @@ let toastT = 0;
 function toast(s) { const t = $('toast'); t.textContent = s; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2400); }
 
 /* ---------- 로그인 ---------- */
-function onAuthChange(u) {
+let googleOk = false;
+function onAuthChange(u, info) {
+  if (info && 'google' in info) googleOk = !!info.google;
   user = u || null;
   if (user) rpc('dn_me').then((r) => { me = r; if (r && r.animal) { myAnimal = r.animal; lsSet('animal', myAnimal); } updateMe(); }).catch(() => {});
   else { me = null; updateMe(); }
@@ -437,10 +439,12 @@ function needLogin(why) {
   openSheet(`<h3>${L_('로그인하고 쪽지를 남겨요', 'Log in to leave notes')}</h3>
     <p class="hint" style="font-size:14px">${esc(why || L_('쪽지 남기기·좋아요·댓글은 로그인한 이웃만 할 수 있어요. 구경은 로그인 없이도 돼요.', 'Writing, likes and comments need an account. Browsing is free.'))}</p>
     <div class="menu"><button id="lgK" style="background:#fee500;color:#191600">💬 ${L_('카카오로 시작하기', 'Continue with Kakao')}</button>
+    ${googleOk ? `<button id="lgG" style="background:#fff;border:1.5px solid #dadce0"><b style="color:#4285f4">G</b> ${L_('구글로 시작하기', 'Continue with Google')}</button>` : ''}
     <button id="lgE">✉️ ${L_('이메일로 로그인', 'Log in with email')}</button>
     <button id="lgN">${L_('나중에 할게요', 'Maybe later')}</button></div>`);
   $('lgK').onclick = () => MGH.save.login('kakao');
   $('lgE').onclick = () => MGH.save.login('page');
+  if ($('lgG')) $('lgG').onclick = () => MGH.save.login('google');
   $('lgN').onclick = closeSheet;
 }
 
