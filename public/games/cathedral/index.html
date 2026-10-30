@@ -4,8 +4,8 @@
 <script src="/mgh/bridge.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>온라인 명상 - 성당과 절</title>
-<meta name="description" content="온라인 명상 · 성당과 절. 파이프오르간 또는 목탁과 염불 소리를 들으며 기도하고, 잠깐 쉬어가는 공간입니다.">
+<title>온라인 명상 - 온라인 성당</title>
+<meta name="description" content="성당 · 온라인 성당. 파이프오르간 소리를 듣고, 기도하고, 잠깐 쉬어가는 공간입니다.">
 <style>
 html,body{margin:0;height:100%;background:#07060a;overflow:hidden;font-family:'Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;color:#f3e9d6}
 canvas{display:block;touch-action:none}
@@ -26,6 +26,7 @@ canvas{display:block;touch-action:none}
 .loading{margin-top:12px;font-size:12px;color:#bba98a;min-height:16px}
 .credit{position:fixed;right:10px;bottom:6px;font-size:9px;color:rgba(243,233,214,.35);pointer-events:none}
 .timer{font-variant-numeric:tabular-nums}
+.spacesw[hidden]{display:none}
 .spacesw{pointer-events:auto;position:absolute;left:50%;top:0;transform:translateX(-50%);display:flex;gap:4px;background:rgba(20,14,10,.55);backdrop-filter:blur(8px);border:1px solid rgba(243,233,214,.18);border-radius:999px;padding:4px}
 .spacesw button{width:40px;height:32px;border:0;border-radius:999px;background:none;color:#f3e9d6;font-size:18px;font-weight:900;cursor:pointer;font-family:serif}
 .spacesw button.on{background:#e8d3a2;color:#2a1c0e}
@@ -61,7 +62,7 @@ body.sitting .joy{opacity:.45}
 <body>
 <div class="top">
   <div class="pill">🕯️ 온라인 명상 <small id="spaceName">성당</small></div>
-  <div class="spacesw" id="spaceSw"><button data-m="cathedral" class="on" title="성당">✝</button><button data-m="temple" title="절">卍</button></div>
+  <div class="spacesw" id="spaceSw" hidden><button data-m="cathedral" class="on" title="성당">✝</button><button data-m="temple" title="절">卍</button></div>
   <div class="pill">👥 <span id="ppl">1</span> · <span class="timer" id="timer">00:00</span></div>
 </div>
 <div class="hint" id="hint"></div>
@@ -243,7 +244,10 @@ function addCandle(x, y, z, h, s = 1) {
 const candleLight = new THREE.PointLight(0xffb060, 14, 18, 2); candleLight.position.set(CX, FLOOR + 2.6, ALTAR_Z + .4); scene.add(candleLight);
 CATH_ONLY.push(step, altar, cloth, candleLight); candles.forEach((c) => CATH_ONLY.push(c.f, c.glow, c.body));
 // 절 모드 (처음엔 숨김)
-const TEMPLE = buildTemple(scene, { FLOOR, CX, ALTAR_Z, woodMap: tex('wood.webp') });
+// 절 모드는 아직 숨김 — 주소에 ?space=temple 을 붙였을 때만 만든다 (내부 확인용)
+const TEMPLE_ON = new URLSearchParams(location.search).get('space') === 'temple';
+if (TEMPLE_ON) document.getElementById('spaceSw').hidden = false;
+const TEMPLE = TEMPLE_ON ? buildTemple(scene, { FLOOR, CX, ALTAR_Z, woodMap: tex('wood.webp') }) : null;
 const pewSlots = slots; let activeSlots = pewSlots;
 let space = 'cathedral'; // 'cathedral' | 'temple'
 const sitDY = () => (space === 'temple' ? .1 : .46);
@@ -297,6 +301,7 @@ function buildNav(churchMeshes) {
   navC.box(CX, ALTAR_Z, 4, 2.5); // 제단 단
   navC.box(RACK.x, RACK.z, RACK_W / 2 + .05, .5);
   navC.flood(SPAWN.x, SPAWN.z, 1);
+  if (!TEMPLE) { nav = navC; return; }
   navT = new NavGrid(-18, -40, 26, 22, .25); TEMPLE.navMark(navT); navT.wall = navT.block.slice(); // 법당 벽·기둥
   const TZ = TEMPLE.ALTAR_Z; navT.box(CX, TZ - .5, 4.4, 2.9); navT.box(CX, TZ + 2.4, 1.3, .5); // 불단 · 앞 상
   navT.box(RACK.x, RACK.z, RACK_W / 2 + .05, .5);
@@ -610,7 +615,7 @@ async function joinPresence() {
 }
 // 성당 ↔ 절
 function setSpace(m) {
-  if (m === space) return;
+  if (m === space || (m === 'temple' && !TEMPLE)) return;
   if (mode === 'sit') standUp();
   space = m;
   const T = m === 'temple';
