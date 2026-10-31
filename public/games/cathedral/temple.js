@@ -140,7 +140,6 @@ function buildHall(G, FLOOR, CX, TZ) {
   }
   // 뒤쪽(불상 뒤) 후불벽 + 위쪽 광창
   add(new THREE.BoxGeometry(W, H, .3), plaster, CX, FLOOR + H / 2, Z1);
-  add(new THREE.PlaneGeometry(9, 7.2), new THREE.MeshStandardMaterial({ map: backTex(), roughness: .8 }), CX, FLOOR + 4.6, Z1 + .2);
   for (const s of [-1, 1]) { add(new THREE.PlaneGeometry(2.6, 1.4), latM, CX + s * 6.8, FLOOR + 8.3, Z1 + .2); sunWins.front.push({ x: CX + s * 6.8, y: FLOOR + 8.3, z: Z1 + .3 }); }
   // 기둥 (안쪽 고주 두 줄 + 벽 기둥)
   const colGeo = new THREE.CylinderGeometry(.3, .34, POST, 20), baseGeo = new THREE.CylinderGeometry(.48, .55, .3, 8);
@@ -191,23 +190,16 @@ export function buildTemple(scene, { FLOOR, CX, woodMap }) {
     const rim = new THREE.Mesh(rimGeo, new THREE.MeshStandardMaterial({ color: 0xd8a640, roughness: .5, metalness: .3 })); rim.rotation.x = Math.PI / 2; rim.position.set(x, FLOOR + .13, z); G.add(rim);
     slots.push({ x, z, taken: null });
   }
-  // 불단과 불상
-  const gold = new THREE.MeshStandardMaterial({ color: 0xe0a83a, metalness: .85, roughness: .32, emissive: 0x1a1004 });
-  const dais = new THREE.Mesh(new THREE.BoxGeometry(8.5, 1.0, 5.5), new THREE.MeshStandardMaterial({ color: 0x6a1410, roughness: .6 }));
-  dais.position.set(CX, FLOOR + .5, ALTAR_Z - .5); G.add(dais);
-  // 불상 (도형으로 만든 임시 불상 — 에셋을 구하면 교체)
-  const S = 1.3; const bud = new THREE.Group(); bud.position.set(CX, FLOOR + 1.0, ALTAR_Z - .8); G.add(bud);
-  const stand = buddha(gold); stand.scale.setScalar(S); bud.add(stand);
-
-  const halo = new THREE.Mesh(new THREE.CircleGeometry(2.6, 48), new THREE.MeshBasicMaterial({ map: haloTex(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-  halo.position.set(CX, FLOOR + 1.0 + 4.0 * S, ALTAR_Z - 1.9); halo.scale.setScalar(S / 1.15); G.add(halo);
-  const body = new THREE.Mesh(new THREE.CircleGeometry(3.6, 48), halo.material.clone()); body.material.opacity = .55;
-  body.position.set(CX, FLOOR + 1.0 + 2.6 * S, ALTAR_Z - 2.0); body.scale.set(S / 1.15, 1.25 * S / 1.15, 1); G.add(body);
-  const spot = new THREE.SpotLight(0xffd9a0, 55, 34, .55, .6, 1.4); spot.position.set(CX, FLOOR + 8.5, ALTAR_Z + 8); spot.target = bud; G.add(spot);
-  const fill = new THREE.PointLight(0xffb070, 10, 10, 1.6); fill.position.set(CX, FLOOR + 3, ALTAR_Z + 2.5); G.add(fill);
-  // 불단 앞 작은 상
-  const table = new THREE.Mesh(new THREE.BoxGeometry(2.4, .55, .8), new THREE.MeshStandardMaterial({ color: 0x4a1a10, roughness: .5 }));
-  table.position.set(CX, FLOOR + .28, ALTAR_Z + 2.4); G.add(table);
+  // 불단 — 실제 법당 사진 (Pexels, 무료 상업적 이용 가능) 을 후불벽 자리에 크게 건다
+  const Z1 = HALL.bounds.Z1, PH = 10, PW = PH * 1152 / 2048;
+  const tl = new THREE.TextureLoader(), ph = tl.load('assets/buddha-altar.jpg'); ph.colorSpace = THREE.SRGBColorSpace; ph.anisotropy = 8;
+  const photo = new THREE.Mesh(new THREE.PlaneGeometry(PW, PH), new THREE.MeshBasicMaterial({ map: ph, color: 0xd8d0c4 }));
+  photo.position.set(CX, FLOOR + PH / 2, Z1 + .3); G.add(photo);
+  const frameM = new THREE.MeshStandardMaterial({ color: 0x8a2a1c, roughness: .6 });
+  for (const [w, h, x, y] of [[PW + .7, .35, 0, PH - .17], [.35, PH, -PW / 2 - .17, PH / 2], [.35, PH, PW / 2 + .17, PH / 2], [PW + .7, .5, 0, .25]]) {
+    const f = new THREE.Mesh(new THREE.BoxGeometry(w, h, .3), frameM); f.position.set(CX + x, FLOOR + y, Z1 + .35); G.add(f);
+  }
+  const fill = new THREE.PointLight(0xffd0a0, 6, 12, 1.6); fill.position.set(CX, FLOOR + 4, Z1 + 4); G.add(fill);
 
   // 연등 — 천장 아래를 가득 채운 알록달록한 연꽃 등
   const lgeo = new THREE.LatheGeometry([[0, -.32], [.18, -.3], [.3, -.18], [.34, 0], [.3, .16], [.2, .27], [.08, .32], [0, .33]].map(([x, y]) => new THREE.Vector2(x, y)), 18);
@@ -240,7 +232,6 @@ export function buildTemple(scene, { FLOOR, CX, woodMap }) {
   function update(t) {
     for (let i = 0; i < N; i++) { const p = meta[i], s = Math.sin(t * .6 + p.ph) * .025; m4.makeRotationZ(s).setPosition(p.x, p.y, p.z); lan.setMatrixAt(i, m4); }
     lan.instanceMatrix.needsUpdate = true;
-    halo.rotation.z = t * .03;
   }
   return { group: G, slots, update, sunWins: HALL.sunWins, navMark: HALL.navMark, ALTAR_Z, bounds: HALL.bounds };
 }
