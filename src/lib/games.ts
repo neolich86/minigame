@@ -214,7 +214,7 @@ const CATALOG: Game[] = [
     kind: "app",
     title: { ko: "온라인 명상", en: "Online Meditation" },
     desc: {
-      ko: "성당 · 온라인 성당. 파이프오르간 소리를 듣고, 기도하고, 잠깐 쉬어가는 공간입니다. 卍 절로 바꾸면 관음보살상 앞에서 목탁과 염불 소리가 흘러요.",
+      ko: "성당 · 온라인 성당. 파이프오르간 소리를 듣고, 기도하고, 잠깐 쉬어가는 공간입니다. 卍 절로 바꾸면 법당에서 천수경 염불이 흘러요.",
       en: "An online cathedral and temple — listen to the pipe organ or the moktak and chanting, pray, and take a quiet moment.",
     },
     genre: "casual",

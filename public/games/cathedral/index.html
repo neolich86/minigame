@@ -77,7 +77,7 @@ body.sitting .joy{opacity:.45}
   <button id="bSit"><span>🪑</span>앉기</button>
   <button id="bLook"><span>🌀</span>둘러보기</button>
 </div>
-<div class="credit">성당 모델: Gothic Like Structures by Loafbrr (CC0) · 사람들: Kenney Mini Characters (CC0)</div>
+<div class="credit">성당 모델: Gothic Like Structures by Loafbrr (CC0) · 사람들: Kenney Mini Characters (CC0) · 염불: BTN 불교방송</div>
 <div class="charpick" id="charPick"></div>
 <div class="intro" id="intro"><div class="box">
   <h1>빛의 성당</h1>
@@ -96,7 +96,7 @@ import { UnrealBloomPass } from './vendor/jsm/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from './vendor/jsm/postprocessing/OutputPass.js';
 import { makeGlassMaterials, remapGlass } from './glass.js?v=3d671e0b';
 import { NavGrid } from './navgrid.js?v=edba4531';
-import { buildTemple, templeAudio } from './temple.js?v=7f704dae';
+import { buildTemple, templeAudio } from './temple.js?v=db293e62';
 import { Actor, PEOPLE, loadPerson, loadAllPeople, makeThumbs } from './people.js?v=3edb56a4';
 
 /* ───────── 기본 ───────── */
@@ -338,7 +338,7 @@ async function changePerson(id) {
 }
 
 /* ───────── 파이프오르간 (직접 합성한 느린 화음 · 저작권 없는 자작 진행) ───────── */
-let ac = null, master = null, musicOn = true, organBus = null, temple = null;
+let ac = null, master = null, musicOn = true, organBus = null, temple = null, recOut = null;
 const NOTE = (n) => 440 * Math.pow(2, (n - 69) / 12);
 // 라단조 느린 진행: Dm – B♭ – F – C – Gm – Dm/F – A – Dm  (각 9초)
 const PROG = [[50, 57, 62, 65, 69], [46, 58, 62, 65, 70], [41, 57, 60, 65, 69], [48, 55, 60, 64, 67], [43, 55, 58, 62, 67], [41, 57, 62, 65, 69], [45, 57, 61, 64, 69], [38, 57, 62, 65, 69]];
@@ -366,7 +366,8 @@ function startMusic() {
   master.connect(lp); lp.connect(dry); lp.connect(verb); verb.connect(wet); dry.connect(comp); wet.connect(comp); comp.connect(ac.destination);
   master.gain.linearRampToValueAtTime(.22, ac.currentTime + 4);
   organBus = ac.createGain(); organBus.gain.value = space === 'cathedral' ? 1 : 0; organBus.connect(master);
-  temple = templeAudio(ac, master); temple.bus.gain.value = space === 'temple' ? 1 : 0;
+  recOut = ac.createGain(); recOut.gain.setValueAtTime(0, ac.currentTime); recOut.connect(comp); recOut.gain.linearRampToValueAtTime(1, ac.currentTime + 3); // 녹음은 잔향 없이 바로
+  temple = templeAudio(ac, recOut); temple.bus.gain.value = space === 'temple' ? 1 : 0;
   const vib = ac.createOscillator(); vib.frequency.value = 4.6; const vibG = ac.createGain(); vibG.gain.value = 1.2; vib.connect(vibG); vib.start();
   function voice(n, t0, dur, vol) {
     const o = ac.createOscillator(); o.setPeriodicWave(wave); o.frequency.value = NOTE(n); o.detune.value = rnd(-3, 3);
@@ -392,7 +393,7 @@ function startMusic() {
 const bMusic = document.getElementById('bMusic');
 bMusic.onclick = () => {
   if (!ac) { musicOn = !musicOn; if (musicOn) startMusic(); }
-  else { musicOn = !musicOn; master.gain.cancelScheduledValues(ac.currentTime); master.gain.linearRampToValueAtTime(musicOn ? .22 : 0, ac.currentTime + 1.5); }
+  else { musicOn = !musicOn; master.gain.cancelScheduledValues(ac.currentTime); master.gain.linearRampToValueAtTime(musicOn ? .22 : 0, ac.currentTime + 1.5); recOut.gain.cancelScheduledValues(ac.currentTime); recOut.gain.linearRampToValueAtTime(musicOn ? 1 : 0, ac.currentTime + 1.5); }
   bMusic.classList.toggle('on', musicOn);
 };
 
@@ -630,7 +631,7 @@ function setSpace(m) {
   document.getElementById('bCandleLbl').textContent = T ? '촛불 공양' : '촛불 켜기';
   setSun(sunSide);
   if (player) { leavePresence().then(joinPresence); }
-  toast(T ? '卍 절로 들어왔어요 · 목탁 소리에 맞춰 잠시 쉬어 가세요' : '✝ 성당으로 들어왔어요');
+  toast(T ? '卍 절로 들어왔어요 · 천수경 염불을 들으며 잠시 쉬어 가세요' : '✝ 성당으로 들어왔어요');
 }
 document.querySelectorAll('#spaceSw button').forEach((b) => { b.onclick = () => setSpace(b.dataset.m); });
 // 버튼 없이 바로 입장 (오르간은 브라우저 정책상 첫 터치·키 입력 때 시작)
@@ -640,7 +641,7 @@ Promise.all([ready, peopleReady]).then(async () => {
   const it = document.getElementById('intro'); it.style.opacity = 0; setTimeout(() => it.remove(), 1200);
   document.body.classList.add('in'); window.__ready = true;
   if (new URLSearchParams(location.search).get('space') === 'temple') setSpace('temple'); else joinPresence();
-  const T = space === 'temple', snd = T ? '목탁 소리가' : '오르간이', seatW = T ? '방석' : '의자';
+  const T = space === 'temple', snd = T ? '염불 소리가' : '오르간이', seatW = T ? '방석' : '의자';
   hint(matchMedia('(pointer: coarse)').matches ? `화면을 누르면 ${snd} 울려요 · 조이스틱으로 걷기 · ${seatW} 근처에서 🪑 앉기` : `클릭하면 ${snd} 울려요 · WASD로 걷기 · 끌어서 시점 돌리기 · ${seatW} 근처에서 E로 앉기`);
 });
 const firstTouch = () => { if (musicOn) startMusic(); removeEventListener('pointerdown', firstTouch, true); removeEventListener('keydown', firstTouch, true); };
