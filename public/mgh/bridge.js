@@ -234,8 +234,34 @@
     if (W.MGH_PLATFORM) return W.MGH_PLATFORM;
     try { if (W.Capacitor && W.Capacitor.isNativePlatform && W.Capacitor.isNativePlatform()) return "app"; } catch (e) {}
     try { var pc = embedded && W.parent.Capacitor; if (pc && pc.isNativePlatform && pc.isNativePlatform()) return "app"; } catch (e) {}
+    // 구글플레이 TWA 앱(Passport Map 등)은 크롬으로 열려 Capacitor 가 없다 — 처음 열릴 때 referrer 가 android-app:// 이고, 그 탭에 표시해 둔다
+    try {
+      var top = W.top, ref = (top.document && top.document.referrer) || "";
+      if (ref.indexOf("android-app://") === 0) { try { top.sessionStorage.setItem("mgh:twa", "1"); } catch (e) {} return "app"; }
+      if (top.sessionStorage.getItem("mgh:twa") === "1") return "app";
+      if (top.matchMedia && top.matchMedia("(display-mode: standalone)").matches && /Android/i.test(navigator.userAgent) && /\/(passport-map|m\/)/.test(top.location.pathname)) return "app";
+    } catch (e) {}
     return "web";
   }
+  // 접속 기록: 이 탭에서 이 게임을 처음 열 때 한 번 (visitor = 기기마다 무작위 익명 id)
+  function logVisit() {
+    try {
+      var game = W.MGH_GAME || ((/\/games\/([a-z0-9-]+)\//.exec(location.pathname) || [])[1]);
+      if (!game) return;
+      var sk = "mgh:visit:" + game;
+      try { if (sessionStorage.getItem(sk)) return; sessionStorage.setItem(sk, "1"); } catch (e) {}
+      var vid = null;
+      try {
+        vid = localStorage.getItem("mgh:vid");
+        if (!vid) { vid = (W.crypto && crypto.randomUUID) ? crypto.randomUUID() : null; if (vid) localStorage.setItem("mgh:vid", vid); }
+      } catch (e) {}
+      var url = (W.MGH_API || "") + "/api/visit-event";
+      var body = JSON.stringify({ game: game, platform: platform(), visitor: vid });
+      if (navigator.sendBeacon && navigator.sendBeacon(url, body)) return;
+      fetch(url, { method: "POST", body: body, keepalive: true, mode: "no-cors" }).catch(function () {});
+    } catch (e) {}
+  }
+  setTimeout(logVisit, 1500);
   var lastShare = {};
   function logShare(method, game) {
     try {

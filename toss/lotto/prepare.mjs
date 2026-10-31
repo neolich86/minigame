@@ -14,7 +14,7 @@ const must = (from, to) => {
   html = html.split(from).join(to);
 };
 must('<script src="/mgh/bridge.js"></script><script src="/mgh/i18n/lotto.js"></script>',
-  '<script src="./mgh/bridge.js"></script><script src="./mgh/i18n/lotto.js"></script>');
+  '<script>window.MGH_PLATFORM="toss";window.MGH_API="https://playwithme.kr";window.MGH_GAME="lotto"</script><script src="./mgh/bridge.js"></script><script src="./mgh/i18n/lotto.js"></script>');
 html = html.replace(/<link rel="canonical"[^>]*>/, "");
 must("</body>", '<script type="module" src="./toss.js"></script>\n</body>');
 fs.writeFileSync(path.join(out, "index.html"), html);

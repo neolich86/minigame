@@ -15,7 +15,7 @@ const must = (from, to) => {
   html = html.split(from).join(to);
 };
 must('<script src="/mgh/bridge.js"></script><script src="/mgh/i18n/archer.js"></script><script src="/mgh/result.js"></script>',
-  '<script src="./mgh/bridge.js"></script><script src="./mgh/i18n/archer.js"></script>');
+  '<script>window.MGH_PLATFORM="toss";window.MGH_API="https://playwithme.kr";window.MGH_GAME="archer"</script><script src="./mgh/bridge.js"></script><script src="./mgh/i18n/archer.js"></script>');
 html = html.replace(/<link rel="canonical"[^>]*>/, "");
 must("return /[?&]app=1/.test(location.search||'');", "return true; // 앱인토스: 항상 앱 모드");
 must("</style>", "#btnVs{display:none!important}\n</style>");

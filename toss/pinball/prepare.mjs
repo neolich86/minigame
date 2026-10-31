@@ -15,7 +15,7 @@ const must = (from, to) => {
   html = html.split(from).join(to);
 };
 must('<script src="/mgh/bridge.js"></script><script src="/mgh/i18n/pinball.js"></script>',
-  '<script src="./mgh/bridge.js"></script><script src="./mgh/i18n/pinball.js"></script>');
+  '<script>window.MGH_PLATFORM="toss";window.MGH_API="https://playwithme.kr";window.MGH_GAME="pinball"</script><script src="./mgh/bridge.js"></script><script src="./mgh/i18n/pinball.js"></script>');
 must('<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>', '<script src="./matter.min.js"></script>');
 html = html.replace(/<link rel="canonical"[^>]*>/, "");
 html = html.split("브라우저 스크롤로").join("스크롤로");
