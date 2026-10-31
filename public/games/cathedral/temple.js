@@ -1,5 +1,7 @@
 // 절 모드 — 나무 마루와 방석, 정면 불상, 천장을 채운 연등, 목탁과 염불 소리
 import * as THREE from 'three';
+import { GLTFLoader } from './vendor/jsm/GLTFLoader.js';
+import { MeshoptDecoder } from './vendor/jsm/libs/meshopt_decoder.module.js';
 
 const LOTUS_COLS = [0xff5a8a, 0xff3b4e, 0xffc23d, 0x5fd37a, 0x4aa8ff, 0xb46bff, 0xff8a3d, 0xff7bd5, 0xfff07a];
 
@@ -195,7 +197,22 @@ export function buildTemple(scene, { FLOOR, CX, woodMap }) {
   const gold = new THREE.MeshStandardMaterial({ color: 0xe0a83a, metalness: .85, roughness: .32, emissive: 0x1a1004 });
   const dais = new THREE.Mesh(new THREE.BoxGeometry(8.5, 1.0, 5.5), new THREE.MeshStandardMaterial({ color: 0x6a1410, roughness: .6 }));
   dais.position.set(CX, FLOOR + .5, ALTAR_Z - .5); G.add(dais);
-  const S = 1.3; const bud = buddha(gold); bud.position.set(CX, FLOOR + 1.0, ALTAR_Z - .8); bud.scale.setScalar(S); G.add(bud);
+  // 관음보살상 (cgtrader 모델을 줄이고 압축한 assets/guanyin.glb) — 받는 동안은 단순한 불상을 대신 세워 둔다
+  const S = 1.3; const bud = new THREE.Group(); bud.position.set(CX, FLOOR + 1.0, ALTAR_Z - .8); G.add(bud);
+  const stand = buddha(gold); stand.scale.setScalar(S); bud.add(stand);
+  const STATUE_H = 6.4; // 연꽃 대좌 포함 높이 (m)
+  new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('assets/guanyin.glb').then((g) => {
+    const m = g.scene; m.rotation.x = -Math.PI / 2; // 모델은 Z 축이 위
+    m.traverse((o) => { if (o.isMesh) { o.material = gold; o.frustumCulled = false; } });
+    m.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(m), k = STATUE_H / (box.max.y - box.min.y);
+    m.scale.setScalar(k); m.updateMatrixWorld(true);
+    const b2 = new THREE.Box3().setFromObject(m), c = b2.getCenter(new THREE.Vector3());
+    m.position.set(-c.x, -b2.min.y, -c.z);
+    bud.remove(stand); bud.add(m);
+    halo.position.y = FLOOR + 1.0 + STATUE_H - .75; halo.scale.setScalar(1.05);
+    body.position.y = FLOOR + 1.0 + STATUE_H * .5; body.scale.set(1.1, 1.45, 1);
+  }).catch((e) => console.warn('statue', e));
   const halo = new THREE.Mesh(new THREE.CircleGeometry(2.6, 48), new THREE.MeshBasicMaterial({ map: haloTex(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
   halo.position.set(CX, FLOOR + 1.0 + 4.0 * S, ALTAR_Z - 1.9); halo.scale.setScalar(S / 1.15); G.add(halo);
   const body = new THREE.Mesh(new THREE.CircleGeometry(3.6, 48), halo.material.clone()); body.material.opacity = .55;

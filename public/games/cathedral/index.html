@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>온라인 명상 - 온라인 성당</title>
-<meta name="description" content="성당 · 온라인 성당. 파이프오르간 소리를 듣고, 기도하고, 잠깐 쉬어가는 공간입니다.">
+<meta name="description" content="온라인 명상 · 성당과 절. 파이프오르간 또는 목탁과 염불 소리를 들으며 기도하고, 잠깐 쉬어가는 공간입니다.">
 <style>
 html,body{margin:0;height:100%;background:#07060a;overflow:hidden;font-family:'Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;color:#f3e9d6}
 canvas{display:block;touch-action:none}
@@ -96,7 +96,7 @@ import { UnrealBloomPass } from './vendor/jsm/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from './vendor/jsm/postprocessing/OutputPass.js';
 import { makeGlassMaterials, remapGlass } from './glass.js?v=3d671e0b';
 import { NavGrid } from './navgrid.js?v=edba4531';
-import { buildTemple, templeAudio } from './temple.js?v=1d25e597';
+import { buildTemple, templeAudio } from './temple.js?v=7f704dae';
 import { Actor, PEOPLE, loadPerson, loadAllPeople, makeThumbs } from './people.js?v=3edb56a4';
 
 /* ───────── 기본 ───────── */
@@ -244,8 +244,7 @@ function addCandle(x, y, z, h, s = 1) {
 const candleLight = new THREE.PointLight(0xffb060, 14, 18, 2); candleLight.position.set(CX, FLOOR + 2.6, ALTAR_Z + .4); scene.add(candleLight);
 CATH_ONLY.push(step, altar, cloth, candleLight); candles.forEach((c) => CATH_ONLY.push(c.f, c.glow, c.body));
 // 절 모드 (처음엔 숨김)
-// 절 모드는 아직 숨김 — 주소에 ?space=temple 을 붙였을 때만 만든다 (내부 확인용)
-const TEMPLE_ON = new URLSearchParams(location.search).get('space') === 'temple';
+const TEMPLE_ON = true; // 절 모드 공개 (주소에 ?space=temple 을 붙이면 절에서 시작)
 if (TEMPLE_ON) document.getElementById('spaceSw').hidden = false;
 const TEMPLE = TEMPLE_ON ? buildTemple(scene, { FLOOR, CX, ALTAR_Z, woodMap: tex('wood.webp') }) : null;
 const pewSlots = slots; let activeSlots = pewSlots;
