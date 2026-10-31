@@ -181,19 +181,19 @@ export function buildTemple(scene, { FLOOR, CX, woodMap }) {
   floor.rotation.x = -Math.PI / 2; floor.position.set(CX, FLOOR + .03, -2.2); G.add(floor);
   // 방석 (가운데 통로를 두고 양쪽에 줄지어)
   const slots = [];
-  const cushionCols = [0x8a1f2e, 0x5b2a7a, 0x7a3a12, 0x1f4a7a];
+  const cushionCols = [0x8a8a86, 0x7e7e7a, 0x92918c, 0x84837e]; // 회색 방석 (조금씩 다른 톤)
   const cGeo = new THREE.CylinderGeometry(.33, .36, .1, 28), rimGeo = new THREE.TorusGeometry(.33, .035, 8, 28);
   for (let z = 9.6, row = 0; z > -6; z -= 1.3, row++) for (const s of [-1, 1]) for (let k = 0; k < 4; k++) {
     const x = CX + s * (1.4 + k * 1.05);
     const col = cushionCols[(row + (s > 0 ? 1 : 0)) % cushionCols.length];
     const c = new THREE.Mesh(cGeo, new THREE.MeshStandardMaterial({ color: col, roughness: .9 })); c.position.set(x, FLOOR + .08, z); G.add(c);
-    const rim = new THREE.Mesh(rimGeo, new THREE.MeshStandardMaterial({ color: 0xd8a640, roughness: .5, metalness: .3 })); rim.rotation.x = Math.PI / 2; rim.position.set(x, FLOOR + .13, z); G.add(rim);
+    const rim = new THREE.Mesh(rimGeo, new THREE.MeshStandardMaterial({ color: 0x5e5d5a, roughness: .8 })); rim.rotation.x = Math.PI / 2; rim.position.set(x, FLOOR + .13, z); G.add(rim);
     slots.push({ x, z, taken: null });
   }
   // 불단 — 실제 법당 사진 (Pexels, 무료 상업적 이용 가능) 을 후불벽 자리에 크게 건다
-  const Z1 = HALL.bounds.Z1, PH = 10, PW = PH * 1152 / 2048;
+  const Z1 = HALL.bounds.Z1, PH = 10, PW = PH * 1365 / 2048;
   const tl = new THREE.TextureLoader(), ph = tl.load('assets/buddha-altar.jpg'); ph.colorSpace = THREE.SRGBColorSpace; ph.anisotropy = 8;
-  const photo = new THREE.Mesh(new THREE.PlaneGeometry(PW, PH), new THREE.MeshBasicMaterial({ map: ph, color: 0xd8d0c4 }));
+  const photo = new THREE.Mesh(new THREE.PlaneGeometry(PW, PH), new THREE.MeshBasicMaterial({ map: ph, color: 0xffffff }));
   photo.position.set(CX, FLOOR + PH / 2, Z1 + .3); G.add(photo);
   const frameM = new THREE.MeshStandardMaterial({ color: 0x8a2a1c, roughness: .6 });
   for (const [w, h, x, y] of [[PW + .7, .35, 0, PH - .17], [.35, PH, -PW / 2 - .17, PH / 2], [.35, PH, PW / 2 + .17, PH / 2], [PW + .7, .5, 0, .25]]) {
