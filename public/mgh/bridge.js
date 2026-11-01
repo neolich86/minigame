@@ -234,10 +234,10 @@
     if (W.MGH_PLATFORM) return W.MGH_PLATFORM;
     try { if (W.Capacitor && W.Capacitor.isNativePlatform && W.Capacitor.isNativePlatform()) return "app"; } catch (e) {}
     try { var pc = embedded && W.parent.Capacitor; if (pc && pc.isNativePlatform && pc.isNativePlatform()) return "app"; } catch (e) {}
-    // 구글플레이 TWA 앱(Passport Map 등)은 크롬으로 열려 Capacitor 가 없다 — 처음 열릴 때 referrer 가 android-app:// 이고, 그 탭에 표시해 둔다
+    // 구글플레이 TWA 앱(Passport Map 등)은 크롬으로 열려 Capacitor 가 없다 — 처음 열릴 때 referrer 가 android-app://kr.minigame.… 이고, 그 탭에 표시해 둔다
     try {
       var top = W.top, ref = (top.document && top.document.referrer) || "";
-      if (ref.indexOf("android-app://") === 0) { try { top.sessionStorage.setItem("mgh:twa", "1"); } catch (e) {} return "app"; }
+      if (/^android-app:\/\/kr\.minigame\./.test(ref)) { /* 우리 앱(TWA)에서 열렸을 때만 — 카카오톡 등 다른 앱에서 링크로 연 크롬도 android-app:// 로 시작한다 */ try { top.sessionStorage.setItem("mgh:twa", "1"); } catch (e) {} return "app"; }
       if (top.sessionStorage.getItem("mgh:twa") === "1") return "app";
       if (top.matchMedia && top.matchMedia("(display-mode: standalone)").matches && /Android/i.test(navigator.userAgent) && /\/(passport-map|m\/)/.test(top.location.pathname)) return "app";
     } catch (e) {}
