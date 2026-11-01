@@ -1,0 +1,21 @@
+{
+  "appId": "kr.minigame.carddex",
+  "appName": "카드 도감",
+  "webDir": "www",
+  "backgroundColor": "#121218",
+  "server": {
+    "url": "https://playwithme.kr/card-dex-app",
+    "errorPath": "error.html",
+    "cleartext": false,
+    "allowNavigation": [
+      "playwithme.kr",
+      "*.playwithme.kr",
+      "*.kakao.com",
+      "*.kakaocdn.net",
+      "*.supabase.co"
+    ]
+  },
+  "android": {
+    "backgroundColor": "#121218"
+  }
+}

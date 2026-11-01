@@ -1,0 +1,14 @@
+{
+  "name": "card-dex-android",
+  "version": "1.0.0",
+  "description": "카드 도감 - Android(Capacitor) 앱 (playwithme.kr/card-dex-app 을 여는 방식)",
+  "scripts": {
+    "sync": "npx cap sync android"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@capacitor/android": "^6.2.1",
+    "@capacitor/cli": "^6.2.1",
+    "@capacitor/core": "^6.2.1"
+  }
+}

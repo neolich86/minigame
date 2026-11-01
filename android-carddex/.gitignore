@@ -1,0 +1,12 @@
+node_modules/
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+# 서명 키는 절대 저장소에 올리지 않는다
+*.jks
+*.keystore
+*.p12
