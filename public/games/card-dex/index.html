@@ -249,6 +249,29 @@ function pickPhoto() {
     inp.click();
   });
 }
+// 이미지 링크 → 사이트 서버가 대신 받아 와서(브라우저 제한 우회) 1MB 이하로 줄인다
+async function linkPhoto(url) {
+  url = String(url || '').trim();
+  if (!/^https?:\/\/\S+$/i.test(url)) { toast('https:// 로 시작하는 이미지 주소를 넣어 주세요'); return null; }
+  try {
+    const r = await fetch('/api/card-dex/image?url=' + encodeURIComponent(url));
+    if (!r.ok) {
+      const why = await r.text();
+      toast(why === 'not_image' ? '이미지 주소가 아니에요 (이미지를 길게 눌러 "이미지 주소 복사"로 넣어 주세요)' : why === 'too_big' ? '이미지가 너무 커요 (8MB 이하)' : '이미지를 불러오지 못했어요');
+      return null;
+    }
+    return await compressPhoto(await r.blob());
+  } catch (e) { toast('이미지를 불러오지 못했어요'); return null; }
+}
+const linkRowHTML = (id) => `<div class="share-url" id="${id}" style="display:none;margin-top:8px"><input type="text" id="${id}U" placeholder="https://… 이미지 주소" inputmode="url"><button class="btn gold" id="${id}G" style="flex:none">불러오기</button></div>`;
+function bindLinkRow(id, onBlob) {
+  $(id + 'G').onclick = async () => {
+    $(id + 'G').disabled = true; $(id + 'G').innerHTML = '<span class="spin"></span>';
+    const b = await linkPhoto($(id + 'U').value);
+    $(id + 'G').disabled = false; $(id + 'G').textContent = '불러오기';
+    if (b) { $(id).style.display = 'none'; onBlob(b); }
+  };
+}
 async function uploadPhoto(cardId, blob) {
   if (!window.MGH || !MGH.save || !MGH.save.putPublic) throw new Error('standalone');
   const url = await MGH.save.putPublic(`${cardId.replace(/[^A-Za-z0-9_-]/g, '')}.webp`, blob);
@@ -303,7 +326,8 @@ function openAdd() {
     $('sRes').innerHTML = ''; $('sManual').style.display = 'none'; if (!h.manual) $('sQ').value = h.name; if ($('sSL')) $('sSL').style.display = 'none'; $('sHint').style.display = 'none';
     st.photo = null;
     $('step2').innerHTML = `<div class="picked"><div class="art" id="pArt">${h.image ? `<img src="${esc(h.image)}" alt="">` : '<div class="noimg">없음</div>'}</div>
-      <div style="flex:1;min-width:0">${h.manual ? '<b>직접 입력</b>' : `<b>${esc(h.name)}</b><div class="hint" style="margin:2px 0 0">${esc(h.set)}${h.lang && h.lang !== st.lang ? ` · ${LANG[h.lang]} 그림` : ''}</div>`}<button class="chip" id="reSearch" style="margin-top:6px">다른 카드 찾기</button>${h.image ? '' : ' <button class="chip" id="pPhoto" style="margin-top:6px;border-color:var(--gold);color:var(--gold)">📷 사진 올리기</button>'}</div></div>
+      <div style="flex:1;min-width:0">${h.manual ? '<b>직접 입력</b>' : `<b>${esc(h.name)}</b><div class="hint" style="margin:2px 0 0">${esc(h.set)}${h.lang && h.lang !== st.lang ? ` · ${LANG[h.lang]} 그림` : ''}</div>`}<button class="chip" id="reSearch" style="margin-top:6px">다른 카드 찾기</button>${h.image ? '' : ' <button class="chip" id="pPhoto" style="margin-top:6px;border-color:var(--gold);color:var(--gold)">📷 사진 올리기</button> <button class="chip" id="pLink" style="margin-top:6px;border-color:var(--gold);color:var(--gold)">🔗 링크로 넣기</button>'}</div></div>
+      ${h.image ? '' : linkRowHTML('pLR')}
       ${h.manual ? `<div class="row"><label>카드 이름</label><input type="text" id="sName" maxlength="80" placeholder="예) 피카츄 ex" value="${esc(h.name)}"></div>` : ''}
       <div class="row"><label>카드 번호 (내 카드 왼쪽 아래 번호)</label><input type="text" id="sNum" maxlength="40" placeholder="예) 012/025" value="${esc(h.number)}"><div class="hint">일어판·북미판·한글판은 번호가 달라요. 내 카드에 적힌 번호로 고쳐 주세요.</div></div>
       <div class="row"><label>내 카드 언어</label>${segHTML('sLang', Object.entries(LANG), st.lang)}</div>
@@ -312,11 +336,9 @@ function openAdd() {
     $('reSearch').onclick = () => { st.hit = null; $('step2').innerHTML = ''; $('sManual').style.display = ''; if ($('sSL')) $('sSL').style.display = ''; $('sHint').style.display = ''; $('sQ').focus(); search(); };
     bindGrade(st);
     bindSeg('sLang', (v) => { st.lang = v; });
-    if ($('pPhoto')) $('pPhoto').onclick = async () => {
-      const b = await pickPhoto(); if (!b) return;
-      st.photo = b; $('pArt').innerHTML = `<img src="${URL.createObjectURL(b)}" alt="">`; $('pPhoto').textContent = '📷 사진 바꾸기';
-      toast(`사진 준비 완료 (${Math.round(b.size / 1024)}KB)`);
-    };
+    const setPhoto = (b) => { st.photo = b; $('pArt').innerHTML = `<img src="${URL.createObjectURL(b)}" alt="">`; toast(`그림 준비 완료 (${Math.round(b.size / 1024)}KB)`); };
+    if ($('pPhoto')) $('pPhoto').onclick = async () => { const b = await pickPhoto(); if (b) setPhoto(b); };
+    if ($('pLink')) { $('pLink').onclick = () => { $('pLR').style.display = 'flex'; $('pLRU').focus(); }; bindLinkRow('pLR', setPhoto); }
     $('aCancel').onclick = closeSheet;
     $('aSave').onclick = async () => {
       st.note = $('sNote').value.trim();
@@ -341,10 +363,15 @@ function openDetail(c) {
   openSheet(`<div class="detail">${cardHTML(c).replace(/^<button[^>]*>/, '<div>').replace(/<\/button>\s*$/, '</div>').replace('<span class="check">✓</span>', '')}
     <dl><dt>이름</dt><dd>${esc(c.name)}</dd><dt>번호</dt><dd>${esc(c.number || '-')}</dd>${c.set_name ? `<dt>세트</dt><dd>${esc(c.set_name)}</dd>` : ''}
     <dt>언어</dt><dd>${LANG[c.lang]}</dd><dt>등급</dt><dd>${graded ? `${c.grader.toUpperCase()} ${fmtGrade(c.grade)}` : '미등급'}</dd>${c.note ? `<dt>메모</dt><dd>${esc(c.note)}</dd>` : ''}</dl></div>
-    ${mine && (!c.image || /\/game-public\//.test(c.image)) ? `<div class="actions"><button class="btn" id="dPhoto" style="border-color:var(--gold);color:var(--gold)">📷 ${c.image ? '사진 바꾸기' : '사진 올리기'}</button></div>` : ''}
+    ${mine && (!c.image || /\/game-public\//.test(c.image)) ? `<div class="actions"><button class="btn" id="dPhoto" style="border-color:var(--gold);color:var(--gold)">📷 ${c.image ? '사진 바꾸기' : '사진 올리기'}</button><button class="btn" id="dLink" style="border-color:var(--gold);color:var(--gold)">🔗 링크로 넣기</button></div>${linkRowHTML('dLR')}` : ''}
     <div class="actions">${mine ? '<button class="btn" id="dDel">삭제</button><button class="btn" id="dEdit">수정</button>' : ''}<button class="btn gold" id="dClose">닫기</button></div>`);
   $('dClose').onclick = closeSheet;
   if (!mine) return;
+  const putImg = async (b) => {
+    toast('올리는 중…');
+    try { c.image = await uploadPhoto(c.id, b); toast('그림을 넣었어요'); closeSheet(); load(); } catch (e) { toast(errMsg(e)); }
+  };
+  if ($('dLink')) { $('dLink').onclick = () => { $('dLR').style.display = 'flex'; $('dLRU').focus(); }; bindLinkRow('dLR', putImg); }
   if ($('dPhoto')) $('dPhoto').onclick = async () => {
     const b = await pickPhoto(); if (!b) return;
     $('dPhoto').disabled = true; $('dPhoto').innerHTML = '<span class="spin"></span> 올리는 중…';
