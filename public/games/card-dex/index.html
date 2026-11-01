@@ -237,6 +237,29 @@ async function load() {
   $('grid').innerHTML = '<div class="empty" style="grid-column:1/-1"><span class="spin"></span></div>';
   try { cards = (await rpc('cd_my_cards')) || []; } catch (e) { toast(errMsg(e)); cards = []; }
   render();
+  fixOldPhotos();
+}
+// 예전에 올린 사진 중 여백이 있는 것을 한 번씩 잘라서 다시 올린다
+let fixing = false;
+async function fixOldPhotos() {
+  if (fixing) return; fixing = true;
+  let done = {}; try { done = JSON.parse(localStorage.getItem('card-dex:trimmed') || '{}'); } catch (e) {}
+  let changed = false;
+  for (const c of cards) {
+    if (!c.image || !/\/game-public\//.test(c.image) || done[c.id]) continue;
+    done[c.id] = 1;
+    try {
+      const r = await fetch(c.image, { cache: 'no-store' }); if (!r.ok) continue;
+      const blob = await r.blob(), u = URL.createObjectURL(blob);
+      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = u; });
+      const trim = findTrim(img); URL.revokeObjectURL(u);
+      if (!trim) continue;
+      c.image = await uploadPhoto(c.id, await compressPhoto(blob)); changed = true;
+    } catch (e) {}
+  }
+  try { localStorage.setItem('card-dex:trimmed', JSON.stringify(done)); } catch (e) {}
+  fixing = false;
+  if (changed) render();
 }
 
 /* ---------- 시트 ---------- */
@@ -259,6 +282,26 @@ function needLogin() {
 
 /* ---------- 사진 올리기 (그림이 없는 카드) ---------- */
 // 고른 사진을 카드 비율로 줄여 1MB 이하 webp 로 만든다
+// 사진 둘레의 여백(단색 배경·투명 부분)을 찾아 잘라낼 영역 → {x,y,w,h} (잘라낼 게 거의 없으면 null)
+function findTrim(img) {
+  const W = img.naturalWidth, H = img.naturalHeight, k = Math.min(1, 360 / Math.max(W, H));
+  const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(W * k)); c.height = Math.max(1, Math.round(H * k));
+  const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0, c.width, c.height);
+  let d; try { d = g.getImageData(0, 0, c.width, c.height).data; } catch (e) { return null; }
+  const w = c.width, h = c.height, px = (x, y) => { const i = (y * w + x) * 4; return [d[i], d[i + 1], d[i + 2], d[i + 3]]; };
+  const corners = [px(0, 0), px(w - 1, 0), px(0, h - 1), px(w - 1, h - 1)];
+  const bg = [0, 1, 2, 3].map((j) => corners.reduce((a, p) => a + p[j], 0) / 4);
+  const diff = (p) => (bg[3] < 40 ? (p[3] > 60 ? 255 : 0) : p[3] < 60 ? 0 : Math.abs(p[0] - bg[0]) + Math.abs(p[1] - bg[1]) + Math.abs(p[2] - bg[2]));
+  const rowHit = (y) => { let n = 0; for (let x = 0; x < w; x++) if (diff(px(x, y)) > 60) n++; return n > w * 0.04; };
+  const colHit = (x) => { let n = 0; for (let y = 0; y < h; y++) if (diff(px(x, y)) > 60) n++; return n > h * 0.04; };
+  let t = 0, b = h - 1, l = 0, r = w - 1;
+  while (t < b && !rowHit(t)) t++; while (b > t && !rowHit(b)) b--;
+  while (l < r && !colHit(l)) l++; while (r > l && !colHit(r)) r--;
+  const cw = r - l + 1, ch = b - t + 1;
+  if (cw < w * 0.2 || ch < h * 0.2) return null;          // 너무 많이 잘리면 잘못 찾은 것
+  if (cw > w * 0.97 && ch > h * 0.97) return null;        // 여백이 거의 없음
+  return { x: l / k, y: t / k, w: cw / k, h: ch / k };
+}
 async function compressPhoto(file) {
   if (!file || !/^image\//.test(file.type)) throw new Error('not_image');
   const url = URL.createObjectURL(file);
@@ -266,9 +309,10 @@ async function compressPhoto(file) {
     const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
     let max = 1100;
     for (let tries = 0; tries < 8; tries++) {
-      const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
-      const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      const tr = findTrim(img) || { x: 0, y: 0, w: img.naturalWidth, h: img.naturalHeight };
+      const k = Math.min(1, max / Math.max(tr.w, tr.h));
+      const c = document.createElement('canvas'); c.width = Math.round(tr.w * k); c.height = Math.round(tr.h * k);
+      c.getContext('2d').drawImage(img, tr.x, tr.y, tr.w, tr.h, 0, 0, c.width, c.height);
       for (const q of [0.86, 0.75, 0.62]) {
         const b = await new Promise((res) => c.toBlob(res, 'image/webp', q)) || await new Promise((res) => c.toBlob(res, 'image/jpeg', q));
         if (b && b.size <= 1024 * 1024) return b;
