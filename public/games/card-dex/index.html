@@ -43,7 +43,9 @@ h1 .foil{background:linear-gradient(110deg,#ffe7a0,#e6c46a 30%,#fff4c8 50%,#c79a
 .art .noimg{color:var(--sub);font-size:12px;text-align:center;padding:8px}
 .meta{padding:7px 2px 0}
 .meta .nm{font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.meta .sub{font-size:11px;color:var(--sub);display:flex;gap:6px;align-items:center;margin-top:2px}
+.meta .sub{font-size:13px;font-weight:700;color:#c9c5d4;display:flex;gap:7px;align-items:center;margin-top:3px;font-variant-numeric:tabular-nums}
+.flag{display:inline-block;width:21px;height:14px;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.25);flex:none;vertical-align:middle;overflow:hidden}
+.flag svg{display:block;width:100%;height:100%}
 .lang{display:inline-block;border:1px solid var(--line);border-radius:5px;padding:0 5px;font-size:10px;font-weight:800;color:var(--ink)}
 .check{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);border:2px solid #fff;display:none;align-items:center;justify-content:center;font-weight:900;font-size:14px;z-index:2}
 .selecting .check{display:flex}
@@ -131,6 +133,13 @@ input:focus{border-color:var(--gold)}
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const LANG = { ko: '한글판', ja: '일어판', en: '북미판' }, LANG_S = { ko: '한', ja: '日', en: 'EN' };
+// 국기 (윈도우에서는 국기 이모지가 글자로 보여서 직접 그린다)
+const FLAG_SVG = {
+  ko: '<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#fff"/><path d="M15 6a4 4 0 0 1 0 8a2 2 0 0 1 0-4a2 2 0 0 0 0-4z" fill="#0047a0"/><path d="M15 6a4 4 0 0 0 0 8a2 2 0 0 0 0-4a2 2 0 0 1 0-4z" fill="#cd2e3a" transform="rotate(180 15 10)"/><g stroke="#000" stroke-width="1.1"><path d="M5 4.5l3 2.2M4.4 5.4l3 2.2M3.8 6.3l3 2.2"/><path d="M22 13.3l3 2.2M21.4 14.2l3 2.2M20.8 15.1l3 2.2"/><path d="M22 6.7l3-2.2M21.4 5.8l3-2.2M20.8 4.9l3-2.2"/><path d="M5 15.5l3-2.2M4.4 14.6l3-2.2M3.8 13.7l3-2.2"/></g></svg>',
+  ja: '<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#bc002d"/></svg>',
+  en: '<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#fff"/><g fill="#b22234"><rect width="30" height="1.54"/><rect y="3.08" width="30" height="1.54"/><rect y="6.15" width="30" height="1.54"/><rect y="9.23" width="30" height="1.54"/><rect y="12.3" width="30" height="1.54"/><rect y="15.4" width="30" height="1.54"/><rect y="18.46" width="30" height="1.54"/></g><rect width="13" height="10.8" fill="#3c3b6e"/></svg>',
+};
+const flag = (l) => (FLAG_SVG[l] ? `<span class="flag" title="${LANG[l]}">${FLAG_SVG[l]}</span>` : '');
 const GRADERS = [['raw', '미등급'], ['psa', 'PSA'], ['bgs', 'BGS'], ['cgc', 'CGC'], ['brg', 'BRG'], ['ars', 'ARS']];
 // 등급 회사마다 점수 표기가 다르다 — [점수, 태그, 버튼 글자]  (태그: bl 블랙라벨 · pristine · gem · plus(10+))
 const N10 = [9, 8, 7, 6, 5, 4, 3, 2, 1].map((g) => [g, '', String(g)]);
@@ -181,7 +190,7 @@ function cardHTML(c, opts = {}) {
   return `<button class="card${opts.sel ? ' sel' : ''}" data-id="${esc(c.id)}">
     <span class="check">✓</span>
     <div class="slab${graded ? ' graded' : ''}">${label}<div class="art">${img}</div></div>
-    <div class="meta"><div class="nm">${esc(c.name)}</div><div class="sub"><span class="lang">${LANG_S[c.lang] || ''}</span><span>${esc(c.number || '')}</span></div></div>
+    <div class="meta"><div class="nm">${esc(c.name)}</div><div class="sub">${flag(c.lang)}<span>${esc(c.number || '')}</span></div></div>
   </button>`;
 }
 
@@ -347,7 +356,7 @@ function openAdd() {
       const r = await fetch(`/api/card-dex/search?game=${game}&lang=${st.searchLang}&q=${encodeURIComponent(q)}`);
       const hits = await r.json(); if (my !== seq) return;
       if (!Array.isArray(hits) || !hits.length) { $('sRes').innerHTML = '<div class="hint">찾는 카드가 없어요. 이름을 조금 다르게 써 보거나 다른 언어로 찾아보세요.</div>'; return; }
-      $('sRes').innerHTML = hits.map((h, i) => `<button data-i="${i}"><div class="art">${h.image ? `<img src="${esc(h.image)}" loading="lazy" alt="">` : '<div class="noimg">이미지 없음</div>'}</div><small><b>${esc(h.name)}</b></small><small>${h.lang && h.lang !== st.searchLang ? `<span class="lang">${LANG_S[h.lang]}</span> ` : ''}${esc(h.set)} ${esc(h.number)}</small></button>`).join('');
+      $('sRes').innerHTML = hits.map((h, i) => `<button data-i="${i}"><div class="art">${h.image ? `<img src="${esc(h.image)}" loading="lazy" alt="">` : '<div class="noimg">이미지 없음</div>'}</div><small><b>${esc(h.name)}</b></small><small>${h.lang && h.lang !== st.searchLang ? `${flag(h.lang)} ` : ''}${esc(h.set)} ${esc(h.number)}</small></button>`).join('');
       $('sRes').querySelectorAll('button').forEach((b) => b.onclick = () => pickHit(hits[+b.dataset.i]));
     } catch (e) { if (my === seq) $('sRes').innerHTML = '<div class="hint">검색이 잠시 안 돼요. 다시 시도해 주세요.</div>'; }
   }
