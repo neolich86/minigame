@@ -35,6 +35,8 @@ h1 .foil{background:linear-gradient(110deg,#ffe7a0,#e6c46a 30%,#fff4c8 50%,#c79a
 .slab.graded{background:linear-gradient(160deg,#e9eef3,#b9c2cc);padding:5px 6px 7px}
 .label{display:flex;align-items:center;justify-content:space-between;gap:6px;border-radius:5px;padding:4px 7px;margin-bottom:5px;font-weight:900;font-size:11px;letter-spacing:.02em;color:#fff}
 .label b{font-size:15px}
+.label small{font-size:8px;letter-spacing:.06em;margin-right:2px;opacity:.9}
+.g-bl{background:linear-gradient(90deg,#000,#222 50%,#000);color:#f2d27a;box-shadow:inset 0 0 0 1px #8a6a20}
 .g-psa{background:#c8102e}.g-bgs{background:#111;color:#e6c46a}.g-cgc{background:#1f4fa3}.g-brg{background:#0f6b4f}.g-ars{background:#5b2a86}
 .art{aspect-ratio:63/88;border-radius:6px;overflow:hidden;background:#2a2a36;display:flex;align-items:center;justify-content:center;position:relative}
 .art img{width:100%;height:100%;object-fit:cover;display:block}
@@ -63,6 +65,7 @@ h1 .foil{background:linear-gradient(110deg,#ffe7a0,#e6c46a 30%,#fff4c8 50%,#c79a
 .row>label{display:block;font-size:12px;color:var(--sub);font-weight:700;margin-bottom:6px}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
 .seg button{border:1px solid var(--line);background:#15151c;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700}
+.seg button.bl{background:#000;color:#f2d27a;border-color:#6a5420}
 .seg button.on{border-color:var(--gold);color:var(--gold);background:#2a2516}
 input[type=text],input[type=search]{width:100%;border:1px solid var(--line);background:#15151c;color:var(--ink);border-radius:10px;padding:11px 12px;font:inherit;font-size:15px;outline:none}
 input:focus{border-color:var(--gold)}
@@ -129,7 +132,26 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const LANG = { ko: '한글판', ja: '일어판', en: '북미판' }, LANG_S = { ko: '한', ja: '日', en: 'EN' };
 const GRADERS = [['raw', '미등급'], ['psa', 'PSA'], ['bgs', 'BGS'], ['cgc', 'CGC'], ['brg', 'BRG'], ['ars', 'ARS']];
-const GRADES = [10, 9.5, 9, 8.5, 8, 7.5, 7, 6.5, 6, 5, 4, 3, 2, 1];
+// 등급 회사마다 점수 표기가 다르다 — [점수, 태그, 버튼 글자]  (태그: bl 블랙라벨 · pristine · gem · plus(10+))
+const N10 = [9, 8, 7, 6, 5, 4, 3, 2, 1].map((g) => [g, '', String(g)]);
+const SCALES = {
+  psa: [[10, '', '10'], ...N10],
+  brg: [[10, '', '10'], ...N10],
+  bgs: [[10, 'bl', 'Black Label 10'], [10, 'pristine', '10 Pristine'], [9.5, '', '9.5 Gem Mint'], [9, '', '9 Mint'], [8, '', '8 NM-MT'], [7, '', '7 NM'], [6, '', '6 EX-MT'], [5, '', '5 EX'], [4, '', '4 VG-EX'], [3, '', '3 VG'], [2, '', '2 Good'], [1, '', '1 Poor']],
+  cgc: [[10, 'pristine', '10 Pristine'], [10, 'gem', '10 Gem Mint'], [9.5, '', '9.5 Mint+'], [9, '', '9 Mint'], [8.5, '', '8.5 NM/Mint+'], [8, '', '8 NM/Mint'], [7.5, '', '7.5 NM+'], [7, '', '7 NM'], [6.5, '', '6.5 EX/NM+'], [6, '', '6 EX/NM'], [5.5, '', '5.5 EX+'], [5, '', '5 EX'], [4.5, '', '4.5 VG/EX+'], [4, '', '4 VG/EX'], [3.5, '', '3.5 VG+'], [3, '', '3 VG'], [2.5, '', '2.5 G+'], [2, '', '2 Good'], [1.5, '', '1.5 Fair'], [1, '', '1 Poor']],
+  ars: [[10, 'plus', '10+'], [10, '', '10'], ...N10],
+};
+const gkey = (g, t) => `${Number(g)}|${t || ''}`;
+// 슬랩 라벨 오른쪽에 들어갈 점수 글자
+function gradeText(c) {
+  const g = fmtGrade(c.grade), t = c.grade_tag || '';
+  if (t === 'bl') return `<small>BLACK LABEL</small> ${g}`;
+  if (t === 'pristine') return `<small>PRISTINE</small> ${g}`;
+  if (t === 'gem') return `<small>GEM MINT</small> ${g}`;
+  if (t === 'plus') return `${g}+`;
+  return g;
+}
+const gradePlain = (c) => gradeText(c).replace(/<\/?small>/g, '');
 const GAME = { pokemon: '포켓몬', onepiece: '원피스' };
 let user = null, cards = [], game = 'pokemon', filt = 'all', langF = null, selecting = false, sel = new Set(), viewer = null, googleOk = false;
 try { const g = localStorage.getItem('card-dex:tab'); if (GAME[g]) game = g; } catch {}
@@ -154,7 +176,7 @@ const parentQuery = () => { let q = location.search; try { if (window.MGH && MGH
 /* ---------- 카드 한 장 그리기 ---------- */
 function cardHTML(c, opts = {}) {
   const graded = c.grader && c.grader !== 'raw';
-  const label = graded ? `<div class="label g-${c.grader}"><span>${c.grader.toUpperCase()}</span><b>${fmtGrade(c.grade)}</b></div>` : '';
+  const label = graded ? `<div class="label g-${c.grader}${c.grade_tag === 'bl' ? ' g-bl' : ''}"><span>${c.grader.toUpperCase()}</span><b>${gradeText(c)}</b></div>` : '';
   const img = c.image ? `<img src="${esc(c.image)}" alt="${esc(c.name)}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'이미지 없음'}))">` : `<div class="noimg">이미지 없음</div>`;
   return `<button class="card${opts.sel ? ' sel' : ''}" data-id="${esc(c.id)}">
     <span class="check">✓</span>
@@ -284,12 +306,21 @@ function segHTML(id, items, cur) { return `<div class="seg" id="${id}">${items.m
 function bindSeg(id, fn) { $(id).querySelectorAll('button').forEach((b) => b.onclick = () => { $(id).querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); fn(b.dataset.v); }); }
 function gradeRows(st) {
   return `<div class="row"><label>등급 회사</label>${segHTML('sGrader', GRADERS, st.grader)}</div>
-    <div class="row" id="gradeRow" style="${st.grader === 'raw' ? 'display:none' : ''}"><label>등급 점수</label>${segHTML('sGrade', GRADES.map((g) => [g, fmtGrade(g)]), st.grade)}</div>
+    <div class="row" id="gradeRow" style="${st.grader === 'raw' ? 'display:none' : ''}"><label>등급 점수</label><div class="seg" id="sGrade"></div></div>
     <div class="row"><label>메모 (선택)</label><input type="text" id="sNote" maxlength="100" placeholder="예) 첫 박스에서 뽑은 카드" value="${esc(st.note || '')}"></div>`;
 }
 function bindGrade(st) {
-  bindSeg('sGrader', (v) => { st.grader = v; $('gradeRow').style.display = v === 'raw' ? 'none' : ''; if (v !== 'raw' && st.grade == null) { st.grade = 10; $('sGrade').querySelector('[data-v="10"]').classList.add('on'); } });
-  bindSeg('sGrade', (v) => { st.grade = Number(v); });
+  // 등급 회사를 고를 때마다 그 회사의 점수 버튼으로 바꾼다
+  const drawScale = () => {
+    const sc = SCALES[st.grader];
+    if (!sc) { $('gradeRow').style.display = 'none'; return; }
+    $('gradeRow').style.display = '';
+    if (!sc.some(([g, t]) => gkey(g, t) === gkey(st.grade, st.tag))) { st.grade = sc[0][0]; st.tag = sc[0][1]; }
+    $('sGrade').innerHTML = sc.map(([g, t, l]) => `<button data-v="${gkey(g, t)}" class="${gkey(g, t) === gkey(st.grade, st.tag) ? 'on' : ''}${t === 'bl' ? ' bl' : ''}">${l}</button>`).join('');
+    bindSeg('sGrade', (v) => { const [g, t] = v.split('|'); st.grade = Number(g); st.tag = t; });
+  };
+  bindSeg('sGrader', (v) => { st.grader = v; drawScale(); });
+  drawScale();
 }
 function openAdd() {
   if (!user) return needLogin();
@@ -346,7 +377,7 @@ function openAdd() {
       if (!nm) { toast('카드 이름을 넣어 주세요'); return; }
       $('aSave').disabled = true;
       try {
-        const newId = await rpc('cd_add_card', { p_game: game, p_ref: h.ref, p_name: nm, p_number: num, p_set: h.set, p_image: h.image, p_lang: st.lang, p_grader: st.grader, p_grade: st.grader === 'raw' ? null : st.grade, p_note: st.note });
+        const newId = await rpc('cd_add_card', { p_game: game, p_ref: h.ref, p_name: nm, p_number: num, p_set: h.set, p_image: h.image, p_lang: st.lang, p_grader: st.grader, p_grade: st.grader === 'raw' ? null : st.grade, p_tag: st.grader === 'raw' ? '' : (st.tag || ''), p_note: st.note });
         if (st.photo) { try { await uploadPhoto(newId, st.photo); } catch (e) { toast('카드는 넣었지만 사진을 올리지 못했어요'); } }
         closeSheet(); toast('🃏 도감에 넣었어요'); load();
       } catch (e) { $('aSave').disabled = false; toast(errMsg(e)); }
@@ -362,7 +393,7 @@ function openDetail(c) {
   const graded = c.grader !== 'raw';
   openSheet(`<div class="detail">${cardHTML(c).replace(/^<button[^>]*>/, '<div>').replace(/<\/button>\s*$/, '</div>').replace('<span class="check">✓</span>', '')}
     <dl><dt>이름</dt><dd>${esc(c.name)}</dd><dt>번호</dt><dd>${esc(c.number || '-')}</dd>${c.set_name ? `<dt>세트</dt><dd>${esc(c.set_name)}</dd>` : ''}
-    <dt>언어</dt><dd>${LANG[c.lang]}</dd><dt>등급</dt><dd>${graded ? `${c.grader.toUpperCase()} ${fmtGrade(c.grade)}` : '미등급'}</dd>${c.note ? `<dt>메모</dt><dd>${esc(c.note)}</dd>` : ''}</dl></div>
+    <dt>언어</dt><dd>${LANG[c.lang]}</dd><dt>등급</dt><dd>${graded ? `${c.grader.toUpperCase()} ${gradePlain(c)}` : '미등급'}</dd>${c.note ? `<dt>메모</dt><dd>${esc(c.note)}</dd>` : ''}</dl></div>
     ${mine && (!c.image || /\/game-public\//.test(c.image)) ? `<div class="actions"><button class="btn" id="dPhoto" style="border-color:var(--gold);color:var(--gold)">📷 ${c.image ? '사진 바꾸기' : '사진 올리기'}</button><button class="btn" id="dLink" style="border-color:var(--gold);color:var(--gold)">🔗 링크로 넣기</button></div>${linkRowHTML('dLR')}` : ''}
     <div class="actions">${mine ? '<button class="btn" id="dDel">삭제</button><button class="btn" id="dEdit">수정</button>' : ''}<button class="btn gold" id="dClose">닫기</button></div>`);
   $('dClose').onclick = closeSheet;
@@ -383,13 +414,13 @@ function openDetail(c) {
     try { await rpc('cd_delete_card', { p_id: c.id }); closeSheet(); toast('삭제했어요'); load(); } catch (e) { toast(errMsg(e)); }
   };
   $('dEdit').onclick = () => {
-    const st = { lang: c.lang, grader: c.grader, grade: c.grade == null ? null : Number(c.grade), note: c.note };
+    const st = { lang: c.lang, grader: c.grader, grade: c.grade == null ? null : Number(c.grade), tag: c.grade_tag || '', note: c.note };
     openSheet(`<h3>${esc(c.name)} 수정</h3><div class="row"><label>카드 언어</label>${segHTML('sLang', Object.entries(LANG), st.lang)}</div>${gradeRows(st)}
       <div class="actions"><button class="btn" id="eCancel">취소</button><button class="btn gold" id="eSave">저장</button></div>`);
     bindSeg('sLang', (v) => { st.lang = v; }); bindGrade(st);
     $('eCancel').onclick = () => openDetail(c);
     $('eSave').onclick = async () => {
-      try { await rpc('cd_update_card', { p_id: c.id, p_lang: st.lang, p_grader: st.grader, p_grade: st.grader === 'raw' ? null : st.grade, p_note: $('sNote').value.trim() }); closeSheet(); toast('저장했어요'); load(); }
+      try { await rpc('cd_update_card', { p_id: c.id, p_lang: st.lang, p_grader: st.grader, p_grade: st.grader === 'raw' ? null : st.grade, p_tag: st.grader === 'raw' ? '' : (st.tag || ''), p_note: $('sNote').value.trim() }); closeSheet(); toast('저장했어요'); load(); }
       catch (e) { toast(errMsg(e)); }
     };
   };
