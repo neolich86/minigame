@@ -445,7 +445,13 @@ async function makeShare(gameArg, ids, title) {
       <div class="share-url"><input type="text" id="shUrl" readonly value="${esc(url)}"></div>
       <div class="actions"><button class="btn" id="shCopy">링크 복사</button>${navigator.share ? '<button class="btn gold" id="shNative">공유하기</button>' : '<button class="btn gold" id="shClose">닫기</button>'}</div>`);
     $('shCopy').onclick = async () => { try { await navigator.clipboard.writeText(url); } catch (e) { $('shUrl').select(); document.execCommand('copy'); } toast('링크를 복사했어요'); window.MGH?.shared?.('copy'); };
-    if ($('shNative')) $('shNative').onclick = async () => { try { await navigator.share({ title: '내 카드 도감', text: title, url }); window.MGH?.shared?.('native'); } catch (e) {} };
+    if ($('shNative')) $('shNative').onclick = async () => {
+      try { await navigator.share({ title: '내 카드 도감', text: title, url }); window.MGH?.shared?.('native'); }
+      catch (e) {
+        if (e && e.name === 'AbortError') return; // 사용자가 공유 창을 닫음
+        try { await navigator.clipboard.writeText(url); toast('이 기기에서는 공유 창을 열 수 없어 링크를 복사했어요'); } catch (_) { $('shUrl').select(); document.execCommand('copy'); toast('링크를 복사했어요'); }
+      }
+    };
     if ($('shClose')) $('shClose').onclick = closeSheet;
   } catch (e) { toast(errMsg(e)); }
 }
