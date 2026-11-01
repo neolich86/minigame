@@ -11,7 +11,7 @@ import { useToasts } from "./Toasts";
 import { formatScore, formatVs, gameById, itemPath, playStoreUrl } from "@/lib/games";
 import { GAME_RPC } from "@/lib/gameRpc";
 import { cloudEnabled, displayName, googleLoginAvailable, sb, signInGoogle, fetchMyRank, fetchMyScores, signInKakao, submitScore, type ScoreRow } from "@/lib/supabase";
-import { deleteFiles, deleteShare, fileUrls, loadSave, publishShare, putFile, shareInfo, storeSave } from "@/lib/saves";
+import { deleteFiles, deleteShare, fileUrls, loadSave, publishShare, putFile, putPublicFile, shareInfo, storeSave } from "@/lib/saves";
 import { errorKey } from "@/lib/i18n";
 import { createChallenge, fetchChallenge, fetchTopPct, type Challenge } from "@/lib/challenge";
 
@@ -152,6 +152,9 @@ export function GamePlayer({ gameId, app }: { gameId: string; app?: string }) {
         case "putFile":
           if (!(args.blob instanceof Blob) || typeof args.name !== "string") throw new Error("bad_file");
           return putFile(game.id, args.name, args.blob);
+        case "putPublic":
+          if (!(args.blob instanceof Blob) || typeof args.name !== "string") throw new Error("bad_file");
+          return putPublicFile(game.id, args.name, args.blob);
         case "deleteFiles":
           return deleteFiles(game.id, Array.isArray(args.names) ? args.names.filter((n): n is string => typeof n === "string") : []);
         case "shareInfo":

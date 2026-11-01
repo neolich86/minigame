@@ -145,6 +145,7 @@ function errMsg(e) {
   if (/too_many_cards/.test(m)) return '카드는 3,000장까지 등록할 수 있어요';
   if (/too_many_shares/.test(m)) return '오늘 공유 링크를 너무 많이 만들었어요';
   if (/standalone/.test(m)) return '사이트(playwithme.kr) 안에서 열어 주세요';
+  if (/file_too_big/.test(m)) return '사진이 1MB를 넘어요';
   return '잠시 후 다시 시도해 주세요';
 }
 const fmtGrade = (g) => (g == null ? '' : (Number(g) % 1 ? Number(g).toFixed(1) : String(Number(g))));
@@ -220,6 +221,41 @@ function needLogin() {
   $('lgN').onclick = closeSheet;
 }
 
+/* ---------- 사진 올리기 (그림이 없는 카드) ---------- */
+// 고른 사진을 카드 비율로 줄여 1MB 이하 webp 로 만든다
+async function compressPhoto(file) {
+  if (!file || !/^image\//.test(file.type)) throw new Error('not_image');
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    let max = 1100;
+    for (let tries = 0; tries < 8; tries++) {
+      const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      for (const q of [0.86, 0.75, 0.62]) {
+        const b = await new Promise((res) => c.toBlob(res, 'image/webp', q)) || await new Promise((res) => c.toBlob(res, 'image/jpeg', q));
+        if (b && b.size <= 1024 * 1024) return b;
+      }
+      max = Math.round(max * 0.75);
+    }
+    throw new Error('too_big');
+  } finally { URL.revokeObjectURL(url); }
+}
+function pickPhoto() {
+  return new Promise((res) => {
+    const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
+    inp.onchange = async () => { const f = inp.files && inp.files[0]; if (!f) return res(null); try { res(await compressPhoto(f)); } catch (e) { toast('사진을 읽지 못했어요. 다른 사진으로 해 주세요'); res(null); } };
+    inp.click();
+  });
+}
+async function uploadPhoto(cardId, blob) {
+  if (!window.MGH || !MGH.save || !MGH.save.putPublic) throw new Error('standalone');
+  const url = await MGH.save.putPublic(`${cardId.replace(/[^A-Za-z0-9_-]/g, '')}.webp`, blob);
+  await rpc('cd_set_image', { p_id: cardId, p_image: url });
+  return url;
+}
+
 /* ---------- 카드 추가 ---------- */
 function segHTML(id, items, cur) { return `<div class="seg" id="${id}">${items.map(([v, t]) => `<button data-v="${v}" class="${String(v) === String(cur) ? 'on' : ''}">${t}</button>`).join('')}</div>`; }
 function bindSeg(id, fn) { $(id).querySelectorAll('button').forEach((b) => b.onclick = () => { $(id).querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); fn(b.dataset.v); }); }
@@ -265,8 +301,9 @@ function openAdd() {
     st.hit = h;
     if (game === 'pokemon' && h.lang) st.lang = h.lang;
     $('sRes').innerHTML = ''; $('sManual').style.display = 'none'; if (!h.manual) $('sQ').value = h.name; if ($('sSL')) $('sSL').style.display = 'none'; $('sHint').style.display = 'none';
-    $('step2').innerHTML = `<div class="picked"><div class="art">${h.image ? `<img src="${esc(h.image)}" alt="">` : '<div class="noimg">없음</div>'}</div>
-      <div style="flex:1;min-width:0">${h.manual ? '<b>직접 입력</b>' : `<b>${esc(h.name)}</b><div class="hint" style="margin:2px 0 0">${esc(h.set)}${h.lang && h.lang !== st.lang ? ` · ${LANG[h.lang]} 그림` : ''}</div>`}<button class="chip" id="reSearch" style="margin-top:6px">다른 카드 찾기</button></div></div>
+    st.photo = null;
+    $('step2').innerHTML = `<div class="picked"><div class="art" id="pArt">${h.image ? `<img src="${esc(h.image)}" alt="">` : '<div class="noimg">없음</div>'}</div>
+      <div style="flex:1;min-width:0">${h.manual ? '<b>직접 입력</b>' : `<b>${esc(h.name)}</b><div class="hint" style="margin:2px 0 0">${esc(h.set)}${h.lang && h.lang !== st.lang ? ` · ${LANG[h.lang]} 그림` : ''}</div>`}<button class="chip" id="reSearch" style="margin-top:6px">다른 카드 찾기</button>${h.image ? '' : ' <button class="chip" id="pPhoto" style="margin-top:6px;border-color:var(--gold);color:var(--gold)">📷 사진 올리기</button>'}</div></div>
       ${h.manual ? `<div class="row"><label>카드 이름</label><input type="text" id="sName" maxlength="80" placeholder="예) 피카츄 ex" value="${esc(h.name)}"></div>` : ''}
       <div class="row"><label>카드 번호 (내 카드 왼쪽 아래 번호)</label><input type="text" id="sNum" maxlength="40" placeholder="예) 012/025" value="${esc(h.number)}"><div class="hint">일어판·북미판·한글판은 번호가 달라요. 내 카드에 적힌 번호로 고쳐 주세요.</div></div>
       <div class="row"><label>내 카드 언어</label>${segHTML('sLang', Object.entries(LANG), st.lang)}</div>
@@ -275,6 +312,11 @@ function openAdd() {
     $('reSearch').onclick = () => { st.hit = null; $('step2').innerHTML = ''; $('sManual').style.display = ''; if ($('sSL')) $('sSL').style.display = ''; $('sHint').style.display = ''; $('sQ').focus(); search(); };
     bindGrade(st);
     bindSeg('sLang', (v) => { st.lang = v; });
+    if ($('pPhoto')) $('pPhoto').onclick = async () => {
+      const b = await pickPhoto(); if (!b) return;
+      st.photo = b; $('pArt').innerHTML = `<img src="${URL.createObjectURL(b)}" alt="">`; $('pPhoto').textContent = '📷 사진 바꾸기';
+      toast(`사진 준비 완료 (${Math.round(b.size / 1024)}KB)`);
+    };
     $('aCancel').onclick = closeSheet;
     $('aSave').onclick = async () => {
       st.note = $('sNote').value.trim();
@@ -282,7 +324,8 @@ function openAdd() {
       if (!nm) { toast('카드 이름을 넣어 주세요'); return; }
       $('aSave').disabled = true;
       try {
-        await rpc('cd_add_card', { p_game: game, p_ref: h.ref, p_name: nm, p_number: num, p_set: h.set, p_image: h.image, p_lang: st.lang, p_grader: st.grader, p_grade: st.grader === 'raw' ? null : st.grade, p_note: st.note });
+        const newId = await rpc('cd_add_card', { p_game: game, p_ref: h.ref, p_name: nm, p_number: num, p_set: h.set, p_image: h.image, p_lang: st.lang, p_grader: st.grader, p_grade: st.grader === 'raw' ? null : st.grade, p_note: st.note });
+        if (st.photo) { try { await uploadPhoto(newId, st.photo); } catch (e) { toast('카드는 넣었지만 사진을 올리지 못했어요'); } }
         closeSheet(); toast('🃏 도감에 넣었어요'); load();
       } catch (e) { $('aSave').disabled = false; toast(errMsg(e)); }
     };
@@ -298,9 +341,16 @@ function openDetail(c) {
   openSheet(`<div class="detail">${cardHTML(c).replace(/^<button[^>]*>/, '<div>').replace(/<\/button>\s*$/, '</div>').replace('<span class="check">✓</span>', '')}
     <dl><dt>이름</dt><dd>${esc(c.name)}</dd><dt>번호</dt><dd>${esc(c.number || '-')}</dd>${c.set_name ? `<dt>세트</dt><dd>${esc(c.set_name)}</dd>` : ''}
     <dt>언어</dt><dd>${LANG[c.lang]}</dd><dt>등급</dt><dd>${graded ? `${c.grader.toUpperCase()} ${fmtGrade(c.grade)}` : '미등급'}</dd>${c.note ? `<dt>메모</dt><dd>${esc(c.note)}</dd>` : ''}</dl></div>
+    ${mine && (!c.image || /\/game-public\//.test(c.image)) ? `<div class="actions"><button class="btn" id="dPhoto" style="border-color:var(--gold);color:var(--gold)">📷 ${c.image ? '사진 바꾸기' : '사진 올리기'}</button></div>` : ''}
     <div class="actions">${mine ? '<button class="btn" id="dDel">삭제</button><button class="btn" id="dEdit">수정</button>' : ''}<button class="btn gold" id="dClose">닫기</button></div>`);
   $('dClose').onclick = closeSheet;
   if (!mine) return;
+  if ($('dPhoto')) $('dPhoto').onclick = async () => {
+    const b = await pickPhoto(); if (!b) return;
+    $('dPhoto').disabled = true; $('dPhoto').innerHTML = '<span class="spin"></span> 올리는 중…';
+    try { c.image = await uploadPhoto(c.id, b); toast('사진을 올렸어요'); closeSheet(); load(); }
+    catch (e) { $('dPhoto').disabled = false; $('dPhoto').textContent = '📷 사진 올리기'; toast(errMsg(e)); }
+  };
   $('dDel').onclick = async () => {
     if ($('dDel').dataset.sure !== '1') { $('dDel').dataset.sure = '1'; $('dDel').textContent = '한 번 더 누르면 삭제'; return; }
     try { await rpc('cd_delete_card', { p_id: c.id }); closeSheet(); toast('삭제했어요'); load(); } catch (e) { toast(errMsg(e)); }

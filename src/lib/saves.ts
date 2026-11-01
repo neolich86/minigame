@@ -195,3 +195,16 @@ export async function deleteMyAccount(): Promise<void> {
   if (error) throw error;
   await c.auth.signOut();
 }
+
+/** 공개 사진 한 장 올리기 (game-public/<user>/<gameId>/u/<name>) → 누구나 볼 수 있는 주소. 1MB 까지 */
+export async function putPublicFile(gameId: string, name: string, blob: Blob): Promise<string> {
+  if (!FILE_RE.test(name)) throw new Error("bad_file_name");
+  if (blob.size > 1024 * 1024) throw new Error("file_too_big");
+  const user = await uid();
+  const c = client();
+  const path = `${user}/${gameId}/u/${name}`;
+  const { error } = await c.storage.from(PUB).upload(path, blob, { upsert: true, contentType: blob.type || "image/webp", cacheControl: "31536000" });
+  if (error) throw error;
+  return `${c.storage.from(PUB).getPublicUrl(path).data.publicUrl}?v=${Date.now().toString(36)}`;
+}
+

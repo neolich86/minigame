@@ -320,6 +320,8 @@
       /** prevAt: 마지막으로 읽은/쓴 updatedAt — 그 뒤 다른 기기가 저장했으면 {conflict:true, data, updatedAt} 로 응답 */
       store: function (data, prevAt) { return saveCall("store", { data: data, prevAt: prevAt }); },
       putFile: function (name, blob) { return saveCall("putFile", { name: name, blob: blob }); },
+      /** 공개 사진 한 장(1MB 이하) → 공개 주소. 누구나 볼 수 있으니 공유용 그림에만 */
+      putPublic: function (name, blob) { return saveCall("putPublic", { name: name, blob: blob }); },
       deleteFiles: function (names) { return saveCall("deleteFiles", { names: names }); },
       urls: function (names) { return saveCall("urls", { names: names }); },
       /** 공개 링크: shareInfo() → {slug, base, names}, sharePublish(data, {name: blob}, keepNames) → {slug}, shareDelete() */

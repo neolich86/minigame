@@ -16,5 +16,5 @@ export const GAME_RPC: Record<string, readonly string[]> = {
     "dn_block",
     "dn_unblock_all",
   ],
-  "card-dex": ["cd_my_cards", "cd_add_card", "cd_update_card", "cd_delete_card", "cd_share", "cd_get_share"],
+  "card-dex": ["cd_my_cards", "cd_add_card", "cd_update_card", "cd_delete_card", "cd_share", "cd_get_share", "cd_set_image"],
 };
