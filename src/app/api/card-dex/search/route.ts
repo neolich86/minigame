@@ -48,7 +48,29 @@ async function fillImage(lang: string, c: TcgCard): Promise<string> {
   return "";
 }
 type LHit = Hit & { lang: string };
+// 북미판(영문)은 Pokémon TCG API (pokemontcg.io) — 거의 모든 카드가 공식 스캔 그림과 함께 있다. 키(POKEMONTCG_API_KEY)는 있으면 한도가 늘어난다
+async function ptcgSearch(q: string, rest = ""): Promise<LHit[]> {
+  const num = /^(\d{1,3})\s*\/\s*(\d{1,3})$/.exec(q) || /^(\d{1,3})$/.exec(q);
+  const clean = (v: string) => v.replace(/["\\*:()]/g, " ").trim();
+  let query: string;
+  if (num) query = `number:${Number(num[1])}` + (num[2] ? ` set.printedTotal:${Number(num[2])}` : "");
+  else { query = `name:"${clean(q)}*"`; }
+  const url = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(query)}&pageSize=80&orderBy=-set.releaseDate&select=id,name,number,set,images`;
+  const headers: Record<string, string> = {};
+  if (process.env.POKEMONTCG_API_KEY) headers["X-Api-Key"] = process.env.POKEMONTCG_API_KEY;
+  const r = await fetch(url, { cache: "no-store", headers });
+  if (!r.ok) return [];
+  const j = (await r.json()) as { data?: { id: string; name: string; number: string; set?: { name?: string; printedTotal?: number }; images?: { small?: string } }[] };
+  let list = j.data || [];
+  if (rest) { const t = rest.toLowerCase().replace(/\s+/g, ""); list = list.filter((c) => c.name.toLowerCase().replace(/\s+/g, "").includes(t)); }
+  return list.map((c) => ({
+    ref: "ptcg:" + c.id, name: c.name,
+    number: c.set?.printedTotal ? `${c.number}/${String(c.set.printedTotal).padStart(3, "0")}` : c.number,
+    set: c.set?.name || "", image: c.images?.small || "", lang: "en",
+  }));
+}
 async function searchIn(lang: string, q: string, sets: Map<string, SetInfo>, rest = ""): Promise<LHit[]> {
+  if (lang === "en") { try { const p = await ptcgSearch(q, rest); if (p.length) return p; } catch {} }
   let list: TcgCard[];
   // 카드 왼쪽 아래 번호 "012/025" · "12" 로도 찾는다
   const num = /^(\d{1,3})\s*\/\s*(\d{1,3})$/.exec(q) || /^(\d{1,3})$/.exec(q);
@@ -87,8 +109,9 @@ async function pokemon(lang: string, q: string): Promise<(Hit & { lang: string }
     }
   }
   hits = hits.slice(0, 80);
-  const imgs = await Promise.all(hits.map((h, i) => (i < 30 ? fillImage(h.lang, { id: h.ref, name: h.name, image: h.image || undefined }) : Promise.resolve(h.image))));
-  hits.forEach((h, i) => { h.image = imgs[i] ? `${imgs[i]}/low.webp` : ""; });
+  const isP = (h: LHit) => h.ref.startsWith("ptcg:");
+  const imgs = await Promise.all(hits.map((h, i) => (isP(h) ? Promise.resolve(h.image) : i < 30 ? fillImage(h.lang, { id: h.ref, name: h.name, image: h.image || undefined }) : Promise.resolve(h.image))));
+  hits.forEach((h, i) => { h.image = !imgs[i] ? "" : isP(h) ? imgs[i] : `${imgs[i]}/low.webp`; });
   return hits.sort((a, b) => Number(!a.image) - Number(!b.image)); // 그림 있는 카드 먼저
 }
 

@@ -241,8 +241,10 @@ function openAdd() {
       <input type="search" id="sQ" placeholder="${game === 'onepiece' ? '영문 이름 또는 카드번호 (예: Luffy, OP01-001)' : '카드 이름 또는 왼쪽 아래 번호 (예: 피카츄, リザードン, 012/025)'}" autocomplete="off">
       ${game === 'pokemon' ? `<div class="seg" id="sSL" style="margin-top:8px"></div>` : ''}
       <div class="hint" id="sHint">${game === 'onepiece' ? '원피스 카드 검색은 영문판 기준이에요. 그림이 같아 썸네일로 써요.' : '한글로 찾아서 결과가 적으면 일본어·영어 카드에서도 자동으로 찾아요. 카드 왼쪽 아래 번호(012/025)로도 찾을 수 있어요.'}</div>
-      <div class="results" id="sRes"></div></div>
+      <div class="results" id="sRes"></div>
+      <button class="chip" id="sManual" style="margin-top:10px">✏️ 찾는 카드가 없어요 · 직접 입력</button></div>
     <div id="step2"></div>`);
+  $('sManual').onclick = () => pickHit({ ref: 'manual-' + Date.now(), name: st.q && !/^\d/.test(st.q) ? st.q : '', number: /^\d/.test(st.q) ? st.q : '', set: '', image: '', manual: true });
   const renderSL = () => { if (!$('sSL')) return; const cur = st.searchLang; $('sSL').innerHTML = searchLangs().map(([v, t]) => `<button data-v="${v}" class="${v === cur ? 'on' : ''}">${t}로 검색</button>`).join(''); bindSeg('sSL', (v) => { st.searchLang = v; search(); }); };
   renderSL();
   let tm = 0, seq = 0;
@@ -262,21 +264,25 @@ function openAdd() {
   function pickHit(h) {
     st.hit = h;
     if (game === 'pokemon' && h.lang) st.lang = h.lang;
-    $('sRes').innerHTML = ''; $('sQ').value = h.name; if ($('sSL')) $('sSL').style.display = 'none'; $('sHint').style.display = 'none';
+    $('sRes').innerHTML = ''; $('sManual').style.display = 'none'; if (!h.manual) $('sQ').value = h.name; if ($('sSL')) $('sSL').style.display = 'none'; $('sHint').style.display = 'none';
     $('step2').innerHTML = `<div class="picked"><div class="art">${h.image ? `<img src="${esc(h.image)}" alt="">` : '<div class="noimg">없음</div>'}</div>
-      <div><b>${esc(h.name)}</b><div class="hint" style="margin:2px 0 0">${esc(h.set)} · ${esc(h.number)}</div><button class="chip" id="reSearch" style="margin-top:6px">다른 카드 찾기</button></div></div>
+      <div style="flex:1;min-width:0">${h.manual ? '<b>직접 입력</b>' : `<b>${esc(h.name)}</b><div class="hint" style="margin:2px 0 0">${esc(h.set)}${h.lang && h.lang !== st.lang ? ` · ${LANG[h.lang]} 그림` : ''}</div>`}<button class="chip" id="reSearch" style="margin-top:6px">다른 카드 찾기</button></div></div>
+      ${h.manual ? `<div class="row"><label>카드 이름</label><input type="text" id="sName" maxlength="80" placeholder="예) 피카츄 ex" value="${esc(h.name)}"></div>` : ''}
+      <div class="row"><label>카드 번호 (내 카드 왼쪽 아래 번호)</label><input type="text" id="sNum" maxlength="40" placeholder="예) 012/025" value="${esc(h.number)}"><div class="hint">일어판·북미판·한글판은 번호가 달라요. 내 카드에 적힌 번호로 고쳐 주세요.</div></div>
       <div class="row"><label>내 카드 언어</label>${segHTML('sLang', Object.entries(LANG), st.lang)}</div>
       ${gradeRows(st)}
       <div class="actions"><button class="btn" id="aCancel">취소</button><button class="btn gold" id="aSave">도감에 넣기</button></div>`;
-    $('reSearch').onclick = () => { st.hit = null; $('step2').innerHTML = ''; if ($('sSL')) $('sSL').style.display = ''; $('sHint').style.display = ''; $('sQ').focus(); search(); };
+    $('reSearch').onclick = () => { st.hit = null; $('step2').innerHTML = ''; $('sManual').style.display = ''; if ($('sSL')) $('sSL').style.display = ''; $('sHint').style.display = ''; $('sQ').focus(); search(); };
     bindGrade(st);
     bindSeg('sLang', (v) => { st.lang = v; });
     $('aCancel').onclick = closeSheet;
     $('aSave').onclick = async () => {
       st.note = $('sNote').value.trim();
+      const nm = h.manual ? $('sName').value.trim() : h.name, num = $('sNum').value.trim();
+      if (!nm) { toast('카드 이름을 넣어 주세요'); return; }
       $('aSave').disabled = true;
       try {
-        await rpc('cd_add_card', { p_game: game, p_ref: h.ref, p_name: h.name, p_number: h.number, p_set: h.set, p_image: h.image, p_lang: st.lang, p_grader: st.grader, p_grade: st.grader === 'raw' ? null : st.grade, p_note: st.note });
+        await rpc('cd_add_card', { p_game: game, p_ref: h.ref, p_name: nm, p_number: num, p_set: h.set, p_image: h.image, p_lang: st.lang, p_grader: st.grader, p_grade: st.grader === 'raw' ? null : st.grade, p_note: st.note });
         closeSheet(); toast('🃏 도감에 넣었어요'); load();
       } catch (e) { $('aSave').disabled = false; toast(errMsg(e)); }
     };

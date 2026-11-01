@@ -11,7 +11,7 @@ create table if not exists public.cd_cards (
   name       text not null check (char_length(name) between 1 and 80),
   number     text not null default '' check (char_length(number) <= 40),
   set_name   text not null default '' check (char_length(set_name) <= 80),
-  image      text not null default '' check (image = '' or image ~ '^https://(assets\.tcgdex\.net|optcgapi\.com)/'),
+  image      text not null default '' check (image = '' or image ~ '^https://(assets\.tcgdex\.net|optcgapi\.com|images\.pokemontcg\.io)/'),
   lang       text not null check (lang in ('ko', 'ja', 'en')),               -- 한글판 · 일어판 · 북미(영문)판
   grader     text not null default 'raw' check (grader in ('raw', 'psa', 'bgs', 'cgc', 'brg', 'ars')),
   grade      numeric(3, 1) check (grade is null or (grade >= 1 and grade <= 10)),
