@@ -7,7 +7,7 @@ import NAMES from "@/lib/pokemonNames.json";
 export const dynamic = "force-dynamic";
 
 type Hit = { ref: string; name: string; number: string; set: string; image: string };
-const HEAD = { "cache-control": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400" };
+const HEAD = { "cache-control": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400", "access-control-allow-origin": "*" };
 const LANGS = ["ko", "ja", "en"] as const;
 
 // ── 포켓몬 (TCGdex) ──
@@ -157,6 +157,6 @@ export async function GET(req: Request) {
     return Response.json(hits, { headers: HEAD });
   } catch (e) {
     console.error("[card-dex/search]", (e as Error).message);
-    return Response.json({ error: "search_failed" }, { status: 502 });
+    return Response.json({ error: "search_failed" }, { status: 502, headers: { "access-control-allow-origin": "*" } });
   }
 }

@@ -134,6 +134,7 @@ input:focus{border-color:var(--gold)}
 <script>
 'use strict';
 const $ = (id) => document.getElementById(id);
+const API = window.CD_API || ''; // 앱인토스 빌드는 https://playwithme.kr
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const LANG = { ko: '한글판', ja: '일어판', en: '북미판' }, LANG_S = { ko: '한', ja: '日', en: 'EN' };
 // 국기 (윈도우에서는 국기 이모지가 글자로 보여서 직접 그린다)
@@ -337,7 +338,7 @@ async function linkPhoto(url) {
   url = String(url || '').trim();
   if (!/^https?:\/\/\S+$/i.test(url)) { toast('https:// 로 시작하는 이미지 주소를 넣어 주세요'); return null; }
   try {
-    const r = await fetch('/api/card-dex/image?url=' + encodeURIComponent(url));
+    const r = await fetch(API + '/api/card-dex/image?url=' + encodeURIComponent(url));
     if (!r.ok) {
       const why = await r.text();
       toast(why === 'not_image' ? '이미지 주소가 아니에요 (이미지를 길게 눌러 "이미지 주소 복사"로 넣어 주세요)' : why === 'too_big' ? '이미지가 너무 커요 (8MB 이하)' : '이미지를 불러오지 못했어요');
@@ -405,7 +406,7 @@ function openAdd() {
     if (!q) { $('sRes').innerHTML = ''; return; }
     $('sRes').innerHTML = '<div class="hint"><span class="spin"></span> 찾는 중…</div>';
     try {
-      const r = await fetch(`/api/card-dex/search?game=${game}&lang=${st.searchLang}&q=${encodeURIComponent(q)}`);
+      const r = await fetch(`${API}/api/card-dex/search?game=${game}&lang=${st.searchLang}&q=${encodeURIComponent(q)}`);
       const hits = await r.json(); if (my !== seq) return;
       if (!Array.isArray(hits) || !hits.length) { $('sRes').innerHTML = '<div class="hint">찾는 카드가 없어요. 이름을 조금 다르게 써 보거나 다른 언어로 찾아보세요.</div>'; return; }
       $('sRes').innerHTML = hits.map((h, i) => `<button data-i="${i}"><div class="art">${h.image ? `<img src="${esc(h.image)}" loading="lazy" alt="">` : '<div class="noimg">이미지 없음</div>'}</div><small><b>${esc(h.name)}</b></small><small>${h.lang && h.lang !== st.searchLang ? `${flag(h.lang)} ` : ''}${esc(h.set)} ${esc(h.number)}</small></button>`).join('');

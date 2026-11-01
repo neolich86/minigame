@@ -8,6 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const MAX = 8 * 1024 * 1024;
+const CORS = { "access-control-allow-origin": "*" };
 
 function privateIp(ip: string): boolean {
   if (net.isIPv4(ip)) {
@@ -34,33 +35,33 @@ async function safeUrl(raw: string): Promise<URL | null> {
 export async function GET(req: Request) {
   const raw = new URL(req.url).searchParams.get("url") || "";
   let target = await safeUrl(raw);
-  if (!target) return new Response("bad_url", { status: 400 });
+  if (!target) return new Response("bad_url", { status: 400, headers: CORS });
   try {
     let res: Response | null = null;
     for (let hop = 0; hop < 4; hop++) {
       res = await fetch(target, { redirect: "manual", headers: { "user-agent": "Mozilla/5.0 (card-dex image fetch)", accept: "image/*" }, signal: AbortSignal.timeout(10000) });
       if (res.status >= 300 && res.status < 400 && res.headers.get("location")) {
         target = await safeUrl(new URL(res.headers.get("location")!, target).toString());
-        if (!target) return new Response("bad_url", { status: 400 });
+        if (!target) return new Response("bad_url", { status: 400, headers: CORS });
         continue;
       }
       break;
     }
-    if (!res || !res.ok || !res.body) return new Response("fetch_failed", { status: 502 });
+    if (!res || !res.ok || !res.body) return new Response("fetch_failed", { status: 502, headers: CORS });
     const type = (res.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
-    if (!/^image\/(jpeg|png|webp|gif|avif)$/.test(type)) return new Response("not_image", { status: 415 });
-    if (Number(res.headers.get("content-length") || 0) > MAX) return new Response("too_big", { status: 413 });
+    if (!/^image\/(jpeg|png|webp|gif|avif)$/.test(type)) return new Response("not_image", { status: 415, headers: CORS });
+    if (Number(res.headers.get("content-length") || 0) > MAX) return new Response("too_big", { status: 413, headers: CORS });
     const reader = res.body.getReader(), chunks: Uint8Array[] = [];
     let size = 0;
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
       size += value.length;
-      if (size > MAX) { reader.cancel(); return new Response("too_big", { status: 413 }); }
+      if (size > MAX) { reader.cancel(); return new Response("too_big", { status: 413, headers: CORS }); }
       chunks.push(value);
     }
-    return new Response(Buffer.concat(chunks), { headers: { "content-type": type, "cache-control": "no-store" } });
+    return new Response(Buffer.concat(chunks), { headers: { "content-type": type, "cache-control": "no-store", ...CORS } });
   } catch {
-    return new Response("fetch_failed", { status: 502 });
+    return new Response("fetch_failed", { status: 502, headers: CORS });
   }
 }
