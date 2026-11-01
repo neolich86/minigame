@@ -158,6 +158,11 @@ function gradeText(c) {
   if (t === 'pristine') return `<small>PRISTINE</small> ${g}`;
   if (t === 'gem') return `<small>GEM MINT</small> ${g}`;
   if (t === 'plus') return `${g}+`;
+  if (c.grader === 'brg') { // BRG 는 점수 옆에 등급 이름 (GEM MINT · MINT · NM-MT …)
+    const row = SCALES.brg.find(([v]) => Number(v) === Number(c.grade));
+    const nm = row ? row[2].replace(/^[\d.]+\s*/, '').toUpperCase() : '';
+    if (nm) return `<small>${nm}</small> ${g}`;
+  }
   return g;
 }
 const gradePlain = (c) => gradeText(c).replace(/<\/?small>/g, '');
