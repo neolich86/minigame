@@ -173,24 +173,22 @@ export async function deleteShare(gameId: string): Promise<void> {
 export async function deleteMyAccount(): Promise<void> {
   const user = await uid();
   const c = client();
-  for (const bucket of [BUCKET, PUB]) {
-    const { data: dirs } = await c.storage.from(bucket).list(user, { limit: 1000 });
-    for (const d of dirs ?? []) {
-      // 폴더(게임별)는 id 가 없다
-      if (d.id) {
-        await c.storage.from(bucket).remove([`${user}/${d.name}`]);
-        continue;
-      }
-      const dir = `${user}/${d.name}`;
-      for (;;) {
-        const { data: files } = await c.storage.from(bucket).list(dir, { limit: 1000 });
-        if (!files?.length) break;
-        const { error } = await c.storage.from(bucket).remove(files.map((f) => `${dir}/${f.name}`));
+  // 폴더 안 폴더(예: card-dex/u/)까지 모두 지운다
+  async function wipe(bucket: string, dir: string, depth = 0): Promise<void> {
+    if (depth > 4) return;
+    for (;;) {
+      const { data } = await c.storage.from(bucket).list(dir, { limit: 1000 });
+      const items = data ?? [];
+      const files = items.filter((f) => f.id).map((f) => `${dir}/${f.name}`);
+      for (const d of items.filter((f) => !f.id)) await wipe(bucket, `${dir}/${d.name}`, depth + 1);
+      if (files.length) {
+        const { error } = await c.storage.from(bucket).remove(files);
         if (error) throw error;
-        if (files.length < 1000) break;
       }
+      if (items.length < 1000 || !files.length) break;
     }
   }
+  for (const bucket of [BUCKET, PUB]) await wipe(bucket, user);
   const { error } = await c.rpc("delete_my_account");
   if (error) throw error;
   await c.auth.signOut();
