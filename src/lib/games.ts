@@ -221,7 +221,6 @@ const CATALOG: Game[] = [
     thumb: "/thumbs/card-dex.jpg",
     src: "/games/card-dex/index.html",
     saves: true, // 로그인 상태 전달 + MGH.rpc (src/lib/gameRpc.ts)
-    hidden: true, // supabase/migrations/0029_card_dex.sql 실행 후 공개
   },
   {
     id: "cathedral",
