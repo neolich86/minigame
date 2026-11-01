@@ -2,6 +2,8 @@
 // GET /api/card-dex/search?game=pokemon&lang=ko&q=피카츄   → [{ref, name, number, set, image}]
 // 포켓몬: TCGdex (https://tcgdex.dev, 한글·일어·영문)  /  원피스: OPTCG API (https://optcgapi.com, 영문)
 // 카드 그림은 저장하지 않고 각 API 의 이미지 주소를 그대로 돌려준다.
+import NAMES from "@/lib/pokemonNames.json";
+
 export const dynamic = "force-dynamic";
 
 type Hit = { ref: string; name: string; number: string; set: string; image: string };
@@ -45,8 +47,8 @@ async function fillImage(lang: string, c: TcgCard): Promise<string> {
   }
   return "";
 }
-async function pokemon(lang: string, q: string): Promise<Hit[]> {
-  const sets = await tcgdexSets(lang);
+type LHit = Hit & { lang: string };
+async function searchIn(lang: string, q: string, sets: Map<string, SetInfo>, rest = ""): Promise<LHit[]> {
   let list: TcgCard[];
   // 카드 왼쪽 아래 번호 "012/025" · "12" 로도 찾는다
   const num = /^(\d{1,3})\s*\/\s*(\d{1,3})$/.exec(q) || /^(\d{1,3})$/.exec(q);
@@ -55,14 +57,38 @@ async function pokemon(lang: string, q: string): Promise<Hit[]> {
     list = (await tcgList(lang, `localId=${n}`, 500)).filter((c) => Number(c.localId) === n && (!of || sets.get(setOf(c.id))?.official === of));
   } else {
     list = await tcgList(lang, `name=${encodeURIComponent(q)}`);
+    if (rest) { const r = rest.toLowerCase().replace(/\s+/g, ""); list = list.filter((c) => c.name.toLowerCase().replace(/\s+/g, "").includes(r)); }
   }
-  list = list.slice(0, 60);
-  const imgs = await Promise.all(list.map((c, i) => (i < 30 ? fillImage(lang, c) : Promise.resolve(c.image || ""))));
-  const hits = list.map((c, i) => {
+  return list.slice(0, 60).map((c) => {
     const st = sets.get(setOf(c.id));
     const of = st?.official ? `/${String(st.official).padStart(3, "0")}` : "";
-    return { ref: c.id, name: c.name, number: c.localId ? `${c.localId}${of}` : "", set: st?.name || setOf(c.id), image: imgs[i] ? `${imgs[i]}/low.webp` : "" };
+    return { ref: c.id, name: c.name, number: c.localId ? `${c.localId}${of}` : "", set: st?.name || setOf(c.id), image: c.image || "", lang };
   });
+}
+// 한글 이름 → 일본어·영어 이름 (포켓몬 1025종, src/lib/pokemonNames.json: [한, 日, EN])
+function translateKo(q: string): { ja: string; en: string; rest: string } | null {
+  let best: string[] | null = null;
+  for (const row of NAMES) if (q.includes(row[0]) && (!best || row[0].length > best[0].length)) best = row;
+  if (!best) return null;
+  return { ja: best[1], en: best[2], rest: q.replace(best[0], "").trim() };
+}
+async function pokemon(lang: string, q: string): Promise<(Hit & { lang: string })[]> {
+  const [setsKo, setsJa, setsEn] = await Promise.all(["ko", "ja", "en"].map((l) => tcgdexSets(l)));
+  const S: Record<string, Map<string, SetInfo>> = { ko: setsKo, ja: setsJa, en: setsEn };
+  let hits = await searchIn(lang, q, S[lang]);
+  // 한글로 찾았는데 결과가 적으면: 이름을 일본어·영어로 바꿔(번호 검색은 그대로) 다시 찾는다
+  if (lang === "ko" && hits.length < 6) {
+    const isNum = /^\d{1,3}(\s*\/\s*\d{1,3})?$/.test(q);
+    const tr = isNum ? { ja: q, en: q, rest: "" } : /[가-힣]/.test(q) ? translateKo(q) : { ja: q, en: q, rest: "" };
+    if (tr) {
+      const [ja, en] = await Promise.all([searchIn("ja", tr.ja, S.ja, tr.rest), searchIn("en", tr.en, S.en, tr.rest)]);
+      const seen = new Set(hits.map((h) => h.lang + h.ref));
+      for (const h of [...ja, ...en]) if (!seen.has(h.lang + h.ref)) { seen.add(h.lang + h.ref); hits.push(h); }
+    }
+  }
+  hits = hits.slice(0, 80);
+  const imgs = await Promise.all(hits.map((h, i) => (i < 30 ? fillImage(h.lang, { id: h.ref, name: h.name, image: h.image || undefined }) : Promise.resolve(h.image))));
+  hits.forEach((h, i) => { h.image = imgs[i] ? `${imgs[i]}/low.webp` : ""; });
   return hits.sort((a, b) => Number(!a.image) - Number(!b.image)); // 그림 있는 카드 먼저
 }
 
