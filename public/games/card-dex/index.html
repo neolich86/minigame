@@ -239,9 +239,9 @@ function openAdd() {
   openSheet(`<h3>${GAME[game]} 카드 추가</h3>
     <div class="row"><label>카드 언어</label>${segHTML('sLang', Object.entries(LANG), st.lang)}</div>
     <div class="row"><label>카드 찾기</label>
-      <input type="search" id="sQ" placeholder="${game === 'onepiece' ? '영문 이름 또는 카드번호 (예: Luffy, OP01-001)' : '카드 이름 (예: 피카츄, リザードン, Charizard)'}" autocomplete="off">
+      <input type="search" id="sQ" placeholder="${game === 'onepiece' ? '영문 이름 또는 카드번호 (예: Luffy, OP01-001)' : '카드 이름 또는 왼쪽 아래 번호 (예: 피카츄, リザードン, 012/025)'}" autocomplete="off">
       ${game === 'pokemon' ? `<div class="seg" id="sSL" style="margin-top:8px"></div>` : ''}
-      <div class="hint" id="sHint">${game === 'onepiece' ? '원피스 카드 검색은 영문판 기준이에요. 그림이 같아 썸네일로 써요.' : '검색 언어는 카드 언어를 따라가요. 결과가 없으면 다른 언어로 찾아보세요.'}</div>
+      <div class="hint" id="sHint">${game === 'onepiece' ? '원피스 카드 검색은 영문판 기준이에요. 그림이 같아 썸네일로 써요.' : '카드 왼쪽 아래 번호(012/025)로도 찾을 수 있어요. 결과가 없으면 다른 언어로 찾아보세요.'}</div>
       <div class="results" id="sRes"></div></div>
     <div id="step2"></div>`);
   const renderSL = () => { if (!$('sSL')) return; const cur = st.searchLang || st.lang; $('sSL').innerHTML = searchLangs().map(([v, t]) => `<button data-v="${v}" class="${v === cur ? 'on' : ''}">${t}로 검색</button>`).join(''); bindSeg('sSL', (v) => { st.searchLang = v; search(); }); };
