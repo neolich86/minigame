@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<script src="/mgh/bridge.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>카드 도감</title>
+<meta name="description" content="내가 가진 포켓몬카드·원피스카드를 등급(PSA·BGS·CGC·BRG·ARS)과 함께 온라인 도감에 모아 두고 링크로 자랑하세요.">
+<style>
+:root{--bg:#121218;--panel:#1b1b24;--line:#2c2c3a;--ink:#f1eee6;--sub:#9b98a8;--gold:#e6c46a;--gold2:#b8902e;--accent:#7cc4ff;--r:14px}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:radial-gradient(1200px 500px at 50% -200px,#2a2440 0,transparent 70%),var(--bg)}
+button{font:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:980px;margin:0 auto;padding:16px 16px 110px}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-size:22px;margin:0;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+h1 .foil{background:linear-gradient(110deg,#ffe7a0,#e6c46a 30%,#fff4c8 50%,#c79a3a 70%,#ffe7a0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.who{color:var(--sub);font-size:13px}
+.sp{flex:1}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:9px 15px;font-size:13px;font-weight:700}
+.btn.gold{background:linear-gradient(180deg,#f0d27e,#c99b3c);color:#2a1f08;border:0}
+.btn.on{border-color:var(--gold);color:var(--gold)}
+.tabs{display:flex;gap:6px;margin:16px 0 10px;border-bottom:1px solid var(--line)}
+.tab{border:0;background:none;padding:10px 14px 12px;font-weight:800;font-size:15px;color:var(--sub);border-bottom:3px solid transparent;margin-bottom:-1px}
+.tab.on{color:var(--ink);border-color:var(--gold)}
+.tab small{font-weight:600;color:var(--sub);margin-left:4px}
+.bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 11px;font-size:12px;font-weight:700;color:var(--sub)}
+.chip.on{background:var(--ink);color:#121218;border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+@media (max-width:480px){.grid{grid-template-columns:repeat(2,1fr);gap:10px}}
+.card{position:relative;border:0;padding:0;background:none;text-align:left}
+.slab{border-radius:10px;padding:6px;background:linear-gradient(160deg,#3a3a48,#22222c);box-shadow:0 6px 18px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.06)}
+.slab.graded{background:linear-gradient(160deg,#e9eef3,#b9c2cc);padding:5px 6px 7px}
+.label{display:flex;align-items:center;justify-content:space-between;gap:6px;border-radius:5px;padding:4px 7px;margin-bottom:5px;font-weight:900;font-size:11px;letter-spacing:.02em;color:#fff}
+.label b{font-size:15px}
+.g-psa{background:#c8102e}.g-bgs{background:#111;color:#e6c46a}.g-cgc{background:#1f4fa3}.g-brg{background:#0f6b4f}.g-ars{background:#5b2a86}
+.art{aspect-ratio:63/88;border-radius:6px;overflow:hidden;background:#2a2a36;display:flex;align-items:center;justify-content:center;position:relative}
+.art img{width:100%;height:100%;object-fit:cover;display:block}
+.art .noimg{color:var(--sub);font-size:12px;text-align:center;padding:8px}
+.meta{padding:7px 2px 0}
+.meta .nm{font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta .sub{font-size:11px;color:var(--sub);display:flex;gap:6px;align-items:center;margin-top:2px}
+.lang{display:inline-block;border:1px solid var(--line);border-radius:5px;padding:0 5px;font-size:10px;font-weight:800;color:var(--ink)}
+.check{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);border:2px solid #fff;display:none;align-items:center;justify-content:center;font-weight:900;font-size:14px;z-index:2}
+.selecting .check{display:flex}
+.card.sel .check{background:var(--gold);border-color:var(--gold);color:#2a1f08}
+.card.sel .slab{outline:3px solid var(--gold);outline-offset:2px}
+.empty{text-align:center;color:var(--sub);padding:50px 10px;line-height:1.7}
+.empty b{color:var(--ink);display:block;font-size:17px;margin-bottom:6px}
+.selbar{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#24242f;border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 16px;display:none;align-items:center;gap:8px;box-shadow:0 8px 30px rgba(0,0,0,.5);white-space:nowrap}
+.selbar.on{display:flex}
+.fab{position:fixed;right:20px;bottom:calc(20px + env(safe-area-inset-bottom));border-radius:999px;padding:14px 20px;font-weight:900;font-size:15px;border:0;background:linear-gradient(180deg,#f0d27e,#c99b3c);color:#2a1f08;box-shadow:0 10px 30px rgba(230,196,106,.35)}
+.selecting~.fab,.viewer .fab{display:none}
+/* 시트 */
+.dim{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.dim.on{display:flex}
+.sheet{width:100%;max-width:560px;max-height:92vh;overflow:auto;background:var(--panel);border-radius:20px 20px 0 0;padding:18px 18px calc(22px + env(safe-area-inset-bottom));border:1px solid var(--line)}
+@media (min-width:700px){.dim{align-items:center}.sheet{border-radius:20px}}
+.sheet h3{margin:0 0 12px;font-size:18px}
+.row{margin:12px 0}
+.row>label{display:block;font-size:12px;color:var(--sub);font-weight:700;margin-bottom:6px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1px solid var(--line);background:#15151c;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700}
+.seg button.on{border-color:var(--gold);color:var(--gold);background:#2a2516}
+input[type=text],input[type=search]{width:100%;border:1px solid var(--line);background:#15151c;color:var(--ink);border-radius:10px;padding:11px 12px;font:inherit;font-size:15px;outline:none}
+input:focus{border-color:var(--gold)}
+.results{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:10px;max-height:46vh;overflow:auto}
+.results button{border:1px solid var(--line);background:#15151c;border-radius:8px;padding:4px;text-align:left}
+.results button.on{border-color:var(--gold)}
+.results .art{border-radius:5px}
+.results small{display:block;font-size:10px;color:var(--sub);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hint{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.5}
+.picked{display:flex;gap:12px;align-items:center;background:#15151c;border:1px solid var(--line);border-radius:12px;padding:8px}
+.picked .art{width:64px;flex:none}
+.actions{display:flex;gap:8px;margin-top:16px}
+.actions .btn{flex:1;padding:12px;border-radius:12px;font-size:14px}
+.detail{display:flex;gap:16px;flex-wrap:wrap}
+.detail .slab{width:200px;flex:none;margin:0 auto}
+.detail dl{flex:1;min-width:200px;margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:14px}
+.detail dt{color:var(--sub)}
+.detail dd{margin:0;font-weight:700}
+.toast{position:fixed;left:50%;top:18px;transform:translate(-50%,-20px);background:#2b2b38;border:1px solid var(--line);padding:10px 16px;border-radius:999px;font-size:13px;font-weight:700;opacity:0;transition:.3s;pointer-events:none;z-index:40}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.share-url{display:flex;gap:6px}
+.share-url input{font-size:13px}
+.banner{background:linear-gradient(90deg,#2a2516,#1b1b24);border:1px solid #4a3f22;border-radius:12px;padding:12px 14px;margin:14px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner b{color:var(--gold)}
+.credit{text-align:center;color:#5d5a6b;font-size:10px;margin-top:40px;line-height:1.6}
+.spin{display:inline-block;width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:sp 1s linear infinite;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <header>
+    <h1>🃏 <span class="foil">카드 도감</span></h1>
+    <span class="who" id="who"></span>
+    <span class="sp"></span>
+    <button class="btn" id="bSelect">☑️ 골라서 공유</button>
+    <button class="btn gold" id="bShareAll">🔗 도감 공유</button>
+  </header>
+  <div id="banner"></div>
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-g="pokemon">포켓몬 <small id="cnt-pokemon"></small></button>
+    <button class="tab" data-g="onepiece">원피스 <small id="cnt-onepiece"></small></button>
+  </div>
+  <div class="bar" id="filters">
+    <button class="chip on" data-f="all">전체</button>
+    <button class="chip" data-f="graded">등급 카드</button>
+    <button class="chip" data-f="raw">미등급</button>
+    <span class="sp"></span>
+    <button class="chip" data-l="ko">한글판</button>
+    <button class="chip" data-l="ja">일어판</button>
+    <button class="chip" data-l="en">북미판</button>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="credit">카드 이미지: 포켓몬 — TCGdex · 원피스 — OPTCG API (각 카드 그림의 저작권은 The Pokémon Company · Bandai 에 있습니다)</div>
+</div>
+<button class="fab" id="fab">＋ 카드 추가</button>
+<div class="selbar" id="selbar"><span id="selN">0장 선택</span><button class="btn" id="selCancel">취소</button><button class="btn gold" id="selShare">🔗 공유 링크 만들기</button></div>
+<div class="dim" id="dim"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const LANG = { ko: '한글판', ja: '일어판', en: '북미판' }, LANG_S = { ko: '한', ja: '日', en: 'EN' };
+const GRADERS = [['raw', '미등급'], ['psa', 'PSA'], ['bgs', 'BGS'], ['cgc', 'CGC'], ['brg', 'BRG'], ['ars', 'ARS']];
+const GRADES = [10, 9.5, 9, 8.5, 8, 7.5, 7, 6.5, 6, 5, 4, 3, 2, 1];
+const GAME = { pokemon: '포켓몬', onepiece: '원피스' };
+let user = null, cards = [], game = 'pokemon', filt = 'all', langF = null, selecting = false, sel = new Set(), viewer = null, googleOk = false;
+try { const g = localStorage.getItem('card-dex:tab'); if (GAME[g]) game = g; } catch {}
+
+function toast(s) { const t = $('toast'); t.textContent = s; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), 2400); }
+function rpc(name, params) {
+  if (!window.MGH || !MGH.rpc || !MGH.embedded) return Promise.reject(new Error('standalone'));
+  return MGH.rpc(name, params);
+}
+function errMsg(e) {
+  const m = String(e && e.message || e);
+  if (/not_authenticated/.test(m)) return '로그인이 필요해요';
+  if (/too_many_cards/.test(m)) return '카드는 3,000장까지 등록할 수 있어요';
+  if (/too_many_shares/.test(m)) return '오늘 공유 링크를 너무 많이 만들었어요';
+  if (/standalone/.test(m)) return '사이트(playwithme.kr) 안에서 열어 주세요';
+  return '잠시 후 다시 시도해 주세요';
+}
+const fmtGrade = (g) => (g == null ? '' : (Number(g) % 1 ? Number(g).toFixed(1) : String(Number(g))));
+const parentQuery = () => { let q = location.search; try { if (window.MGH && MGH.embedded) q = window.parent.location.search; } catch (e) {} return new URLSearchParams(q); };
+
+/* ---------- 카드 한 장 그리기 ---------- */
+function cardHTML(c, opts = {}) {
+  const graded = c.grader && c.grader !== 'raw';
+  const label = graded ? `<div class="label g-${c.grader}"><span>${c.grader.toUpperCase()}</span><b>${fmtGrade(c.grade)}</b></div>` : '';
+  const img = c.image ? `<img src="${esc(c.image)}" alt="${esc(c.name)}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'이미지 없음'}))">` : `<div class="noimg">이미지 없음</div>`;
+  return `<button class="card${opts.sel ? ' sel' : ''}" data-id="${esc(c.id)}">
+    <span class="check">✓</span>
+    <div class="slab${graded ? ' graded' : ''}">${label}<div class="art">${img}</div></div>
+    <div class="meta"><div class="nm">${esc(c.name)}</div><div class="sub"><span class="lang">${LANG_S[c.lang] || ''}</span><span>${esc(c.number || '')}</span></div></div>
+  </button>`;
+}
+
+/* ---------- 목록 ---------- */
+function visible() {
+  const src = viewer ? viewer.cards : cards;
+  return src.filter((c) => c.game === game && (filt === 'all' || (filt === 'graded' ? c.grader !== 'raw' : c.grader === 'raw')) && (!langF || c.lang === langF));
+}
+function render() {
+  const src = viewer ? viewer.cards : cards;
+  for (const g of Object.keys(GAME)) $('cnt-' + g).textContent = src.filter((c) => c.game === g).length || '';
+  document.querySelectorAll('#tabs .tab').forEach((b) => b.classList.toggle('on', b.dataset.g === game));
+  document.querySelectorAll('#filters [data-f]').forEach((b) => b.classList.toggle('on', b.dataset.f === filt));
+  document.querySelectorAll('#filters [data-l]').forEach((b) => b.classList.toggle('on', b.dataset.l === langF));
+  const list = visible(), grid = $('grid');
+  document.body.classList.toggle('selecting', selecting);
+  $('app').classList.toggle('selecting', selecting);
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">${viewer ? `<b>${GAME[game]} 카드가 없어요</b>` :
+      !user ? `<b>나만의 카드 도감을 만들어 보세요</b>가진 포켓몬카드·원피스카드를 등급과 함께 모아 두고<br>링크 하나로 자랑할 수 있어요.<br><br><button class="btn gold" id="eLogin">로그인하고 시작하기</button>` :
+      src.some((c) => c.game === game) ? '<b>조건에 맞는 카드가 없어요</b>' : `<b>아직 ${GAME[game]} 카드가 없어요</b>오른쪽 아래 <b style="display:inline;color:var(--gold)">＋ 카드 추가</b>로 첫 카드를 등록해 보세요.`}</div>`;
+    if ($('eLogin')) $('eLogin').onclick = () => needLogin();
+  } else grid.innerHTML = list.map((c) => cardHTML(c, { sel: sel.has(c.id) })).join('');
+  grid.querySelectorAll('.card').forEach((b) => b.onclick = () => {
+    const c = src.find((x) => x.id === b.dataset.id); if (!c) return;
+    if (selecting) { sel.has(c.id) ? sel.delete(c.id) : sel.add(c.id); b.classList.toggle('sel'); updSel(); }
+    else openDetail(c);
+  });
+  $('fab').style.display = viewer || selecting ? 'none' : '';
+  $('bSelect').style.display = $('bShareAll').style.display = viewer || !user ? 'none' : '';
+}
+function updSel() { $('selN').textContent = `${sel.size}장 선택`; $('selbar').classList.toggle('on', selecting); }
+document.querySelectorAll('#tabs .tab').forEach((b) => b.onclick = () => { game = b.dataset.g; try { localStorage.setItem('card-dex:tab', game); } catch {} render(); });
+document.querySelectorAll('#filters [data-f]').forEach((b) => b.onclick = () => { filt = b.dataset.f; render(); });
+document.querySelectorAll('#filters [data-l]').forEach((b) => b.onclick = () => { langF = langF === b.dataset.l ? null : b.dataset.l; render(); });
+
+async function load() {
+  if (!user) { cards = []; render(); return; }
+  $('grid').innerHTML = '<div class="empty" style="grid-column:1/-1"><span class="spin"></span></div>';
+  try { cards = (await rpc('cd_my_cards')) || []; } catch (e) { toast(errMsg(e)); cards = []; }
+  render();
+}
+
+/* ---------- 시트 ---------- */
+function openSheet(html) { $('sheet').innerHTML = html; $('dim').classList.add('on'); }
+function closeSheet() { $('dim').classList.remove('on'); }
+$('dim').onclick = (e) => { if (e.target === $('dim')) closeSheet(); };
+
+function needLogin() {
+  openSheet(`<h3>로그인하고 도감을 만들어요</h3><p class="hint" style="font-size:14px">카드 등록과 공유는 로그인한 뒤에 할 수 있어요. 공유받은 도감 구경은 로그인 없이도 돼요.</p>
+    <div class="actions" style="flex-direction:column">
+      <button class="btn" id="lgK" style="background:#fee500;color:#191600;border:0">💬 카카오로 시작하기</button>
+      ${googleOk ? '<button class="btn" id="lgG" style="background:#fff;color:#222;border:0"><b style="color:#4285f4">G</b> 구글로 시작하기</button>' : ''}
+      <button class="btn" id="lgE">✉️ 이메일로 로그인</button>
+      <button class="btn" id="lgN">나중에 할게요</button></div>`);
+  $('lgK').onclick = () => MGH.save.login('kakao');
+  $('lgE').onclick = () => MGH.save.login('page');
+  if ($('lgG')) $('lgG').onclick = () => MGH.save.login('google');
+  $('lgN').onclick = closeSheet;
+}
+
+/* ---------- 카드 추가 ---------- */
+function segHTML(id, items, cur) { return `<div class="seg" id="${id}">${items.map(([v, t]) => `<button data-v="${v}" class="${String(v) === String(cur) ? 'on' : ''}">${t}</button>`).join('')}</div>`; }
+function bindSeg(id, fn) { $(id).querySelectorAll('button').forEach((b) => b.onclick = () => { $(id).querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); fn(b.dataset.v); }); }
+function gradeRows(st) {
+  return `<div class="row"><label>등급 회사</label>${segHTML('sGrader', GRADERS, st.grader)}</div>
+    <div class="row" id="gradeRow" style="${st.grader === 'raw' ? 'display:none' : ''}"><label>등급 점수</label>${segHTML('sGrade', GRADES.map((g) => [g, fmtGrade(g)]), st.grade)}</div>
+    <div class="row"><label>메모 (선택)</label><input type="text" id="sNote" maxlength="100" placeholder="예) 첫 박스에서 뽑은 카드" value="${esc(st.note || '')}"></div>`;
+}
+function bindGrade(st) {
+  bindSeg('sGrader', (v) => { st.grader = v; $('gradeRow').style.display = v === 'raw' ? 'none' : ''; if (v !== 'raw' && st.grade == null) { st.grade = 10; $('sGrade').querySelector('[data-v="10"]').classList.add('on'); } });
+  bindSeg('sGrade', (v) => { st.grade = Number(v); });
+}
+function openAdd() {
+  if (!user) return needLogin();
+  const st = { lang: game === 'onepiece' ? 'ja' : 'ko', searchLang: null, q: '', hit: null, grader: 'raw', grade: null, note: '' };
+  const searchLangs = () => (game === 'onepiece' ? [] : [['ko', '한글'], ['ja', '일어'], ['en', '영어']]);
+  openSheet(`<h3>${GAME[game]} 카드 추가</h3>
+    <div class="row"><label>카드 언어</label>${segHTML('sLang', Object.entries(LANG), st.lang)}</div>
+    <div class="row"><label>카드 찾기</label>
+      <input type="search" id="sQ" placeholder="${game === 'onepiece' ? '영문 이름 또는 카드번호 (예: Luffy, OP01-001)' : '카드 이름 (예: 피카츄, リザードン, Charizard)'}" autocomplete="off">
+      ${game === 'pokemon' ? `<div class="seg" id="sSL" style="margin-top:8px"></div>` : ''}
+      <div class="hint" id="sHint">${game === 'onepiece' ? '원피스 카드 검색은 영문판 기준이에요. 그림이 같아 썸네일로 써요.' : '검색 언어는 카드 언어를 따라가요. 결과가 없으면 다른 언어로 찾아보세요.'}</div>
+      <div class="results" id="sRes"></div></div>
+    <div id="step2"></div>`);
+  const renderSL = () => { if (!$('sSL')) return; const cur = st.searchLang || st.lang; $('sSL').innerHTML = searchLangs().map(([v, t]) => `<button data-v="${v}" class="${v === cur ? 'on' : ''}">${t}로 검색</button>`).join(''); bindSeg('sSL', (v) => { st.searchLang = v; search(); }); };
+  renderSL();
+  bindSeg('sLang', (v) => { st.lang = v; if (!st.searchLang) renderSL(); if (!st.hit && st.q) search(); });
+  let tm = 0, seq = 0;
+  $('sQ').oninput = () => { st.q = $('sQ').value.trim(); clearTimeout(tm); tm = setTimeout(search, 350); };
+  async function search() {
+    const q = st.q; const my = ++seq;
+    if (!q) { $('sRes').innerHTML = ''; return; }
+    $('sRes').innerHTML = '<div class="hint"><span class="spin"></span> 찾는 중…</div>';
+    try {
+      const r = await fetch(`/api/card-dex/search?game=${game}&lang=${st.searchLang || st.lang}&q=${encodeURIComponent(q)}`);
+      const hits = await r.json(); if (my !== seq) return;
+      if (!Array.isArray(hits) || !hits.length) { $('sRes').innerHTML = '<div class="hint">찾는 카드가 없어요. 이름을 조금 다르게 써 보거나 다른 언어로 찾아보세요.</div>'; return; }
+      $('sRes').innerHTML = hits.map((h, i) => `<button data-i="${i}"><div class="art">${h.image ? `<img src="${esc(h.image)}" loading="lazy" alt="">` : '<div class="noimg">이미지 없음</div>'}</div><small><b>${esc(h.name)}</b></small><small>${esc(h.set)} ${esc(h.number)}</small></button>`).join('');
+      $('sRes').querySelectorAll('button').forEach((b) => b.onclick = () => pickHit(hits[+b.dataset.i]));
+    } catch (e) { if (my === seq) $('sRes').innerHTML = '<div class="hint">검색이 잠시 안 돼요. 다시 시도해 주세요.</div>'; }
+  }
+  function pickHit(h) {
+    st.hit = h;
+    $('sRes').innerHTML = ''; $('sQ').value = h.name; if ($('sSL')) $('sSL').style.display = 'none'; $('sHint').style.display = 'none';
+    $('step2').innerHTML = `<div class="picked"><div class="art">${h.image ? `<img src="${esc(h.image)}" alt="">` : '<div class="noimg">없음</div>'}</div>
+      <div><b>${esc(h.name)}</b><div class="hint" style="margin:2px 0 0">${esc(h.set)} · ${esc(h.number)}</div><button class="chip" id="reSearch" style="margin-top:6px">다른 카드 찾기</button></div></div>
+      ${gradeRows(st)}
+      <div class="actions"><button class="btn" id="aCancel">취소</button><button class="btn gold" id="aSave">도감에 넣기</button></div>`;
+    $('reSearch').onclick = () => { st.hit = null; $('step2').innerHTML = ''; if ($('sSL')) $('sSL').style.display = ''; $('sHint').style.display = ''; $('sQ').focus(); search(); };
+    bindGrade(st);
+    $('aCancel').onclick = closeSheet;
+    $('aSave').onclick = async () => {
+      st.note = $('sNote').value.trim();
+      $('aSave').disabled = true;
+      try {
+        await rpc('cd_add_card', { p_game: game, p_ref: h.ref, p_name: h.name, p_number: h.number, p_set: h.set, p_image: h.image, p_lang: st.lang, p_grader: st.grader, p_grade: st.grader === 'raw' ? null : st.grade, p_note: st.note });
+        closeSheet(); toast('🃏 도감에 넣었어요'); load();
+      } catch (e) { $('aSave').disabled = false; toast(errMsg(e)); }
+    };
+  }
+  setTimeout(() => $('sQ').focus(), 50);
+}
+$('fab').onclick = openAdd;
+
+/* ---------- 카드 보기 · 수정 ---------- */
+function openDetail(c) {
+  const mine = !viewer;
+  const graded = c.grader !== 'raw';
+  openSheet(`<div class="detail">${cardHTML(c).replace(/^<button[^>]*>/, '<div>').replace(/<\/button>\s*$/, '</div>').replace('<span class="check">✓</span>', '')}
+    <dl><dt>이름</dt><dd>${esc(c.name)}</dd><dt>번호</dt><dd>${esc(c.number || '-')}</dd>${c.set_name ? `<dt>세트</dt><dd>${esc(c.set_name)}</dd>` : ''}
+    <dt>언어</dt><dd>${LANG[c.lang]}</dd><dt>등급</dt><dd>${graded ? `${c.grader.toUpperCase()} ${fmtGrade(c.grade)}` : '미등급'}</dd>${c.note ? `<dt>메모</dt><dd>${esc(c.note)}</dd>` : ''}</dl></div>
+    <div class="actions">${mine ? '<button class="btn" id="dDel">삭제</button><button class="btn" id="dEdit">수정</button>' : ''}<button class="btn gold" id="dClose">닫기</button></div>`);
+  $('dClose').onclick = closeSheet;
+  if (!mine) return;
+  $('dDel').onclick = async () => {
+    if ($('dDel').dataset.sure !== '1') { $('dDel').dataset.sure = '1'; $('dDel').textContent = '한 번 더 누르면 삭제'; return; }
+    try { await rpc('cd_delete_card', { p_id: c.id }); closeSheet(); toast('삭제했어요'); load(); } catch (e) { toast(errMsg(e)); }
+  };
+  $('dEdit').onclick = () => {
+    const st = { lang: c.lang, grader: c.grader, grade: c.grade == null ? null : Number(c.grade), note: c.note };
+    openSheet(`<h3>${esc(c.name)} 수정</h3><div class="row"><label>카드 언어</label>${segHTML('sLang', Object.entries(LANG), st.lang)}</div>${gradeRows(st)}
+      <div class="actions"><button class="btn" id="eCancel">취소</button><button class="btn gold" id="eSave">저장</button></div>`);
+    bindSeg('sLang', (v) => { st.lang = v; }); bindGrade(st);
+    $('eCancel').onclick = () => openDetail(c);
+    $('eSave').onclick = async () => {
+      try { await rpc('cd_update_card', { p_id: c.id, p_lang: st.lang, p_grader: st.grader, p_grade: st.grader === 'raw' ? null : st.grade, p_note: $('sNote').value.trim() }); closeSheet(); toast('저장했어요'); load(); }
+      catch (e) { toast(errMsg(e)); }
+    };
+  };
+}
+
+/* ---------- 공유 ---------- */
+const shareBase = () => { try { return (window.MGH && MGH.embedded ? window.parent.location.origin : location.origin) + '/apps/card-dex?s='; } catch (e) { return 'https://playwithme.kr/apps/card-dex?s='; } };
+async function makeShare(gameArg, ids, title) {
+  try {
+    const sid = await rpc('cd_share', { p_game: gameArg, p_ids: ids && ids.length ? ids : null });
+    const url = shareBase() + sid;
+    openSheet(`<h3>🔗 ${esc(title)}</h3><p class="hint" style="font-size:13px">${ids ? '고른 카드만 보여요.' : '앞으로 넣는 카드도 이 링크에 바로 보여요.'} 로그인하지 않은 사람도 볼 수 있어요.</p>
+      <div class="share-url"><input type="text" id="shUrl" readonly value="${esc(url)}"></div>
+      <div class="actions"><button class="btn" id="shCopy">링크 복사</button>${navigator.share ? '<button class="btn gold" id="shNative">공유하기</button>' : '<button class="btn gold" id="shClose">닫기</button>'}</div>`);
+    $('shCopy').onclick = async () => { try { await navigator.clipboard.writeText(url); } catch (e) { $('shUrl').select(); document.execCommand('copy'); } toast('링크를 복사했어요'); window.MGH?.shared?.('copy'); };
+    if ($('shNative')) $('shNative').onclick = async () => { try { await navigator.share({ title: '내 카드 도감', text: title, url }); window.MGH?.shared?.('native'); } catch (e) {} };
+    if ($('shClose')) $('shClose').onclick = closeSheet;
+  } catch (e) { toast(errMsg(e)); }
+}
+$('bShareAll').onclick = () => {
+  if (!user) return needLogin();
+  openSheet(`<h3>도감 공유</h3><div class="actions" style="flex-direction:column">
+    <button class="btn" id="s1">${GAME[game]} 도감만 공유</button><button class="btn" id="s2">포켓몬 + 원피스 전체 공유</button><button class="btn" id="s3">닫기</button></div>`);
+  $('s1').onclick = () => makeShare(game, null, `${GAME[game]} 도감`);
+  $('s2').onclick = () => makeShare(null, null, '카드 도감 전체');
+  $('s3').onclick = closeSheet;
+};
+$('bSelect').onclick = () => { selecting = true; sel.clear(); updSel(); render(); toast('공유할 카드를 눌러 골라요'); };
+$('selCancel').onclick = () => { selecting = false; sel.clear(); updSel(); render(); };
+$('selShare').onclick = () => {
+  if (!sel.size) return toast('카드를 한 장 이상 골라 주세요');
+  const ids = [...sel]; selecting = false; sel.clear(); updSel(); render();
+  makeShare(null, ids, `고른 카드 ${ids.length}장`);
+};
+
+/* ---------- 공유 링크로 들어온 경우 (읽기 전용) ---------- */
+async function openViewer(sid) {
+  try {
+    const d = await rpc('cd_get_share', { p_id: sid });
+    if (!d) { toast('공유가 없거나 지워졌어요'); return false; }
+    viewer = d;
+    document.body.classList.add('viewer');
+    if (d.game) game = d.game; else if (!d.cards.some((c) => c.game === game) && d.cards.length) game = d.cards[0].game;
+    if (d.game) $('tabs').querySelector(`[data-g="${d.game === 'pokemon' ? 'onepiece' : 'pokemon'}"]`).style.display = 'none';
+    $('banner').innerHTML = `<div class="banner"><span>👀 <b>${esc(d.nickname)}</b>님의 ${d.all ? (d.game ? GAME[d.game] + ' 도감' : '카드 도감') : '자랑 카드'} · ${d.cards.length}장</span><span class="sp"></span><button class="btn gold" id="mine">나도 도감 만들기</button></div>`;
+    $('mine').onclick = () => { try { window.parent.location.href = '/apps/card-dex'; } catch (e) { location.href = location.pathname; } };
+    render();
+    return true;
+  } catch (e) { toast(errMsg(e)); return false; }
+}
+
+/* ---------- 로그인 상태 ---------- */
+function onAuthChange(u, info) {
+  if (info && 'google' in info) googleOk = !!info.google;
+  user = u || null;
+  $('who').textContent = user && !viewer ? `${user.name || ''}님의 컬렉션` : '';
+  if (!viewer) load(); else render();
+}
+const sid = parentQuery().get('s');
+(async () => {
+  if (sid && /^[a-zA-Z0-9]{8}$/.test(sid)) {
+    // 로그인 상태가 전달된 뒤 RPC 를 부르도록 잠깐 기다린다
+    await new Promise((r) => setTimeout(r, 400));
+    if (await openViewer(sid)) { if (window.MGH && MGH.save) MGH.save.onAuth((u, i) => { if (i && 'google' in i) googleOk = !!i.google; user = u || null; }); return; }
+  }
+  if (window.MGH && MGH.save && MGH.embedded) MGH.save.onAuth(onAuthChange);
+  else render();
+})();
+render();
+</script>
+</body>
+</html>

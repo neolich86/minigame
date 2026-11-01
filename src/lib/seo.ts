@@ -40,6 +40,42 @@ export const HOME_SEO: Record<Lang, { title: string; description: string; keywor
 };
 
 export const GAME_SEO: SeoMap = {
+  "card-dex": {
+    ko: {
+      title: "카드 도감 - 포켓몬카드·원피스카드 컬렉션 온라인 정리·자랑",
+      h1: "카드 도감 — 내 포켓몬카드·원피스카드를 등급과 함께 모아 두는 온라인 바인더",
+      description: "가진 포켓몬카드·원피스카드를 검색해 도감에 넣고, 한글판·일어판·북미판과 PSA·BGS·CGC·BRG·ARS 등급 점수를 기록하세요. 도감 전체나 고른 카드를 링크 하나로 자랑할 수 있어요.",
+      keywords: ["카드 도감", "포켓몬카드", "원피스카드", "카드 컬렉션", "PSA", "BGS", "CGC", "BRG", "ARS", "그레이딩", "PSA 10", "카드 정리", "포켓몬카드 관리", "무료"],
+      about: [
+        "카드 도감은 실물로 가진 트레이딩 카드를 온라인에 모아 두는 바인더예요. 카드 이름으로 검색해 고르면 카드 그림이 자동으로 붙고, 내 카드의 언어(한글판·일어판·북미판)와 등급 회사(PSA·BGS·CGC·BRG·ARS)·점수를 함께 기록해요.",
+        "도감은 포켓몬과 원피스 탭으로 나뉘어 슬랩처럼 전시돼요. 도감 전체나 자랑하고 싶은 카드 몇 장만 골라 링크를 만들면, 로그인하지 않은 친구도 바로 볼 수 있어요.",
+      ],
+      howTo: [
+        "로그인한 뒤 오른쪽 아래 ＋ 카드 추가를 눌러요.",
+        "카드 언어를 고르고 이름으로 검색해 내 카드를 찾아요.",
+        "등급 카드라면 등급 회사와 점수를 고르고 도감에 넣어요.",
+        "🔗 도감 공유 또는 ☑️ 골라서 공유로 링크를 만들어 자랑해요.",
+      ],
+      tags: ["포켓몬카드", "원피스카드", "컬렉션", "PSA", "무료"],
+    },
+    en: {
+      title: "Card Binder - Track & Show Off Your Pokémon and One Piece Cards",
+      h1: "Card Binder — An Online Binder for Your Graded Pokémon & One Piece Cards",
+      description: "Search and add your Pokémon and One Piece cards, record language (KR/JP/EN) and grades from PSA, BGS, CGC, BRG or ARS, and share your binder or a few favorite cards with one link.",
+      keywords: ["card binder", "pokemon cards", "one piece cards", "card collection", "PSA", "BGS", "CGC", "graded cards", "free"],
+      about: [
+        "Card Binder keeps your physical trading cards online. Search a card by name and its artwork is attached automatically; record the language and the grading company and score.",
+        "Cards are displayed by game in slab-style frames. Share the whole binder or just a few cards with a link anyone can open.",
+      ],
+      howTo: [
+        "Log in and tap ＋ Add card.",
+        "Pick the card language and search by name.",
+        "For graded cards choose the company and grade, then save.",
+        "Share your binder or selected cards with a link.",
+      ],
+      tags: ["Pokémon cards", "One Piece cards", "Collection", "PSA", "Free"],
+    },
+  },
   "potion-atelier": {
     ko: {
       title: "포션 공방 - 물약 섞기 퍼즐 · 워터 소트 가게 게임",

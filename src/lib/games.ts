@@ -210,6 +210,20 @@ const CATALOG: Game[] = [
     saves: true, // 로그인 상태 전달 + MGH.rpc (src/lib/gameRpc.ts)
   },
   {
+    id: "card-dex",
+    kind: "app",
+    title: { ko: "카드 도감", en: "Card Binder" },
+    desc: {
+      ko: "가진 포켓몬카드·원피스카드를 언어·등급(PSA·BGS·CGC·BRG·ARS)과 함께 온라인 도감에 모아 두고, 도감 전체나 고른 카드를 링크로 자랑해요",
+      en: "Keep your Pokémon and One Piece cards — language and grade (PSA, BGS, CGC, BRG, ARS) — in an online binder and share it with a link",
+    },
+    genre: "casual",
+    thumb: "/thumbs/card-dex.jpg",
+    src: "/games/card-dex/index.html",
+    saves: true, // 로그인 상태 전달 + MGH.rpc (src/lib/gameRpc.ts)
+    hidden: true, // supabase/migrations/0029_card_dex.sql 실행 후 공개
+  },
+  {
     id: "cathedral",
     kind: "app",
     title: { ko: "온라인 명상", en: "Online Meditation" },
