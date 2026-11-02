@@ -27,6 +27,12 @@ h1{font-size:19px;margin:0}
 .lobby .row{display:flex;gap:8px;margin:10px 0}
 .lobby input{flex:1;min-width:0;background:#0b0f18;border:1px solid var(--line);border-radius:12px;padding:12px;color:var(--ink);font:inherit;font-size:20px;font-weight:800;letter-spacing:.3em;text-align:center;text-transform:uppercase}
 .or{color:var(--sub);font-size:12px;margin:18px 0 8px}
+/* 지도 고르기 */
+.mapsel{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.mapsel button{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:11px;font-weight:900;font-size:14px}
+.mapsel button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.mapname{font-size:13px;color:var(--sub);margin:0 0 6px 2px}
+.mapname b{color:var(--ink)}
 /* 미니맵 */
 .mapbox{position:relative;width:100%;aspect-ratio:1;border-radius:16px;overflow:hidden;background:#05070c;border:1px solid var(--line)}
 .mapbox img.map{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:auto;filter:saturate(1.1)}
@@ -84,8 +90,10 @@ h1{font-size:19px;margin:0}
   </section>
 
   <section id="room" hidden>
+    <div class="mapsel" id="mapSel" hidden></div>
+    <div class="mapname">🗺️ <b id="mapName">신기쟁탈전</b></div>
     <div class="mapbox" id="mapbox">
-      <img class="map" src="map.png?v=2" alt="미니맵">
+      <img class="map" id="mapImg" src="map-shingi.png" alt="미니맵">
       <div id="dots"></div>
       <div id="pings"></div>
       <div class="banner" id="banner"></div>
@@ -129,9 +137,10 @@ const pos = (d) => {
 const ACT = { atk: ['⚔️', '공격'], def: ['🛡️', '방어'], rally: ['🚩', '집결'] };
 const EMOS = ['👀', '💣', '🔥', '❗', '⏳', '🏃', '💀', '👍'];
 const CODE_CH = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const MAPS = { shingi: { name: '신기쟁탈전', img: 'map-shingi.png' }, garden: { name: '미혹의정원', img: 'map-garden.png' } };
 
 let sb = null, ch = null, me = (crypto.randomUUID && crypto.randomUUID()) || String(Math.random()).slice(2);
-let isLeader = false, code = '', pings = {}, order = [], sel = '12', keys = null, pubJwk = null, rev = 0;
+let isLeader = false, code = '', mapId = 'shingi', pings = {}, order = [], sel = '12', keys = null, pubJwk = null, rev = 0;
 
 function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => e.classList.remove('on'), 2200); }
 const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -141,7 +150,7 @@ async function codeOf(jwk) {
   const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(jwk.x + '.' + jwk.y)));
   return [...h.slice(0, 6)].map((b) => CODE_CH[b % CODE_CH.length]).join('');
 }
-const canon = (s) => JSON.stringify({ p: s.p, o: s.o, r: s.r });
+const canon = (s) => JSON.stringify({ m: s.m, p: s.p, o: s.o, r: s.r });
 
 async function client() {
   if (sb) return sb;
@@ -153,6 +162,11 @@ async function client() {
 }
 
 /* ---------- 지도 그리기 ---------- */
+function drawMap() {
+  $('mapImg').src = MAPS[mapId].img;
+  $('mapName').textContent = MAPS[mapId].name;
+  document.querySelectorAll('#mapSel button').forEach((b) => b.classList.toggle('on', b.dataset.m === mapId));
+}
 function drawDots() {
   $('dots').innerHTML = isLeader ? DIRS.map((d) => { const p = pos(d); return `<div class="dot${d.id === sel ? ' sel' : ''}" style="left:${p.x}%;top:${p.y}%"></div>`; }).join('') : '';
 }
@@ -184,18 +198,18 @@ async function createRoom() {
       pubJwk = { kty: pubJwk.kty, crv: pubJwk.crv, x: pubJwk.x, y: pubJwk.y };
     }
     isLeader = true; code = await codeOf(pubJwk);
-    try { const st = JSON.parse(sessionStorage.getItem('guild-ping:pings') || 'null'); if (st) { pings = st.p || {}; order = st.o || []; } } catch (e) {}
+    try { const st = JSON.parse(sessionStorage.getItem('guild-ping:pings') || 'null'); if (st) { pings = st.p || {}; order = st.o || []; if (MAPS[st.m]) mapId = st.m; } } catch (e) {}
     await join();
   } catch (e) { console.error(e); $('lobbyMsg').textContent = '방을 만들지 못했어요. 잠시 후 다시 시도해 주세요.'; $('bCreate').disabled = false; }
 }
 async function signedState() {
-  const s = { p: pings, o: order, r: ++rev };
+  const s = { m: mapId, p: pings, o: order, r: ++rev };
   const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, keys.privateKey, new TextEncoder().encode(canon(s)));
   return { ...s, k: pubJwk, s: b64u(sig) };
 }
 async function publish(announce) {
-  try { sessionStorage.setItem('guild-ping:pings', JSON.stringify({ p: pings, o: order })); } catch (e) {}
-  drawPings();
+  try { sessionStorage.setItem('guild-ping:pings', JSON.stringify({ m: mapId, p: pings, o: order })); } catch (e) {}
+  drawMap(); drawPings();
   if (!ch) return;
   const st = await signedState();
   ch.send({ type: 'broadcast', event: 'state', payload: { ...st, a: announce || '' } });
@@ -212,6 +226,13 @@ function command(t, e) {
   if (navigator.vibrate) navigator.vibrate(20);
 }
 function buildLeaderUI() {
+  $('mapSel').hidden = false;
+  $('mapSel').innerHTML = Object.entries(MAPS).map(([k, v]) => `<button data-m="${k}" class="${k === mapId ? 'on' : ''}">${v.name}</button>`).join('');
+  $('mapSel').querySelectorAll('button').forEach((b) => b.onclick = () => {
+    if (b.dataset.m === mapId) return;
+    mapId = b.dataset.m; pings = {}; order = []; lastNew = null;
+    logLine(`지도 변경: ${MAPS[mapId].name}`); publish(`🗺️ ${MAPS[mapId].name}`);
+  });
   $('clock').innerHTML = DIRS.map((d) => `<button data-d="${d.id}" class="${d.id === sel ? 'on' : ''}">${d.id === 'c' ? '중앙' : d.id}</button>`).join('');
   $('clock').querySelectorAll('button').forEach((b) => b.onclick = () => { sel = b.dataset.d; $('clock').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); drawDots(); });
   document.querySelectorAll('.acts button').forEach((b) => b.onclick = () => command(b.dataset.a));
@@ -237,6 +258,7 @@ async function accept(st) {
   const ok = await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, verifyKey.key, fromB64u(st.s), new TextEncoder().encode(canon(st)));
   if (!ok || st.r <= lastRev) return false;
   lastRev = st.r;
+  if (MAPS[st.m] && st.m !== mapId) { mapId = st.m; drawMap(); }
   const before = pings; pings = st.p || {}; order = st.o || [];
   lastNew = order.find((k) => JSON.stringify(before[k]) !== JSON.stringify(pings[k])) && order[order.length - 1];
   drawPings();
@@ -276,7 +298,7 @@ async function join() {
   $('lobby').hidden = true; $('room').hidden = false; $('pCode').hidden = false; $('pPpl').hidden = false;
   $('code').textContent = code; $('leader').hidden = !isLeader; $('member').hidden = isLeader;
   if (isLeader) buildLeaderUI();
-  drawDots(); drawPings();
+  drawMap(); drawDots(); drawPings();
 }
 function showLobby(msg) { $('lobby').hidden = false; $('room').hidden = true; $('pCode').hidden = true; $('pPpl').hidden = true; $('lobbyMsg').textContent = msg || ''; $('bCreate').disabled = false; $('bJoin').disabled = false; }
 
