@@ -257,12 +257,37 @@ function drawPrev() {
   x.strokeStyle = 'rgba(40,80,50,.9)'; x.lineWidth = 26; x.beginPath(); x.moveTo(-40, 120); x.quadraticCurveTo(300, 40, 640, 140); x.stroke();
   for (const [bx, by, r, a] of bokeh) { const rg = x.createRadialGradient(bx, by, 0, bx, by, r); rg.addColorStop(0, `rgba(255,220,150,${a})`); rg.addColorStop(1, 'rgba(255,220,150,0)'); x.fillStyle = rg; x.beginPath(); x.arc(bx, by, r, 0, 7); x.fill(); }
   x.strokeStyle = '#d8b060'; x.lineWidth = 3; x.beginPath(); x.moveTo(300, 70); x.lineTo(300, 140); x.stroke();
+  // 글씨 쓸 면이 넓은 장식은 장식 위에, 좁거나 복잡한 장식은 아래에 매단 종이 꼬리표에 쓴다
+  const SURFACE = { star: [330, 220], gold: [335, 220], heart: [300, 250], ball: [325, 270] };
+  const typed = $('wishText').value.trim(), t = typed || '소원을 적어주세요';
+  const wrap = (maxW) => { const out = []; let cur = ''; for (const ch of t) { if (x.measureText(cur + ch).width > maxW) { out.push(cur); cur = ch; } else cur += ch; } out.push(cur); return out; };
+  // 50자까지 다 들어가도록 글씨 크기를 줄여 가며 맞춘다
+  const fit = (big, small, maxW, maxLines) => { let sz = big, lines; for (; sz >= small; sz -= 2) { x.font = `${sz}px "Nanum Pen Script", cursive`; lines = wrap(maxW); if (lines.length <= maxLines) break; } return { sz: Math.max(sz, small), lines: lines.slice(0, maxLines) }; };
   const im = prevImg[pick]; const draw = () => {
-    x.save(); x.shadowColor = 'rgba(255,220,140,.9)'; x.shadowBlur = 60; x.drawImage(im, 60, 90, 480, 480); x.restore();
-    const t = $('wishText').value.trim() || '소원을 적어주세요';
-    x.font = `${t.length > 18 ? 34 : 44}px "Nanum Pen Script", cursive`; x.fillStyle = $('wishText').value.trim() ? '#4a2a10' : 'rgba(90,60,30,.65)'; x.textAlign = 'center'; x.textBaseline = 'middle';
-    const lines = []; let cur = ''; for (const ch of t) { if (x.measureText(cur + ch).width > 230) { lines.push(cur); cur = ch; } else cur += ch; } lines.push(cur);
-    lines.slice(0, 3).forEach((l, i) => x.fillText(l, 300, 330 + (i - (Math.min(lines.length, 3) - 1) / 2) * 40));
+    const surf = SURFACE[pick];
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    if (surf) {
+      x.save(); x.shadowColor = 'rgba(255,220,140,.9)'; x.shadowBlur = 60; x.drawImage(im, 60, 90, 480, 480); x.restore();
+      const { sz, lines } = fit(48, 26, surf[1], 4);
+      x.lineJoin = 'round'; x.lineWidth = 7; x.strokeStyle = 'rgba(255,248,230,.85)';
+      x.fillStyle = typed ? '#3a1e08' : 'rgba(90,60,30,.7)';
+      lines.forEach((l, i) => { const y = surf[0] + (i - (lines.length - 1) / 2) * sz * .95; x.strokeText(l, 300, y); x.fillText(l, 300, y); });
+    } else {
+      // 장식은 위에 조금 작게, 아래에 꼬리표
+      x.save(); x.shadowColor = 'rgba(255,220,140,.9)'; x.shadowBlur = 50; x.drawImage(im, 150, 70, 300, 300); x.restore();
+      x.strokeStyle = '#c8303a'; x.lineWidth = 4; x.beginPath(); x.moveTo(300, 330); x.quadraticCurveTo(318, 365, 300, 398); x.stroke();
+      const { sz, lines } = fit(44, 26, 290, 4);
+      const hh = Math.max(70, (lines.length * sz * 1.02 + 34) / 2);
+      x.save(); x.translate(300, 398 + hh + 4); x.rotate(-.03);
+      x.shadowColor = 'rgba(0,0,0,.45)'; x.shadowBlur = 18; x.shadowOffsetY = 6;
+      x.fillStyle = '#f7ecd3'; x.beginPath(); x.moveTo(-170, -hh); x.lineTo(150, -hh); x.lineTo(185, 0); x.lineTo(150, hh); x.lineTo(-170, hh); x.closePath(); x.fill();
+      x.shadowColor = 'transparent';
+      x.strokeStyle = 'rgba(160,120,70,.5)'; x.lineWidth = 2; x.setLineDash([6, 5]); x.beginPath(); x.moveTo(-158, -hh + 12); x.lineTo(146, -hh + 12); x.lineTo(172, 0); x.lineTo(146, hh - 12); x.lineTo(-158, hh - 12); x.closePath(); x.stroke(); x.setLineDash([]);
+      x.fillStyle = '#d8c6a0'; x.beginPath(); x.arc(150, 0, 9, 0, 7); x.fill();
+      x.fillStyle = typed ? '#3a1e08' : 'rgba(90,60,30,.6)';
+      lines.forEach((l, i) => x.fillText(l, -10, (i - (lines.length - 1) / 2) * sz * 1.02));
+      x.restore();
+    }
   };
   im.complete ? draw() : (im.onload = draw);
 }
