@@ -4,7 +4,7 @@
 <script src="/mgh/bridge.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>길드 작전판</title>
+<title>문파 컨텐츠 작전판</title>
 <meta name="description" content="길드장이 버튼 몇 번으로 미니맵에 '12시 집결 · 1시 공격 · 6시 방어' 같은 명령 핑을 찍으면, 코드로 입장한 길드원 최대 50명이 실시간으로 보는 작전판">
 <style>
 :root{--bg:#0f1420;--panel:#171e2e;--line:#2a3550;--ink:#eef2fb;--sub:#8e9bb8;--atk:#ff5d5d;--def:#4fa3ff;--rally:#ffc53d;--acc:#7c8cff}
@@ -13,7 +13,8 @@ html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-fa
 button{font:inherit;color:inherit;cursor:pointer}
 .wrap{max-width:560px;margin:0 auto;padding:12px 12px 24px}
 header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-h1{font-size:19px;margin:0}
+h1{font-size:min(19px,4.6vw);margin:0;white-space:nowrap}
+@media(max-width:400px){h1 .em{display:none}}
 .sp{flex:1}
 .pill{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 11px;font-size:12px;font-weight:700;white-space:nowrap}
 .pill b{color:var(--rally);letter-spacing:.12em}
@@ -23,6 +24,7 @@ h1{font-size:19px;margin:0}
 /* 입장 화면 */
 .lobby{padding:30px 6px;text-align:center}
 .lobby h2{font-size:24px;margin:0 0 8px}
+.lobby p.intro{font-size:16.5px;word-break:keep-all;color:var(--ink);opacity:.85}
 .lobby p{color:var(--sub);line-height:1.6;margin:0 0 22px;font-size:14px}
 .lobby .row{display:flex;gap:8px;margin:10px 0}
 .lobby input{flex:1;min-width:0;background:#0b0f18;border:1px solid var(--line);border-radius:12px;padding:12px;color:var(--ink);font:inherit;font-size:20px;font-weight:800;letter-spacing:.3em;text-align:center;text-transform:uppercase}
@@ -79,14 +81,13 @@ h1{font-size:19px;margin:0}
 <body>
 <div class="wrap">
   <header>
-    <h1>🗺️ 길드 작전판</h1><span class="sp"></span>
+    <h1><span class="em">🗺️ </span>문파 컨텐츠 작전판</h1><span class="sp"></span>
     <span class="pill" id="pCode" hidden>코드 <b id="code"></b></span>
     <span class="pill" id="pPpl" hidden>👥 <span id="ppl">1</span>/50</span>
   </header>
 
   <section class="lobby" id="lobby">
-    <h2>명령은 길드장이, 보는 건 모두가</h2>
-    <p>길드장이 방을 만들면 입장 코드가 나와요.<br>길드원은 코드로 들어와 미니맵에 찍히는 명령을 실시간으로 봐요. (최대 50명)</p>
+    <p class="intro">길드장이 방을 만들면 입장 코드가 나와요.<br>길드원은 코드로 들어와 미니맵에 찍히는 명령을 실시간으로 봐요. (최대 50명)</p>
     <button class="btn pri" id="bCreate" style="width:100%;padding:15px;font-size:16px">👑 길드장으로 방 만들기</button>
     <div class="or">— 또는 길드원으로 입장 —</div>
     <div class="row"><input id="iCode" maxlength="6" placeholder="입장 코드" autocomplete="off" inputmode="latin"><button class="btn" id="bJoin">입장</button></div>

@@ -314,7 +314,7 @@ const CATALOG: Game[] = [
   {
     id: "guild-ping",
     kind: "tool",
-    title: { ko: "길드 작전판", en: "Guild Command Map" },
+    title: { ko: "문파 컨텐츠 작전판", en: "Guild Command Map" },
     desc: {
       ko: "길드장이 미니맵 지점에 공격·방어·집결 명령을 찍으면, 입장 코드로 들어온 길드원 최대 50명이 실시간으로 보는 작전판. 지점 위치는 길드장이 직접 옮길 수 있어요",
       en: "Guild leaders ping attack, defend and rally orders on minimap points — up to 50 members watch live with a room code. Leaders can drag the points anywhere",
