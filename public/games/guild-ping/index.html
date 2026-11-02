@@ -115,7 +115,7 @@ h1{font-size:19px;margin:0}
           <button class="a-def" data-a="def">🛡️ 방어</button>
           <button class="a-rally" data-a="rally">🚩 집결</button>
         </div>
-        <div class="tools"><button class="btn" id="bUndo">↩️ 마지막 지우기</button><button class="btn" id="bClear">🧹 전체 지우기</button><button class="btn" id="bShare">🔗 코드 공유</button></div>
+        <div class="tools"><button class="btn" id="bUndo">↩️ 마지막 지우기</button><button class="btn" id="bClear">🧹 전체 지우기</button><button class="btn" id="bShare">🔗 링크 공유</button></div>
         <p class="hint">지점을 고른 뒤 공격·방어·집결을 누르면 바로 길드원 화면에 찍혀요. 같은 지점에 새 명령을 보내면 바뀌어요.</p>
       </div>
     </div>
@@ -279,9 +279,13 @@ function buildLeaderUI() {
   $('bClear').onclick = () => { pings = {}; order = []; lastNew = null; logLine('모든 명령 지움'); publish('명령 초기화'); };
   $('bShare').onclick = async () => {
     const url = shareUrl();
-    const text = `길드 작전판 입장 코드: ${code}\n${url}`;
-    try { if (navigator.share) { await navigator.share({ title: '길드 작전판', text }); return; } } catch (e) { if (e.name === 'AbortError') return; }
-    try { await navigator.clipboard.writeText(text); toast('입장 코드와 링크를 복사했어요'); } catch (e) { toast(`입장 코드: ${code}`); }
+    let ok = false;
+    try { await navigator.clipboard.writeText(url); ok = true; } catch (e) {
+      // 클립보드 API가 막힌 환경(일부 인앱 브라우저) 대비
+      const t = document.createElement('textarea'); t.value = url; t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select();
+      try { ok = document.execCommand('copy'); } catch (e2) {} t.remove();
+    }
+    toast(ok ? '입장 링크를 복사했어요' : url);
   };
 }
 function shareUrl() { try { const top = window.MGH && MGH.embedded ? window.parent.location : location; return `${top.origin}${top.pathname}?code=${code}`; } catch (e) { return `https://playwithme.kr/tools/guild-ping?code=${code}`; } }
