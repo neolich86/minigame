@@ -235,6 +235,19 @@ const CATALOG: Game[] = [
     src: "/games/cathedral/index.html",
   },
   {
+    id: "xmas-village",
+    kind: "app",
+    title: { ko: "크리스마스 소원 마을", en: "Christmas Wish Village" },
+    desc: {
+      ko: "눈 내리는 밤의 크리스마스 마을. 눈사람이 되어 마을을 걷고, 한가운데 커다란 트리에 소원을 걸어 보세요.",
+      en: "A snowy Christmas village at night — walk around as a snowman and hang your wish on the giant tree.",
+    },
+    genre: "casual",
+    thumb: "/thumbs/xmas-village.jpg",
+    src: "/games/xmas-village/index.html",
+    hidden: true, // 단계별로 만드는 중 — 소원 공유(2단계)까지 끝나면 공개
+  },
+  {
     id: "explore-map",
     kind: "app",
     title: { ko: "동네 정복", en: "Town Conquest" },
