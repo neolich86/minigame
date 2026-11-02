@@ -119,8 +119,13 @@ const API = window.GP_API || '';
 const MAX = 50;
 // 방향: 12시~11시 + 중앙. 지도 중심에서 반지름 비율 R 만큼 떨어진 곳
 const DIRS = [...Array(12)].map((_, i) => ({ id: String(i === 0 ? 12 : i), label: `${i === 0 ? 12 : i}시`, a: i / 12 * Math.PI * 2 })).concat([{ id: 'c', label: '중앙', a: null }]);
-const R = 0.36;
-const pos = (d) => d.a === null ? { x: 50, y: 50 } : { x: 50 + Math.sin(d.a) * R * 100, y: 50 - Math.cos(d.a) * R * 100 };
+const R = 0.38; // 지도 중심에서 사각형 테두리까지 (지도 폭 대비)
+// 시계 방향을 원이 아니라 사각형 테두리 위로 펼친다 (한 변에 3개: 11·12·1 / 2·3·4 / 5·6·7 / 8·9·10)
+const pos = (d) => {
+  if (d.a === null) return { x: 50, y: 50 };
+  const sx = Math.sin(d.a), sy = -Math.cos(d.a), k = Math.max(Math.abs(sx), Math.abs(sy));
+  return { x: 50 + sx / k * R * 100, y: 50 + sy / k * R * 100 };
+};
 const ACT = { atk: ['⚔️', '공격'], def: ['🛡️', '방어'], rally: ['🚩', '집결'] };
 const EMOS = ['👀', '💣', '🔥', '❗', '⏳', '🏃', '💀', '👍'];
 const CODE_CH = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
