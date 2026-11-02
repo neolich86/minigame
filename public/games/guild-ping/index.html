@@ -65,8 +65,6 @@ h1{font-size:19px;margin:0}
 .acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
 .acts button{border:0;border-radius:12px;padding:14px 0;font-weight:900;font-size:16px;color:#fff}
 .a-atk{background:linear-gradient(180deg,#ff7676,#d63c3c)}.a-def{background:linear-gradient(180deg,#6cb6ff,#2f7fe0)}.a-rally{background:linear-gradient(180deg,#ffd666,#e0a316);color:#2a1d00!important}
-.emos{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:8px}
-.emos button{border:1px solid var(--line);background:#0e1320;border-radius:10px;padding:8px 0;font-size:20px}
 .tools{display:flex;gap:8px;margin-top:10px}
 .tools .btn{flex:1;padding:10px;font-size:13px}
 .hint{color:var(--sub);font-size:12px;margin-top:8px;line-height:1.5}
@@ -117,9 +115,8 @@ h1{font-size:19px;margin:0}
           <button class="a-def" data-a="def">🛡️ 방어</button>
           <button class="a-rally" data-a="rally">🚩 집결</button>
         </div>
-        <div class="emos" id="emos"></div>
         <div class="tools"><button class="btn" id="bUndo">↩️ 마지막 지우기</button><button class="btn" id="bClear">🧹 전체 지우기</button><button class="btn" id="bShare">🔗 코드 공유</button></div>
-        <p class="hint">지점을 고른 뒤 공격·방어·집결이나 이모지를 누르면 바로 길드원 화면에 찍혀요. 같은 지점에 새 명령을 보내면 바뀌어요.</p>
+        <p class="hint">지점을 고른 뒤 공격·방어·집결을 누르면 바로 길드원 화면에 찍혀요. 같은 지점에 새 명령을 보내면 바뀌어요.</p>
       </div>
     </div>
     <div class="watch" id="member" hidden>👀 관전 모드 — 길드장의 명령을 기다리는 중이에요</div>
@@ -145,7 +142,6 @@ const validLayout = (l) => l && typeof l === 'object' && DIRS.every((d) => Array
   ? Object.fromEntries(DIRS.map((d) => [d.id, [l[d.id][0], l[d.id][1]]])) : null;
 const pos = (d) => { const p = layoutOf(mapId)[d.id]; return { x: p[0], y: p[1] }; };
 const ACT = { atk: ['⚔️', '공격'], def: ['🛡️', '방어'], rally: ['🚩', '집결'] };
-const EMOS = ['👀', '💣', '🔥', '❗', '⏳', '🏃', '💀', '👍'];
 const CODE_CH = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const MAPS = { shingi: { name: '신기쟁탈전', img: 'map-shingi.png' }, garden: { name: '미혹의정원', img: 'map-garden.png' } };
 
@@ -279,8 +275,6 @@ function buildLeaderUI() {
   };
   $('bReset').onclick = () => { layouts[mapId] = defLayout(); saveLayout(); logLine('지점 위치 기본으로'); publish(''); };
   document.querySelectorAll('.acts button').forEach((b) => b.onclick = () => command(b.dataset.a));
-  $('emos').innerHTML = EMOS.map((e) => `<button data-e="${e}">${e}</button>`).join('');
-  $('emos').querySelectorAll('button').forEach((b) => b.onclick = () => command('emo', b.dataset.e));
   $('bUndo').onclick = () => { const k = order.pop(); if (!k) return toast('지울 명령이 없어요'); delete pings[k]; lastNew = null; logLine(`${DIRS.find((x) => x.id === k).label} 명령 지움`); publish(''); };
   $('bClear').onclick = () => { pings = {}; order = []; lastNew = null; logLine('모든 명령 지움'); publish('명령 초기화'); };
   $('bShare').onclick = async () => {

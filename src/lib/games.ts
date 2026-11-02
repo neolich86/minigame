@@ -316,13 +316,12 @@ const CATALOG: Game[] = [
     kind: "tool",
     title: { ko: "길드 작전판", en: "Guild Command Map" },
     desc: {
-      ko: "길드장이 버튼으로 미니맵에 '12시 집결 · 1시 공격 · 6시 방어' 명령을 찍으면, 코드로 들어온 길드원 최대 50명이 실시간으로 보는 작전판",
-      en: "Guild leaders tap buttons to ping 'rally at 12, attack at 1, defend at 6' on a minimap — up to 50 members watch live with a room code",
+      ko: "길드장이 미니맵 지점에 공격·방어·집결 명령을 찍으면, 입장 코드로 들어온 길드원 최대 50명이 실시간으로 보는 작전판. 지점 위치는 길드장이 직접 옮길 수 있어요",
+      en: "Guild leaders ping attack, defend and rally orders on minimap points — up to 50 members watch live with a room code. Leaders can drag the points anywhere",
     },
     genre: "strategy",
     thumb: "/thumbs/guild-ping.jpg",
     src: "/games/guild-ping/index.html",
-    hidden: true, // 샘플 확인 후 공개
   },
   {
     id: "lotto",
