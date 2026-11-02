@@ -312,6 +312,19 @@ const CATALOG: Game[] = [
     boards: [{ id: "blackjack", label: { ko: "최고 잔액", en: "Peak balance" }, unit: { ko: "", en: "" }, format: "won", vs: { label: { ko: "최고 잔액", en: "peak balance" }, question: { ko: "누가 더 크게 따나?", en: "Who wins bigger?" } } }],
   },
   {
+    id: "guild-ping",
+    kind: "tool",
+    title: { ko: "길드 작전판", en: "Guild Command Map" },
+    desc: {
+      ko: "길드장이 버튼으로 미니맵에 '12시 집결 · 1시 공격 · 6시 방어' 명령을 찍으면, 코드로 들어온 길드원 최대 50명이 실시간으로 보는 작전판",
+      en: "Guild leaders tap buttons to ping 'rally at 12, attack at 1, defend at 6' on a minimap — up to 50 members watch live with a room code",
+    },
+    genre: "strategy",
+    thumb: "/thumbs/guild-ping.jpg",
+    src: "/games/guild-ping/index.html",
+    hidden: true, // 샘플 확인 후 공개
+  },
+  {
     id: "lotto",
     kind: "tool",
     title: { ko: "로또 번호 추첨기", en: "Lotto Number Picker" },
