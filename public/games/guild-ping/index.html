@@ -46,14 +46,20 @@ h1{font-size:19px;margin:0}
 .ping.new .ic{animation:pop .5s ease-out,pulse 1.6s ease-out .5s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(var(--c,255,255,255),.7)}100%{box-shadow:0 0 0 18px rgba(var(--c,255,255,255),0)}}
 @keyframes pop{0%{transform:scale(2.2);opacity:0}100%{transform:scale(1);opacity:1}}
-.dot{position:absolute;width:10px;height:10px;margin:-5px;border-radius:50%;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.45)}
-.dot.sel{background:var(--rally);border-color:#fff;box-shadow:0 0 12px var(--rally)}
+.dot{position:absolute;width:26px;height:26px;margin:-13px;border-radius:50%;background:rgba(10,14,24,.55);border:2px solid rgba(255,255,255,.55);color:#fff;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none}
+.dot.sel{background:var(--rally);border-color:#fff;color:#1a1300;box-shadow:0 0 12px var(--rally)}
+.edit .dot{width:36px;height:36px;margin:-18px;font-size:15px;border-style:dashed;border-color:#fff;background:rgba(79,163,255,.55);cursor:grab;z-index:3}
+.edit .dot.drag{cursor:grabbing;transform:scale(1.25);background:rgba(79,163,255,.9)}
+.edit #pings{opacity:.35}
+.editbar{display:flex;gap:8px;margin-top:8px}
+.editbar .btn{flex:1;padding:10px;font-size:13px}
+.editbar .btn.on{background:var(--acc);border-color:var(--acc);color:#fff}
 .banner{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:rgba(0,0,0,.78);border:1px solid var(--line);padding:7px 14px;border-radius:999px;font-weight:900;font-size:15px;white-space:nowrap;opacity:0;transition:.3s}
 .banner.on{opacity:1}
 /* 명령 패널 */
 .panel{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px}
 .panel h3{margin:0 0 8px;font-size:12px;color:var(--sub);font-weight:800}
-.clock{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.clock{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .clock button{border:1px solid var(--line);background:#0e1320;border-radius:10px;padding:10px 0;font-weight:900;font-size:14px}
 .clock button.on{background:var(--rally);color:#1a1300;border-color:var(--rally)}
 .acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
@@ -101,8 +107,10 @@ h1{font-size:19px;margin:0}
 
     <div id="leader" hidden>
       <div class="panel">
-        <h3>① 방향 고르기</h3>
+        <h3>① 지점 고르기 <span style="font-weight:600">(지도에서 숫자를 눌러도 돼요)</span></h3>
         <div class="clock" id="clock"></div>
+        <div class="editbar"><button class="btn" id="bEdit">📍 지점 위치 옮기기</button><button class="btn" id="bReset" hidden>↺ 기본 위치로</button></div>
+        <p class="hint" id="editHint" hidden>지도 위 숫자를 끌어서 원하는 곳에 놓으세요. 놓는 순간 길드원 화면에도 바뀌어요. 지도별로 따로 저장돼요.</p>
         <h3 style="margin-top:12px">② 명령 보내기</h3>
         <div class="acts">
           <button class="a-atk" data-a="atk">⚔️ 공격</button>
@@ -111,7 +119,7 @@ h1{font-size:19px;margin:0}
         </div>
         <div class="emos" id="emos"></div>
         <div class="tools"><button class="btn" id="bUndo">↩️ 마지막 지우기</button><button class="btn" id="bClear">🧹 전체 지우기</button><button class="btn" id="bShare">🔗 코드 공유</button></div>
-        <p class="hint">방향을 고른 뒤 공격·방어·집결이나 이모지를 누르면 바로 길드원 화면에 찍혀요. 같은 방향에 새 명령을 보내면 바뀌어요.</p>
+        <p class="hint">지점을 고른 뒤 공격·방어·집결이나 이모지를 누르면 바로 길드원 화면에 찍혀요. 같은 지점에 새 명령을 보내면 바뀌어요.</p>
       </div>
     </div>
     <div class="watch" id="member" hidden>👀 관전 모드 — 길드장의 명령을 기다리는 중이에요</div>
@@ -125,22 +133,24 @@ h1{font-size:19px;margin:0}
 const $ = (id) => document.getElementById(id);
 const API = window.GP_API || '';
 const MAX = 50;
-// 방향: 12시~11시 + 중앙. 지도 중심에서 반지름 비율 R 만큼 떨어진 곳
-const DIRS = [...Array(12)].map((_, i) => ({ id: String(i === 0 ? 12 : i), label: `${i === 0 ? 12 : i}시`, a: i / 12 * Math.PI * 2 })).concat([{ id: 'c', label: '중앙', a: null }]);
-const R = 0.38; // 지도 중심에서 사각형 테두리까지 (지도 폭 대비)
-// 시계 방향을 원이 아니라 사각형 테두리 위로 펼친다 (한 변에 3개: 11·12·1 / 2·3·4 / 5·6·7 / 8·9·10)
-const pos = (d) => {
-  if (d.a === null) return { x: 50, y: 50 };
-  const sx = Math.sin(d.a), sy = -Math.cos(d.a), k = Math.max(Math.abs(sx), Math.abs(sy));
-  return { x: 50 + sx / k * R * 100, y: 50 + sy / k * R * 100 };
-};
+// 지점: 3×3 기본 배치(1~9번). 길드장이 지도마다 직접 끌어서 옮길 수 있다
+const DIRS = [...Array(9)].map((_, i) => ({ id: String(i + 1), label: `${i + 1}번` }));
+const defLayout = () => Object.fromEntries(DIRS.map((d, i) => [d.id, [20 + (i % 3) * 30, 20 + Math.floor(i / 3) * 30]]));
+const layouts = {}; // mapId → { id: [x%, y%] }
+function layoutOf(m) {
+  if (!layouts[m]) { let l = null; try { l = JSON.parse(localStorage.getItem('guild-ping:layout:' + m) || 'null'); } catch (e) {} layouts[m] = validLayout(l) || defLayout(); }
+  return layouts[m];
+}
+const validLayout = (l) => l && typeof l === 'object' && DIRS.every((d) => Array.isArray(l[d.id]) && l[d.id].length === 2 && l[d.id].every((v) => typeof v === 'number' && v >= 0 && v <= 100))
+  ? Object.fromEntries(DIRS.map((d) => [d.id, [l[d.id][0], l[d.id][1]]])) : null;
+const pos = (d) => { const p = layoutOf(mapId)[d.id]; return { x: p[0], y: p[1] }; };
 const ACT = { atk: ['⚔️', '공격'], def: ['🛡️', '방어'], rally: ['🚩', '집결'] };
 const EMOS = ['👀', '💣', '🔥', '❗', '⏳', '🏃', '💀', '👍'];
 const CODE_CH = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const MAPS = { shingi: { name: '신기쟁탈전', img: 'map-shingi.png' }, garden: { name: '미혹의정원', img: 'map-garden.png' } };
 
 let sb = null, ch = null, me = (crypto.randomUUID && crypto.randomUUID()) || String(Math.random()).slice(2);
-let isLeader = false, code = '', mapId = 'shingi', pings = {}, order = [], sel = '12', keys = null, pubJwk = null, rev = 0;
+let isLeader = false, editing = false, code = '', mapId = 'shingi', pings = {}, order = [], sel = '5', keys = null, pubJwk = null, rev = 0;
 
 function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => e.classList.remove('on'), 2200); }
 const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -150,7 +160,7 @@ async function codeOf(jwk) {
   const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(jwk.x + '.' + jwk.y)));
   return [...h.slice(0, 6)].map((b) => CODE_CH[b % CODE_CH.length]).join('');
 }
-const canon = (s) => JSON.stringify({ m: s.m, p: s.p, o: s.o, r: s.r });
+const canon = (s) => JSON.stringify({ m: s.m, l: s.l, p: s.p, o: s.o, r: s.r });
 
 async function client() {
   if (sb) return sb;
@@ -168,8 +178,34 @@ function drawMap() {
   document.querySelectorAll('#mapSel button').forEach((b) => b.classList.toggle('on', b.dataset.m === mapId));
 }
 function drawDots() {
-  $('dots').innerHTML = isLeader ? DIRS.map((d) => { const p = pos(d); return `<div class="dot${d.id === sel ? ' sel' : ''}" style="left:${p.x}%;top:${p.y}%"></div>`; }).join('') : '';
+  $('mapbox').classList.toggle('edit', editing);
+  $('dots').innerHTML = isLeader ? DIRS.map((d) => { const p = pos(d); return `<div class="dot${d.id === sel ? ' sel' : ''}" data-d="${d.id}" style="left:${p.x}%;top:${p.y}%">${d.id}</div>`; }).join('') : '';
+  if (isLeader) $('dots').querySelectorAll('.dot').forEach(bindDot);
 }
+function selectDot(id) { sel = id; $('clock').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x.dataset.d === id)); drawDots(); }
+// 지점 끌어 옮기기 (편집 모드) · 그냥 누르면 선택
+function bindDot(el) {
+  el.onpointerdown = (ev) => {
+    ev.preventDefault();
+    const id = el.dataset.d, box = $('mapbox').getBoundingClientRect(), sx = ev.clientX, sy = ev.clientY;
+    let moved = false;
+    try { el.setPointerCapture(ev.pointerId); } catch (e) {}
+    el.onpointermove = (e) => {
+      if (!editing) return;
+      if (!moved && Math.hypot(e.clientX - sx, e.clientY - sy) < 4) return;
+      moved = true; el.classList.add('drag');
+      const x = Math.min(97, Math.max(3, (e.clientX - box.left) / box.width * 100)), y = Math.min(97, Math.max(3, (e.clientY - box.top) / box.height * 100));
+      layoutOf(mapId)[id] = [Math.round(x * 10) / 10, Math.round(y * 10) / 10];
+      el.style.left = x + '%'; el.style.top = y + '%';
+      drawPings();
+    };
+    el.onpointerup = el.onpointercancel = () => {
+      el.onpointermove = el.onpointerup = el.onpointercancel = null;
+      if (moved) { saveLayout(); selectDot(id); publish(''); } else selectDot(id);
+    };
+  };
+}
+function saveLayout() { try { localStorage.setItem('guild-ping:layout:' + mapId, JSON.stringify(layoutOf(mapId))); } catch (e) {} }
 let lastNew = null;
 function drawPings() {
   $('pings').innerHTML = Object.entries(pings).map(([k, v]) => {
@@ -198,18 +234,18 @@ async function createRoom() {
       pubJwk = { kty: pubJwk.kty, crv: pubJwk.crv, x: pubJwk.x, y: pubJwk.y };
     }
     isLeader = true; code = await codeOf(pubJwk);
-    try { const st = JSON.parse(sessionStorage.getItem('guild-ping:pings') || 'null'); if (st) { pings = st.p || {}; order = st.o || []; if (MAPS[st.m]) mapId = st.m; } } catch (e) {}
+    try { const st = JSON.parse(sessionStorage.getItem('guild-ping:pings') || 'null'); if (st) { pings = st.p || {}; order = (st.o || []).filter((k) => DIRS.some((d) => d.id === k)); for (const k in pings) if (!order.includes(k)) delete pings[k]; if (MAPS[st.m]) mapId = st.m; } } catch (e) {}
     await join();
   } catch (e) { console.error(e); $('lobbyMsg').textContent = '방을 만들지 못했어요. 잠시 후 다시 시도해 주세요.'; $('bCreate').disabled = false; }
 }
 async function signedState() {
-  const s = { m: mapId, p: pings, o: order, r: ++rev };
+  const s = { m: mapId, l: layoutOf(mapId), p: pings, o: order, r: ++rev };
   const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, keys.privateKey, new TextEncoder().encode(canon(s)));
   return { ...s, k: pubJwk, s: b64u(sig) };
 }
 async function publish(announce) {
   try { sessionStorage.setItem('guild-ping:pings', JSON.stringify({ m: mapId, p: pings, o: order })); } catch (e) {}
-  drawMap(); drawPings();
+  drawMap(); drawDots(); drawPings();
   if (!ch) return;
   const st = await signedState();
   ch.send({ type: 'broadcast', event: 'state', payload: { ...st, a: announce || '' } });
@@ -233,8 +269,15 @@ function buildLeaderUI() {
     mapId = b.dataset.m; pings = {}; order = []; lastNew = null;
     logLine(`지도 변경: ${MAPS[mapId].name}`); publish(`🗺️ ${MAPS[mapId].name}`);
   });
-  $('clock').innerHTML = DIRS.map((d) => `<button data-d="${d.id}" class="${d.id === sel ? 'on' : ''}">${d.id === 'c' ? '중앙' : d.id}</button>`).join('');
-  $('clock').querySelectorAll('button').forEach((b) => b.onclick = () => { sel = b.dataset.d; $('clock').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); drawDots(); });
+  $('clock').innerHTML = DIRS.map((d) => `<button data-d="${d.id}" class="${d.id === sel ? 'on' : ''}">${d.id}</button>`).join('');
+  $('clock').querySelectorAll('button').forEach((b) => b.onclick = () => selectDot(b.dataset.d));
+  $('bEdit').onclick = () => {
+    editing = !editing;
+    $('bEdit').classList.toggle('on', editing); $('bEdit').textContent = editing ? '✅ 위치 옮기기 끝' : '📍 지점 위치 옮기기';
+    $('bReset').hidden = $('editHint').hidden = !editing;
+    drawDots();
+  };
+  $('bReset').onclick = () => { layouts[mapId] = defLayout(); saveLayout(); logLine('지점 위치 기본으로'); publish(''); };
   document.querySelectorAll('.acts button').forEach((b) => b.onclick = () => command(b.dataset.a));
   $('emos').innerHTML = EMOS.map((e) => `<button data-e="${e}">${e}</button>`).join('');
   $('emos').querySelectorAll('button').forEach((b) => b.onclick = () => command('emo', b.dataset.e));
@@ -259,6 +302,7 @@ async function accept(st) {
   if (!ok || st.r <= lastRev) return false;
   lastRev = st.r;
   if (MAPS[st.m] && st.m !== mapId) { mapId = st.m; drawMap(); }
+  const l = validLayout(st.l); if (l && MAPS[st.m]) layouts[st.m] = l;
   const before = pings; pings = st.p || {}; order = st.o || [];
   lastNew = order.find((k) => JSON.stringify(before[k]) !== JSON.stringify(pings[k])) && order[order.length - 1];
   drawPings();
