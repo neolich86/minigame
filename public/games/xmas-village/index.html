@@ -32,12 +32,16 @@ body.cine .ui{opacity:0;pointer-events:none}
 .grid button img{width:100%;height:100%;object-fit:contain}
 .grid button.on{border-color:var(--gold);background:rgba(255,216,138,.16);box-shadow:0 0 14px rgba(255,216,138,.35)}
 .grid button.lock img{filter:brightness(.3) saturate(.2)}
-.grid button.lock::after{content:'🔒';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px}
+.grid button.lock::after{content:'🔒\A' attr(data-day) '일차';white-space:pre;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;font-weight:900;line-height:1.5;color:#fff;text-shadow:0 1px 3px #000}
 .wish textarea{margin-top:14px;width:100%;box-sizing:border-box;height:78px;resize:none;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.25);color:var(--ink);font:inherit;font-size:14px;padding:12px}
 .wish .cnt{text-align:right;font-size:11px;color:var(--sub);margin-top:-22px;margin-right:10px;position:relative;pointer-events:none}
-.wish .go{margin-top:16px;width:100%;border:0;border-radius:14px;padding:14px;font-weight:900;font-size:15px;background:linear-gradient(180deg,#fff0f2,#ffd6dc);color:#3a1a22}
+.wish .btns{display:flex;gap:8px;margin-top:12px}
+.wish .pv{flex:none;border:1px solid var(--line);border-radius:14px;padding:14px 14px;font-weight:900;font-size:14px;background:rgba(255,255,255,.08)}
+.wish .pv.on{background:rgba(255,216,138,.2);border-color:var(--gold)}
+.wish .att{margin-top:12px;font-size:12px;color:var(--sub);background:rgba(255,255,255,.05);border-radius:10px;padding:8px 10px;line-height:1.5}
+.wish .att b{color:var(--gold)}
+.wish .go{flex:1;border:0;border-radius:14px;padding:14px;font-weight:900;font-size:15px;background:linear-gradient(180deg,#fff0f2,#ffd6dc);color:#3a1a22}
 .wish .go:disabled{opacity:.5}
-.wishOpen{left:18px;top:calc(18px + env(safe-area-inset-top));border-radius:999px;padding:11px 16px;font-weight:900;font-size:14px;border:1px solid var(--line)}
 /* 미리보기 */
 .prev{right:18px;top:calc(18px + env(safe-area-inset-top));width:300px;height:300px;border-radius:22px;overflow:hidden}
 .prev canvas{width:100%;height:100%}
@@ -95,7 +99,6 @@ body.cine .cinehint{display:block}
   .chips{top:calc(10px + env(safe-area-inset-top));left:0;right:0;transform:none;max-width:none;padding:2px 12px}
   .chip{padding:7px 11px;font-size:12px}
   .wish{left:10px;right:10px;width:auto;top:auto;bottom:calc(10px + env(safe-area-inset-bottom));border-radius:22px;max-height:70vh;overflow:auto;z-index:8}
-  .wishOpen{top:calc(56px + env(safe-area-inset-top));left:12px}
   .prev{right:12px;top:calc(56px + env(safe-area-inset-top));width:150px;height:150px;border-radius:18px}
   .me{left:10px;bottom:calc(84px + env(safe-area-inset-bottom));padding:6px 14px 6px 6px}
   .me .av{width:44px;height:44px}.me b{font-size:13px}
@@ -113,13 +116,9 @@ body.cine .cinehint{display:block}
 </head>
 <body>
 <div class="ui chips">
-  <div class="chip glass" id="cLight">🎄 매일 오후 8시 점등식 <b id="lightLeft"></b></div>
-  <div class="chip glass" id="cGift">🎁 오늘의 선물 <b>0/6</b></div>
   <div class="chip glass" id="cToday">✨ 오늘의 소원</div>
-  <div class="chip glass" id="cAdvent">📅 어드벤트 <b id="dday"></b></div>
 </div>
 
-<button class="ui wishOpen glass" id="wishOpen" hidden>🎄 소원 걸기</button>
 <section class="ui wish glass" id="wish">
   <button class="x" id="wishClose" aria-label="접기">✕</button>
   <h2>소원을 걸어보세요</h2>
@@ -127,7 +126,8 @@ body.cine .cinehint{display:block}
   <div class="grid" id="grid"></div>
   <textarea id="wishText" maxlength="50" placeholder="소원을 적어주세요…"></textarea>
   <div class="cnt"><span id="wishCnt">0</span>/50</div>
-  <button class="go" id="wishGo">🎄 트리에 걸기</button>
+  <div class="att" id="att"></div>
+  <div class="btns"><button class="pv" id="wishPrev">👀 미리보기</button><button class="go" id="wishGo">🎄 트리에 걸기</button></div>
 </section>
 <div class="ui prev glass" id="prev"><canvas id="prevCv" width="600" height="600"></canvas><span class="tag">내 소원 미리보기</span></div>
 
@@ -140,7 +140,8 @@ body.cine .cinehint{display:block}
   <button data-e="wave">👋 손 흔들기</button><button data-e="jump">⛄ 폴짝</button><button data-e="spin">💃 빙글</button><button data-e="sit">🪵 앉기</button>
 </div>
 <nav class="ui menu glass">
-  <button id="mMove" class="on"><span>🚶</span>이동하기</button>
+  <button id="mWish"><span>🎄</span>소원 걸기</button>
+  <button id="mMove"><span>🚶</span>이동하기</button>
   <button id="mPlay"><span>🙂</span>놀기</button>
   <button id="mCine"><span>🌙</span>눈멍하기</button>
   <button id="mMsg"><span>💬</span>메시지 보기</button>
@@ -178,7 +179,7 @@ import { EffectComposer } from './vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from './vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from './vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from './vendor/jsm/postprocessing/OutputPass.js';
-import { buildVillage, walkable, SPAWN, FIRE, FENCE_R, TREE_H } from './village.js?v=cb3fb9a5';
+import { buildVillage, walkable, SPAWN, FIRE, FENCE_R, TREE_H } from './village.js?v=9aeb1498';
 import { ORNAMENTS, ORN, makeOrnament, ornamentThumbs } from './ornaments.js?v=46cfe367';
 import { makeSnowman, animateSnowman, nameTag, randomName, randomLook, HATS, COLORS, HOLDS } from './snowman.js?v=880e123d';
 
@@ -230,10 +231,21 @@ function snowThumb(look) { const s = makeSnowman(look); s.rotation.y = .3; thumb
 /* ───────── 소원 장식 고르기 · 미리보기 ───────── */
 let pick = 'star';
 const thumbs = ornamentThumbs(120);
-$('grid').innerHTML = ORNAMENTS.map((o) => `<button data-id="${o.id}" class="${o.open ? '' : 'lock'}${o.id === pick ? ' on' : ''}" title="${o.name}${o.open ? '' : ' (잠김)'}"><img src="${thumbs[o.id]}" alt="${o.name}"></button>`).join('');
+// 출석 보상: 마을에 들어온 날(한국 날짜) 수를 세어, 2일차부터 하루에 장식 하나씩 열린다 (빠진 날이 있어도 누적)
+const LOCKED = ORNAMENTS.filter((o) => !o.open); LOCKED.forEach((o, i) => { o.day = i + 2; });
+const visitDays = store.get('days', []); const today = kstDay();
+const newDay = !visitDays.includes(today); if (newDay) { visitDays.push(today); store.set('days', visitDays.slice(-60)); }
+const attDays = visitDays.length;
+const isOpen = (o) => o.open || attDays >= o.day;
+function drawAtt() {
+  const nxt = LOCKED.find((o) => attDays < o.day);
+  $('att').innerHTML = `📅 출석 <b>${attDays}일차</b>` + (nxt ? ` · 다음 보상: ${nxt.name} (${nxt.day}일차)` : ' · 모든 장식을 모았어요! 🎉');
+}
+drawAtt();
+$('grid').innerHTML = ORNAMENTS.map((o) => `<button data-id="${o.id}" data-day="${o.day || ''}" class="${isOpen(o) ? '' : 'lock'}${o.id === pick ? ' on' : ''}" title="${o.name}${isOpen(o) ? '' : ` (출석 ${o.day}일차)`}"><img src="${thumbs[o.id]}" alt="${o.name}"></button>`).join('');
 $('grid').querySelectorAll('button').forEach((b) => b.onclick = () => {
   const o = ORN[b.dataset.id];
-  if (!o.open) return toast(`🔒 ${o.name}은(는) 오늘의 선물·어드벤트에서 얻을 수 있어요 (준비 중)`);
+  if (!isOpen(o)) return toast(`🔒 ${o.name} 장식은 출석 ${o.day}일차에 열려요 (지금 ${attDays}일차)`);
   pick = o.id; $('grid').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); drawPrev();
 });
 $('wishText').oninput = () => { $('wishCnt').textContent = $('wishText').value.length; drawPrev(); };
@@ -256,13 +268,15 @@ function drawPrev() {
 }
 document.fonts && document.fonts.load('40px "Nanum Pen Script"').then(drawPrev);
 drawPrev();
+function setPrev(on) { $('prev').hidden = !on; $('wishPrev').classList.toggle('on', on); if (on) drawPrev(); }
 function setPanel(open) {
-  $('wish').hidden = !open; $('prev').hidden = !open; $('wishOpen').hidden = open;
+  $('wish').hidden = !open; $('mWish').classList.toggle('on', open); if (!open) setPrev(false);
   document.body.classList.toggle('panel', open && MOBILE);
 }
 $('wishClose').onclick = () => setPanel(false);
-$('wishOpen').onclick = () => setPanel(true);
-setPanel(!MOBILE);
+$('mWish').onclick = () => setPanel($('wish').hidden);
+$('wishPrev').onclick = () => setPrev($('prev').hidden);
+setPanel(false);
 
 /* ───────── 트리에 장식 걸기 ───────── */
 const hung = []; // { obj, slot, ph }
@@ -345,10 +359,7 @@ function exitCine() { mode = 'walk'; document.body.classList.remove('cine'); }
 $('mCine').onclick = enterCine;
 el.addEventListener('pointerdown', () => { if (mode === 'cine') setTimeout(exitCine, 0); });
 $('mMsg').onclick = () => toast('💬 모두의 소원 목록은 곧 열려요');
-$('cGift').onclick = () => toast('🎁 마을 곳곳에 숨은 선물 상자 — 곧 열려요');
 $('cToday').onclick = () => toast('✨ 어제 ❤️를 가장 많이 받은 소원이 여기 떠요 — 곧 열려요');
-$('cAdvent').onclick = () => toast('📅 12월 1일부터 매일 어드벤트 달력 한 칸이 열려요');
-$('cLight').onclick = () => toast('🎄 매일 오후 8시, 트리 점등식이 열려요');
 $('mShot').onclick = () => {
   composer.render();
   const src = renderer.domElement, c = document.createElement('canvas'); c.width = src.width; c.height = src.height; const x = c.getContext('2d');
@@ -414,17 +425,7 @@ $('bSound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); $
 const first = () => { if (soundOn) startSound(); removeEventListener('pointerdown', first, true); removeEventListener('keydown', first, true); };
 addEventListener('pointerdown', first, true); addEventListener('keydown', first, true);
 
-/* ───────── 상단 칩: 점등식 · 어드벤트 (한국 시간) ───────── */
-function kstNow() { const d = new Date(); return new Date(d.getTime() + (d.getTimezoneOffset() + 540) * 60000); }
-function tickChips() {
-  const k = kstNow(), mins = k.getHours() * 60 + k.getMinutes();
-  let left = 20 * 60 - mins; if (left < -10) left += 1440;
-  $('lightLeft').textContent = left <= 0 ? '진행 중!' : left < 60 ? `${left}분 후` : '';
-  const xmas = new Date(k.getFullYear(), 11, 25); if (k > new Date(k.getFullYear(), 11, 25, 23, 59)) xmas.setFullYear(k.getFullYear() + 1);
-  const dd = Math.ceil((xmas - new Date(k.getFullYear(), k.getMonth(), k.getDate())) / 86400000);
-  $('dday').textContent = dd === 0 ? 'Merry Christmas!' : `D-${dd}`;
-}
-tickChips(); setInterval(tickChips, 30000);
+function kstDay() { const d = new Date(Date.now() + 540 * 60000); return d.toISOString().slice(0, 10); }
 
 /* ───────── 함께 있는 사람들 (Supabase Realtime) ───────── */
 let net = null; const remotes = new Map();
@@ -475,6 +476,8 @@ villageReady.then(() => {
   buildMe(); joinPresence();
   const it = $('intro'); it.style.opacity = 0; setTimeout(() => it.remove(), 1000);
   document.body.classList.add('in'); window.__ready = true;
+  const got = LOCKED.find((o) => o.day === attDays);
+  if (newDay && got) setTimeout(() => toast(`🎁 출석 ${attDays}일차 보상! 「${got.name}」 장식을 받았어요`, 5000), 1500);
   if (COARSE) $('hint').textContent = '조이스틱이나 바닥을 눌러 걸어요 · 끌어서 둘러보기';
 }).catch((e) => { console.error(e); document.querySelector('.intro p').textContent = '마을을 불러오지 못했어요. 새로고침해 주세요.'; });
 

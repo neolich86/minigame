@@ -28,6 +28,17 @@ export function buildSky(scene) {
       float neb = fbm(d*6.)*fbm(d*13.+3.);
       col += band*(vec3(.32,.28,.46)*neb*1.7 + vec3(.06,.05,.1));
       col -= band*vec3(.05)*smoothstep(.45,.7,fbm(d*9.+7.));
+      // 녹색 오로라: 북쪽(-z) 하늘에 일렁이는 커튼
+      float az = atan(d.x, -d.z);
+      float base = .16 + .07*sin(az*2.3 + t*.04) + .04*sin(az*5.1 - t*.07);
+      float hgt = y - base;
+      float curtain = smoothstep(-.015, .03, hgt) * exp(-max(hgt,0.)*5.5);
+      float streak = .35 + .65*pow(n(vec3(az*38., t*.25, 1.)), 2.);
+      float wave = .5 + .5*fbm(vec3(az*4. + t*.03, hgt*3., t*.02));
+      float side = smoothstep(.15, -.45, d.z);
+      float aur = curtain * streak * wave * side;
+      col += aur * mix(vec3(.08,.95,.45), vec3(.35,.25,.85), smoothstep(.05,.3,hgt)) * .85;
+      col += side * exp(-abs(hgt)*14.) * vec3(.02,.12,.06) * wave;
       vec3 g = d*420.; vec3 c = floor(g); float r = h(c);
       float star = step(.984 - band*.025, r) * smoothstep(.55,.0,length(fract(g)-.5));
       col += star*(.55+.45*sin(t*2.2+r*90.))*mix(vec3(.8,.85,1.),vec3(1.,.9,.75),h(c+1.))*1.6*smoothstep(-.02,.12,y);
