@@ -108,10 +108,19 @@ body.cine .cinehint{display:block}
   .right button{height:44px;padding:0 12px;font-size:13px}.right .sq{width:44px}
   .right .fs{display:none}
   .hint{bottom:calc(150px + env(safe-area-inset-bottom));font-size:11.5px}
-  .pop{bottom:calc(84px + env(safe-area-inset-bottom))}
-  .joy{bottom:calc(150px + env(safe-area-inset-bottom))}
+  .pop{bottom:calc(144px + env(safe-area-inset-bottom));max-width:calc(100vw - 20px)}
+  .pop button{padding:10px 11px}
+  .joy{bottom:calc(160px + env(safe-area-inset-bottom))}
+  body.popopen .joy,body.popopen .hint{opacity:0;pointer-events:none}
+  .me{max-width:calc(100vw - 150px);box-sizing:border-box}
+  .me>div:last-child{min-width:0}
+  .me b,.me small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .right .lbl{display:none}
+  .right #bTree{width:44px;padding:0;justify-content:center;font-size:18px}
   body.panel .me,body.panel .right,body.panel .joy,body.panel .menu{opacity:0;pointer-events:none}
 }
+@media (max-width:760px){.menu button{white-space:nowrap}}
+@media (max-width:380px){.menu{padding:5px}.menu button{font-size:10px;padding:7px 1px;letter-spacing:-.3px}.menu button span{font-size:17px}}
 </style>
 </head>
 <body>
@@ -137,7 +146,7 @@ body.cine .cinehint{display:block}
 </div>
 <div class="ui hint" id="hint">방향키 또는 바닥을 클릭해서 걸어요 · 드래그로 둘러보기 (위로 끌면 하늘)</div>
 <div class="ui pop glass" id="playPop">
-  <button data-e="wave">👋 손 흔들기</button><button data-e="jump">⛄ 폴짝</button><button data-e="spin">💃 빙글</button><button data-e="sit">🪵 앉기</button>
+  <button data-e="wave">👋 손 흔들기</button><button data-e="jump">⛄ 폴짝</button><button data-e="sit">🪵 앉기</button>
 </div>
 <nav class="ui menu glass">
   <button id="mWish"><span>🎄</span>소원 걸기</button>
@@ -148,7 +157,7 @@ body.cine .cinehint{display:block}
   <button id="mShot"><span>📷</span>사진찍기</button>
 </nav>
 <div class="ui right">
-  <button class="glass" id="bTree">📍 트리로 가기</button>
+  <button class="glass" id="bTree" title="트리로 가기">📍<span class="lbl"> 트리로 가기</span></button>
   <button class="glass sq" id="bSound">🔈</button>
   <button class="glass sq fs" id="bFull">⛶</button>
 </div>
@@ -338,7 +347,7 @@ const keys = {}, joy = { x: 0, y: 0 };
 const el = renderer.domElement; let drag = null;
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), gPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const marker = new THREE.Mesh(new THREE.RingGeometry(.35, .5, 24), new THREE.MeshBasicMaterial({ color: 0xffe2a0, transparent: true, opacity: 0, depthWrite: false })); marker.rotation.x = -Math.PI / 2; marker.position.y = .05; scene.add(marker);
-el.addEventListener('pointerdown', (e) => { if (mode === 'cine') return; drag = { x: e.clientX, y: e.clientY, yaw: tYaw, pitch: tPitch, moved: false }; el.setPointerCapture(e.pointerId); $('playPop').classList.remove('show'); $('mPlay').classList.remove('on'); });
+el.addEventListener('pointerdown', (e) => { if (mode === 'cine') return; drag = { x: e.clientX, y: e.clientY, yaw: tYaw, pitch: tPitch, moved: false }; el.setPointerCapture(e.pointerId); setPop(false); });
 el.addEventListener('pointermove', (e) => {
   if (!drag) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
@@ -367,8 +376,9 @@ function lookAtPoint(p) { tYaw = Math.atan2(me.x - p.x, me.z - p.z); tPitch = .3
 /* 하단 메뉴 */
 $('mMove').onclick = () => { $('hint').style.opacity = 1; clearTimeout(hintT); hintT = setTimeout(() => $('hint').style.opacity = 0, 5000); };
 let hintT = setTimeout(() => $('hint').style.opacity = 0, 9000);
-$('mPlay').onclick = () => { const s = $('playPop').classList.toggle('show'); $('mPlay').classList.toggle('on', s); };
-$('playPop').querySelectorAll('button').forEach((b) => b.onclick = () => { $('playPop').classList.remove('show'); $('mPlay').classList.remove('on'); doEmote(b.dataset.e); });
+function setPop(on) { $('playPop').classList.toggle('show', on); $('mPlay').classList.toggle('on', on); document.body.classList.toggle('popopen', on); }
+$('mPlay').onclick = () => setPop(!$('playPop').classList.contains('show'));
+$('playPop').querySelectorAll('button').forEach((b) => b.onclick = () => { setPop(false); doEmote(b.dataset.e); });
 function doEmote(e) {
   if (e === 'sit') return sitNear();
   me.emote = e; me.emoteT = performance.now(); sendEmote(e);
@@ -379,7 +389,7 @@ function sitNear() {
   best.taken = 'me'; me.sitting = best; me.x = best.x; me.z = best.z; me.f = best.f; moveTarget = null; netNow();
 }
 function standUp() { if (me.sitting) { me.sitting.taken = null; me.sitting = null; netNow(); } }
-function enterCine() { mode = 'cine'; document.body.classList.add('cine'); $('playPop').classList.remove('show'); }
+function enterCine() { mode = 'cine'; document.body.classList.add('cine'); setPop(false); }
 function exitCine() { mode = 'walk'; document.body.classList.remove('cine'); }
 $('mCine').onclick = enterCine;
 el.addEventListener('pointerdown', () => { if (mode === 'cine') setTimeout(exitCine, 0); });
