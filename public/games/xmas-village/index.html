@@ -135,7 +135,7 @@ body.cine .cinehint{display:block}
   <div class="av"><img id="meImg" alt=""><button id="bDeco">꾸미기</button></div>
   <div><b id="meName"></b><small><i></i>지금 <span id="ppl">1</span>명이 함께 있어요</small></div>
 </div>
-<div class="ui hint" id="hint">방향키 또는 바닥을 클릭해서 걸어요 · 드래그로 둘러보기</div>
+<div class="ui hint" id="hint">방향키 또는 바닥을 클릭해서 걸어요 · 드래그로 둘러보기 (위로 끌면 하늘)</div>
 <div class="ui pop glass" id="playPop">
   <button data-e="wave">👋 손 흔들기</button><button data-e="jump">⛄ 폴짝</button><button data-e="spin">💃 빙글</button><button data-e="sit">🪵 앉기</button>
 </div>
@@ -343,7 +343,7 @@ el.addEventListener('pointermove', (e) => {
   if (!drag) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
   if (Math.hypot(dx, dy) > 6) drag.moved = true;
-  if (drag.moved) { tYaw = drag.yaw - dx * .005; tPitch = Math.max(.08, Math.min(1.25, drag.pitch + dy * .004)); glanceUntil = 0; }
+  if (drag.moved) { tYaw = drag.yaw - dx * .005; tPitch = Math.max(-1.45, Math.min(1.25, drag.pitch + dy * .004)); glanceUntil = 0; }
 });
 el.addEventListener('pointerup', (e) => {
   if (drag && !drag.moved && mode === 'walk') { // 바닥을 눌러 걷기
@@ -352,7 +352,7 @@ el.addEventListener('pointerup', (e) => {
   }
   drag = null;
 });
-el.addEventListener('wheel', (e) => { tDist = Math.max(4, Math.min(22, tDist + e.deltaY * .01)); }, { passive: true });
+el.addEventListener('wheel', (e) => { tDist = Math.max(4, Math.min(30, tDist + e.deltaY * .01)); }, { passive: true });
 addEventListener('keydown', (e) => { if (/INPUT|TEXTAREA/.test(e.target.tagName)) return; const k = e.key.toLowerCase(); keys[k] = true; if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) { e.preventDefault(); moveTarget = null; standUp(); } if (mode === 'cine') exitCine(); });
 addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
@@ -503,7 +503,7 @@ villageReady.then(() => {
   document.body.classList.add('in'); window.__ready = true;
   const got = LOCKED.find((o) => o.day === attDays);
   if (newDay && got) setTimeout(() => toast(`🎁 출석 ${attDays}일차 보상! 「${got.name}」 장식을 받았어요`, 5000), 1500);
-  if (COARSE) $('hint').textContent = '조이스틱이나 바닥을 눌러 걸어요 · 끌어서 둘러보기';
+  if (COARSE) $('hint').textContent = '조이스틱이나 바닥을 눌러 걸어요 · 끌어서 둘러보기 (위로 끌면 하늘)';
 }).catch((e) => { console.error(e); document.querySelector('.intro p').textContent = '마을을 불러오지 못했어요. 새로고침해 주세요.'; });
 
 /* ───────── 그리기 ───────── */
@@ -556,8 +556,11 @@ function frame() {
   } else if (me.root) {
     yaw += (tYaw - yaw) * Math.min(1, dt * 5); pitch += (tPitch - pitch) * Math.min(1, dt * 5); dist += (tDist - dist) * Math.min(1, dt * 5);
     tgt.set(me.x, 1.6, me.z);
-    camPos.set(me.x + Math.sin(yaw) * Math.cos(pitch) * dist, 1.3 + Math.sin(pitch) * dist, me.z + Math.cos(yaw) * Math.cos(pitch) * dist);
-    camera.position.lerp(camPos, Math.min(1, dt * 6)); camera.lookAt(tgt.x, tgt.y + 1.2, tgt.z);
+    // 아래로 끌면 내려다보고, 위로 끌면 카메라가 눈 바닥까지 내려가 하늘을 올려다본다
+    const cp = Math.cos(pitch), dx = -Math.sin(yaw) * cp, dy = -Math.sin(pitch), dz = -Math.cos(yaw) * cp;
+    camPos.set(me.x - dx * dist, 2.8 - dy * dist, me.z - dz * dist);
+    if (camPos.y < .45) { const k = (2.8 - .45) / Math.max(.001, dy); camPos.set(me.x - dx * Math.min(dist, k), .45, me.z - dz * Math.min(dist, k)); }
+    camera.position.lerp(camPos, Math.min(1, dt * 6)); camera.lookAt(camera.position.x + dx, camera.position.y + dy, camera.position.z + dz);
   } else { const a = t * .05; camera.position.set(Math.sin(a) * 40, 12, Math.cos(a) * 40); camera.lookAt(0, 8, 0); }
   composer.render();
   requestAnimationFrame(frame);
