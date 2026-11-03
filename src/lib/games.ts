@@ -245,6 +245,7 @@ const CATALOG: Game[] = [
     genre: "casual",
     thumb: "/thumbs/xmas-village.jpg",
     src: "/games/xmas-village/index.html",
+    saves: true, // 로그인 상태 전달 + MGH.rpc (소원 저장·하트·출석)
   },
   {
     id: "explore-map",
