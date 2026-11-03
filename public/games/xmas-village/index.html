@@ -122,7 +122,8 @@ body.cine .cinehint{display:block}
 @media (max-width:760px){
   .chips{top:calc(10px + env(safe-area-inset-top));left:0;right:0;transform:none;max-width:none;padding:2px 12px}
   .chip{padding:7px 11px;font-size:12px}
-  .wish{left:10px;right:10px;width:auto;top:auto;bottom:calc(10px + env(safe-area-inset-bottom));border-radius:22px;max-height:70vh;overflow:auto;z-index:8}
+  .wish .x{position:sticky;top:0;float:right;margin:-6px -6px 0 0;z-index:2;background:rgba(40,46,80,.9)}
+  .wish{left:10px;right:10px;width:auto;top:auto;bottom:calc(10px + env(safe-area-inset-bottom));border-radius:22px;max-height:64vh;overflow:auto;z-index:8}
   .prev{right:12px;top:calc(56px + env(safe-area-inset-top));width:150px;height:150px;border-radius:18px}
   .me{left:10px;bottom:calc(84px + env(safe-area-inset-bottom));padding:6px 14px 6px 6px}
   .me .av{width:44px;height:44px}.me b{font-size:13px}
@@ -474,6 +475,8 @@ el.addEventListener('pointermove', (e) => {
   if (drag.moved) { tYaw = drag.yaw - dx * .005; tPitch = Math.max(-1.45, Math.min(1.25, drag.pitch + dy * .004)); glanceUntil = 0; }
 });
 el.addEventListener('pointerup', (e) => {
+  // 소원 쓰는 중에 바탕(마을)을 누르면 패널을 닫는다
+  if (drag && !drag.moved && !$('wish').hidden) { setPanel(false); drag = null; return; }
   if (drag && !drag.moved && mode === 'walk') { // 장식을 누르면 소원 읽기, 바닥을 누르면 걷기
     ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
     const hit = ray.intersectObjects(hitList, false)[0];
