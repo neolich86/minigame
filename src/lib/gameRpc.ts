@@ -17,4 +17,5 @@ export const GAME_RPC: Record<string, readonly string[]> = {
     "dn_unblock_all",
   ],
   "card-dex": ["cd_my_cards", "cd_add_card", "cd_update_card", "cd_delete_card", "cd_share", "cd_get_share", "cd_set_image"],
+  "xmas-village": ["xv_tree", "xv_wish", "xv_list", "xv_today", "xv_add", "xv_heart", "xv_report", "xv_delete", "xv_checkin"],
 };

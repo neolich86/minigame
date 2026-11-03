@@ -84,6 +84,30 @@ body.cine .ui{opacity:0;pointer-events:none}
 .opts .sw{width:30px;height:30px;padding:0;border-radius:50%}
 .modal .row{display:flex;gap:8px;margin-top:18px}
 .modal .row button{flex:1;border:0;border-radius:12px;padding:12px;font-weight:900}
+/* 소원 카드 · 목록 · 로그인 */
+#wcard{z-index:24}#loginBox{z-index:26}
+.wcard canvas{width:100%;aspect-ratio:1;border-radius:16px;display:block}
+.wcard .who{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:13px;color:var(--sub)}
+.wcard .who b{color:var(--ink);font-size:14px}
+.wcard .acts{display:flex;gap:8px;margin-top:12px}
+.wcard .acts button{flex:1;border:1px solid var(--line);background:rgba(255,255,255,.06);border-radius:12px;padding:11px 6px;font-weight:900;font-size:14px}
+.wcard .acts .heart.on{background:rgba(255,120,140,.2);border-color:#ff8fa0;color:#ffd6dc}
+.wcard .acts .close{background:#ffd6dc;color:#3a1a22;border:0}
+.msgs .box{width:min(520px,calc(100vw - 20px));height:min(680px,calc(100vh - 40px));display:flex;flex-direction:column}
+.msgs .tabs{display:flex;gap:6px;margin-bottom:10px}
+.msgs .tabs button{flex:1;border:1px solid var(--line);background:rgba(255,255,255,.05);border-radius:12px;padding:9px;font-weight:900;font-size:13px}
+.msgs .tabs button.on{background:rgba(255,216,138,.18);border-color:var(--gold);color:var(--gold)}
+.msgs .list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-right:2px}
+.msgs .it{display:flex;gap:10px;align-items:center;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;padding:8px 10px;text-align:left;width:100%}
+.msgs .it img{width:44px;height:44px;flex:none}
+.msgs .it .tx{flex:1;min-width:0}
+.msgs .it .tx b{display:block;font-family:"Nanum Pen Script",cursive;font-size:21px;font-weight:400;line-height:1.15;word-break:break-all}
+.msgs .it .tx small{color:var(--sub);font-size:11.5px}
+.msgs .it .hc{flex:none;font-size:12px;color:#ffb3c0;font-weight:800}
+.msgs .empty{color:var(--sub);text-align:center;padding:40px 10px;font-size:14px;line-height:1.6}
+.msgs .more{margin-top:8px;border:1px solid var(--line);background:rgba(255,255,255,.06);border-radius:12px;padding:10px;font-weight:800}
+.login p{color:var(--sub);font-size:14px;line-height:1.6;margin:0 0 14px}
+.login .lb{display:block;width:100%;border:0;border-radius:12px;padding:13px;font-weight:900;font-size:15px;margin-top:8px}
 .intro{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#1a2050,#050814);transition:opacity 1s}
 .intro .box{text-align:center;padding:24px}
 .intro h1{font-size:30px;margin:0 0 10px}
@@ -177,6 +201,25 @@ body.cine .cinehint{display:block}
   <div class="row"><button id="dCancel" style="background:rgba(255,255,255,.1)">닫기</button><button id="dSave" style="background:#ffd6dc;color:#3a1a22">저장</button></div>
 </div></div>
 
+<div class="modal" id="wcard"><div class="box glass wcard">
+  <canvas id="wcCv" width="600" height="600"></canvas>
+  <div class="who"><b id="wcNick"></b><span id="wcDate"></span></div>
+  <div class="acts"><button class="heart" id="wcHeart">🤍 0</button><button id="wcMore">🚩 신고</button><button class="close" id="wcClose">닫기</button></div>
+</div></div>
+<div class="modal msgs" id="msgs"><div class="box glass">
+  <h3>💬 모두의 소원</h3>
+  <div class="tabs"><button data-s="new" class="on">최신</button><button data-s="top">❤️ 인기</button><button data-s="mine">내 소원</button></div>
+  <div class="list" id="msgList"></div>
+  <div class="row"><button id="msgClose" style="background:rgba(255,255,255,.1)">닫기</button></div>
+</div></div>
+<div class="modal login" id="loginBox"><div class="box glass">
+  <h3>🎄 로그인하고 소원을 걸어요</h3>
+  <p>소원 걸기 · ❤️ · 신고는 로그인한 사람만 할 수 있어요.<br>마을 구경과 소원 읽기는 로그인 없이도 돼요.</p>
+  <button class="lb" id="lgK" style="background:#fee500;color:#191600">카카오로 로그인</button>
+  <button class="lb" id="lgG" style="background:#fff;color:#222">Google로 로그인</button>
+  <button class="lb" id="lgE" style="background:rgba(255,255,255,.12)">이메일로 로그인</button>
+  <div class="row"><button id="lgClose" style="background:rgba(255,255,255,.08)">닫기</button></div>
+</div></div>
 <div class="intro" id="intro"><div class="box"><h1>🎄 크리스마스 소원 마을</h1><p>눈 내리는 마을을 짓고 있어요…</p><div class="bar"><i id="bar"></i></div></div></div>
 
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
@@ -244,36 +287,40 @@ const thumbs = ornamentThumbs(120);
 const LOCKED = ORNAMENTS.filter((o) => !o.open); LOCKED.forEach((o, i) => { o.day = i + 2; });
 const visitDays = store.get('days', []); const today = kstDay();
 const newDay = !visitDays.includes(today); if (newDay) { visitDays.push(today); store.set('days', visitDays.slice(-60)); }
-const attDays = visitDays.length;
+let attDays = visitDays.length;
 const isOpen = (o) => o.open || attDays >= o.day;
 function drawAtt() {
   const nxt = LOCKED.find((o) => attDays < o.day);
   $('att').innerHTML = `📅 출석 <b>${attDays}일차</b>` + (nxt ? ` · 다음 보상: ${nxt.name} (${nxt.day}일차)` : ' · 모든 장식을 모았어요! 🎉');
 }
 drawAtt();
+function drawGrid() {
 $('grid').innerHTML = ORNAMENTS.map((o) => `<button data-id="${o.id}" data-day="${o.day || ''}" class="${isOpen(o) ? '' : 'lock'}${o.id === pick ? ' on' : ''}" title="${o.name}${isOpen(o) ? '' : ` (출석 ${o.day}일차)`}"><img src="${thumbs[o.id]}" alt="${o.name}"></button>`).join('');
 $('grid').querySelectorAll('button').forEach((b) => b.onclick = () => {
   const o = ORN[b.dataset.id];
   if (!isOpen(o)) return toast(`🔒 ${o.name} 장식은 출석 ${o.day}일차에 열려요 (지금 ${attDays}일차)`);
   pick = o.id; $('grid').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); drawPrev();
 });
+}
+drawGrid();
 $('wishText').oninput = () => { $('wishCnt').textContent = $('wishText').value.length; drawPrev(); };
 const prevImg = {}; for (const o of ORNAMENTS) { const i = new Image(); i.src = thumbs[o.id]; prevImg[o.id] = i; }
 const bokeh = Array.from({ length: 22 }, () => [Math.random() * 600, Math.random() * 600, 12 + Math.random() * 40, .08 + Math.random() * .25]);
-function drawPrev() {
-  const c = $('prevCv'), x = c.getContext('2d');
+function drawPrev() { const t = $('wishText').value.trim(); drawCard($('prevCv'), pick, t || '소원을 적어주세요', !!t); }
+// 장식 + 소원 글씨 그림 (미리보기 · 소원 카드 공용)
+function drawCard(c, orn, t, typed) {
+  const x = c.getContext('2d');
   const g = x.createLinearGradient(0, 0, 0, 600); g.addColorStop(0, '#1d3b2c'); g.addColorStop(1, '#0c1a14'); x.fillStyle = g; x.fillRect(0, 0, 600, 600);
   x.strokeStyle = 'rgba(40,80,50,.9)'; x.lineWidth = 26; x.beginPath(); x.moveTo(-40, 120); x.quadraticCurveTo(300, 40, 640, 140); x.stroke();
   for (const [bx, by, r, a] of bokeh) { const rg = x.createRadialGradient(bx, by, 0, bx, by, r); rg.addColorStop(0, `rgba(255,220,150,${a})`); rg.addColorStop(1, 'rgba(255,220,150,0)'); x.fillStyle = rg; x.beginPath(); x.arc(bx, by, r, 0, 7); x.fill(); }
   x.strokeStyle = '#d8b060'; x.lineWidth = 3; x.beginPath(); x.moveTo(300, 70); x.lineTo(300, 140); x.stroke();
   // 글씨 쓸 면이 넓은 장식은 장식 위에, 좁거나 복잡한 장식은 아래에 매단 종이 꼬리표에 쓴다
   const SURFACE = { star: [330, 220], gold: [335, 220], heart: [300, 250], ball: [325, 270] };
-  const typed = $('wishText').value.trim(), t = typed || '소원을 적어주세요';
   const wrap = (maxW) => { const out = []; let cur = ''; for (const ch of t) { if (x.measureText(cur + ch).width > maxW) { out.push(cur); cur = ch; } else cur += ch; } out.push(cur); return out; };
   // 50자까지 다 들어가도록 글씨 크기를 줄여 가며 맞춘다
   const fit = (big, small, maxW, maxLines) => { let sz = big, lines; for (; sz >= small; sz -= 2) { x.font = `${sz}px "Nanum Pen Script", cursive`; lines = wrap(maxW); if (lines.length <= maxLines) break; } return { sz: Math.max(sz, small), lines: lines.slice(0, maxLines) }; };
-  const im = prevImg[pick]; const draw = () => {
-    const surf = SURFACE[pick];
+  const im = prevImg[orn] || prevImg.star; const draw = () => {
+    const surf = SURFACE[orn];
     x.textAlign = 'center'; x.textBaseline = 'middle';
     if (surf) {
       x.save(); x.shadowColor = 'rgba(255,220,140,.9)'; x.shadowBlur = 60; x.drawImage(im, 60, 90, 480, 480); x.restore();
@@ -300,7 +347,7 @@ function drawPrev() {
   };
   im.complete ? draw() : (im.onload = draw);
 }
-document.fonts && document.fonts.load('40px "Nanum Pen Script"').then(drawPrev);
+document.fonts && document.fonts.load('40px "Nanum Pen Script"').then(() => { drawPrev(); if (cardWish) drawCard($('wcCv'), cardWish.ornament, cardWish.text, true); });
 drawPrev();
 function setPrev(on) { $('prev').hidden = !on; $('wishPrev').classList.toggle('on', on); if (on) drawPrev(); }
 function setPanel(open) {
@@ -315,26 +362,98 @@ setPanel(false);
 /* ───────── 트리에 장식 걸기 ───────── */
 const hung = []; // { obj, slot, ph }
 let slotNext = 0;
-function hang(id, color, glow = 1.1, pop = false) {
+const hitList = [], wishes = new Map(); // id → { w, obj }
+const hitGeo = new THREE.SphereGeometry(1.1, 8, 6), hitMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false });
+function hang(id, color, glow = 1.1, pop = false, wish = null) {
   const s = V.slots[slotNext++ % V.slots.length];
   const o = makeOrnament(id, color, glow);
+  if (wish) { const hb = new THREE.Mesh(hitGeo, hitMat); hb.position.y = -.45; hb.userData.wish = wish.id; o.add(hb); hitList.push(hb); wishes.set(wish.id, { w: wish, obj: o }); }
   const sc = .5 + Math.random() * .12; o.scale.setScalar(pop ? .01 : sc);
   o.position.set(s.x, s.y, s.z); o.rotation.y = Math.atan2(s.x, s.z);
   scene.add(o); hung.push({ obj: o, slot: s, ph: Math.random() * 10, sc, born: pop ? performance.now() : 0 });
   return o;
 }
+/* ───────── 서버 (MGH.rpc) ───────── */
+const CLOUD = !!(window.MGH && MGH.embedded && MGH.rpc);
+const rpc = (n, p) => MGH.rpc(n, p || {});
+const authed = () => !!(CLOUD && MGH.save && MGH.save.user && MGH.save.user());
+const ERR = { daily_limit: '소원은 하루에 3개까지 걸 수 있어요', no_links: '링크나 연락처는 적을 수 없어요', bad_words: '고운 말로 적어 주세요 🙏', bad_length: '소원은 1~50자로 적어 주세요' };
+function errMsg(e) { const m = String((e && e.message) || e || ''); for (const k in ERR) if (m.includes(k)) return ERR[k]; if (/not_authenticated/.test(m)) return '로그인이 필요해요'; return '잠시 후 다시 시도해 주세요'; }
+function needLogin() { if (!CLOUD) { toast('playwithme.kr 에서 열면 소원을 걸 수 있어요'); return true; } if (authed()) return false; $('loginBox').classList.add('show'); return true; }
+$('lgK').onclick = () => MGH.save.login('kakao'); $('lgG').onclick = () => MGH.save.login('google'); $('lgE').onclick = () => MGH.save.login('page');
+$('lgClose').onclick = () => $('loginBox').classList.remove('show');
+function hangWish(w, pop) { if (!w || wishes.has(w.id)) return null; return hang(w.ornament, null, pop ? 1.6 : 1.1 + Math.random() * .5, pop, w); }
+
 $('wishGo').onclick = async () => {
   const t = $('wishText').value.trim();
   if (!t) { toast('소원을 먼저 적어주세요'); $('wishText').focus(); return; }
   if (/(https?:|www\.|\.com|\.kr|\d{2,4}[-\s]?\d{3,4}[-\s]?\d{4})/i.test(t)) { toast('링크나 연락처는 적을 수 없어요'); return; }
-  if (!V) return;
-  const o = hang(pick, null, 1.6, true);
-  $('wishText').value = ''; $('wishCnt').textContent = 0; drawPrev();
-  if (MOBILE) setPanel(false);
-  lookAtPoint(o.position);
-  toast('✨ 소원을 걸었어요! (미리보기 · 곧 모두에게 보여요)', 4200);
-  burst(o.position);
+  if (!V || needLogin()) return;
+  $('wishGo').disabled = true;
+  try {
+    const w = await rpc('xv_add', { p_text: t, p_ornament: pick, p_nick: myName });
+    const o = hangWish(w, true);
+    if (net && net.ready) net.ch.send({ type: 'broadcast', event: 'wish', payload: { id: w.id } });
+    $('wishText').value = ''; $('wishCnt').textContent = 0; drawPrev();
+    if (MOBILE) setPanel(false);
+    if (o) { lookAtPoint(o.position); burst(o.position); }
+    toast('✨ 트리에 소원을 걸었어요! 장식을 누르면 다시 볼 수 있어요', 4200);
+  } catch (e) { toast(errMsg(e)); }
+  $('wishGo').disabled = false;
 };
+
+/* ───────── 소원 카드 (장식 누르기 · 목록에서 열기) ───────── */
+let cardWish = null;
+const fmtDate = (iso) => { const d = new Date(iso), s = (Date.now() - d) / 1000; if (s < 60) return '방금'; if (s < 3600) return `${Math.floor(s / 60)}분 전`; if (s < 86400) return `${Math.floor(s / 3600)}시간 전`; return `${d.getMonth() + 1}월 ${d.getDate()}일`; };
+function openWish(w) {
+  cardWish = w; drawCard($('wcCv'), w.ornament, w.text, true);
+  $('wcNick').textContent = `⛄ ${w.nick || '눈사람'}`; $('wcDate').textContent = fmtDate(w.created_at);
+  drawHeart(); $('wcMore').textContent = w.mine ? '🗑 지우기' : '🚩 신고'; delete $('wcMore').dataset.sure;
+  $('wcard').classList.add('show');
+}
+function drawHeart() { const w = cardWish; $('wcHeart').textContent = `${w.liked ? '❤️' : '🤍'} ${w.hearts}`; $('wcHeart').classList.toggle('on', !!w.liked); }
+$('wcClose').onclick = () => $('wcard').classList.remove('show');
+$('wcard').onclick = (e) => { if (e.target === $('wcard')) $('wcard').classList.remove('show'); };
+$('wcHeart').onclick = async () => {
+  if (needLogin()) return; const w = cardWish;
+  try { const r = await rpc('xv_heart', { p_id: w.id }); w.liked = r.liked; w.hearts = r.hearts; drawHeart(); syncWish(w); const hc = $('msgList').querySelector(`[data-id="${w.id}"] .hc`); if (hc) hc.textContent = `${w.liked ? '❤️' : '🤍'} ${w.hearts}`; if (r.liked) toast('❤️ 마음을 보냈어요'); } catch (e) { toast(errMsg(e)); }
+};
+$('wcMore').onclick = async () => {
+  if (needLogin()) return; const w = cardWish, b = $('wcMore');
+  if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = w.mine ? '정말 지울까요?' : '정말 신고할까요?'; return; }
+  try {
+    if (w.mine) { await rpc('xv_delete', { p_id: w.id }); unhang(w.id); toast('소원을 지웠어요'); }
+    else { await rpc('xv_report', { p_id: w.id }); toast('신고했어요. 여러 명이 신고하면 숨겨져요'); }
+    $('wcard').classList.remove('show'); if ($('msgs').classList.contains('show')) loadMsgs(true);
+  } catch (e) { toast(errMsg(e)); }
+};
+function syncWish(w) { const h = wishes.get(w.id); if (h) Object.assign(h.w, { hearts: w.hearts, liked: w.liked }); }
+function unhang(id) { const h = wishes.get(id); if (!h) return; scene.remove(h.obj); wishes.delete(id); const i = hung.findIndex((x) => x.obj === h.obj); if (i >= 0) hung.splice(i, 1); const j = hitList.findIndex((m) => m.userData.wish === id); if (j >= 0) hitList.splice(j, 1); }
+
+/* ───────── 모두의 소원 (메시지 보기) ───────── */
+let msgSort = 'new', msgOff = 0, msgBusy = false;
+const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+async function loadMsgs(reset) {
+  if (msgBusy) return; msgBusy = true;
+  if (reset) { msgOff = 0; $('msgList').innerHTML = '<div class="empty">불러오는 중…</div>'; }
+  try {
+    if (msgSort === 'mine' && !authed()) { $('msgList').innerHTML = '<div class="empty">로그인하면 내가 건 소원을 모아 볼 수 있어요</div>'; msgBusy = false; return; }
+    const rows = await rpc('xv_list', { p_sort: msgSort, p_offset: msgOff }) || [];
+    if (reset) $('msgList').innerHTML = '';
+    $('msgList').querySelector('.more')?.remove();
+    if (!rows.length && msgOff === 0) $('msgList').innerHTML = `<div class="empty">${msgSort === 'mine' ? '아직 건 소원이 없어요.<br>🎄 소원 걸기에서 첫 소원을 걸어 보세요!' : '아직 걸린 소원이 없어요.<br>첫 번째 소원을 걸어 보세요!'}</div>`;
+    for (const w of rows) {
+      const b = document.createElement('button'); b.className = 'it'; b.dataset.id = w.id;
+      b.innerHTML = `<img src="${thumbs[w.ornament] || thumbs.star}" alt=""><span class="tx"><b>${esc(w.text)}</b><small>⛄ ${esc(w.nick || '눈사람')} · ${fmtDate(w.created_at)}</small></span><span class="hc">${w.liked ? '❤️' : '🤍'} ${w.hearts}</span>`;
+      b.onclick = () => openWish(w); $('msgList').appendChild(b);
+    }
+    msgOff += rows.length;
+    if (rows.length === 30) { const m = document.createElement('button'); m.className = 'more'; m.textContent = '더 보기'; m.onclick = () => loadMsgs(false); $('msgList').appendChild(m); }
+  } catch (e) { if (reset) $('msgList').innerHTML = '<div class="empty">소원을 불러오지 못했어요.<br>잠시 후 다시 열어 주세요.</div>'; }
+  msgBusy = false;
+}
+$('msgs').querySelectorAll('.tabs button').forEach((b) => b.onclick = () => { msgSort = b.dataset.s; $('msgs').querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('on', x === b)); loadMsgs(true); });
+$('msgClose').onclick = () => $('msgs').classList.remove('show');
 
 /* ───────── 반짝 효과 ───────── */
 const sparks = [];
@@ -355,8 +474,10 @@ el.addEventListener('pointermove', (e) => {
   if (drag.moved) { tYaw = drag.yaw - dx * .005; tPitch = Math.max(-1.45, Math.min(1.25, drag.pitch + dy * .004)); glanceUntil = 0; }
 });
 el.addEventListener('pointerup', (e) => {
-  if (drag && !drag.moved && mode === 'walk') { // 바닥을 눌러 걷기
+  if (drag && !drag.moved && mode === 'walk') { // 장식을 누르면 소원 읽기, 바닥을 누르면 걷기
     ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
+    const hit = ray.intersectObjects(hitList, false)[0];
+    if (hit) { const h = wishes.get(hit.object.userData.wish); if (h) { openWish(h.w); drag = null; return; } }
     const p = new THREE.Vector3(); if (ray.ray.intersectPlane(gPlane, p) && Math.hypot(p.x, p.z) < 34) { moveTarget = { x: p.x, z: p.z }; marker.position.set(p.x, .05, p.z); marker.material.opacity = .9; standUp(); }
   }
   drag = null;
@@ -393,8 +514,9 @@ function enterCine() { mode = 'cine'; document.body.classList.add('cine'); setPo
 function exitCine() { mode = 'walk'; document.body.classList.remove('cine'); }
 $('mCine').onclick = enterCine;
 el.addEventListener('pointerdown', () => { if (mode === 'cine') setTimeout(exitCine, 0); });
-$('mMsg').onclick = () => toast('💬 모두의 소원 목록은 곧 열려요');
-$('cToday').onclick = () => toast('✨ 어제 ❤️를 가장 많이 받은 소원이 여기 떠요 — 곧 열려요');
+$('mMsg').onclick = () => { if (!CLOUD) return toast('playwithme.kr 에서 열면 모두의 소원을 볼 수 있어요'); $('msgs').classList.add('show'); loadMsgs(true); };
+let todayWish = null;
+$('cToday').onclick = () => { if (todayWish) openWish(todayWish); else toast('✨ 어제 ❤️를 가장 많이 받은 소원이 여기 떠요 — 오늘 마음에 드는 소원에 ❤️를 눌러 보세요'); };
 $('mShot').onclick = () => {
   composer.render();
   const src = renderer.domElement, c = document.createElement('canvas'); c.width = src.width; c.height = src.height; const x = c.getContext('2d');
@@ -498,6 +620,7 @@ async function joinPresence() {
       for (const k of [...remotes.keys()]) if (!state[k]) dropRemote(k);
     })
       .on('broadcast', { event: 'p' }, ({ payload }) => { if (payload && payload.k) applyRemote(payload.k, payload); })
+      .on('broadcast', { event: 'wish' }, async ({ payload }) => { if (!payload || !payload.id || wishes.has(payload.id)) return; try { const w = await rpc('xv_wish', { p_id: String(payload.id) }); const o = hangWish(w, true); if (o) burst(o.position); } catch {} })
       .on('broadcast', { event: 'e' }, ({ payload }) => { const r = payload && remotes.get(payload.k); if (r && ['wave', 'jump', 'spin'].includes(payload.e)) { r.emote = payload.e; r.emoteT = performance.now(); } })
       .subscribe((s) => { if (s === 'SUBSCRIBED') { net.ready = true; netSend(true); } });
   } catch (e) { console.warn('presence', e); }
@@ -506,15 +629,31 @@ async function joinPresence() {
 /* ───────── 시작 ───────── */
 villageReady.then(() => {
   // 트리를 채우는 기본 장식 (빛나는 별·하트·방울·눈꽃)
-  const deco = ['star', 'heart', 'ball', 'flake', 'bell', 'moon', 'sock', 'house'], cols = [0xffe08a, 0xff9aa8, 0xffffff, 0xa8d8ff, 0xffc070, 0xffeaa8, 0xd8303a, 0xb06a48];
-  for (let i = 0; i < 150; i++) { const k = i % 8 < 4 ? i % 4 : (i % 8); hang(deco[k], cols[k] ?? null, .9 + Math.random() * .8); }
   buildMe(); joinPresence();
+  fillTree();
   const it = $('intro'); it.style.opacity = 0; setTimeout(() => it.remove(), 1000);
   document.body.classList.add('in'); window.__ready = true;
   const got = LOCKED.find((o) => o.day === attDays);
   if (newDay && got) setTimeout(() => toast(`🎁 출석 ${attDays}일차 보상! 「${got.name}」 장식을 받았어요`, 5000), 1500);
   if (COARSE) $('hint').textContent = '조이스틱이나 바닥을 눌러 걸어요 · 끌어서 둘러보기 (위로 끌면 하늘)';
 }).catch((e) => { console.error(e); document.querySelector('.intro p').textContent = '마을을 불러오지 못했어요. 새로고침해 주세요.'; });
+
+// 모두의 소원을 트리에 걸고, 빈자리는 글 없는 기본 장식으로 채운다
+async function fillTree() {
+  let real = [];
+  if (CLOUD) { try { real = await rpc('xv_tree') || []; } catch (e) { console.warn('xv_tree', e); } }
+  real.forEach((w) => hangWish(w, false));
+  const deco = ['star', 'heart', 'ball', 'flake', 'bell', 'moon', 'sock', 'house'], cols = [0xffe08a, 0xff9aa8, 0xffffff, 0xa8d8ff, 0xffc070, 0xffeaa8, 0xd8303a, 0xb06a48];
+  const n = Math.max(30, Math.min(150, 300 - real.length));
+  for (let i = 0; i < n; i++) { const k = i % 8 < 4 ? i % 4 : (i % 8); hang(deco[k], cols[k] ?? null, .7 + Math.random() * .6); }
+  if (CLOUD) { try { todayWish = await rpc('xv_today'); if (todayWish) $('cToday').innerHTML = '✨ 오늘의 소원 <b>❤️</b>'; } catch {} }
+}
+// 로그인하면 출석을 계정에 합쳐 저장 (기기를 바꿔도 이어지게)
+if (CLOUD && MGH.save && MGH.save.onAuth) MGH.save.onAuth(async (u) => {
+  if (!u) return;
+  $('loginBox').classList.remove('show');
+  try { const n = await rpc('xv_checkin', { p_days: visitDays }); if (n > attDays) { attDays = n; drawAtt(); drawGrid(); } } catch (e) { console.warn('checkin', e); }
+});
 
 /* ───────── 그리기 ───────── */
 const clock = new THREE.Clock(); const camPos = new THREE.Vector3(), tgt = new THREE.Vector3();
@@ -576,7 +715,7 @@ function frame() {
   requestAnimationFrame(frame);
 }
 frame();
-window.__xv = { me, get V() { return V; }, setCam: (y, p, d) => { tYaw = yaw = y; tPitch = pitch = p; tDist = dist = d; }, goto: (x, z, f) => { me.x = x; me.z = z; if (f !== undefined) me.f = f; } };
+window.__xv = { me, wishes, camera, get V() { return V; }, setCam: (y, p, d) => { tYaw = yaw = y; tPitch = pitch = p; tDist = dist = d; }, goto: (x, z, f) => { me.x = x; me.z = z; if (f !== undefined) me.f = f; } };
 </script>
 </body>
 </html>
