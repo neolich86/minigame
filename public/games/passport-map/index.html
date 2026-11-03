@@ -892,7 +892,236 @@ const MAG_SCENES={ // 키: MAG_KEY 의 값
    <circle cx="100" cy="98" r="10" fill="#ff8a10"/>
    <path d="M84 79 q6 -8 14 -4 q-6 6 -14 4Z" fill="#2f8a3a"/><path d="M84 80 v-4" stroke="#5a3a22" stroke-width="2"/>` }
 };
-const MAG_KEY={'KR:Gangneung':'gangneung','KR:Jeonju':'jeonju','KR:Gyeongju':'gyeongju','KR:Busan':'busan','KR:Jeju':'jeju','KR:Seoul':'seoul','KR:Incheon':'incheon','KR:Daegu':'daegu','KR:Gwangju':'gwangju','KR:Daejeon':'daejeon','KR:Yeosu':'yeosu','KR:Sokcho':'sokcho','KR:Ulleungdo':'ulleungdo','KR:Dokdo':'dokdo'};
+/* 세계 인기 여행 도시 그림 */
+// 세계 인기 여행 도시 그림 마그넷 (장면 102×95 안쪽, 9~111 / 9~104)
+const SKY=(t,b)=>`<rect width="120" height="120" fill="${b}"/><rect width="120" height="38" fill="${t}"/><rect y="30" width="120" height="22" fill="${t}" opacity=".5"/>`;
+const SUN=(x,y,r,c='#fff4c0')=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><circle cx="${x}" cy="${y}" r="${r*1.6}" fill="${c}" opacity=".25"/>`;
+const SEA=(y,c='#2f86d0',w='#9fd0ff')=>`<rect y="${y}" width="120" height="${120-y}" fill="${c}"/><path d="M0 ${y+4} Q15 ${y} 30 ${y+4} T60 ${y+4} T90 ${y+4} T120 ${y+4}" stroke="${w}" stroke-width="2" fill="none"/><path d="M14 ${y+14} h22 M60 ${y+18} h30" stroke="${w}" stroke-width="2" opacity=".5"/>`;
+const GROUND=(y,c)=>`<path d="M-5 ${y} Q60 ${y-10} 125 ${y} V120 H-5Z" fill="${c}"/>`;
+const STARS=(n=7)=>[[14,14],[36,24],[70,12],[98,20],[86,34],[22,40],[54,30]].slice(0,n).map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.4" fill="#fff6c8"/>`).join('');
+const PALM=(x,y,s=1)=>`<g transform="translate(${x} ${y}) scale(${s})"><path d="M0 0 C2 -14 4 -26 8 -36" stroke="#6a4424" stroke-width="3" fill="none"/><path d="M8 -36 q-14 -2 -20 6 q10 -8 20 -6Z M8 -36 q14 -4 20 4 q-10 -8 -20 -4Z M8 -36 q-6 -10 -16 -10 q10 2 16 10Z M8 -36 q8 -10 18 -8 q-12 0 -18 8Z" fill="#2f8a3a"/></g>`;
+const CLOUD=(x,y,s=1)=>`<g transform="translate(${x} ${y}) scale(${s})" fill="#fff" opacity=".9"><circle cx="0" cy="0" r="6"/><circle cx="7" cy="-3" r="7"/><circle cx="14" cy="0" r="5"/><rect x="0" y="0" width="14" height="5"/></g>`;
+const WIN=(x,y,w,h,n,m,c='#ffd27a')=>{let s='';for(let i=0;i<n;i++)for(let j=0;j<m;j++)s+=`<rect x="${x+i*w/n+1}" y="${y+j*h/m+1}" width="${w/n-2}" height="${h/m-2}" fill="${c}"/>`;return s};
+
+const WORLD = {
+  // ───── 일본
+  tokyo: { c: '#c8303a', s: `${SKY('#ffd0b0','#ffe6cc')}<path d="M10 70 L40 34 L52 42 L70 30 L100 70Z" fill="#7a8fb8"/><path d="M40 34 L46 40 L34 42Z M70 30 L76 38 L64 38Z" fill="#fff"/>
+    ${GROUND(84,'#c8d8c0')}<g stroke="#e84a2a" stroke-width="2.4" fill="none"><path d="M78 92 L88 20 L98 92"/><path d="M81 70 h14 M84 50 h8 M86 36 h4"/></g><rect x="82" y="58" width="12" height="4" fill="#fff"/><rect x="84" y="40" width="8" height="3" fill="#fff"/><path d="M88 20 v-8" stroke="#e84a2a" stroke-width="1.5"/>
+    <rect x="16" y="74" width="12" height="20" fill="#9aa8c0"/><rect x="30" y="66" width="14" height="28" fill="#8a98b4"/><rect x="48" y="78" width="12" height="16" fill="#a8b4c8"/>${WIN(16,76,12,16,2,3,'#ffe9b0')}${WIN(30,68,14,24,2,4,'#ffe9b0')}`},
+  osaka: { c: '#2f6a3a', s: `${SKY('#bfe3ff','#e8f6ff')}${CLOUD(84,22)}${GROUND(92,'#8ab870')}
+    <rect x="30" y="76" width="60" height="18" fill="#cfc6b4" stroke="#9a8f7a"/><path d="M26 76 Q60 68 94 76Z" fill="#3a6a4a"/>
+    <rect x="38" y="60" width="44" height="16" fill="#fafafa"/><path d="M32 62 Q60 52 88 62Z" fill="#3a6a4a"/>${WIN(42,64,36,8,4,1,'#5a5a5a')}
+    <rect x="46" y="46" width="28" height="14" fill="#fafafa"/><path d="M40 48 Q60 38 80 48Z" fill="#3a6a4a"/>
+    <rect x="52" y="34" width="16" height="12" fill="#fafafa"/><path d="M46 36 Q60 24 74 36Z" fill="#3a6a4a"/><path d="M52 28 l-4 -4 M68 28 l4 -4" stroke="#d8b040" stroke-width="2"/>`},
+  kyoto: { c: '#d23a2a', s: `${SKY('#ffe9c8','#fff4e0')}<rect y="86" width="120" height="34" fill="#c8b89a"/>
+    ${[0,1,2].map(i=>{const x=14+i*30,s=1-i*.18;return `<g transform="translate(${x} ${88-i*6}) scale(${s})"><rect x="4" y="-60" width="6" height="60" fill="#e8402a"/><rect x="38" y="-60" width="6" height="60" fill="#e8402a"/><rect x="-4" y="-66" width="56" height="7" rx="2" fill="#2a2a2a"/><rect x="0" y="-58" width="48" height="5" fill="#e8402a"/><rect x="22" y="-58" width="4" height="10" fill="#e8402a"/></g>`}).join('')}
+    <path d="M0 86 H120" stroke="#9a8a6a" stroke-width="2"/>`},
+  fukuoka: { c: '#1f4f8f', s: `${SKY('#1c2a5a','#3a4a8a')}${STARS(5)}${SEA(84,'#1f3f7a','#6a8fd0')}
+    <path d="M70 84 L76 18 L84 18 L90 84Z" fill="#b8d0f0" opacity=".9"/>${Array.from({length:12},(_,i)=>`<path d="M${71+i*.45} ${24+i*5} h${18-i*.9}" stroke="#7aa0e0" stroke-width="1"/>`).join('')}<rect x="74" y="12" width="12" height="6" fill="#e8eef8"/>
+    <rect x="14" y="66" width="34" height="14" rx="2" fill="#c8303a"/><path d="M12 66 h38 l-4 -8 h-30Z" fill="#8a2a2a"/><circle cx="24" cy="72" r="3" fill="#ffd27a"/><circle cx="38" cy="72" r="3" fill="#ffd27a"/><path d="M18 80 v4 M44 80 v4" stroke="#5a3a22" stroke-width="2"/>`},
+  sapporo: { c: '#2f5a9a', s: `${SKY('#a8c8f0','#dceaff')}${Array.from({length:16},(_,i)=>`<circle cx="${(i*37)%110+6}" cy="${(i*53)%80+8}" r="1.6" fill="#fff"/>`).join('')}${GROUND(90,'#f4f8ff')}
+    <rect x="40" y="56" width="40" height="34" fill="#fafafa" stroke="#b8c0cc"/><path d="M34 58 L60 42 L86 58Z" fill="#c84a3a"/><rect x="52" y="22" width="16" height="22" fill="#fafafa" stroke="#b8c0cc"/><path d="M48 24 L60 12 L72 24Z" fill="#c84a3a"/>
+    <circle cx="60" cy="32" r="5" fill="#fff" stroke="#556" stroke-width="1"/><path d="M60 32 v-3 M60 32 h2.5" stroke="#334" stroke-width="1"/>${WIN(46,64,28,12,3,1,'#8ab0d8')}<rect x="56" y="78" width="8" height="12" fill="#7a5a3a"/>`},
+  okinawa: { c: '#e07a2a', s: `${SKY('#7fd0ff','#c8f0ff')}${SUN(96,20,8)}${SEA(74,'#22b8d0','#b8f4ff')}
+    <rect y="94" width="120" height="26" fill="#f4e2b0"/>
+    <g transform="translate(26 58)"><rect x="4" y="22" width="30" height="18" rx="4" fill="#d8743a"/><circle cx="19" cy="18" r="14" fill="#e08a4a"/><path d="M7 10 q12 -12 24 0" stroke="#b85a2a" stroke-width="4" fill="none"/><circle cx="13" cy="16" r="3" fill="#fff"/><circle cx="25" cy="16" r="3" fill="#fff"/><circle cx="13" cy="16" r="1.4" fill="#222"/><circle cx="25" cy="16" r="1.4" fill="#222"/><path d="M10 24 q9 6 18 0" stroke="#fff" stroke-width="2" fill="none"/></g>
+    ${PALM(92,100,.9)}`},
+  // ───── 동남아 · 중화권
+  bangkok: { c: '#d8a020', s: `${SKY('#ffb47a','#ffd9a8')}${SUN(30,30,9,'#fff0a0')}${SEA(88,'#c08a3a','#ffd9a0')}
+    <path d="M60 10 C62 30 72 50 74 88 H46 C48 50 58 30 60 10Z" fill="#f2e2c8" stroke="#c8a87a"/>${[30,44,58,72].map(y=>`<path d="M${50+ (y-30)*-.05} ${y} h${20+(y-30)*.12}" stroke="#d87a5a" stroke-width="2"/>`).join('')}
+    <path d="M30 88 C32 66 36 58 38 50 C40 58 44 66 46 88Z M74 88 C76 66 80 58 82 50 C84 58 88 66 90 88Z" fill="#ead6b4" stroke="#c8a87a"/>
+    <path d="M60 10 v-4" stroke="#c8a87a" stroke-width="1.5"/>`},
+  phuket: { c: '#1f8fb0', s: `${SKY('#8fd8ff','#d0f2ff')}${CLOUD(20,18)}${SEA(66,'#18b0c8','#c0f8ff')}
+    <path d="M70 70 C72 40 80 28 90 26 C100 30 104 44 104 70Z" fill="#5a8a5a"/><path d="M84 30 C90 26 98 32 100 40" fill="#3f7a46"/>
+    <path d="M14 86 h52 l-6 8 h-40Z" fill="#8a5a2a"/><path d="M16 86 q-6 -10 2 -16" stroke="#e84a6a" stroke-width="3" fill="none"/><rect x="34" y="72" width="16" height="12" fill="#f4e2c0"/><path d="M30 72 h24 l-4 -6 h-16Z" fill="#2f6a8a"/>
+    <rect y="98" width="120" height="22" fill="#f8e6b8"/>`},
+  pattaya: { c: '#e05a7a', s: `${SKY('#ff9ab0','#ffd0a8')}${SUN(60,62,16,'#ffe27a')}${SEA(70,'#3a7fd5','#ffc0d0')}
+    <rect y="96" width="120" height="24" fill="#f4dcb0"/>${PALM(14,98)}${PALM(98,98,.8)}
+    <path d="M44 96 l6 -16 l6 16Z" fill="#e84a3a"/><path d="M50 80 v16" stroke="#7a4a2a" stroke-width="1.5"/><path d="M40 96 h20" stroke="#b88a5a" stroke-width="2"/>`},
+  hanoi: { c: '#c8303a', s: `${SKY('#cfeaff','#eaf6ff')}${GROUND(64,'#5f9a5f')}${SEA(72,'#4a9a8a','#a0e0d0')}
+    <rect x="44" y="54" width="32" height="24" fill="#d8c8a8" stroke="#9a8a6a"/><path d="M40 56 Q60 46 80 56Z" fill="#7a4a3a"/><rect x="50" y="38" width="20" height="16" fill="#d8c8a8" stroke="#9a8a6a"/><path d="M46 40 Q60 30 74 40Z" fill="#7a4a3a"/><rect x="54" y="26" width="12" height="12" fill="#d8c8a8" stroke="#9a8a6a"/><path d="M50 28 Q60 18 70 28Z" fill="#7a4a3a"/>
+    <path d="M52 64 a4 6 0 0 1 8 0 v6 h-8Z M62 64 a4 6 0 0 1 8 0 v6 h-8Z" fill="#7a6a4a"/>
+    <path d="M10 92 q20 -10 40 0" stroke="#c8303a" stroke-width="3" fill="none"/>${[14,22,30,38,46].map(x=>`<path d="M${x} ${92-Math.sin((x-10)/40*Math.PI)*9} v8" stroke="#c8303a" stroke-width="1.5"/>`).join('')}`},
+  'hochiminh': { c: '#d8a020', s: `${SKY('#ffd9a8','#fff0d8')}${GROUND(92,'#c8a878')}
+    <rect x="22" y="40" width="76" height="52" fill="#f2d6b0" stroke="#b88a5a"/><path d="M18 42 L60 26 L102 42Z" fill="#c8603a"/><rect x="54" y="14" width="12" height="16" fill="#f2d6b0" stroke="#b88a5a"/><circle cx="60" cy="22" r="4" fill="#fff" stroke="#556"/>
+    ${WIN(26,48,68,16,6,1,'#7a9ac8')}<path d="M48 92 v-18 a12 12 0 0 1 24 0 v18Z" fill="#8a5a3a"/>
+    <path d="M6 100 Q16 88 26 100Z" fill="#e8c86a" stroke="#a8884a"/><path d="M94 100 Q104 88 114 100Z" fill="#e8c86a" stroke="#a8884a"/>`},
+  danang: { c: '#e0a020', s: `${SKY('#1c2a5a','#3a3a7a')}${STARS(5)}${SEA(74,'#1a3a6a','#6a8fd0')}
+    <path d="M0 70 H120" stroke="#b8c0d0" stroke-width="3"/>
+    <path d="M10 70 Q24 44 38 62 Q52 80 66 54 Q80 30 96 50 Q104 60 108 52" stroke="#ffc020" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M104 52 l8 -8 l2 6 l6 -2 l-6 8Z" fill="#ffc020"/><path d="M110 48 q8 -10 2 -18" stroke="#ff7a20" stroke-width="2" fill="none"/>
+    ${Array.from({length:9},(_,i)=>`<path d="M${14+i*10} 70 v${8+i%2*4}" stroke="#ffd27a" stroke-width="1" opacity=".5"/>`).join('')}`},
+  nhatrang: { c: '#1f8fb0', s: `${SKY('#8fd8ff','#d0f2ff')}${SUN(94,22,8)}<path d="M-5 66 Q20 46 46 60 Q70 48 125 64 V70 H-5Z" fill="#5a8a6a"/>${SEA(66,'#1aa8d0','#c0f4ff')}
+    <rect y="94" width="120" height="26" fill="#f8e6b8"/>${PALM(18,98)}
+    <circle cx="80" cy="94" r="10" fill="#e84a5a"/><path d="M70 94 h20 M80 84 v10" stroke="#fff" stroke-width="2"/><path d="M80 94 v12" stroke="#7a5a3a" stroke-width="2"/>`},
+  singapore: { c: '#d23a3a', s: `${SKY('#1c2a5a','#4a3a7a')}${STARS(6)}${SEA(80,'#1f3f7a','#8a8fd0')}
+    ${[22,40,58].map(x=>`<path d="M${x} 80 L${x+4} 40 L${x+12} 40 L${x+14} 80Z" fill="#c8d0e0"/>${WIN(x+4,44,10,34,2,6,'#ffd27a')}`).join('')}
+    <path d="M16 38 Q46 30 78 38 L78 42 H16Z" fill="#e8eef8"/>
+    <g transform="translate(90 50)"><path d="M0 30 C-2 18 2 8 10 4 C16 2 20 8 18 14 C24 12 28 20 22 26 C18 30 10 30 4 30Z" fill="#f0f0f0"/><circle cx="12" cy="10" r="1.4" fill="#333"/><path d="M18 14 q10 -2 14 4" stroke="#9fd0ff" stroke-width="2" fill="none"/></g>`},
+  kualalumpur: { c: '#1f4f8f', s: `${SKY('#2a3a7a','#5a5aa0')}${STARS(5)}${GROUND(96,'#2a3050')}
+    ${[38,68].map(x=>`<path d="M${x} 96 V40 L${x+2} 34 V28 L${x+4} 22 V14 L${x+6} 8 L${x+8} 14 V22 L${x+10} 28 V34 L${x+12} 40 V96Z" fill="#c8d4e8" stroke="#8a9ab8" stroke-width=".8"/>${Array.from({length:8},(_,i)=>`<path d="M${x+1} ${46+i*6} h${10}" stroke="#7a8ab0" stroke-width=".8"/>`).join('')}`).join('')}
+    <rect x="50" y="52" width="18" height="4" fill="#c8d4e8"/>`},
+  bali: { c: '#2f8a3a', s: `${SKY('#ffb47a','#ffe0b0')}${SUN(60,58,14,'#fff0a0')}${GROUND(92,'#4f7a3a')}
+    <path d="M18 92 V40 L24 34 L22 28 L28 22 L26 16 L32 10 L38 16 L36 22 L42 28 L40 34 L46 40 L48 92Z" fill="#6a4a3a"/>
+    <path d="M102 92 V40 L96 34 L98 28 L92 22 L94 16 L88 10 L82 16 L84 22 L78 28 L80 34 L74 40 L72 92Z" fill="#6a4a3a"/>
+    ${[50,62,74].map(y=>`<path d="M20 ${y} h26 M74 ${y} h26" stroke="#4a3022" stroke-width="1.5"/>`).join('')}
+    <path d="M52 92 h16 v4 h-16Z" fill="#8a6a4a"/>`},
+  hongkong: { c: '#c8303a', s: `${SKY('#1c2a5a','#3a3a7a')}${STARS(4)}<path d="M-5 50 Q30 34 60 42 Q90 30 125 46 V70 H-5Z" fill="#2a3a5a"/>${SEA(76,'#1a2f6a','#8a8fd0')}
+    ${[[8,46,10],[20,38,9],[31,30,10],[43,42,8],[53,26,9],[64,36,10],[76,44,9],[87,32,10],[99,46,10]].map(([x,y,w])=>`<rect x="${x}" y="${y}" width="${w}" height="${76-y}" fill="#3a4a7a"/>${WIN(x,y+2,w,76-y-4,2,Math.floor((76-y)/6),'#ffd27a')}`).join('')}
+    <g transform="translate(70 80)"><path d="M0 12 h34 l-4 6 h-26Z" fill="#7a3a2a"/><path d="M8 12 V-6 q8 4 8 18Z M20 12 V-4 q10 4 8 16Z" fill="#e84a3a"/></g>`},
+  macau: { c: '#2f8a5a', s: `${SKY('#cfeaff','#eef8ff')}${GROUND(98,'#c8b89a')}
+    <path d="M28 98 V30 H92 V98Z" fill="#e8d8b4" stroke="#a8946a"/><path d="M40 30 L60 14 L80 30Z" fill="#e8d8b4" stroke="#a8946a"/>
+    ${[[34,40],[52,40],[70,40],[34,62],[52,62],[70,62]].map(([x,y])=>`<rect x="${x}" y="${y}" width="14" height="14" rx="7" fill="#7aa0d8" opacity=".85"/>`).join('')}
+    <path d="M50 98 V82 a10 10 0 0 1 20 0 V98Z" fill="#7aa0d8"/>${[30,90].map(x=>`<rect x="${x-2}" y="30" width="4" height="68" fill="#d8c8a0"/>`).join('')}`},
+  taipei: { c: '#2f8a5a', s: `${SKY('#bfe3ff','#e8f6ff')}${CLOUD(14,22)}${GROUND(94,'#7ab06a')}
+    ${Array.from({length:8},(_,i)=>`<path d="M${48+i*.6} ${86-i*9} L${50+i*.6} ${78-i*9} H${70-i*.6} L${72-i*.6} ${86-i*9}Z" fill="#8ab8a8" stroke="#4a8a7a"/>`).join('')}
+    <rect x="50" y="86" width="20" height="10" fill="#8ab8a8" stroke="#4a8a7a"/><rect x="57" y="10" width="6" height="8" fill="#8ab8a8" stroke="#4a8a7a"/><path d="M60 10 v-6" stroke="#4a8a7a" stroke-width="1.5"/>
+    <path d="M6 94 L18 76 L30 94Z M90 94 L104 70 L118 94Z" fill="#5f9a5f"/>`},
+  beijing: { c: '#c8303a', s: `${SKY('#cfe0ff','#eef4ff')}<path d="M-5 70 L20 42 L40 58 L64 34 L90 56 L125 40 V120 H-5Z" fill="#6a9a6a"/><path d="M-5 84 Q60 70 125 84 V120 H-5Z" fill="#4f7a4a"/>
+    <path d="M-2 76 L20 54 L40 66 L64 46 L90 62 L122 50" stroke="#c8b48a" stroke-width="6" fill="none" stroke-linejoin="round"/>
+    ${[[20,54],[64,46],[90,62]].map(([x,y])=>`<rect x="${x-5}" y="${y-12}" width="10" height="12" fill="#c8b48a" stroke="#8a7a5a"/><path d="M${x-5} ${y-12} h10" stroke="#8a7a5a" stroke-dasharray="2 2"/>`).join('')}`},
+  shanghai: { c: '#d23a8a', s: `${SKY('#2a2a6a','#6a3a8a')}${STARS(5)}${SEA(84,'#2a2a6a','#d080c0')}
+    <rect x="58" y="20" width="3" height="64" fill="#e8e8f8"/><circle cx="59.5" cy="62" r="9" fill="#e84a9a"/><circle cx="59.5" cy="36" r="6" fill="#e84a9a"/><circle cx="59.5" cy="18" r="2.5" fill="#e84a9a"/>
+    <path d="M51 84 L56 66 M68 84 L63 66" stroke="#e8e8f8" stroke-width="2.5"/>
+    ${[[16,50,10],[28,40,8],[78,34,9],[90,48,10],[102,56,9]].map(([x,y,w])=>`<rect x="${x}" y="${y}" width="${w}" height="${84-y}" fill="#4a3a8a"/>${WIN(x,y+2,w,84-y-4,2,5,'#ffd27a')}`).join('')}`},
+  cebu: { c: '#1f8fb0', s: `${SKY('#8fd8ff','#d0f2ff')}${SUN(20,20,8)}${SEA(60,'#1ac0d8','#d0fcff')}<rect y="60" width="120" height="16" fill="#38d0e0" opacity=".6"/>
+    <rect y="92" width="120" height="28" fill="#f8ecc8"/>${PALM(96,96)}
+    <path d="M24 78 h44 l-4 6 h-36Z" fill="#f4f4f4"/><path d="M14 80 q8 -6 16 -2 M62 80 q8 -6 16 -2" stroke="#7a5a3a" stroke-width="2" fill="none"/><rect x="36" y="68" width="16" height="10" fill="#2f86d0"/>`},
+  dubai: { c: '#c89a3a', s: `${SKY('#ffc890','#ffe6c0')}${SUN(28,30,9,'#fff0b0')}<path d="M-5 92 Q30 80 60 90 Q90 80 125 92 V120 H-5Z" fill="#e8c08a"/>
+    <path d="M58 92 L58 30 L60 8 L62 30 L62 92Z" fill="#a8b8d0"/><path d="M52 92 L54 48 L58 44 V92Z M68 92 L66 52 L62 48 V92Z" fill="#b8c8dc"/><path d="M46 92 L48 66 L54 62 V92Z M74 92 L72 70 L66 66 V92Z" fill="#c8d4e4"/>
+    <path d="M86 92 l4 -10 h18 l4 10Z" fill="#c89a5a"/>`},
+  istanbul: { c: '#c8303a', s: `${SKY('#ffb48a','#ffd9b0')}${SUN(94,24,7)}${SEA(90,'#3a6aa8','#a8c8f0')}
+    <rect x="34" y="62" width="52" height="28" fill="#d8b8a0"/><path d="M38 62 a22 22 0 0 1 44 0Z" fill="#c8a490"/><path d="M58 40 v-6" stroke="#9a7a6a" stroke-width="1.5"/>
+    <path d="M30 66 a8 8 0 0 1 16 0Z M74 66 a8 8 0 0 1 16 0Z" fill="#c8a490"/>
+    ${[22,98].map(x=>`<rect x="${x-2}" y="30" width="4" height="60" fill="#e8d8c8"/><path d="M${x-3} 30 L${x} 18 L${x+3} 30Z" fill="#9a7a6a"/><rect x="${x-3}" y="48" width="6" height="2" fill="#9a7a6a"/>`).join('')}`},
+  agra: { c: '#e0a020', s: `${SKY('#ffd0e0','#fff0e8')}${SEA(92,'#8ab8d0','#e0f0ff')}
+    <rect x="34" y="56" width="52" height="36" fill="#f8f4f0" stroke="#c8c0b8"/><path d="M40 56 C40 34 60 26 60 18 C60 26 80 34 80 56Z" fill="#fbf8f4" stroke="#c8c0b8"/><path d="M60 18 v-6" stroke="#c8a040" stroke-width="1.5"/>
+    <path d="M52 92 V74 a8 8 0 0 1 16 0 V92Z" fill="#d8d0c8"/>${[38,74].map(x=>`<path d="M${x} 66 h8" stroke="#c8c0b8" stroke-width="6"/>`).join('')}
+    ${[20,100].map(x=>`<rect x="${x-2}" y="40" width="4" height="52" fill="#f8f4f0" stroke="#c8c0b8"/><circle cx="${x}" cy="38" r="3" fill="#f8f4f0" stroke="#c8c0b8"/>`).join('')}`},
+  // ───── 유럽
+  london: { c: '#c8303a', s: `${SKY('#b8c8dc','#dce4ee')}${CLOUD(84,22,.9)}${GROUND(98,'#8a9098')}
+    <rect x="22" y="34" width="20" height="64" fill="#d8b878" stroke="#9a7a3a"/><rect x="20" y="30" width="24" height="6" fill="#c8a868"/><path d="M22 30 L32 12 L42 30Z" fill="#5a6a7a"/><circle cx="32" cy="44" r="7" fill="#f8f0d8" stroke="#6a5a3a"/><path d="M32 44 v-4 M32 44 h3" stroke="#333" stroke-width="1"/>${WIN(24,56,16,38,2,5,'#9a7a3a')}
+    <g transform="translate(54 66)"><rect width="52" height="30" rx="4" fill="#d8303a"/><rect y="13" width="52" height="3" fill="#a02028"/>${WIN(3,3,46,9,5,1,'#f0f4ff')}${WIN(3,17,46,8,5,1,'#f0f4ff')}<circle cx="10" cy="31" r="4" fill="#222"/><circle cx="42" cy="31" r="4" fill="#222"/></g>`},
+  paris: { c: '#2f4fa0', s: `${SKY('#ffc0c8','#ffe6d8')}${SUN(94,24,7,'#fff6d0')}${GROUND(96,'#9ab88a')}
+    <path d="M42 96 L56 46 L58 20 L60 6 L62 20 L64 46 L78 96 H70 Q60 76 50 96Z" fill="#6a5a4a"/>
+    <path d="M48 70 H72 M53 52 H67 M57 34 H63" stroke="#6a5a4a" stroke-width="3"/>
+    ${Array.from({length:10},(_,i)=>`<path d="M${46+i*.8} ${92-i*5} L${74-i*.8} ${92-i*5}" stroke="#8a7a6a" stroke-width=".6" opacity=".6"/>`).join('')}`},
+  rome: { c: '#c8603a', s: `${SKY('#ffd9a8','#fff0d8')}${SUN(24,22,7)}${GROUND(94,'#c8b088')}
+    <path d="M12 94 V40 Q60 26 108 40 V94Z" fill="#d8b88a" stroke="#a8885a"/><path d="M76 94 V44 Q92 40 108 44" fill="#e8d0a8"/>
+    ${[44,60,76].map((y,j)=>Array.from({length:7},(_,i)=>`<path d="M${16+i*13} ${y+12} v-6 a4 4 0 0 1 8 0 v6Z" fill="${j===0?'#9a7a5a':'#7a5a3a'}"/>`).join('')).join('')}
+    <path d="M12 52 Q60 40 108 52 M12 68 Q60 58 108 68" stroke="#a8885a" stroke-width="1.5" fill="none"/>`},
+  barcelona: { c: '#d8a020', s: `${SKY('#bfe3ff','#e8f6ff')}${GROUND(98,'#c8b088')}
+    ${[[22,30],[38,16],[52,10],[68,10],[82,16],[98,30]].map(([x,y])=>`<path d="M${x-6} 98 V${y+20} C${x-6} ${y+6} ${x-2} ${y} ${x} ${y-6} C${x+2} ${y} ${x+6} ${y+6} ${x+6} ${y+20} V98Z" fill="#c8a878" stroke="#8a6a3a"/><circle cx="${x}" cy="${y-6}" r="2.5" fill="#e8c040"/>${Array.from({length:5},(_,i)=>`<circle cx="${x}" cy="${y+18+i*10}" r="1.4" fill="#7a5a3a"/>`).join('')}`).join('')}`},
+  amsterdam: { c: '#e07a20', s: `${SKY('#cfe0ff','#eef4ff')}${SEA(84,'#4a7a9a','#b8d8f0')}
+    ${[[6,'#8a4a3a'],[26,'#3a5a7a'],[46,'#a86a3a'],[66,'#5a6a3a'],[86,'#7a3a3a']].map(([x,c],i)=>{const h=40+(i%2)*8;return `<path d="M${x} 84 V${84-h} L${x+4} ${84-h} L${x+4} ${80-h} L${x+8} ${76-h} L${x+12} ${80-h} L${x+12} ${84-h} H${x+18} V84Z" fill="${c}"/>${WIN(x+2,90-h,14,h-10,2,3,'#f0f0f8')}`}).join('')}
+    <g transform="translate(70 96)" stroke="#222" stroke-width="1.6" fill="none"><circle cx="0" cy="0" r="6"/><circle cx="20" cy="0" r="6"/><path d="M0 0 L8 -10 L16 -10 L20 0 M8 -10 L10 0 L0 0"/></g>`},
+  prague: { c: '#c8303a', s: `${SKY('#ffc8a8','#ffe8d0')}${SUN(98,20,6)}${SEA(88,'#4a6a9a','#b8c8f0')}
+    <path d="M0 88 H120" stroke="#b8a88a" stroke-width="4"/>${[16,40,64,88].map(x=>`<path d="M${x} 88 a10 8 0 0 1 20 0" stroke="#b8a88a" stroke-width="3" fill="none"/>`).join('')}
+    <rect x="20" y="40" width="80" height="40" fill="#e8d8c0"/>${WIN(22,46,76,14,10,1,'#7a8aa8')}<path d="M16 42 h88 l-4 -6 h-80Z" fill="#a84a3a"/>
+    ${[[40,10],[60,6],[80,10]].map(([x,y])=>`<path d="M${x-5} 40 V${y+12} L${x} ${y} L${x+5} ${y+12} V40Z" fill="#5a5a5a"/>`).join('')}`},
+  vienna: { c: '#c8303a', s: `${SKY('#cfe0ff','#eef4ff')}${GROUND(96,'#9aa898')}
+    <path d="M24 96 V54 H96 V96Z" fill="#e8dcc0" stroke="#a8946a"/><path d="M20 56 L60 30 L100 56Z" fill="#2f8a6a"/>${Array.from({length:6},(_,i)=>`<path d="M${30+i*8} ${52-i*3.5} l4 -2 l4 2" stroke="#e8c040" stroke-width="1.5" fill="none"/>`).join('')}
+    <path d="M68 96 V22 L74 6 L80 22 V96Z" fill="#c8b8a0" stroke="#8a7a5a"/>${[30,44,58,72].map(y=>`<path d="M68 ${y} h12" stroke="#8a7a5a"/>`).join('')}
+    ${WIN(28,62,36,24,4,2,'#7a8aa8')}`},
+  venice: { c: '#2f6a9a', s: `${SKY('#ffd0b0','#fff0e0')}${SEA(76,'#3a8aa8','#b8e8f0')}
+    ${[[4,'#e8a87a',36],[30,'#d87a5a',44],[58,'#f0c8a0',32],[84,'#c8a07a',42]].map(([x,c,h])=>`<rect x="${x}" y="${76-h}" width="24" height="${h}" fill="${c}"/>${WIN(x+2,80-h,20,h-10,3,2,'#5a6a8a')}`).join('')}
+    <path d="M18 98 Q60 108 104 96 Q100 92 96 96 Q60 102 24 94Z" fill="#1a1a22"/><path d="M104 96 q6 -6 4 -12" stroke="#1a1a22" stroke-width="2" fill="none"/>
+    <path d="M70 98 L76 70" stroke="#5a3a22" stroke-width="2"/><circle cx="66" cy="88" r="3" fill="#333"/><rect x="63" y="90" width="6" height="7" fill="#fff"/>`},
+  florence: { c: '#c8603a', s: `${SKY('#ffd9a8','#fff0d8')}${GROUND(96,'#c8a878')}
+    <rect x="30" y="62" width="60" height="34" fill="#f0e6d0" stroke="#a8946a"/><path d="M38 62 C38 30 82 30 82 62Z" fill="#c8603a"/>${Array.from({length:5},(_,i)=>`<path d="M${44+i*8} 62 C${46+i*7} 46 ${52+i*4} 38 60 34" stroke="#f0e6d0" stroke-width="1.6" fill="none"/>`).join('')}
+    <rect x="54" y="26" width="12" height="8" fill="#f0e6d0" stroke="#a8946a"/><path d="M56 26 L60 18 L64 26Z" fill="#c8a040"/>
+    <rect x="94" y="34" width="12" height="62" fill="#f0e6d0" stroke="#a8946a"/>${WIN(36,70,48,20,4,1,'#5a8a6a')}`},
+  milan: { c: '#2f4fa0', s: `${SKY('#cfe0ff','#eef4ff')}${GROUND(98,'#b8b0a0')}
+    <path d="M18 98 V54 L60 34 L102 54 V98Z" fill="#f4f0e8" stroke="#b8b0a0"/>
+    ${[22,32,42,52,60,68,78,88,98].map((x,i)=>`<path d="M${x-2} ${54-(i===4?24:Math.abs(4-i)<2?14:6)} L${x} ${46-(i===4?36:Math.abs(4-i)<2?22:12)} L${x+2} ${54-(i===4?24:Math.abs(4-i)<2?14:6)}Z" fill="#f4f0e8" stroke="#b8b0a0"/>`).join('')}
+    ${[30,50,70,90].map(x=>`<path d="M${x-6} 98 V78 a6 6 0 0 1 12 0 V98Z" fill="#c8c0b0"/>`).join('')}<circle cx="60" cy="10" r="2.2" fill="#e8c040"/>`},
+  madrid: { c: '#c8303a', s: `${SKY('#ffd090','#fff0c8')}${SUN(30,26,10,'#ffe060')}${GROUND(98,'#d8b880')}
+    <rect x="18" y="56" width="84" height="42" fill="#f0e2c8" stroke="#a8946a"/><path d="M14 58 h92 l-6 -8 h-80Z" fill="#c8a878"/>${WIN(22,62,76,14,8,1,'#7a8aa8')}
+    <rect x="52" y="34" width="16" height="22" fill="#f0e2c8" stroke="#a8946a"/><path d="M50 36 Q60 24 70 36Z" fill="#5a6a7a"/>
+    ${[30,50,70,90].map(x=>`<path d="M${x-5} 98 V84 a5 5 0 0 1 10 0 V98Z" fill="#8a6a4a"/>`).join('')}`},
+  berlin: { c: '#3a3a3a', s: `${SKY('#cfe0ff','#eef4ff')}${GROUND(98,'#a8a8a0')}
+    <rect x="14" y="44" width="92" height="12" fill="#e0d4b8" stroke="#a8946a"/>${[18,34,50,66,82,98].map(x=>`<rect x="${x-3}" y="56" width="6" height="42" fill="#e8dcc0" stroke="#a8946a"/>`).join('')}
+    <rect x="14" y="40" width="92" height="4" fill="#c8b898"/>
+    <g transform="translate(44 18)"><path d="M0 22 h32 l-4 -6 h-24Z" fill="#3a7a5a"/><path d="M8 16 l4 -10 h8 l4 10Z" fill="#3a7a5a"/>${[4,10,22,28].map(x=>`<circle cx="${x}" cy="24" r="2.5" fill="#3a7a5a"/>`).join('')}</g>`},
+  munich: { c: '#2f6aa8', s: `${SKY('#bfe3ff','#e8f6ff')}${GROUND(98,'#a8a090')}
+    ${[38,66].map(x=>`<rect x="${x}" y="30" width="16" height="68" fill="#b8644a" stroke="#7a3a2a"/><path d="M${x} 32 C${x} 14 ${x+16} 14 ${x+16} 32Z" fill="#3a8a6a"/>${WIN(x+3,40,10,50,1,5,'#5a3a2a')}`).join('')}
+    <rect x="54" y="52" width="12" height="46" fill="#c8745a"/>
+    <g transform="translate(88 74)"><rect width="18" height="22" rx="2" fill="#f0c040" opacity=".9"/><rect y="-6" width="18" height="8" rx="4" fill="#fff"/><path d="M18 6 q8 0 8 6 q0 6 -8 6" stroke="#ccc" stroke-width="3" fill="none"/></g>`},
+  budapest: { c: '#c8303a', s: `${SKY('#1c2a5a','#3a3a7a')}${STARS(5)}${SEA(80,'#1a2f6a','#ffd27a')}
+    <rect x="10" y="54" width="100" height="26" fill="#e8dcc0"/>${WIN(12,58,96,18,12,2,'#ffd27a')}<path d="M44 54 C44 30 76 30 76 54Z" fill="#c84a3a"/><path d="M60 34 v-12" stroke="#e8dcc0" stroke-width="2"/>
+    ${[14,30,90,106].map(x=>`<path d="M${x-3} 54 L${x} 40 L${x+3} 54Z" fill="#e8dcc0"/>`).join('')}
+    <path d="M10 92 h100" stroke="#ffd27a" stroke-width="2" opacity=".4"/>`},
+  athens: { c: '#2f6aa8', s: `${SKY('#8fd0ff','#d0f0ff')}${SUN(96,20,7)}<path d="M-5 86 Q30 62 60 66 Q90 62 125 86 V120 H-5Z" fill="#c8b088"/>
+    <rect x="22" y="58" width="76" height="6" fill="#f4ecd8" stroke="#b8a888"/><path d="M20 58 L60 42 L100 58Z" fill="#f4ecd8" stroke="#b8a888"/>
+    ${Array.from({length:8},(_,i)=>`<rect x="${25+i*9.6}" y="64" width="5" height="24" fill="#f4ecd8" stroke="#b8a888"/>`).join('')}<rect x="20" y="88" width="80" height="4" fill="#e8dcc0"/>`},
+  santorini: { c: '#1f5fb8', s: `${SKY('#7fc8ff','#c8ecff')}${SEA(80,'#1f6fd0','#a8d8ff')}
+    <path d="M-5 80 L10 60 L120 56 V84 H-5Z" fill="#e8dcc8"/>
+    ${[[8,62,18],[28,54,20],[50,58,16],[70,50,22],[92,58,18]].map(([x,y,w])=>`<rect x="${x}" y="${y}" width="${w}" height="${82-y}" fill="#fff"/><rect x="${x+w/2-2}" y="${y+8}" width="4" height="6" fill="#4a7ad0"/>`).join('')}
+    <path d="M30 54 a10 10 0 0 1 20 0Z" fill="#1f5fd0"/><path d="M40 44 v-6 M37 41 h6" stroke="#fff" stroke-width="1.5"/><path d="M72 50 a8 8 0 0 1 16 0Z" fill="#1f5fd0"/>`},
+  lisbon: { c: '#e0a020', s: `${SKY('#bfe3ff','#e8f6ff')}${GROUND(100,'#b8a888')}
+    ${[[0,'#f0c8a0'],[22,'#a8d0e8'],[44,'#f4e0a0'],[66,'#e8a8a0'],[88,'#c8e0b8']].map(([x,c],i)=>`<rect x="${x}" y="${30+i%2*8}" width="22" height="${70-i%2*8}" fill="${c}"/>${WIN(x+2,36+i%2*8,18,30,2,3,'#5a6a8a')}<path d="M${x} ${30+i%2*8} h22" stroke="#c8603a" stroke-width="4"/>`).join('')}
+    <g transform="translate(20 70)"><rect width="66" height="26" rx="5" fill="#f4c020"/><rect y="12" width="66" height="4" fill="#e0a010"/>${WIN(4,3,58,9,5,1,'#f0f4ff')}<circle cx="12" cy="27" r="3.5" fill="#333"/><circle cx="54" cy="27" r="3.5" fill="#333"/><path d="M33 0 L40 -12" stroke="#333" stroke-width="1.5"/></g>`},
+  interlaken: { c: '#c8303a', s: `${SKY('#8fd0ff','#d8f0ff')}<path d="M-5 76 L26 30 L44 52 L66 18 L92 48 L125 34 V90 H-5Z" fill="#8a96a8"/><path d="M26 30 L34 42 L18 42Z M66 18 L76 34 L56 34Z M110 40 L118 46 L102 46Z" fill="#fff"/>
+    ${GROUND(84,'#6ab04a')}<g transform="translate(78 22)"><path d="M0 8 Q14 -6 28 8" fill="#e8403a"/><path d="M0 8 L12 22 M28 8 L16 22" stroke="#333" stroke-width=".8"/><circle cx="14" cy="24" r="2.5" fill="#333"/></g>
+    <rect x="18" y="86" width="16" height="10" fill="#c8945a"/><path d="M16 88 L26 80 L36 88Z" fill="#8a4a2a"/>`},
+  moscow: { c: '#c8303a', s: `${SKY('#cfe0ff','#eef4ff')}${GROUND(98,'#d0c8c0')}
+    ${[[22,'#e84a3a',50],[42,'#2f8a5a',36],[60,'#e8c040',26],[78,'#2f5fb0',36],[98,'#e84a8a',50]].map(([x,c,y])=>`<rect x="${x-7}" y="${y+10}" width="14" height="${88-y}" fill="#d85a4a" stroke="#9a3a2a"/><path d="M${x-9} ${y+12} C${x-10} ${y} ${x-2} ${y-4} ${x} ${y-10} C${x+2} ${y-4} ${x+10} ${y} ${x+9} ${y+12}Z" fill="${c}"/><path d="M${x} ${y-10} v-5" stroke="#e8c040" stroke-width="1.5"/>`).join('')}
+    <rect x="12" y="78" width="96" height="20" fill="#d85a4a"/>${WIN(14,82,92,12,8,1,'#f0e0c0')}`},
+  dubrovnik: { c: '#c8603a', s: `${SKY('#8fd0ff','#d8f0ff')}${SEA(80,'#1f7ad0','#b0e0ff')}
+    <path d="M6 82 V52 H114 V82Z" fill="#e0d0b0" stroke="#a8946a"/>${Array.from({length:14},(_,i)=>`<rect x="${6+i*8}" y="48" width="4" height="4" fill="#e0d0b0"/>`).join('')}
+    ${[[14,36],[32,30],[50,38],[68,28],[86,34]].map(([x,y])=>`<rect x="${x}" y="${y+6}" width="16" height="${52-y-6}" fill="#f4ecd8"/><path d="M${x-2} ${y+8} L${x+8} ${y} L${x+18} ${y+8}Z" fill="#e0703a"/>`).join('')}
+    <rect x="98" y="20" width="10" height="32" fill="#e0d0b0" stroke="#a8946a"/><path d="M96 22 h14 l-2 -4 h-10Z" fill="#c8b890"/>`},
+  // ───── 아메리카 · 오세아니아 · 아프리카
+  newyork: { c: '#2f8a6a', s: `${SKY('#ffc8a0','#ffe6cc')}${SEA(90,'#3a6aa8','#a8c8f0')}
+    ${[[4,44,12],[18,30,10],[30,52,12],[86,40,10],[98,28,12],[110,50,10]].map(([x,y,w])=>`<rect x="${x}" y="${y}" width="${w}" height="${90-y}" fill="#8a94b0"/>${WIN(x,y+2,w,88-y-4,2,4,'#ffe9b0')}`).join('')}
+    <path d="M22 30 L23 16 L24 30" fill="#8a94b0"/>
+    <g fill="#5fb8a0" stroke="#3a8a7a" stroke-width=".8"><rect x="50" y="78" width="20" height="12"/><path d="M53 78 L56 50 H64 L67 78Z"/><circle cx="60" cy="44" r="5"/><path d="M55 40 l-2 -5 M58 38 l-1 -6 M62 38 l1 -6 M65 40 l2 -5" stroke-width="1.6"/><path d="M64 50 L70 30 L73 31 L67 50Z"/><path d="M70 30 l1.5 -5 l2 5Z" fill="#ffd27a"/></g>`},
+  losangeles: { c: '#e07a2a', s: `${SKY('#ff8a7a','#ffd0a0')}${SUN(60,62,18,'#ffe27a')}<path d="M-5 70 L20 52 L40 62 L60 48 L84 60 L125 50 V120 H-5Z" fill="#8a5a7a"/>${GROUND(88,'#6a3a5a')}
+    ${PALM(20,100,1.2)}${PALM(44,100,.9)}${PALM(96,100,1.3)}${PALM(78,100,.8)}`},
+  sanfrancisco: { c: '#c8402a', s: `${SKY('#ffc8a0','#ffe6d0')}<rect y="40" width="120" height="16" fill="#fff" opacity=".5"/>${SEA(74,'#3a6aa8','#a8c8f0')}
+    ${[30,86].map(x=>`<rect x="${x-3}" y="22" width="6" height="58" fill="#d84a2a"/><path d="M${x-5} 34 h10 M${x-5} 50 h10" stroke="#d84a2a" stroke-width="2"/>`).join('')}
+    <path d="M0 64 H120" stroke="#d84a2a" stroke-width="3"/><path d="M0 50 Q15 66 30 24 Q58 64 86 24 Q100 66 120 50" stroke="#d84a2a" stroke-width="1.8" fill="none"/>
+    ${Array.from({length:12},(_,i)=>`<path d="M${36+i*4.2} 64 V${30+Math.pow((i-5.5)/5.5,2)*30}" stroke="#d84a2a" stroke-width=".6"/>`).join('')}`},
+  lasvegas: { c: '#c82a8a', s: `${SKY('#1a1040','#4a1a6a')}${STARS(6)}<path d="M-5 92 Q60 84 125 92 V120 H-5Z" fill="#3a2a4a"/>
+    ${[[10,52,14,'#ff4aa0'],[28,38,12,'#4ad0ff'],[44,60,14,'#ffd040'],[64,30,12,'#a0ff6a'],[80,48,14,'#ff7a40'],[98,40,12,'#ff4aa0']].map(([x,y,w,c])=>`<rect x="${x}" y="${y}" width="${w}" height="${92-y}" fill="#2a1a3a" stroke="${c}" stroke-width="1.2"/>${WIN(x,y+3,w,88-y-6,2,5,c)}`).join('')}
+    <g transform="translate(40 70) rotate(-12)"><rect width="14" height="14" rx="3" fill="#fff"/>${[[4,4],[10,10],[7,7]].map(([a,b])=>`<circle cx="${a}" cy="${b}" r="1.4" fill="#c8303a"/>`).join('')}</g>`},
+  honolulu: { c: '#e05a3a', s: `${SKY('#8fd8ff','#d0f2ff')}${SUN(22,20,8)}<path d="M50 62 C60 36 86 32 104 38 C112 42 118 52 125 62Z" fill="#7a8a5a"/>${SEA(62,'#1ab0d8','#c8f8ff')}
+    <rect y="96" width="120" height="24" fill="#f8e6b8"/>${PALM(14,100)}
+    <g transform="translate(70 70) rotate(20)"><ellipse cx="0" cy="0" rx="4" ry="22" fill="#ff7a4a"/><path d="M0 -20 v40" stroke="#fff" stroke-width="1.5"/></g>
+    <path d="M30 80 q8 -6 16 0 q8 6 16 0" stroke="#fff" stroke-width="2" fill="none"/>`},
+  guam: { c: '#1f8fb0', s: `${SKY('#8fd8ff','#d0f2ff')}${CLOUD(84,22)}${SEA(66,'#1a90d0','#c0f0ff')}
+    <path d="M-5 66 L-5 26 L34 22 L44 30 L42 66Z" fill="#6a8a5a"/><path d="M-5 26 L34 22 L44 30 L44 36 L-5 34Z" fill="#4f7a3f"/><path d="M36 30 v36" stroke="#8a9a7a" stroke-width="4"/>
+    <rect y="96" width="120" height="24" fill="#f8ecc8"/>${PALM(96,100)}
+    <path d="M64 50 c-3 -5 -10 -2 -8 3 c1 3 8 7 8 7 s7 -4 8 -7 c2 -5 -5 -8 -8 -3Z" fill="#ff5a7a"/>`},
+  cancun: { c: '#1f8fb0', s: `${SKY('#8fd8ff','#d0f2ff')}${SUN(98,18,7)}${SEA(80,'#18c0c8','#c8fcff')}
+    ${[0,1,2,3,4].map(i=>`<rect x="${26+i*7}" y="${74-i*10}" width="${68-i*14}" height="10" fill="#c8b48a" stroke="#8a7a5a"/>`).join('')}<rect x="54" y="20" width="12" height="14" fill="#b8a07a" stroke="#8a7a5a"/>
+    <path d="M56 34 v40 h8 v-40" fill="#a8906a" opacity=".6"/>
+    <rect y="96" width="120" height="24" fill="#f8ecc8"/>${PALM(12,100,.9)}`},
+  sydney: { c: '#1f6fb8', s: `${SKY('#ffc8a0','#ffe6d0')}${SEA(80,'#2a6ab0','#b0d0f0')}
+    <path d="M0 50 Q30 22 60 50" stroke="#7a8090" stroke-width="5" fill="none"/><path d="M0 52 H64" stroke="#7a8090" stroke-width="3"/>${Array.from({length:7},(_,i)=>`<path d="M${6+i*8} 52 V${48-Math.sin((i+.5)/7*Math.PI)*22}" stroke="#7a8090" stroke-width="1"/>`).join('')}
+    <rect x="40" y="76" width="70" height="6" fill="#d8c8a8"/>
+    ${[[46,76,22],[60,76,28],[76,76,30],[92,76,24]].map(([x,y,h])=>`<path d="M${x} ${y} Q${x+2} ${y-h} ${x+16} ${y-h-2} Q${x+10} ${y-h*.5} ${x+14} ${y}Z" fill="#f8f8f4" stroke="#c8c8c0"/>`).join('')}`},
+  cairo: { c: '#d8a020', s: `${SKY('#ffc890','#ffe6c0')}${SUN(94,22,9,'#fff0b0')}<path d="M-5 92 Q60 84 125 92 V120 H-5Z" fill="#e8c890"/>
+    <path d="M16 92 L46 40 L76 92Z" fill="#d8b070"/><path d="M46 40 L76 92 H58Z" fill="#c09858"/>
+    <path d="M62 92 L84 54 L106 92Z" fill="#e0b878"/><path d="M84 54 L106 92 H92Z" fill="#c8a060"/>
+    <g transform="translate(14 74)"><path d="M0 18 h24 l-2 -8 h-14 l-2 -10 h-4 l-2 6Z" fill="#c09858"/></g>
+    <path d="M100 86 h8 M98 82 l4 -6 h6" stroke="#8a6a3a" stroke-width="2" fill="none"/>`},
+};
+// CITY_LIST key → WORLD 이름
+const WORLD_KEY = {
+  'JP:Tokyo':'tokyo','JP:Osaka':'osaka','JP:Kyoto':'kyoto','JP:Fukuoka':'fukuoka','JP:Sapporo':'sapporo','JP:Okinawa (Naha)':'okinawa',
+  'TH:Bangkok':'bangkok','TH:Phuket':'phuket','TH:Pattaya':'pattaya','VN:Hanoi':'hanoi','VN:Ho Chi Minh City':'hochiminh','VN:Da Nang':'danang','VN:Nha Trang':'nhatrang',
+  'SG:Singapore':'singapore','MY:Kuala Lumpur':'kualalumpur','ID:Bali':'bali','HK:Hong Kong':'hongkong','MO:Macau':'macau','TW:Taipei':'taipei',
+  'CN:Beijing':'beijing','CN:Shanghai':'shanghai','PH:Cebu':'cebu','AE:Dubai':'dubai','TR:Istanbul':'istanbul','IN:Agra':'agra',
+  'GB:London':'london','FR:Paris':'paris','IT:Rome':'rome','ES:Barcelona':'barcelona','NL:Amsterdam':'amsterdam','CZ:Prague':'prague','AT:Vienna':'vienna',
+  'IT:Venice':'venice','IT:Florence':'florence','IT:Milan':'milan','ES:Madrid':'madrid','DE:Berlin':'berlin','DE:Munich':'munich','HU:Budapest':'budapest',
+  'GR:Athens':'athens','GR:Santorini':'santorini','PT:Lisbon':'lisbon','CH:Interlaken':'interlaken','RU:Moscow':'moscow','HR:Dubrovnik':'dubrovnik',
+  'US:New York':'newyork','US:Los Angeles':'losangeles','US:San Francisco':'sanfrancisco','US:Las Vegas':'lasvegas','US:Honolulu':'honolulu','GU:Guam':'guam',
+  'MX:Cancún':'cancun','AU:Sydney':'sydney','EG:Cairo':'cairo',
+};
+
+Object.assign(MAG_SCENES,WORLD);
+const MAG_KEY={'KR:Gangneung':'gangneung','KR:Jeonju':'jeonju','KR:Gyeongju':'gyeongju','KR:Busan':'busan','KR:Jeju':'jeju','KR:Seoul':'seoul','KR:Incheon':'incheon','KR:Daegu':'daegu','KR:Gwangju':'gwangju','KR:Daejeon':'daejeon','KR:Yeosu':'yeosu','KR:Sokcho':'sokcho','KR:Ulleungdo':'ulleungdo','KR:Dokdo':'dokdo',...WORLD_KEY};
 const MAG_ON=3.2; // 이 배율보다 확대하면 보인다
 const escX=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function magFrame(id,inner,name,en,ribbon){
@@ -900,7 +1129,7 @@ function magFrame(id,inner,name,en,ribbon){
   <g filter="url(#mshadow)"><rect x="3" y="3" width="114" height="114" rx="21" fill="#fffdf6"/><g clip-path="url(#mc-${id})">${inner}</g>
   <rect x="9" y="9" width="102" height="102" rx="16" fill="url(#mg-${id})"/>
   <rect x="14" y="104" width="92" height="30" rx="10" fill="${ribbon}" stroke="#fffdf6" stroke-width="3"/>
-  <text x="60" y="${en&&en.toLowerCase()!==name.toLowerCase()?118:123}" text-anchor="middle" font-weight="900" font-size="${name.length>8?10:name.length>5?12:14}" fill="#fff">${escX(name.slice(0,10))}</text>
+  <text x="60" y="${en&&en.toLowerCase()!==name.toLowerCase()?118:123}" text-anchor="middle" font-weight="900" font-size="${name.length>12?8:name.length>8?9.5:name.length>5?12:14}" fill="#fff">${escX(name.slice(0,18))}</text>
   ${en&&en.toLowerCase()!==name.toLowerCase()?`<text x="60" y="129" text-anchor="middle" font-weight="800" font-size="7" letter-spacing="1.5" fill="#ffe9c4">${escX(en.slice(0,16).toUpperCase())}</text>`:''}</g>`}
 function magStamp(id,name,en,date,col){
   const top=escX((en||name).slice(0,14).toUpperCase()),fs=name.length>6?11:name.length>4?13:15;
