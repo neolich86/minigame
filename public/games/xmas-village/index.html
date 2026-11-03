@@ -231,8 +231,8 @@ import { EffectComposer } from './vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from './vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from './vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from './vendor/jsm/postprocessing/OutputPass.js';
-import { buildVillage, walkable, SPAWN, FIRE, FENCE_R, TREE_H } from './village.js?v=81d7faac';
-import { ORNAMENTS, ORN, makeOrnament, ornamentThumbs } from './ornaments.js?v=46cfe367';
+import { buildVillage, walkable, SPAWN, FIRE, FENCE_R, TREE_H } from './village.js?v=85e2d64f';
+import { ORNAMENTS, ORN, makeOrnament, ornamentThumbs } from './ornaments.js?v=0ab5c2f9';
 import { makeSnowman, animateSnowman, nameTag, randomName, randomLook, HATS, COLORS, HOLDS } from './snowman.js?v=d9b74416';
 
 const $ = (id) => document.getElementById(id);
@@ -315,7 +315,7 @@ function drawCard(c, orn, t, typed) {
   for (const [bx, by, r, a] of bokeh) { const rg = x.createRadialGradient(bx, by, 0, bx, by, r); rg.addColorStop(0, `rgba(255,220,150,${a})`); rg.addColorStop(1, 'rgba(255,220,150,0)'); x.fillStyle = rg; x.beginPath(); x.arc(bx, by, r, 0, 7); x.fill(); }
   x.strokeStyle = '#d8b060'; x.lineWidth = 3; x.beginPath(); x.moveTo(300, 70); x.lineTo(300, 140); x.stroke();
   // 글씨 쓸 면이 넓은 장식은 장식 위에, 좁거나 복잡한 장식은 아래에 매단 종이 꼬리표에 쓴다
-  const SURFACE = { star: [330, 220], gold: [335, 220], heart: [300, 250], ball: [325, 270] };
+  const SURFACE = { redball: [385, 250] };
   const wrap = (maxW) => { const out = []; let cur = ''; for (const ch of t) { if (x.measureText(cur + ch).width > maxW) { out.push(cur); cur = ch; } else cur += ch; } out.push(cur); return out; };
   // 50자까지 다 들어가도록 글씨 크기를 줄여 가며 맞춘다
   const fit = (big, small, maxW, maxLines) => { let sz = big, lines; for (; sz >= small; sz -= 2) { x.font = `${sz}px "Nanum Pen Script", cursive`; lines = wrap(maxW); if (lines.length <= maxLines) break; } return { sz: Math.max(sz, small), lines: lines.slice(0, maxLines) }; };
@@ -367,7 +367,7 @@ const hitGeo = new THREE.SphereGeometry(1.1, 8, 6), hitMat = new THREE.MeshBasic
 function hang(id, color, glow = 1.1, pop = false, wish = null) {
   const s = V.slots[slotNext++ % V.slots.length];
   const o = makeOrnament(id, color, glow);
-  if (wish) { const hb = new THREE.Mesh(hitGeo, hitMat); hb.position.y = -.45; hb.userData.wish = wish.id; o.add(hb); hitList.push(hb); wishes.set(wish.id, { w: wish, obj: o }); }
+  if (wish) { const hb = new THREE.Mesh(hitGeo, hitMat); hb.position.y = -.6; hb.userData.wish = wish.id; o.add(hb); hitList.push(hb); wishes.set(wish.id, { w: wish, obj: o }); }
   const sc = .5 + Math.random() * .12; o.scale.setScalar(pop ? .01 : sc);
   o.position.set(s.x, s.y, s.z); o.rotation.y = Math.atan2(s.x, s.z);
   scene.add(o); hung.push({ obj: o, slot: s, ph: Math.random() * 10, sc, born: pop ? performance.now() : 0 });
@@ -643,7 +643,7 @@ async function fillTree() {
   let real = [];
   if (CLOUD) { try { real = await rpc('xv_tree') || []; } catch (e) { console.warn('xv_tree', e); } }
   real.forEach((w) => hangWish(w, false));
-  const deco = ['star', 'heart', 'ball', 'flake', 'bell', 'moon', 'sock', 'house'], cols = [0xffe08a, 0xff9aa8, 0xffffff, 0xa8d8ff, 0xffc070, 0xffeaa8, 0xd8303a, 0xb06a48];
+  const deco = ['redball', 'star', 'flake', 'bell', 'sock', 'tree', 'gift', 'cane'], cols = [];
   const n = Math.max(30, Math.min(150, 300 - real.length));
   for (let i = 0; i < n; i++) { const k = i % 8 < 4 ? i % 4 : (i % 8); hang(deco[k], cols[k] ?? null, .7 + Math.random() * .6); }
   if (CLOUD) { try { todayWish = await rpc('xv_today'); if (todayWish) $('cToday').innerHTML = '✨ 오늘의 소원 <b>❤️</b>'; } catch {} }

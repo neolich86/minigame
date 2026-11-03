@@ -175,7 +175,7 @@ function archAndSign(scene, colliders) {
   board.position.set(0, 3.75, AZ); scene.add(board);
   // 트리 옆 게시판
   const note = canvasTex(320, 240, (x) => { x.fillStyle = '#3a2a20'; x.fillRect(0, 0, 320, 240); x.fillStyle = '#f6ecd8'; x.fillRect(12, 12, 296, 216); x.fillStyle = '#5a2a20'; x.font = 'bold 30px Pretendard, system-ui, sans-serif'; x.textAlign = 'center'; x.fillText('🎄 소원 마을 안내', 160, 54);
-    x.font = '22px Pretendard, system-ui, sans-serif'; x.fillStyle = '#3a2a20'; ['트리 가까이에서 소원을 걸어요', '장식을 누르면 소원을 읽어요', '매일 오후 8시 점등식', '서로 따뜻한 말만 남겨요'].forEach((t, i) => x.fillText(t, 160, 100 + i * 34)); });
+    x.font = '22px Pretendard, system-ui, sans-serif'; x.fillStyle = '#3a2a20'; ['트리 가까이에서 소원을 걸어요', '장식을 누르면 소원을 읽어요', '마음에 드는 소원엔 ❤️', '서로 따뜻한 말만 남겨요'].forEach((t, i) => x.fillText(t, 160, 100 + i * 34)); });
   const nb = new THREE.Group(); nb.position.set(6.2, 0, 11.2); nb.rotation.y = -.45; scene.add(nb);
   const pm = new THREE.MeshStandardMaterial({ color: 0x3a2a20 });
   for (const sx of [-.75, .75]) { const p = new THREE.Mesh(new THREE.BoxGeometry(.12, 2.2, .12), pm); p.position.set(sx, 1.1, 0); nb.add(p); }
