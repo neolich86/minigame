@@ -119,7 +119,7 @@ body.cine .credit{opacity:0}
 .cinehint{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);font-size:13px;color:rgba(255,255,255,.55);display:none;z-index:6;pointer-events:none}
 body.cine .cinehint{display:block}
 /* 모바일 */
-@media (max-width:760px){
+@media (max-width:760px), (pointer:coarse) and (max-width:1100px){
   .chips{top:calc(10px + env(safe-area-inset-top));left:0;right:0;transform:none;max-width:none;padding:2px 12px}
   .chip{padding:7px 11px;font-size:12px}
   .wish .x{position:sticky;top:0;float:right;margin:-6px -6px 0 0;z-index:2;background:rgba(40,46,80,.9)}
@@ -144,7 +144,7 @@ body.cine .cinehint{display:block}
   .right #bTree{width:44px;padding:0;justify-content:center;font-size:18px}
   body.panel .me,body.panel .right,body.panel .joy,body.panel .menu{opacity:0;pointer-events:none}
 }
-@media (max-width:760px){.menu button{white-space:nowrap}}
+@media (max-width:760px), (pointer:coarse) and (max-width:1100px){.menu button{white-space:nowrap}}
 @media (max-width:380px){.menu{padding:5px}.menu button{font-size:10px;padding:7px 1px;letter-spacing:-.3px}.menu button span{font-size:17px}}
 </style>
 </head>
@@ -237,7 +237,7 @@ import { ORNAMENTS, ORN, makeOrnament, ornamentThumbs } from './ornaments.js?v=0
 import { makeSnowman, animateSnowman, nameTag, randomName, randomLook, HATS, COLORS, HOLDS } from './snowman.js?v=d9b74416';
 
 const $ = (id) => document.getElementById(id);
-const MOBILE = matchMedia('(max-width:760px)').matches, COARSE = matchMedia('(pointer:coarse)').matches;
+const MOBILE = matchMedia('(max-width:760px), (pointer:coarse) and (max-width:1100px)').matches, COARSE = matchMedia('(pointer:coarse)').matches;
 
 /* ───────── 렌더러 ───────── */
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true });
@@ -531,6 +531,8 @@ $('mShot').onclick = () => {
   });
 };
 $('bTree').onclick = () => { standUp(); moveTarget = { x: 0, z: FENCE_R + 1.6 }; marker.position.set(0, .05, FENCE_R + 1.6); marker.material.opacity = .9; tYaw = 0; tPitch = .3; };
+// 전체화면을 못 쓰는 곳(아이폰 사파리 등)에서는 버튼을 숨긴다
+if (!(document.fullscreenEnabled || document.webkitFullscreenEnabled)) $('bFull').hidden = true;
 $('bFull').onclick = () => { const d = document.documentElement; document.fullscreenElement ? document.exitFullscreen() : d.requestFullscreen && d.requestFullscreen().catch(() => {}); };
 
 /* 꾸미기 */
@@ -561,6 +563,7 @@ const SILENT = [[67, 1.5], [69, .5], [67, 1], [64, 3], [67, 1.5], [69, .5], [67,
 const BASS = [[48, 12], [43, 6], [48, 6], [53, 6], [48, 6], [53, 6], [48, 6], [43, 6], [48, 3], [43, 3], [48, 3], [43, 3], [48, 6]];
 function startSound() {
   if (ac) return; ac = new (window.AudioContext || window.webkitAudioContext)();
+  if (ac.state !== 'running') ac.resume().catch(() => {});
   master = ac.createGain(); master.gain.value = 0; master.connect(ac.destination);
   const verb = ac.createConvolver(); { const len = ac.sampleRate * 3, b = ac.createBuffer(2, len, ac.sampleRate); for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); } verb.buffer = b; }
   const wet = ac.createGain(); wet.gain.value = .5; verb.connect(wet); wet.connect(master);
@@ -581,9 +584,26 @@ function startSound() {
   loop();
   master.gain.linearRampToValueAtTime(soundOn ? .7 : 0, ac.currentTime + 2);
 }
-$('bSound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); $('bSound').textContent = soundOn ? '🔊' : '🔈'; if (!ac) startSound(); else master.gain.linearRampToValueAtTime(soundOn ? .7 : 0, ac.currentTime + .8); };
-const first = () => { if (soundOn) startSound(); removeEventListener('pointerdown', first, true); removeEventListener('keydown', first, true); };
-addEventListener('pointerdown', first, true); addEventListener('keydown', first, true);
+$('bSound').onclick = () => { soundOn = !soundOn; store.set('sound', soundOn); $('bSound').textContent = soundOn ? '🔊' : '🔈'; if (soundOn) { try { silentAudio().play().catch(() => {}); } catch {} } if (!ac) startSound(); else { if (ac.state !== 'running') ac.resume().catch(() => {}); master.gain.linearRampToValueAtTime(soundOn ? .7 : 0, ac.currentTime + .8); } };
+// 아이폰: 무음 모드에서는 Web Audio 가 막힌다 → 첫 터치 때 소리 없는 <audio>를 같이 틀어 '미디어 재생'으로 바꾸고, 멈춘 AudioContext 를 깨운다
+try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch {}
+let silentEl = null;
+function silentAudio() {
+  if (silentEl) return silentEl;
+  const n = 4410, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf), w = (o, t) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, 44100, true); v.setUint32(28, 88200, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+  silentEl = new Audio(URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }))); silentEl.loop = true; silentEl.setAttribute('playsinline', ''); return silentEl;
+}
+const unlockAudio = () => {
+  if (!soundOn) return;
+  try { silentAudio().play().catch(() => {}); } catch {}
+  if (!ac) startSound();
+  if (ac && ac.state !== 'running') ac.resume().catch(() => {});
+  if (ac && ac.state === 'running') ['pointerdown', 'touchend', 'click', 'keydown'].forEach((t) => removeEventListener(t, unlockAudio, true));
+};
+['pointerdown', 'touchend', 'click', 'keydown'].forEach((t) => addEventListener(t, unlockAudio, true));
+document.addEventListener('visibilitychange', () => { if (!document.hidden && ac && soundOn && ac.state !== 'running') ac.resume().catch(() => {}); });
 
 function kstDay() { const d = new Date(Date.now() + 540 * 60000); return d.toISOString().slice(0, 10); }
 
