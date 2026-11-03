@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useApp } from "./AppProvider";
 import { LikeButton } from "./LikeButton";
+import { AdSlot } from "./AdSlot";
 import { useLikes } from "@/lib/likes";
 import { GENRES, KINDS, KIND_INDEX, entryPath, formatScore, itemsOf, type Genre, type Kind } from "@/lib/games";
 import { KIND_SEO } from "@/lib/seo";
@@ -188,6 +189,9 @@ export function GameList({ children, kind = "game" }: { children?: ReactNode; ki
           );
         })}
       </main>
+
+      {/* 광고는 카드 목록 안이 아니라 목록이 끝난 뒤 한 칸 */}
+      <AdSlot />
 
       {children}
 
