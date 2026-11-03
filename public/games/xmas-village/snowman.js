@@ -38,7 +38,7 @@ export function makeSnowman(look) {
   for (const [x, y] of [[-.13, 1.04], [-.05, 1.0], [.05, 1.0], [.13, 1.04]]) add(G.eye, coalM, x, y, .31).scale.setScalar(.55); // 숯 입
   const sm = M(look.scarf); add(G.scarf, sm, 0, .86, 0); const tail = add(G.tail, sm, .16, .7, .22); tail.rotation.z = .2;
   for (const y of [.62, .4, .2]) add(G.btn, M(look.btn), 0, y, .47 - (.62 - y) * .05);
-  const armL = add(G.arm, stickM, -.24, .86, 0); armL.rotation.z = 1.05; const armR = add(G.arm, stickM, .24, .86, 0); armR.rotation.z = -1.05;
+  const armL = add(G.arm, stickM, -.31, .87, 0); armL.rotation.z = 1.05; const armR = add(G.arm, stickM, .31, .87, 0); armR.rotation.z = -1.05;
   // 모자
   const hm = M(look.hatC);
   const hat = new THREE.Group(); hat.position.y = 1.38; body.add(hat);
@@ -63,7 +63,7 @@ export function animateSnowman(s, t, moving, wave = 0) {
   u.body.position.y = moving ? Math.abs(Math.sin(k)) * .14 : Math.sin(t * 1.6 + u.ph) * .01;
   u.body.rotation.z = moving ? Math.sin(k) * .06 : 0;
   u.armL.rotation.z = 1.05 + (moving ? Math.sin(k) * .25 : 0);
-  u.armR.rotation.z = wave > 0 ? -.35 + Math.sin(t * 12) * .4 : -1.05 - (moving ? Math.sin(k) * .25 : 0);
+  u.armR.rotation.z = wave > 0 ? -.95 + Math.sin(t * 12) * .3 : -1.05 - (moving ? Math.sin(k) * .25 : 0);
 }
 
 // 머리 위 이름표 (캔버스 스프라이트)
