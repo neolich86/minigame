@@ -491,13 +491,28 @@ function openDetail(c) {
   };
   $('dEdit').onclick = () => {
     const st = { lang: c.lang, grader: c.grader, grade: c.grade == null ? null : Number(c.grade), tag: c.grade_tag || '', note: c.note };
-    openSheet(`<h3>${esc(c.name)} 수정</h3><div class="row"><label>카드 언어</label>${segHTML('sLang', Object.entries(LANG), st.lang)}</div>${gradeRows(st)}
+    openSheet(`<h3>카드 수정</h3>
+      <div class="row"><label>카드 이름</label><input type="text" id="eName" maxlength="80" value="${esc(c.name)}"></div>
+      <div class="row"><label>카드 번호</label><input type="text" id="eNum" maxlength="40" placeholder="예) 012/025" value="${esc(c.number || '')}"></div>
+      <div class="row"><label>카드 언어</label>${segHTML('sLang', Object.entries(LANG), st.lang)}</div>${gradeRows(st)}
       <div class="actions"><button class="btn" id="eCancel">취소</button><button class="btn gold" id="eSave">저장</button></div>`);
     bindSeg('sLang', (v) => { st.lang = v; }); bindGrade(st);
     $('eCancel').onclick = () => openDetail(c);
     $('eSave').onclick = async () => {
-      try { await rpc('cd_update_card', { p_id: c.id, p_lang: st.lang, p_grader: st.grader, p_grade: st.grader === 'raw' ? null : st.grade, p_tag: st.grader === 'raw' ? '' : (st.tag || ''), p_note: $('sNote').value.trim() }); closeSheet(); toast('저장했어요'); load(); }
-      catch (e) { toast(errMsg(e)); }
+      const nm = $('eName').value.trim(), num = $('eNum').value.trim();
+      if (!nm) { toast('카드 이름을 넣어 주세요'); $('eName').focus(); return; }
+      const base = { p_id: c.id, p_lang: st.lang, p_grader: st.grader, p_grade: st.grader === 'raw' ? null : st.grade, p_tag: st.grader === 'raw' ? '' : (st.tag || ''), p_note: $('sNote').value.trim() };
+      const changed = nm !== c.name || num !== (c.number || '');
+      $('eSave').disabled = true;
+      try {
+        try { await rpc('cd_update_card', changed ? { ...base, p_name: nm, p_number: num } : base); }
+        catch (e) {
+          // 서버에 아직 이름 수정(0034)이 없으면 나머지만 저장
+          if (!changed || !/cd_update_card|function|schema cache/i.test(String(e && (e.message || e)))) throw e;
+          await rpc('cd_update_card', base); closeSheet(); toast('등급·메모는 저장했어요 (이름 수정은 곧 열려요)'); load(); return;
+        }
+        closeSheet(); toast('저장했어요'); load();
+      } catch (e) { $('eSave').disabled = false; toast(errMsg(e)); }
     };
   };
 }
