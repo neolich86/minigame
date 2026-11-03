@@ -512,6 +512,42 @@ export const GAME_SEO: SeoMap = {
       tags: ["Cathedral", "Prayer", "Pipe organ", "Meditation", "Relaxing", "Free"],
     },
   },
+  "xmas-village": {
+    ko: {
+      title: "크리스마스 소원 마을 - 눈 내리는 마을의 트리에 소원을 걸어요",
+      h1: "크리스마스 소원 마을 — 눈사람이 되어 걷고, 커다란 트리에 소원을 거는 곳",
+      description: "눈 내리는 밤의 크리스마스 마을. 눈사람이 되어 마을을 걷고, 한가운데 커다란 크리스마스 트리에 소원을 적은 장식을 걸어 보세요. 별과 은하수, 오로라가 보이는 밤하늘 아래 캠프파이어도 있어요.",
+      keywords: ["크리스마스 소원 마을", "크리스마스", "크리스마스 트리", "소원 트리", "소원 빌기", "소원 쓰기", "크리스마스 마을", "눈사람", "눈 내리는 마을", "오로라", "은하수", "캠프파이어", "크리스마스 게임", "연말", "힐링", "무료"],
+      about: [
+        "크리스마스 소원 마을은 웹에서 바로 들어가는 눈 내리는 밤의 작은 마을이에요. 들어오면 귀여운 눈사람이 되어 마을 입구에서 시작해요. 한가운데에는 빛나는 장식이 가득한 커다란 크리스마스 트리가 서 있고, 둘레에는 창문 몇 곳에서 노란 불빛이 새어 나오는 집들과 장작이 타는 캠프파이어가 있어요.",
+        "🎄 소원 걸기를 누르고 별·하트·눈꽃·종 같은 장식을 고른 뒤 소원을 적으면 트리에 반짝 걸려요. 매일 들어오면 출석 보상으로 선물상자·진저맨·루돌프·황금별 같은 장식이 하나씩 열려요. 하늘을 올려다보면 별과 은하수, 초록 오로라가 보이고, 눈멍하기를 누르면 화면이 천천히 마을을 돌아요. 함께 들어온 사람들의 눈사람도 보이고 손을 흔들어 인사할 수 있어요. 설치나 회원가입 없이 무료예요.",
+      ],
+      howTo: [
+        "방향키·WASD(휴대폰은 조이스틱)나 바닥을 눌러 걸어요. 화면을 끌면 둘러보고, 위로 끌면 하늘을 볼 수 있어요.",
+        "🎄 소원 걸기에서 장식을 고르고 소원을 적은 뒤 👀 미리보기로 확인하고 트리에 걸어요.",
+        "꾸미기에서 눈사람 이름·모자·목도리 색을 바꾸고, 🙂 놀기로 손 흔들기나 캠프파이어에 앉기를 해요.",
+        "🌙 눈멍하기로 마을을 감상하고 📷 사진찍기로 지금 장면을 저장해요.",
+      ],
+      tags: ["크리스마스", "소원", "트리", "눈사람", "힐링", "무료"],
+    },
+    en: {
+      title: "Christmas Wish Village - Hang Your Wish on a Giant Christmas Tree",
+      h1: "Christmas Wish Village — Walk as a Snowman and Hang Your Wish on the Tree",
+      description: "A snowy Christmas village at night. Walk around as a snowman and hang an ornament with your wish on the giant Christmas tree, under stars, the Milky Way and the northern lights.",
+      keywords: ["christmas wish", "christmas tree", "wish tree", "christmas village", "snowman", "northern lights", "cozy", "christmas game", "free"],
+      about: [
+        "Christmas Wish Village is a small snowy village you can enter right from your browser. You become a little snowman and stroll past warm-windowed cottages and a crackling campfire toward a giant glowing Christmas tree.",
+        "Pick an ornament, write your wish and hang it on the tree. Come back each day to unlock new ornaments. Look up to see stars, the Milky Way and green northern lights, wave to other snowmen, and save a photo. Free, no install or sign-up.",
+      ],
+      howTo: [
+        "Walk with arrow keys / WASD (joystick on phones) or tap the ground. Drag to look around, drag up to see the sky.",
+        "Open 🎄 Wish, choose an ornament, write your wish, preview it and hang it on the tree.",
+        "Customize your snowman, wave hello, or sit by the campfire.",
+        "Use 🌙 to gaze at the village and 📷 to save a photo.",
+      ],
+      tags: ["Christmas", "Wish", "Tree", "Snowman", "Cozy", "Free"],
+    },
+  },
   "dongne-note": {
     ko: {
       title: "동네쪽지 - 지도에 남기는 동네 쪽지·메모",

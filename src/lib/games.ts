@@ -245,7 +245,6 @@ const CATALOG: Game[] = [
     genre: "casual",
     thumb: "/thumbs/xmas-village.jpg",
     src: "/games/xmas-village/index.html",
-    hidden: true, // 단계별로 만드는 중 — 소원 공유(2단계)까지 끝나면 공개
   },
   {
     id: "explore-map",
