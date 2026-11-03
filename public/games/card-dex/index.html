@@ -470,7 +470,7 @@ function openDetail(c) {
   openSheet(`<div class="detail">${cardHTML(c).replace(/^<button[^>]*>/, '<div>').replace(/<\/button>\s*$/, '</div>').replace('<span class="check">✓</span>', '')}
     <dl><dt>이름</dt><dd>${esc(c.name)}</dd><dt>번호</dt><dd>${esc(c.number || '-')}</dd>${c.set_name ? `<dt>세트</dt><dd>${esc(c.set_name)}</dd>` : ''}
     <dt>언어</dt><dd>${LANG[c.lang]}</dd><dt>등급</dt><dd>${graded ? `${c.grader.toUpperCase()} ${gradePlain(c)}` : '미등급'}</dd>${c.note ? `<dt>메모</dt><dd>${esc(c.note)}</dd>` : ''}</dl></div>
-    ${mine && (!c.image || /\/game-public\//.test(c.image)) ? `<div class="actions"><button class="btn" id="dPhoto" style="border-color:var(--gold);color:var(--gold)">📷 ${c.image ? '사진 바꾸기' : '사진 올리기'}</button><button class="btn" id="dLink" style="border-color:var(--gold);color:var(--gold)">🔗 링크로 넣기</button></div>${linkRowHTML('dLR')}` : ''}
+    ${mine ? `<div class="actions"><button class="btn" id="dPhoto" style="border-color:var(--gold);color:var(--gold)">📷 ${c.image ? '사진 바꾸기' : '사진 올리기'}</button><button class="btn" id="dLink" style="border-color:var(--gold);color:var(--gold)">🔗 링크로 넣기</button></div>${linkRowHTML('dLR')}` : ''}
     <div class="actions">${mine ? '<button class="btn" id="dDel">삭제</button><button class="btn" id="dEdit">수정</button>' : ''}<button class="btn gold" id="dClose">닫기</button></div>`);
   $('dClose').onclick = closeSheet;
   if (!mine) return;
