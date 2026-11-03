@@ -204,8 +204,9 @@ export async function buildVillage(scene, loader, onProgress) {
     const lit = [[1, 0], [0, 0], [1, 1], [0, 1], [0, 0], [1, 0], [0, 1], [1, 1], [0, 0], [1, 0], [0, 1], [1, 1]][hi++];
     house(scene, x, z, Math.atan2(-x, -z), 5 + (i % 3), 4.4 + (i % 2), lit, [0x8a6a55, 0x7d5d4c, 0x96755d, 0x6e5a72][i % 4], [0x5a2f2a, 0x2f3f5a, 0x5a2f2a, 0x3a5a3f][i % 4], colliders, pools, windows);
   }
-  for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 + .31; const x = Math.cos(a) * 15, z = Math.sin(a) * 15; lamp(scene, x, z, pools); colliders.push({ x, z, r: .3 }); }
-  for (const z of [20, 26]) for (const sx of [-1, 1]) { lamp(scene, sx * 3.4, z, pools); colliders.push({ x: sx * 3.4, z, r: .3 }); }
+  // 가로등 7개: 광장 둘레 5 + 입구 길 2 (엇갈리게)
+  for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + Math.PI / 2 + Math.PI / 5; const x = Math.cos(a) * 15, z = Math.sin(a) * 15; lamp(scene, x, z, pools); colliders.push({ x, z, r: .3 }); }
+  for (const [x, z] of [[-3.4, 20], [3.4, 26]]) { lamp(scene, x, z, pools); colliders.push({ x, z, r: .3 }); }
   const fire = campfire(scene, colliders);
   archAndSign(scene, colliders);
 
