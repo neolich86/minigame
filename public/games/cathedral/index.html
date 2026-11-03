@@ -357,6 +357,7 @@ function reverbIR(ctx, sec) {
 function startMusic() {
   if (ac) return;
   ac = new (window.AudioContext || window.webkitAudioContext)();
+  if (ac.state !== 'running') ac.resume().catch(() => {});
   const wave = organWave(ac);
   master = ac.createGain(); master.gain.value = 0;
   const comp = ac.createDynamicsCompressor();
@@ -394,6 +395,7 @@ const bMusic = document.getElementById('bMusic');
 bMusic.onclick = () => {
   if (!ac) { musicOn = !musicOn; if (musicOn) startMusic(); }
   else { musicOn = !musicOn; master.gain.cancelScheduledValues(ac.currentTime); master.gain.linearRampToValueAtTime(musicOn ? .22 : 0, ac.currentTime + 1.5); recOut.gain.cancelScheduledValues(ac.currentTime); recOut.gain.linearRampToValueAtTime(musicOn ? 1 : 0, ac.currentTime + 1.5); }
+  if (musicOn) { try { silentAudio().play().catch(() => {}); } catch {} if (ac && ac.state !== 'running') ac.resume().catch(() => {}); }
   bMusic.classList.toggle('on', musicOn);
 };
 
@@ -644,8 +646,27 @@ Promise.all([ready, peopleReady]).then(async () => {
   const T = space === 'temple', snd = T ? '염불 소리가' : '오르간이', seatW = T ? '방석' : '의자';
   hint(matchMedia('(pointer: coarse)').matches ? `화면을 누르면 ${snd} 울려요 · 조이스틱으로 걷기 · ${seatW} 근처에서 🪑 앉기` : `클릭하면 ${snd} 울려요 · WASD로 걷기 · 끌어서 시점 돌리기 · ${seatW} 근처에서 E로 앉기`);
 });
-const firstTouch = () => { if (musicOn) startMusic(); removeEventListener('pointerdown', firstTouch, true); removeEventListener('keydown', firstTouch, true); };
-addEventListener('pointerdown', firstTouch, true); addEventListener('keydown', firstTouch, true);
+// 아이폰: 무음 모드에서는 Web Audio(오르간)가 안 들리고, <audio>(염불 mp3)는 들린다.
+// 그래서 첫 터치 때 소리 없는 <audio>를 함께 틀어 '미디어 재생'으로 바꾸고, 멈춰 있는 AudioContext도 깨운다.
+try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch {}
+let silentEl = null;
+function silentAudio() {
+  if (silentEl) return silentEl;
+  const n = 4410, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf), w = (o, t) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, 44100, true); v.setUint32(28, 88200, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+  silentEl = new Audio(URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }))); silentEl.loop = true; silentEl.setAttribute('playsinline', ''); return silentEl;
+}
+const unlockAudio = () => {
+  if (!musicOn) return;
+  try { silentAudio().play().catch(() => {}); } catch {}
+  if (!ac) startMusic();
+  if (ac && ac.state !== 'running') ac.resume().catch(() => {});
+  if (ac && ac.state === 'running') ['pointerdown', 'touchend', 'click', 'keydown'].forEach((t) => removeEventListener(t, unlockAudio, true));
+};
+['pointerdown', 'touchend', 'click', 'keydown'].forEach((t) => addEventListener(t, unlockAudio, true));
+// 다른 앱에 다녀오면 멈춰 있을 수 있어 다시 깨운다
+document.addEventListener('visibilitychange', () => { if (!document.hidden && ac && musicOn && ac.state !== 'running') ac.resume().catch(() => {}); });
 
 /* ───────── 그리기 ───────── */
 const clock = new THREE.Clock();
