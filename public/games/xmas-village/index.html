@@ -577,6 +577,7 @@ function startSound() {
   function box(m, t, v = .16) { for (const [mul, a] of [[1, 1], [2, .35], [4.1, .12]]) { const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = N(m) * mul; const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v * a, t + .005); g.gain.exponentialRampToValueAtTime(.0001, t + 2.2 / mul); o.connect(g); g.connect(mus); o.start(t); o.stop(t + 2.4); } }
   let next = ac.currentTime + .5;
   function loop() {
+    if (ac.state !== 'running') { setTimeout(loop, 1000); return; } // 멈춘 동안 음을 쌓아 두지 않는다
     let t = next; for (const [m, d] of SILENT) { box(m, t); t += d * BEAT; }
     let tb = next; for (const [m, d] of BASS) { box(m, tb, .08); box(m + 7, tb + BEAT, .05); box(m + 12, tb + BEAT * 2, .05); tb += d * BEAT; }
     next = t + BEAT * 6; setTimeout(loop, (next - ac.currentTime - 2) * 1000);
@@ -603,7 +604,15 @@ const unlockAudio = () => {
   if (ac && ac.state === 'running') ['pointerdown', 'touchend', 'click', 'keydown'].forEach((t) => removeEventListener(t, unlockAudio, true));
 };
 ['pointerdown', 'touchend', 'click', 'keydown'].forEach((t) => addEventListener(t, unlockAudio, true));
-document.addEventListener('visibilitychange', () => { if (!document.hidden && ac && soundOn && ac.state !== 'running') ac.resume().catch(() => {}); });
+// 백그라운드로 가면 소리를 멈추고, 돌아오면 다시 튼다
+function bgAudio(hidden) {
+  if (hidden) { if (ac && ac.state === 'running') ac.suspend().catch(() => {}); try { silentEl && silentEl.pause(); } catch {} return; }
+  if (!ac || !soundOn) return;
+  try { silentAudio().play().catch(() => {}); } catch {}
+  if (ac.state !== 'running') ac.resume().catch(() => {});
+}
+document.addEventListener('visibilitychange', () => bgAudio(document.hidden));
+addEventListener('pagehide', () => bgAudio(true)); addEventListener('pageshow', () => bgAudio(document.hidden));
 
 function kstDay() { const d = new Date(Date.now() + 540 * 60000); return d.toISOString().slice(0, 10); }
 

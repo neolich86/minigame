@@ -267,8 +267,9 @@ export function templeAudio(ac, out) {
   }
   const BEAT = .78; let next = 0, n = 0;
   return {
-    bus,
+    bus, rec,
     schedule(active) {
+      if (document.hidden) { if (!rec.paused) rec.pause(); return; } // 백그라운드에서는 멈춘다
       // 녹음된 천수경 (BTN 불교방송 예불·독경 mp3) 을 반복 재생 — 합성 목탁·염불은 쓰지 않는다
       if (active) { if (rec.paused) rec.play().catch(() => {}); } else if (!rec.paused && bus.gain.value < .02) rec.pause();
       return;
