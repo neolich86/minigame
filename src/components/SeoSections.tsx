@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { KindStripRow } from "./KindStripRow";
 import { GAMES, KIND_INDEX, entryPath, gameById, itemsOf, kindOf, type Kind } from "@/lib/games";
 import type { Lang } from "@/lib/i18n";
 import { GUIDES } from "@/lib/guides";
@@ -129,18 +130,7 @@ export function KindStrip({ kind, lang }: { kind: Exclude<Kind, "game">; lang: L
         </Link>
       </div>
       <p className="kind-strip-sub">{seo.subtitle}</p>
-      <div className="kind-strip-row">
-        {items.map((g) => (
-          <Link key={g.id} href={entryPath(g)} className="kind-chip">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={g.thumb} alt={g.title[lang]} loading="lazy" />
-            <span>
-              <b>{g.title[lang]}</b>
-              <small>{g.desc[lang]}</small>
-            </span>
-          </Link>
-        ))}
-      </div>
+      <KindStripRow kind={kind} lang={lang} />
     </section>
   );
 }

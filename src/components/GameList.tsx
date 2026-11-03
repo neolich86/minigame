@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useApp } from "./AppProvider";
 import { LikeButton } from "./LikeButton";
+import { useLikes } from "@/lib/likes";
 import { GENRES, KINDS, KIND_INDEX, entryPath, formatScore, itemsOf, type Genre, type Kind } from "@/lib/games";
 import { KIND_SEO } from "@/lib/seo";
 import { fetchMyScores, type ScoreRow } from "@/lib/supabase";
@@ -25,7 +26,12 @@ const KIND_DESC = { game: "kindDesc_game", tool: "kindDesc_tool", app: "kindDesc
 /** 게임(홈) · 추첨·도구 · 서비스 목록 — kind 로 무엇을 보여줄지 정한다 */
 export function GameList({ children, kind = "game" }: { children?: ReactNode; kind?: Kind }) {
   const { t, lang, user } = useApp();
-  const ITEMS = useMemo(() => itemsOf(kind), [kind]);
+  const { counts: likes } = useLikes();
+  // 하트 많은 순 (같으면 원래 순서). 하트 수를 불러오기 전에는 원래 순서
+  const ITEMS = useMemo(() => {
+    const base = itemsOf(kind);
+    return base.map((g, i) => ({ g, i, n: likes[g.id] ?? 0 })).sort((a, b) => b.n - a.n || a.i - b.i).map((x) => x.g);
+  }, [kind, likes]);
   const isGame = kind === "game";
   const hero = kind === "game" ? null : KIND_SEO[kind][lang];
   const [filter, setFilter] = useState<Genre | "all">("all");
