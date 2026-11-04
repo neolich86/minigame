@@ -17,7 +17,7 @@ const set = (s: Partial<State>) => {
   emit();
 };
 
-function deviceId(): string {
+export function deviceId(): string {
   try {
     let id = localStorage.getItem(DEVICE_KEY);
     if (!id || !/^[0-9a-f-]{36}$/.test(id)) {
