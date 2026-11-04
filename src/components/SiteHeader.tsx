@@ -8,6 +8,7 @@ import { useApp } from "./AppProvider";
 import { cloudEnabled } from "@/lib/supabase";
 import { isAppPath } from "@/lib/appPaths";
 import { useOnline } from "@/lib/online";
+import { OnlineChip } from "./OnlineChip";
 
 export function SiteHeader() {
   const { t, lang, setLang, user, profile, loading } = useApp();
@@ -43,12 +44,7 @@ export function SiteHeader() {
             🧭 <span className="hide-sm">{t("navApps")}</span>
           </Link>
         </div>
-        {online.loaded && (
-          <span className="online-now" title={lang === "ko" ? "지금 접속 중인 사람 (최근 2분)" : "People online now (last 2 min)"}>
-            <i aria-hidden /> {online.total.toLocaleString()}
-            <span className="hide-sm">{lang === "ko" ? "명 접속 중" : " online"}</span>
-          </span>
-        )}
+        {online.loaded && <OnlineChip total={online.total} lang={lang} userId={user?.id ?? null} />}
         <Link href="/ranking" className={`nav-link${path === "/ranking" ? " active" : ""}`}>
           🏆 <span className="hide-sm">{t("navRanking")}</span>
         </Link>
