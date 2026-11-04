@@ -1,0 +1,44 @@
+# 오늘 뭐 읽지? — 도서관 정보나루에서 책을 모아 catalog.json 을 만들고 커밋한다 (커밋되면 Vercel이 배포)
+# 필요한 저장소 Secret: DATA4LIBRARY_KEY (정보나루 인증키 — 저장소에 적지 않는다)
+# 하루 호출 한도가 있어 책별 상세는 data/book-pick/cache.json 에 쌓아 가며 날마다 조금씩 채운다.
+
+name: book-catalog
+
+on:
+  schedule:
+    - cron: "37 18 * * *"   # 매일 KST 03:37
+  workflow_dispatch:
+    inputs:
+      max_calls:
+        description: "이번 실행의 최대 API 호출 수"
+        default: "900"
+
+concurrency:
+  group: book-catalog
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 카탈로그 만들기
+        env:
+          DATA4LIBRARY_KEY: ${{ secrets.DATA4LIBRARY_KEY }}
+          MAX_CALLS: ${{ inputs.max_calls || '900' }}
+        run: node scripts/book-catalog.mjs
+      - name: 바뀌었으면 커밋
+        run: |
+          git config user.name "book-catalog bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/book-pick/cache.json public/games/book-pick/catalog.json 2>/dev/null || true
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git commit -m "오늘 뭐 읽지?: 정보나루 카탈로그 갱신"
+          git pull --rebase origin main && git push
