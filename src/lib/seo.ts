@@ -512,6 +512,34 @@ export const GAME_SEO: SeoMap = {
       tags: ["Cathedral", "Prayer", "Pipe organ", "Meditation", "Relaxing", "Free"],
     },
   },
+  "book-pick": {
+    ko: {
+      title: "오늘 뭐 읽지? - 키워드로 고르는 책 추천",
+      h1: "오늘 뭐 읽지? — 장르·분위기 키워드로 책을 뽑아 주는 책 추천",
+      description: "장르·소재·분위기·시기 키워드를 고르면 어울리는 책을 뽑아 줘요. 재밌게 읽은 책을 책장에 꽂으면 취향이 비슷한 다음 책도 찾아 줘요. 전국 공공도서관 대출 데이터(도서관 정보나루) 기반.",
+      keywords: ["오늘 뭐 읽지", "책 추천", "소설 추천", "책 고르기", "읽을 책 추천", "취향 책 추천", "비슷한 책 찾기", "도서관 인기 대출", "베스트셀러", "책 뽑기", "무료"],
+      about: [
+        "오늘 뭐 읽지?는 \"오늘 뭐 먹지?\"처럼 키워드를 골라 누르면 읽을 책을 한 권 뽑아 주는 책 추천 도구예요. 한국소설·SF·추리 같은 장르, 시간여행·가족·성장 같은 소재, 힐링·반전·잔잔한 같은 분위기, 요즘 책·스테디셀러 같은 시기를 골라 보세요.",
+        "📚 읽은 책으로 찾기에서는 재밌게 읽은 책을 책장에 꽂으면 그 책들의 키워드와 도서관 이용자들의 추천을 바탕으로 비슷한 다음 책을 찾아 줘요. 책 데이터는 전국 공공도서관 대출 기록을 모은 도서관 정보나루에서 가져오고, 매일 새로 갱신돼요. 회원가입 없이 무료예요.",
+      ],
+      howTo: [
+        "장르·소재·분위기·시기·읽기 성향 중 끌리는 키워드를 골라요. 아무것도 안 골라도 돼요.",
+        "📚 책 뽑기를 누르면 추천 한 권과 다른 후보 네 권이 나와요. 다시 뽑기로 다른 책도 볼 수 있어요.",
+        "읽은 책으로 찾기 탭에서 좋아했던 책을 검색해 책장에 꽂으면 비슷한 책을 찾아 줘요.",
+        "마음에 드는 책은 공유 버튼으로 친구에게 보내요.",
+      ],
+      tags: ["책 추천", "소설", "독서", "도서관", "취향", "무료"],
+    },
+    en: {
+      title: "What to Read Today - Book Picker by Genre & Mood",
+      h1: "What to Read Today — Pick Keywords, Get a Book",
+      description: "Choose genres, themes, moods and eras and get a book that fits, or shelve books you loved to find similar ones. Based on Korean public library loan data.",
+      keywords: ["book recommendation", "what to read", "book picker", "korean books", "similar books", "free"],
+      about: ["Pick keywords like genre, theme, mood and era and get a book picked for you — or add books you loved to find the next one. Data from Korea's public library loan statistics (Data4Library), updated daily."],
+      howTo: ["Pick keywords (or none).", "Tap Pick a book to see one pick and four more.", "Use the bookshelf tab to find books similar to ones you loved.", "Share your pick."],
+      tags: ["Books", "Reading", "Library", "Free"],
+    },
+  },
   "xmas-village": {
     ko: {
       title: "크리스마스 소원 마을 - 눈 내리는 마을의 트리에 소원을 걸어요",

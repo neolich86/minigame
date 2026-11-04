@@ -359,7 +359,6 @@ const CATALOG: Game[] = [
     genre: "casual",
     thumb: "/thumbs/book-pick.jpg",
     src: "/games/book-pick/index.html",
-    hidden: true, // 정보나루 카탈로그 연결 전 (지금은 예시 책 목록)
   },
   {
     id: "pinball",
