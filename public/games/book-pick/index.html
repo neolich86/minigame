@@ -431,6 +431,9 @@ loadSel(); renderGroups(); renderStatus();
     try { const r = await fetch(f, { cache: 'no-cache' }); if (r.ok) { data = await r.json(); break; } } catch (e) {}
   }
   BOOKS = (data && data.books) || [];
+  // 정보나루 제목의 부제·원제 표기 정리: "위저드 베이커리 =구병모 장편소설 /Wizard bakery" → "위저드 베이커리"
+  const clean = (t) => String(t || '').split(/\s*[:=;／/]\s*/)[0].replace(/\s*[\(\[].*?[\)\]]\s*$/, '').replace(/\s+/g, ' ').trim() || String(t || '');
+  for (const b of BOOKS) { b.t = clean(b.t); b.a = String(b.a || '').replace(/\s*(지음|지은이|글|저|著|외)\s*$/, '').trim(); }
   loadShelf();
   let m0 = 'kw'; try { m0 = localStorage.getItem('book-pick:mode') || 'kw'; } catch (e) {}
   setMode(m0 === 'shelf' ? 'shelf' : 'kw');

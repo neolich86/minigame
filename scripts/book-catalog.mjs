@@ -113,7 +113,7 @@ function addDoc(d, src) {
   const prev = cand.get(isbn);
   const loan = +(d.loan_count || d.loanCnt || 0);
   if (prev) { prev.loan = Math.max(prev.loan, loan); prev.src.add(src); return; }
-  cand.set(isbn, { id: isbn, t: (d.bookname || '').replace(/\s+/g, ' ').split(/\s*[:=]\s*/)[0].replace(/\s*\(.*?\)\s*$/, '').trim(), a: String(d.authors || '').split(/[;,]/)[0].replace(/(지은이|글|저|지음|옮긴이)\s*:?/g, '').trim(),
+  cand.set(isbn, { id: isbn, t: (d.bookname || '').replace(/\s+/g, ' ').split(/\s*[:=;／/]\s*/)[0].replace(/\s*\(.*?\)\s*$/, '').trim(), a: String(d.authors || '').split(/[;,]/)[0].replace(/(지은이|글|저|지음|옮긴이)\s*:?/g, '').trim(),
     p: (d.publisher || '').trim(), y: +(d.publication_year || 0) || 0, img: d.bookImageURL || '', kdc: String(d.class_no || ''), add: String(d.addition_symbol || ''), loan, src: new Set([src]) });
 }
 
