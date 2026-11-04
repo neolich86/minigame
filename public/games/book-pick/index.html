@@ -383,11 +383,12 @@ function show(x, alts) {
   $('pick').innerHTML = `<h2>『${esc(b.t)}』</h2><div class="meta">${esc(b.a)} · ${b.y}</div>${x.why ? `<div class="why">📚 『${esc(x.why.t)}』${obj(x.why.t)} 좋아했다면</div>` : ''}
     ${hit.length ? `<div class="stamps">${hit.map((k) => `<span class="stamp">#${esc(LABEL[k] || k)}</span>`).join('')}</div>` : '<div style="height:12px"></div>'}
     ${b.d ? `<div class="desc">${esc(b.d)}</div>` : ''}
-    <div class="acts"><button class="btn main" id="pAgain">🔁 다시 뽑기</button><button class="btn sub" id="pInfo">📖 책 정보</button><button class="btn sub" id="pShare">공유</button></div>`;
+    <div class="acts"><button class="btn main" id="pAgain">🔁 다시 뽑기</button><button class="btn sub" id="pCopy">📋 제목 복사</button><button class="btn sub" id="pInfo">📖 책 정보</button><button class="btn sub" id="pShare">공유</button></div>`;
   requestAnimationFrame(() => $('pick').classList.add('show'));
   $('pAgain').onclick = () => draw(false);
   $('pInfo').onclick = () => window.open(`https://search.shopping.naver.com/book/search?query=${encodeURIComponent(b.t + ' ' + b.a)}`, '_blank', 'noopener');
   $('pShare').onclick = () => share(x);
+  $('pCopy').onclick = () => copyText(b.t);
   $('alts').innerHTML = alts.length ? `<h3>이런 책은 어때요?</h3><div class="row">${alts.map((y, i) => `<button data-i="${i}">${cover(y.b, 11)}<div class="nm">${esc(y.b.t)}</div></button>`).join('')}</div>` : '';
   $('alts').querySelectorAll('button').forEach((el) => el.onclick = () => {
     const i = +el.dataset.i, nx = alts[i]; alts[i] = x; show(nx, alts); $('res').scrollTop = 0;
@@ -406,6 +407,15 @@ async function share(x) {
 }
 function closeRes() { $('res').classList.remove('open'); document.body.style.overflow = ''; current = null; try { history.replaceState(null, '', location.pathname); } catch (e) {} renderStatus(); }
 let toastT = 0;
+// 책 제목 복사 (클립보드가 막힌 인앱 브라우저도 대비)
+async function copyText(t) {
+  let ok = false;
+  try { await navigator.clipboard.writeText(t); ok = true; } catch (e) {
+    const a = document.createElement('textarea'); a.value = t; a.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(a); a.select();
+    try { ok = document.execCommand('copy'); } catch (e2) {} a.remove();
+  }
+  toast(ok ? `『${t}』 제목을 복사했어요` : t);
+}
 function toast(s) { const t = $('toast'); t.textContent = s; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2200); }
 
 $('bPick').onclick = () => { current = null; draw(false); };
