@@ -167,7 +167,12 @@ const STYLE_FN = { popular: (b) => b.pop >= 4, hidden: (b) => b.pop <= 3 };
 
 /* ───── 상태 ───── */
 const sel = { genre: new Set(), theme: new Set(), mood: new Set(), era: new Set(), style: new Set() };
-let BOOKS = [], seen = new Set(), current = null, lastList = [];
+let BOOKS = [], current = null, lastList = [];
+// 본 책 기록 (이 브라우저에 최근 300권) — 다시 뽑거나, 뒤로 갔다 다시 뽑아도 새 책부터 나오게
+const seen = new Map(); // id → 본 순서
+let seenN = 0;
+try { (JSON.parse(localStorage.getItem('book-pick:seen') || '[]')).forEach((id) => seen.set(id, ++seenN)); } catch (e) {}
+function markSeen(ids) { ids.forEach((id) => { seen.delete(id); seen.set(id, ++seenN); }); while (seen.size > 300) seen.delete(seen.keys().next().value); try { localStorage.setItem('book-pick:seen', JSON.stringify([...seen.keys()])); } catch (e) {} }
 
 function has(b, k) {
   if (ERA[k]) return ERA[k](b);
@@ -315,12 +320,12 @@ function cover(b, size) {
 async function draw(randomOnly) {
   let list = mode === 'shelf' ? rankSimilar() : randomOnly ? BOOKS.map((b) => ({ b, s: Math.random(), hit: [] })).sort((a, c) => c.s - a.s) : rank(true);
   if (mode === 'kw' && !randomOnly && (sel.theme.size || sel.mood.size)) list = list.filter((x) => x.s > 0);
-  // 본 책 빼기, 같은 저자 한 번만
-  const fresh = list.filter((x) => !seen.has(x.b.id));
-  if (fresh.length < 5 && list.length >= 5) { seen.clear(); }
-  const pool = (fresh.length >= 5 ? fresh : list).slice(0, 30);
+  // 안 본 책 먼저(점수 상위 30권 안에서 고르게 섞어), 모자라면 본 지 오래된 책으로 채운다. 같은 저자는 한 번만
+  const fresh = list.filter((x) => !seen.has(x.b.id)).slice(0, 30).map((x) => ({ x, k: x.s + Math.random() * 2.5 })).sort((a, c) => c.k - a.k).map((o) => o.x);
+  const old = list.filter((x) => seen.has(x.b.id)).sort((a, c) => seen.get(a.b.id) - seen.get(c.b.id));
+  const pool = fresh.concat(old);
   const pickedAuthors = new Set(), five = [];
-  for (const x of pool.sort(() => Math.random() - 0.5).sort((a, c) => c.s - a.s)) {
+  for (const x of pool) {
     if (pickedAuthors.has(x.b.a)) continue;
     pickedAuthors.add(x.b.a); five.push(x);
     if (five.length === 5) break;
@@ -337,7 +342,7 @@ async function draw(randomOnly) {
     $('eBack').onclick = closeRes;
     return;
   }
-  five.forEach((x) => seen.add(x.b.id));
+  markSeen(five.map((x) => x.b.id));
   lastList = five;
   await shuffle(five);
   show(five[0], five.slice(1));
@@ -445,7 +450,7 @@ loadSel(); renderGroups(); renderStatus();
   try { if (window.MGH && MGH.embedded) q = window.parent.location.search || q; } catch (e) {}
   const id = new URLSearchParams(q).get('b');
   const b = id && BOOKS.find((x) => x.id === id);
-  if (b) { $('res').classList.add('open'); document.body.style.overflow = 'hidden'; seen.add(b.id); show({ b, hit: [] }, rank(true).filter((x) => x.b !== b).slice(0, 4)); $('pick').classList.add('show'); }
+  if (b) { $('res').classList.add('open'); document.body.style.overflow = 'hidden'; markSeen([b.id]); show({ b, hit: [] }, rank(true).filter((x) => x.b !== b).slice(0, 4)); $('pick').classList.add('show'); }
 })();
 </script>
 </body>
