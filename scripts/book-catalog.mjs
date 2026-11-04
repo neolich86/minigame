@@ -7,7 +7,7 @@ import path from 'path';
 
 const KEY = (process.env.DATA4LIBRARY_KEY || '').trim();
 if (!KEY) { console.error('DATA4LIBRARY_KEY 가 없어요'); process.exit(1); }
-const MAX_CALLS = +(process.env.MAX_CALLS || 900);
+const MAX_CALLS = +(process.env.MAX_CALLS || 490); // IP 등록 없이 하루 500건까지 (GitHub Actions 는 IP 가 바뀌어 등록 불가)
 const ROOT = path.resolve(import.meta.dirname, '..');
 const CACHE = path.join(ROOT, 'data/book-pick/cache.json');
 const OUT = path.join(ROOT, 'public/games/book-pick/catalog.json');
@@ -28,7 +28,7 @@ async function api(name, params) {
       await sleep(120);
       return j.response || j;
     } catch (e) {
-      if (String(e.message).startsWith('api error')) throw e;
+      if (String(e.message).startsWith('api error')) { if (/500건|IP 등록|한도|초과/.test(e.message)) calls = MAX_CALLS; throw e; }
       if (t === 2) throw e;
       await sleep(1500 * (t + 1));
     }
@@ -42,11 +42,11 @@ const SYN = {
   fantasy: ['판타지', '마법사', '마법', '용', '요정', '이세계', '마녀'],
   mystery: ['추리', '미스터리', '탐정', '수수께끼', '추리소설', '살인사건'],
   thriller: ['스릴러', '서스펜스', '긴장', '추격', '사이코패스', '연쇄살인'],
-  romance: ['로맨스', '연애', '연인', '사랑', '결혼'],
+  romance: ['로맨스', '연애', '연인'],
   horror: ['공포', '호러', '귀신', '유령', '괴담', '저주', '악령'],
-  dystopia: ['디스토피아', '감시', '전체주의', '통제', '독재'],
+  dystopia: ['디스토피아', '전체주의', '빅브라더', '감시사회'],
   apocalypse: ['종말', '멸망', '재난', '생존', '아포칼립스', '전염병', '바이러스'],
-  time: ['시간여행', '타임머신', '과거', '미래', '시간'],
+  time: ['시간여행', '타임머신', '타임슬립', '타임루프', '회귀'],
   space: ['우주', '행성', '은하', '우주선', '외계'],
   ai: ['인공지능', 'AI', '로봇', '안드로이드', '기계'],
   zombie: ['좀비', '감염'],
@@ -70,13 +70,13 @@ const SYN = {
   chilling: ['소름', '공포', '오싹', '섬뜩'],
   twist: ['반전', '비밀', '진실'],
   calm: ['일상', '잔잔', '평범', '산책', '계절'],
-  thinky: ['철학', '사유', '존재', '의미', '삶의 의미', '인간'],
+  thinky: ['철학', '사유', '존재', '삶의 의미', '성찰'],
   warm: ['따뜻', '온기', '다정', '행복', '희망'],
   dark: ['어둠', '절망', '폭력', '고독', '광기'],
   easy: ['재미', '유쾌', '가볍', '짧은'],
   immersive: ['몰입', '긴장', '흥미진진', '모험'],
   short: ['단편', '단편집', '단편소설', '소설집'],
-  long: ['장편', '장편소설', '대하소설', '시리즈'],
+  long: ['장편', '장편소설', '대하소설'],
 };
 // 테마 칩마다 도서 검색에 쓸 대표 낱말 (대출순 상위를 후보로 모은다)
 const SEARCH = ['디스토피아', '종말', '시간여행', '우주', '인공지능', '좀비', '마법', '복수', '범죄', '전쟁', '가족', '우정', '첫사랑', '성장', '고양이', '여행', '요리', '직장', '죽음', '불평등',
@@ -113,7 +113,7 @@ function addDoc(d, src) {
   const prev = cand.get(isbn);
   const loan = +(d.loan_count || d.loanCnt || 0);
   if (prev) { prev.loan = Math.max(prev.loan, loan); prev.src.add(src); return; }
-  cand.set(isbn, { id: isbn, t: (d.bookname || '').replace(/\s+/g, ' ').trim(), a: String(d.authors || '').split(/[;,]/)[0].replace(/(지은이|글|저|지음|옮긴이)\s*:?/g, '').trim(),
+  cand.set(isbn, { id: isbn, t: (d.bookname || '').replace(/\s+/g, ' ').split(/\s*[:=]\s*/)[0].replace(/\s*\(.*?\)\s*$/, '').trim(), a: String(d.authors || '').split(/[;,]/)[0].replace(/(지은이|글|저|지음|옮긴이)\s*:?/g, '').trim(),
     p: (d.publisher || '').trim(), y: +(d.publication_year || 0) || 0, img: d.bookImageURL || '', kdc: String(d.class_no || ''), add: String(d.addition_symbol || ''), loan, src: new Set([src]) });
 }
 
@@ -148,7 +148,10 @@ async function details() {
       const rec = [...(r.maniaRecBooks || []), ...(r.readerRecBooks || [])].map((x) => (x.book || x).isbn13).filter((x) => /^\d{13}$/.test(String(x))).slice(0, 12);
       cache[b.id] = { at: Date.now(), kw, rec, d: String(bk.description || '').replace(/\s+/g, ' ').trim().slice(0, 120), cls: bk.class_no || '', loan: +(bk.loanCnt || 0) };
       got++;
-    } catch (e) { if (e.message === 'budget') break; console.warn('usageAnalysisList', b.id, e.message); cache[b.id] = { at: Date.now() - 80 * 864e5, kw: [], rec: [], d: '', err: 1 }; }
+    } catch (e) {
+      if (e.message === 'budget' || calls >= MAX_CALLS) { console.warn('오늘 호출 한도 도달 — 내일 이어서'); break; }
+      console.warn('usageAnalysisList', b.id, e.message); cache[b.id] = { at: Date.now() - 80 * 864e5, kw: [], rec: [], d: '', err: 1 };
+    }
   }
   return got;
 }
