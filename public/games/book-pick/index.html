@@ -38,7 +38,9 @@ header p{margin:0;color:var(--sub);font-size:14px}
 .bar .in{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:10px}
 .bar .st{flex:1;min-width:0;font-size:13px;line-height:1.35}
 .bar .st b{color:var(--green)}
-.bar .st .rs{color:var(--red);font-size:12px;font-weight:800;margin-left:6px}
+.clr{display:flex;justify-content:flex-end;margin:-4px 0 10px}
+.clr button{border:1.5px solid var(--red);color:var(--red);background:var(--card);border-radius:999px;padding:7px 14px;font-weight:800;font-size:13px;cursor:pointer}
+.bar .st .rs{border:1px solid var(--red);border-radius:999px;padding:2px 9px;background:none;cursor:pointer;color:var(--red);font-size:12px;font-weight:800;margin-left:6px}
 .btn{border-radius:12px;padding:13px 18px;font-weight:800;font-size:15px;white-space:nowrap}
 .btn.main{background:var(--green);color:#fff;box-shadow:0 3px 0 #123326}
 .btn.main:active{transform:translateY(2px);box-shadow:0 1px 0 #123326}
@@ -112,7 +114,7 @@ header p{margin:0;color:var(--sub);font-size:14px}
   </header>
   <div class="notice" id="notice" hidden></div>
   <div class="modes"><button data-m="kw" class="on">🏷️ 키워드로 고르기</button><button data-m="shelf">📚 읽은 책으로 찾기</button></div>
-  <div id="kwView"><div id="groups"></div></div>
+  <div id="kwView"><div class="clr" id="clrRow" hidden><button id="clrAll">✕ 고른 키워드 전체 해제</button></div><div id="groups"></div></div>
   <div id="shelfView" hidden>
     <div class="sbox"><input id="q" placeholder="재밌게 읽은 책 제목이나 작가를 검색하세요" autocomplete="off" enterkeyhint="search"><div class="sugg" id="sugg" hidden></div></div>
     <div class="shelf"><span class="tab">내 책장</span><div class="books" id="shelfBooks"></div><div class="taste" id="taste"></div></div>
@@ -288,14 +290,16 @@ function renderStatus() {
   if (mode === 'shelf') {
     $('status').innerHTML = shelf.length ? `내 책장 <b>${shelf.length}권</b>${shelf.length < 2 ? ' · 1권 더 꽂으면 더 잘 맞아요' : ''}<button class="rs" id="rs">비우기</button>` : '읽은 책을 검색해서 <b>책장에 꽂아</b> 주세요';
     if ($('rs')) $('rs').onclick = () => { shelf = []; saveShelf(); renderShelf(); renderStatus(); };
-    $('bPick').disabled = !shelf.length;
+    $('bPick').disabled = !shelf.length; $('clrRow').hidden = true;
     return;
   }
   const n = nSel(), m = strongCount();
   $('status').innerHTML = n
-    ? `고른 키워드 <b>${n}개</b> · 어울리는 책 <b>${m}권</b><button class="rs" id="rs">초기화</button>`
+    ? `고른 키워드 <b>${n}개</b> · 어울리는 책 <b>${m}권</b><button class="rs" id="rs">✕ 전체 해제</button>`
     : `키워드를 고르지 않으면 <b>모든 책</b>에서 뽑아요`;
-  if ($('rs')) $('rs').onclick = () => { for (const s of Object.values(sel)) s.clear(); renderGroups(); renderStatus(); saveSel(); };
+  const clearAll = () => { for (const s of Object.values(sel)) s.clear(); renderGroups(); renderStatus(); saveSel(); toast('고른 키워드를 모두 해제했어요'); };
+  if ($('rs')) $('rs').onclick = clearAll;
+  $('clrRow').hidden = !n; $('clrAll').onclick = clearAll;
   $('bPick').disabled = !BOOKS.length;
 }
 function saveSel() { try { localStorage.setItem('book-pick:sel', JSON.stringify(Object.fromEntries(Object.entries(sel).map(([k, s]) => [k, [...s]])))); } catch (e) {} }
