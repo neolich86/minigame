@@ -129,7 +129,7 @@ function buildForest() {
 function fxSprite(n, pos, k, o = {}) {
   const { m, t } = FX[n]; const tex = t.clone(); tex.needsUpdate = true;
   tex.repeat.set(m.w / t.image.width, m.h / t.image.height);
-  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, blending: o.add ? THREE.AdditiveBlending : THREE.NormalBlending, rotation: o.rot || 0 });
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, blending: o.add ? THREE.AdditiveBlending : THREE.NormalBlending, rotation: o.rot || 0, opacity: o.op ?? 1 });
   const s = new THREE.Sprite(mat); const pv = o.pv || m.pv; s.center.set(pv[0] / m.w, 1 - pv[1] / m.h);
   s.scale.set(m.w * k * (o.sx || 1), m.h * k, 1); s.position.copy(pos); s.renderOrder = o.ro || 5; scene.add(s); return s;
 }
@@ -377,6 +377,7 @@ function updateShots(dt) {
 }
 
 // ============================================================ 자동 발동 마법
+const snowMat = new THREE.SpriteMaterial({ map: dotT, color: 0xffffff, transparent: true, depthWrite: false });
 function nearestEnemies(x, z, r, n = 99) { return enemies.filter((e) => !e.dead && Math.hypot(e.x - x, e.z - z) < r).sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z)).slice(0, n); }
 function densest(r, range) { // 적이 가장 많이 모인 곳
   let best = null, bc = 0; for (const e of enemies) { if (e.dead || Math.hypot(e.x - P.x, e.z - P.z) > range) continue; let c = 0; for (const o of enemies) if (!o.dead && Math.hypot(o.x - e.x, o.z - e.z) < r) c++; if (e.boss) c += 3; if (c > bc) { bc = c; best = e; } }
@@ -419,10 +420,21 @@ const CASTS = {
     sfx('frost'); return true;
   } },
   blizzard: { cd: () => 9, cast(l) {
+    // 눈보라: 시야를 가리지 않게 — 바닥의 얼음 영역 + 작은 눈송이 + 가장자리에만 옅은 바람
     const c = densest(5, 18); if (!c) return false; const x = c.x, z = c.z, r = 4 + l * .6; let t = 0, tick = 0;
-    const sprites = []; for (let i = 0; i < 7; i++) { const a = i / 7 * 6.28, rr = i ? r * .6 : 0; sprites.push(anim('blizzard', v3(x + Math.cos(a) * rr, 0, z + Math.sin(a) * rr), .05 + r * .006, { ro: 8, loop: true, until: 3.5, delay: i * .07, add: true })); }
-    const ring = groundRing(scene, v3(x, 0, z), r * 2.2, 0xffffff, 0x80c8ff);
-    effects.push({ update(dt) { t += dt; tick -= dt; ring.set(.55 + Math.sin(t * 3) * .03, t < 3.2 ? .55 : Math.max(0, .55 - (t - 3.2) * 2)); if (tick <= 0) { tick = .5; inArea(x, z, r, (e) => { hit(e, atk() * .5 * (1 + .25 * l) * .5, { col: '#d8f2ff', canCrit: false }); e.slow = Math.max(e.slow, .6); }); } if (t > 3.5) { ring.dispose(); return false; } return true; }, kill() { ring.dispose(); } });
+    const frost = new THREE.Mesh(new THREE.CircleGeometry(r, 40), new THREE.MeshBasicMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0, depthWrite: false }));
+    frost.rotation.x = -Math.PI / 2; frost.position.set(x, .05, z); scene.add(frost);
+    const edge = new THREE.Mesh(new THREE.RingGeometry(r * .94, r, 48), new THREE.MeshBasicMaterial({ color: 0xe8f6ff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }));
+    edge.rotation.x = -Math.PI / 2; edge.position.set(x, .06, z); scene.add(edge);
+    for (let i = 0; i < 8; i++) { const a = i / 8 * 6.28 + Math.random() * .4, bx = x + Math.cos(a) * r * .85, bz = z + Math.sin(a) * r * .85; if (Math.hypot(bx - P.x, bz - P.z) < 6) continue; anim('blizzard', v3(bx, 0, bz), .028, { ro: 8, loop: true, until: 3.5, delay: i * .06, op: .5, pv: [40, 52] }); }
+    const flakes = Array.from({ length: 70 }, () => { const sp = new THREE.Sprite(snowMat); sp.scale.setScalar(rand(.1, .2)); scene.add(sp); return { sp, a: Math.random() * 6.28, rr: Math.sqrt(Math.random()) * r, y: Math.random() * 4, v: rand(1.2, 2.4), w: rand(1.5, 3) * (Math.random() < .5 ? -1 : 1) }; });
+    effects.push({ update(dt) {
+      t += dt; tick -= dt; const fade = t < .3 ? t / .3 : t > 3.2 ? Math.max(0, (3.5 - t) / .3) : 1;
+      frost.material.opacity = .28 * fade; edge.material.opacity = .55 * fade;
+      for (const f of flakes) { f.y -= f.v * dt; if (f.y < 0) f.y += 4; f.a += f.w * dt / Math.max(1, f.rr); f.sp.position.set(x + Math.cos(f.a) * f.rr, f.y, z + Math.sin(f.a) * f.rr); f.sp.material.opacity = fade; }
+      if (tick <= 0) { tick = .5; inArea(x, z, r, (e) => { hit(e, atk() * .5 * (1 + .25 * l) * .5, { col: '#d8f2ff', canCrit: false }); e.slow = Math.max(e.slow, .6); }); }
+      if (t > 3.5) { this.kill(); return false; } return true;
+    }, kill() { for (const m of [frost, edge]) { scene.remove(m); m.geometry.dispose(); m.material.dispose(); } flakes.forEach((f) => scene.remove(f.sp)); } });
     sfx('frost'); return true;
   } },
   meteor: { cd: (l) => 12 - l, cast(l) {
