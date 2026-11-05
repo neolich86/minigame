@@ -25,6 +25,11 @@
 
         </activity>
 
+        <!-- AdMob 앱 ID — 지금은 구글 테스트 ID. AdMob 에서 '마법사 키우기' 앱을 만든 뒤 실제 앱 ID(ca-app-pub-…~…)로 교체하고 다시 빌드 -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713"/>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -37,6 +42,9 @@
     </application>
 
     <!-- Permissions -->
+    <!-- 보상형 광고(광고 보고 이어하기) 로딩에 필요 -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- 광고 ID(Android 13+ 에서 광고 SDK가 요구). Play Console '광고 ID' 선언에서 '예: 광고' 로 체크 -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 </manifest>

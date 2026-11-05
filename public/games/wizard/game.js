@@ -746,6 +746,55 @@ function render() {
   renderer.autoClear = false; renderer.clearDepth(); renderer.render(vm, vmCam);
 }
 
+// ============================================================ 보상형 광고 (구글 플레이 앱에서만 — AdMob)
+// 광고 단위 ID 는 웹에 있으니 바꿀 때 앱을 다시 빌드할 필요 없음. (앱 ID 는 android-wizard 의 AndroidManifest.xml)
+const AD_UNIT_REWARD = 'ca-app-pub-3940256099942544/5224354917'; // TODO: 실제 보상형 광고 단위 ID 로 교체 (지금은 구글 테스트 ID)
+const AdBridge = (function () {
+  const cap = (function () { try { if (window.Capacitor) return window.Capacitor; } catch { } try { if (window.parent && window.parent !== window) return window.parent.Capacitor; } catch { } return undefined; })();
+  const native = !!(cap && cap.isNativePlatform && cap.isNativePlatform());
+  const fake = !native && /[?&]testads=1/.test(location.search || '');
+  const AM = native && ((cap.Plugins && cap.Plugins.AdMob) || (cap.registerPlugin && cap.registerPlugin('AdMob')));
+  let ready = fake, loading = false, rewarded = false, pending = null, inited = false;
+  const settle = (ok) => { if (pending) { const r = pending; pending = null; r(ok); } };
+  async function load() { if (!AM || loading || ready) return; loading = true; try { await AM.prepareRewardVideoAd({ adId: AD_UNIT_REWARD }); ready = true; } catch { ready = false; } loading = false; }
+  async function init() {
+    if (!AM || inited) return; inited = true;
+    try {
+      AM.addListener('onRewardedVideoAdReward', () => { rewarded = true; });
+      AM.addListener('onRewardedVideoAdDismissed', () => { ready = false; settle(rewarded); setTimeout(load, 500); });
+      AM.addListener('onRewardedVideoAdFailedToShow', () => { ready = false; settle(false); setTimeout(load, 3000); });
+      AM.addListener('onRewardedVideoAdLoaded', () => { ready = true; });
+      AM.addListener('onRewardedVideoAdFailedToLoad', () => { ready = false; loading = false; setTimeout(load, 15000); });
+      await AM.initialize({});
+      try { const info = await AM.requestConsentInfo(); if (info && info.isConsentFormAvailable && info.status === 'REQUIRED') await AM.showConsentForm(); } catch { }
+    } catch { }
+    load();
+  }
+  return {
+    init, preload: load, available() { return (native || fake) && ready; },
+    show() { return new Promise((res) => { if (fake) { setTimeout(() => res(true), 400); return; } if (!AM || !ready) { res(false); return; } rewarded = false; pending = res; AM.showRewardVideoAd().catch(() => settle(false)); setTimeout(() => settle(false), 120000); }); },
+  };
+})();
+AdBridge.init();
+function setReviveUI() {
+  const b = $('bRevive'); $('reviveMsg').style.display = 'none'; b.disabled = false; b.textContent = '📺 광고 보고 이어하기 (1회)';
+  b.style.display = AdBridge.available() && !G.revived ? '' : 'none';
+}
+$('bRevive').onclick = async () => {
+  const b = $('bRevive'); if (b.disabled || !G.over || G.revived) return;
+  b.disabled = true; b.textContent = '광고 불러오는 중…';
+  const ok = await AdBridge.show();
+  if (ok) { revive(); AdBridge.preload(); }
+  else { b.style.display = 'none'; const m = $('reviveMsg'); m.textContent = '광고를 끝까지 보지 않았거나 불러오지 못했어요.'; m.style.display = ''; AdBridge.preload(); }
+};
+function revive() {
+  G.revived = true; G.over = false; P.hp = Math.ceil(P.maxHp * .5); P.shield = shieldMax(); P.inv = 3;
+  for (const e of enemies) { const dx = e.x - P.x, dz = e.z - P.z, d = Math.hypot(dx, dz) || 1; if (d < 12) { const k = e.boss ? 1 : 5; e.kx += dx / d * k; e.kz += dz / d * k; e.frozen = Math.max(e.frozen, e.boss ? 0 : 1.5); } }
+  anim('level-up', v3(P.x, 0, P.z - 2), .05, { ro: 9, add: true });
+  $('sOver').classList.remove('on'); $('hud').classList.add('on'); state = 'play'; last = performance.now();
+  banner('이어하기!', '3초 동안 무적'); sfx('lvl');
+}
+
 // ============================================================ 흐름
 function togglePause() {
   if (state === 'play') { state = 'pause'; renderPauseSkills(); $('sPause').classList.add('on'); }
@@ -788,6 +837,7 @@ function gameOver() {
   if (window.MGH && MGH.result && secs >= 10) {
     sb.style.display = ''; sb.onclick = () => MGH.result.open({ board: 'wizard', score: secs, fmt: (s) => fmtTime(s), game: '마법사 키우기', icon: '🧙', accent: '#ff8a3c', label: '내 생존', friend: '친구', question: '누가 오래 버티나?', sub: `LV ${P.lv} · 처치 ${G.kills}${G.bossKills ? ` · 보스 ${G.bossKills}` : ''}`, meta: { lv: P.lv, kills: G.kills, boss: G.bossKills }, shareText: `🧙 마법사 키우기 ${fmtTime(secs)} 생존! 누가 더 오래 버티나 대결하자` });
   }
+  setReviveUI();
   setTimeout(() => { $('hud').classList.remove('on'); og.clearRect(0, 0, ov.width, ov.height); $('sOver').classList.add('on'); }, 700);
 }
 
@@ -815,5 +865,5 @@ function gameOver() {
   for (let i = 0; i < 10; i++) spawnEnemy(MTYPES[i % 6], rand(0, 6.28), rand(9, 22));
   $('bStart').disabled = false; $('bStart').textContent = '사냥 시작'; showBest();
   requestAnimationFrame(frame);
-  if (TEST) window.__wz = { get P() { return P; }, get G() { return G; }, get S() { return S; }, get enemies() { return enemies; }, start, take: (id) => take(SK[id]), setMove: (m) => testMove = m, spawnBoss, CASTSX: CASTS, freeze: (f) => frozen = f, stepDraw, get CD() { return CD; }, SK, setState: (s) => state = s, get state() { return state; }, CASTS, update };
+  if (TEST) window.__wz = { get P() { return P; }, get G() { return G; }, get S() { return S; }, get enemies() { return enemies; }, start, take: (id) => take(SK[id]), setMove: (m) => testMove = m, spawnBoss, CASTSX: CASTS, freeze: (f) => frozen = f, stepDraw, get CD() { return CD; }, hurt: (d) => damagePlayer(d), SK, setState: (s) => state = s, get state() { return state; }, CASTS, update };
 })();
