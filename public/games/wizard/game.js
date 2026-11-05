@@ -118,10 +118,11 @@ function buildForest() {
   for (let i = 0; i < 22; i++) {
     const a = srnd() * 6.283, r = 9 + srnd() * 16, x = Math.cos(a) * r, z = Math.sin(a) * r;
     if (OBST.some((o) => o[2] && Math.hypot(o[0] - x, o[1] - z) < 6)) continue;
-    const n = pick(['Rock_1_E', 'Rock_3_E', 'Bush_2_C', 'Rock_2_B', 'Tree_3_A', 'Rock_1_E']); const sc = 1.3 + srnd(); put(n, x, z, sc);
-    OBST.push([x, z, n.startsWith('Tree') ? .8 : n.startsWith('Bush') ? .9 * sc : .55 * sc, n.startsWith('Tree') ? 'tree' : 'rock']);
+    // 움직이는 공간 안은 시야를 가리지 않게 낮고 작게
+    const n = pick(['Rock_1_E', 'Rock_3_E', 'Bush_2_C', 'Rock_2_B', 'Rock_1_A', 'Bush_4_A']); const sc = n === 'Bush_2_C' ? .45 + srnd() * .2 : .6 + srnd() * .3; put(n, x, z, sc);
+    OBST.push([x, z, n.startsWith('Bush') ? .8 * sc + .1 : .55 * sc + .1, 'rock']);
   }
-  for (let i = 0; i < 700; i++) { const a = srnd() * 6.283, r = 3 + srnd() * 45; put(pick(['Grass_1_A', 'Grass_2_A', 'Grass_2_C', 'Bush_1_A']), Math.cos(a) * r, Math.sin(a) * r, .7 + srnd() * .6); }
+  for (let i = 0; i < 700; i++) { const a = srnd() * 6.283, r = 3 + srnd() * 45; put(pick(['Grass_1_A', 'Grass_2_A', 'Grass_2_C', 'Bush_1_A']), Math.cos(a) * r, Math.sin(a) * r, r < ARENA + 2 ? .4 + srnd() * .3 : .7 + srnd() * .6); }
   for (const n in B) plant(n, B[n]);
 }
 
@@ -837,8 +838,10 @@ function start() {
   $('sTitle').classList.remove('on'); $('sOver').classList.remove('on'); $('hud').classList.add('on');
   joyEl.className = touchUI ? 'joy idle' : 'joy'; placeIdleJoy();
   banner('사냥 시작!', '공격은 자동 — 몬스터를 피해 다니세요');
+  if (touchUI || Q.has('touchhint')) { const t = $('tut'); t.classList.add('on'); clearTimeout(start.tt); start.tt = setTimeout(() => t.classList.remove('on'), 30000); }
 }
 function gameOver() {
+  $('tut').classList.remove('on');
   if (G.over) return; G.over = true; state = 'over';
   const secs = Math.floor(G.t);
   if (window.MGH && MGH.submitScore && secs >= 10) MGH.submitScore('wizard', secs, { lv: P.lv, kills: G.kills, boss: G.bossKills });

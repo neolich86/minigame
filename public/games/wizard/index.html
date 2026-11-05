@@ -19,22 +19,35 @@ img,.px{image-rendering:pixelated}
 .mm canvas{width:112px;height:112px}
 .mm .lb{position:absolute;left:0;right:0;bottom:-15px;text-align:center;font-size:11px;font-weight:700;color:#ffd0d0}
 .ftop{position:absolute;left:132px;right:10px;top:calc(12px + env(safe-area-inset-top))}
-/* 모바일: 레벨업 카드 — 화면의 70% 정도, 위아래·양옆 여백 */
+/* 드래그 안내 손가락 (시작 후 30초) */
+#tut{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .8s}
+#tut.on{opacity:1}
+.tut{position:absolute;display:flex;flex-direction:column;align-items:center;gap:6px}
+.tut.l{left:16%;top:60%}
+.tut.r{left:64%;top:44%}
+.tut .fg{font-size:44px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.7))}
+.tut.l .fg{animation:tutL 2.4s ease-in-out infinite}
+.tut.r .fg{animation:tutR 1.8s ease-in-out infinite}
+.tut .tl{font-size:13px;font-weight:700;color:#fff;background:rgba(0,0,0,.45);padding:4px 8px;white-space:nowrap}
+@keyframes tutL{0%{transform:translate(0,0)}25%{transform:translate(0,-34px)}50%{transform:translate(26px,-14px)}75%{transform:translate(-26px,-14px)}100%{transform:translate(0,0)}}
+@keyframes tutR{0%,100%{transform:translateX(-40px) rotate(-8deg)}50%{transform:translateX(40px) rotate(8deg)}}
+/* 모바일: 레벨업 카드 — 글자·아이콘 크게 (이전 대비 약 1.5배), 화면 높이에 맞춰 조절 */
 @media (pointer:coarse),(max-width:600px){
-  #sLevel{justify-content:center;background:rgba(8,10,24,.9);overflow-y:auto;padding:calc(16px + env(safe-area-inset-top)) 0 calc(16px + env(safe-area-inset-bottom))}
-  #sLevel #lvfx{width:clamp(30px,5vh,44px);height:clamp(45px,7.5vh,66px);margin-bottom:-8px}
-  #sLevel h2{font-size:clamp(24px,3.8vh,30px)}
-  #sLevel p.s{font-size:clamp(12px,1.8vh,14px);margin-bottom:12px}
-  #sLevel .cards{width:86%;max-width:420px;gap:clamp(8px,1.4vh,12px)}
-  #sLevel .card{gap:12px;padding:clamp(6px,1vh,10px) 10px;border-width:12px;border-image-width:12px;background-color:rgba(20,24,44,.92)}
-  #sLevel .card .ic{width:clamp(54px,8vh,66px);height:clamp(54px,8vh,66px)}
+  #sLevel{justify-content:safe center;background:rgba(8,10,24,.9);overflow-y:auto;padding:calc(14px + env(safe-area-inset-top)) 0 calc(14px + env(safe-area-inset-bottom))}
+  #sLevel #lvfx{width:clamp(32px,5.5vh,56px);height:clamp(48px,8.2vh,84px);margin-bottom:-8px}
+  #sLevel h2{font-size:clamp(24px,4.3vh,42px)}
+  #sLevel p.s{font-size:clamp(13px,2.1vh,18px);margin-bottom:10px}
+  #sLevel .cards{width:94%;max-width:560px;gap:clamp(6px,1.3vh,16px)}
+  #sLevel .card{gap:12px;padding:clamp(5px,1.1vh,14px) 10px;border-width:14px;border-image-width:14px;background-color:rgba(20,24,44,.92)}
+  #sLevel .card .ic{width:clamp(58px,9.5vh,96px);height:clamp(58px,9.5vh,96px)}
   #sLevel .card .ic canvas{width:92%;height:92%}
-  #sLevel .card h3{font-size:clamp(15px,2.3vh,18px);gap:6px}
-  #sLevel .card h3 .tag{font-size:11px;padding:2px 5px}
-  #sLevel .card .st{margin:4px 0}
-  #sLevel .card .st img{width:clamp(13px,1.9vh,15px)}
-  #sLevel .card p{font-size:clamp(13.5px,2vh,15px);line-height:1.45}
-  #sLevel .btn{font-size:15px;margin-top:14px;padding:9px 24px}
+  #sLevel .card h3{font-size:clamp(17px,2.9vh,26px);gap:7px}
+  #sLevel .card h3 .tag{font-size:clamp(11px,1.6vh,14px);padding:2px 6px}
+  #sLevel .card .st{margin:clamp(3px,.8vh,7px) 0}
+  #sLevel .card .st img{width:clamp(14px,2.3vh,21px)}
+  #sLevel .card p{font-size:clamp(15px,2.5vh,21px);line-height:1.38}
+  #sLevel .btn{font-size:clamp(15px,2.3vh,20px);margin-top:10px;padding:8px 26px}
+  @media (max-height:720px){#sLevel #lvfx{display:none}}
 }
 /* 모바일: 미니맵 크게 */
 @media (pointer:coarse),(max-width:600px){.mm,.mm canvas{width:150px;height:150px}.ftop{left:170px}.edgeNote{top:calc(196px + env(safe-area-inset-top))!important}}
@@ -146,6 +159,7 @@ img,.px{image-rendering:pixelated}
   <div class="hint sh" id="hint"></div>
   <div class="banner sh" id="banner"></div>
   <div class="cross" id="cross"></div>
+  <div id="tut"><div class="tut l"><div class="fg">👆</div><div class="tl sh">끌어서 이동</div></div><div class="tut r"><div class="fg">👆</div><div class="tl sh">끌어서 시점 회전</div></div></div>
   <div class="joy" id="joy"><b id="joyK"></b></div>
   <div class="dash sh" id="bDash"><span id="dashTxt">대시</span><div class="cd" id="dashCd" style="--c:100%"></div></div>
   <div class="bottom">
