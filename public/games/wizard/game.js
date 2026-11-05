@@ -46,7 +46,7 @@ scene.add(new THREE.Mesh(new THREE.SphereGeometry(300, 32, 16), new THREE.Shader
   vertexShader: 'varying vec3 p;void main(){p=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
   fragmentShader: 'uniform vec3 a,b,c;varying vec3 p;void main(){float h=p.y;vec3 col=h>0.12?mix(b,a,smoothstep(.12,.6,h)):mix(c,b,smoothstep(-.02,.12,h));gl_FragColor=vec4(col,1.);}',
 })));
-scene.fog = new THREE.Fog(0xcfe0ea, 34, 110);
+scene.fog = new THREE.Fog(0xcfe0ea, 40, 130);
 scene.add(new THREE.HemisphereLight(0xdfeaff, 0x4a5a3a, 1.25));
 const sun = new THREE.DirectionalLight(0xfff0d0, 1.8); sun.position.set(-30, 40, -60); scene.add(sun);
 scene.add(new THREE.AmbientLight(0xffffff, .55));
@@ -65,7 +65,7 @@ let seed = 31; const srnd = () => (seed = (seed * 16807) % 2147483647) / 2147483
   const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(30, 30); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
   const gr = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshLambertMaterial({ map: t })); gr.rotation.x = -Math.PI / 2; scene.add(gr);
 }
-const ARENA = 27; // 플레이어가 다닐 수 있는 반경
+const ARENA = 45; // 플레이어가 다닐 수 있는 반경 (27 → 45m)
 
 // ============================================================ 에셋
 const TL = new THREE.TextureLoader();
@@ -114,15 +114,15 @@ function buildForest() {
   seed = 77; const pick = (a) => a[(srnd() * a.length) | 0];
   const B = {}; const put = (n, x, z, sc) => { (B[n] = B[n] || []).push([x, z, sc, srnd() * 6.28]); };
   const trees = ['Tree_1_A', 'Tree_1_B', 'Tree_2_A', 'Tree_2_C', 'Tree_3_A', 'Tree_4_A', 'Tree_4_B'];
-  for (let i = 0; i < 460; i++) { const a = srnd() * 6.283, r = 31 + srnd() * 60; put(srnd() < .05 ? 'Tree_Bare_1_A' : pick(trees), Math.cos(a) * r, Math.sin(a) * r, 1.5 + srnd() * .9); if (r < 48) OBST.push([Math.cos(a) * r, Math.sin(a) * r, 0, 'tree']); }
-  for (let i = 0; i < 22; i++) {
-    const a = srnd() * 6.283, r = 9 + srnd() * 16, x = Math.cos(a) * r, z = Math.sin(a) * r;
+  for (let i = 0; i < 720; i++) { const a = srnd() * 6.283, r = ARENA + 4 + srnd() * 60; put(srnd() < .05 ? 'Tree_Bare_1_A' : pick(trees), Math.cos(a) * r, Math.sin(a) * r, 1.5 + srnd() * .9); if (r < ARENA + 21) OBST.push([Math.cos(a) * r, Math.sin(a) * r, 0, 'tree']); }
+  for (let i = 0; i < 55; i++) {
+    const a = srnd() * 6.283, r = 9 + srnd() * (ARENA - 11), x = Math.cos(a) * r, z = Math.sin(a) * r;
     if (OBST.some((o) => o[2] && Math.hypot(o[0] - x, o[1] - z) < 6)) continue;
     // 움직이는 공간 안은 시야를 가리지 않게 낮고 작게
     const n = pick(['Rock_1_E', 'Rock_3_E', 'Bush_2_C', 'Rock_2_B', 'Rock_1_A', 'Bush_4_A']); const sc = n === 'Bush_2_C' ? .45 + srnd() * .2 : .6 + srnd() * .3; put(n, x, z, sc);
     OBST.push([x, z, n.startsWith('Bush') ? .8 * sc + .1 : .55 * sc + .1, 'rock']);
   }
-  for (let i = 0; i < 700; i++) { const a = srnd() * 6.283, r = 3 + srnd() * 45; put(pick(['Grass_1_A', 'Grass_2_A', 'Grass_2_C', 'Bush_1_A']), Math.cos(a) * r, Math.sin(a) * r, r < ARENA + 2 ? .4 + srnd() * .3 : .7 + srnd() * .6); }
+  for (let i = 0; i < 1400; i++) { const a = srnd() * 6.283, r = 3 + Math.sqrt(srnd()) * (ARENA + 18); put(pick(['Grass_1_A', 'Grass_2_A', 'Grass_2_C', 'Bush_1_A']), Math.cos(a) * r, Math.sin(a) * r, r < ARENA + 2 ? .4 + srnd() * .3 : .7 + srnd() * .6); }
   for (const n in B) plant(n, B[n]);
 }
 
@@ -251,7 +251,7 @@ const lv = (id) => S[id] || 0;
 const atk = () => 12 * 1.2 ** lv('dmg');
 const fireRate = () => 1.7 * 1.18 ** lv('aspd');
 const moveSpd = () => 5.2 * 1.08 ** lv('move');
-const magnetR = () => 3.4 * (1 + .35 * lv('magnet'));
+const magnetR = () => 4 * (1 + .35 * lv('magnet'));
 const shieldMax = () => lv('shield') * 25;
 const dashCd = () => lv('blink') ? 4 - lv('blink') * .4 : 4;
 
@@ -265,7 +265,7 @@ function spawnEnemy(type, ang, dist, boss) {
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, alphaTest: .3 }));
   s.center.set(.5, 0); s.scale.set(h * asp, h, 1); s.position.set(x, type.fly || 0, z); scene.add(s);
   const sh = new THREE.Mesh(shadowGeo, shadowMat); sh.rotation.x = -Math.PI / 2; sh.scale.set(h * asp * .9, h * .45, 1); sh.position.set(x, .03, z); scene.add(sh);
-  const hpMul = boss ? 1 + G.t / 400 : 1 + G.t / 110 + (G.t / 300) ** 2;
+  const hpMul = boss ? 1 + G.t / 400 : 1 + G.t / 90 + (G.t / 260) ** 2;
   const e = { type, s, sh, x, z, y: type.fly || 0, h, w: h * asp, r: boss ? 1.8 : Math.max(.45, h * asp * .35), hp: type.hp * hpMul, maxHp: type.hp * hpMul, spd: type.spd / 22 * (boss ? 1 : rand(.9, 1.1)), dmg: type.dmg, xp: type.xp || 0,
     boss: !!boss, flash: 0, frozen: 0, slow: 0, burn: 0, burnDps: 0, hitCd: 0, kx: 0, kz: 0, pull: null, dead: false };
   enemies.push(e); return e;
@@ -679,11 +679,11 @@ function update(dt) {
   // 자동 마법
   for (const s of autoOwned()) { CD[s.id] = (CD[s.id] ?? 1) - dt; if (CD[s.id] <= 0) { const ok = CASTS[s.id].cast(lv(s.id)); CD[s.id] = ok ? CASTS[s.id].cd(lv(s.id)) : .5; } }
   // 스폰
-  const rate = Math.min(7, .75 + G.t / 45 + (G.t / 220) ** 2); G.spawnAcc += dt * rate;
-  while (G.spawnAcc >= 1) { G.spawnAcc--; if (enemies.length < 150) spawnEnemy(pickType(), rand(0, 6.283), rand(24, 32)); }
+  const rate = Math.min(8, (.75 + G.t / 45 + (G.t / 220) ** 2) * 1.2); G.spawnAcc += dt * rate;
+  while (G.spawnAcc >= 1) { G.spawnAcc--; if (enemies.length < 200) spawnEnemy(pickType(), rand(0, 6.283), rand(24, 32)); }
   if (G.t >= G.nextHorde) {
     G.nextHorde += 45; const a = rand(0, 6.283); const n = 10 + Math.floor(G.t / 20); const ty = pickType();
-    for (let i = 0; i < n && enemies.length < 170; i++) spawnEnemy(ty, a + rand(-.35, .35), rand(26, 33));
+    for (let i = 0; i < n && enemies.length < 220; i++) spawnEnemy(ty, a + rand(-.35, .35), rand(26, 33));
     const [rx, ry] = rel(P.x + Math.sin(a) * 30, P.z - Math.cos(a) * 30); const ang = Math.atan2(rx, ry) * 180 / Math.PI;
     const dir = Math.abs(ang) < 35 ? '앞쪽' : Math.abs(ang) > 140 ? '뒤쪽' : ang < 0 ? (ang < -90 ? '왼쪽 뒤' : '왼쪽') : (ang > 90 ? '오른쪽 뒤' : '오른쪽');
     hint(`⚠ ${dir}에서 ${n}마리 무리 접근!`);
