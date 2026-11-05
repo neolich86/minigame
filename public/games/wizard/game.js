@@ -838,7 +838,7 @@ function start() {
   $('sTitle').classList.remove('on'); $('sOver').classList.remove('on'); $('hud').classList.add('on');
   joyEl.className = touchUI ? 'joy idle' : 'joy'; placeIdleJoy();
   banner('사냥 시작!', '공격은 자동 — 몬스터를 피해 다니세요');
-  if (touchUI || Q.has('touchhint')) { const t = $('tut'); t.classList.add('on'); clearTimeout(start.tt); start.tt = setTimeout(() => t.classList.remove('on'), 30000); }
+  if (touchUI || Q.has('touchhint')) { const t = $('tut'); t.classList.add('on'); clearTimeout(start.tt); start.tt = setTimeout(() => t.classList.remove('on'), 10000); }
 }
 function gameOver() {
   $('tut').classList.remove('on');
