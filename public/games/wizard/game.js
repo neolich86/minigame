@@ -533,12 +533,13 @@ function moveTo(nx, nz, teleport) {
   for (let i = 0; i < steps; i++) {
     let x = P.x + (nx - P.x) / (steps - i), z = P.z + (nz - P.z) / (steps - i);
     for (const o of OBST) { if (!o[2]) continue; const dx = x - o[0], dz = z - o[1], d = Math.hypot(dx, dz), m = o[2] + .5; if (d < m) { x = o[0] + dx / d * m; z = o[1] + dz / d * m; } }
-    const r = Math.hypot(x, z); if (r > ARENA) { x *= ARENA / r; z *= ARENA / r; }
+    const r = Math.hypot(x, z); if (r > ARENA) { x *= ARENA / r; z *= ARENA / r; if (state === 'play') edgeNote(); }
     P.x = x; P.z = z;
   }
 }
 
 // ============================================================ 화면 (HUD)
+function edgeNote() { const n = $('edgeNote'); n.classList.add('on'); clearTimeout(edgeNote.t); edgeNote.t = setTimeout(() => n.classList.remove('on'), 1400); }
 function banner(t, sub = '') { const b = $('banner'); b.innerHTML = `${t}${sub ? `<small>${sub}</small>` : ''}`; b.classList.add('on'); clearTimeout(banner.t); banner.t = setTimeout(() => b.classList.remove('on'), 2400); }
 function hint(t) { const h = $('hint'); h.textContent = t; h.classList.add('on'); clearTimeout(hint.t); hint.t = setTimeout(() => h.classList.remove('on'), 2600); }
 function autoOwned() { return SKILLS.filter((s) => s.kind === 'auto' && S[s.id]); }
