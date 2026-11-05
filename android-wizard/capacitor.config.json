@@ -1,0 +1,21 @@
+{
+  "appId": "kr.minigame.wizard",
+  "appName": "마법사 키우기",
+  "webDir": "www",
+  "backgroundColor": "#12182a",
+  "server": {
+    "url": "https://playwithme.kr/wizard-app",
+    "errorPath": "error.html",
+    "cleartext": false,
+    "allowNavigation": [
+      "playwithme.kr",
+      "*.playwithme.kr",
+      "*.kakao.com",
+      "*.kakaocdn.net",
+      "*.supabase.co"
+    ]
+  },
+  "android": {
+    "backgroundColor": "#12182a"
+  }
+}

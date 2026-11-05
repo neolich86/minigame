@@ -18,7 +18,7 @@ const fmtTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(
 // ============================================================ 렌더러
 const renderer = new THREE.WebGLRenderer({ canvas: $('gl'), antialias: false, powerPreference: 'high-performance' });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-let DPR = Math.min(devicePixelRatio || 1, 1.5);
+let DPR = Q.has('hd') ? devicePixelRatio : Math.min(devicePixelRatio || 1, 1.5);
 let W = innerWidth, H = innerHeight;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(70, W / H, .05, 400);
@@ -548,8 +548,8 @@ function updateHUD(force) {
   $('bossTxt').innerHTML = G.bossKills ? `☠ ${G.bossKills}` : '';
   const tot = P.maxHp + shieldMax(); const hb = $('hpBar');
   hb.style.setProperty('--v', (P.hp / tot * 100).toFixed(1) + '%'); hb.style.setProperty('--s', ((P.hp + P.shield) / tot * 100).toFixed(1) + '%');
-  $('hpTxt').textContent = `${Math.ceil(P.hp)}/${P.maxHp}` + (shieldMax() ? `  +${Math.floor(P.shield)}` : '');
-  $('xpBar').style.setProperty('--v', (P.xp / P.need * 100).toFixed(1) + '%');
+  $('hpTxt').textContent = `${Math.ceil(P.hp)} / ${P.maxHp}` + (shieldMax() ? ` (보호막 ${Math.floor(P.shield)})` : '');
+  $('xpBar').style.setProperty('--v', (P.xp / P.need * 100).toFixed(1) + '%'); $('xpTxt').textContent = `${Math.floor(P.xp)} / ${P.need}`;
   if (G.boss) { const p = Math.max(0, G.boss.hp / G.boss.maxHp * 100); $('bossBar').style.setProperty('--v', p + '%'); $('bossPct').textContent = Math.ceil(p) + '%'; }
   $('dashCd').style.setProperty('--c', (100 - P.dashT / dashCd() * 100) + '%');
   document.querySelectorAll('#skills .sk[data-id]').forEach((d) => { const id = d.dataset.id; if (!id) return; const c = CASTS[id].cd(lv(id)); d.querySelector('.cd').style.setProperty('--c', (100 - clamp((CD[id] || 0) / c, 0, 1) * 100) + '%'); });
@@ -646,7 +646,7 @@ function damagePlayer(d) {
   if (P.hp <= 0) { P.hp = 0; gameOver(); }
 }
 let hexT = 0;
-function showHex() { hexT = .45; $('shieldfx').style.opacity = 1; setTimeout(() => $('shieldfx').style.opacity = 0, 200); }
+function showHex() { if (hexT > -.8) return; hexT = .45; $('shieldfx').style.opacity = 1; setTimeout(() => $('shieldfx').style.opacity = 0, 200); }
 
 // ============================================================ 업데이트
 function update(dt) {
@@ -675,13 +675,15 @@ function update(dt) {
     hint(`⚠ ${dir}에서 ${n}마리 무리 접근!`);
   }
   if (G.t >= G.nextBoss) { G.nextBoss += BOSS_EVERY; spawnBoss(); }
-  // 적
+  // 적 — 시야(화면) 밖에 있으면 아주 느리게, 보이면 정상 속도
+  const fwx = -Math.sin(P.yaw), fwz = -Math.cos(P.yaw), viewCos = Math.cos(Math.atan(Math.tan(camera.fov * Math.PI / 360) * camera.aspect) + .08);
   for (const e of enemies) {
     if (e.dead) continue;
     e.flash -= dt; e.frozen -= dt; e.slow -= dt; e.hitCd -= dt;
     if (e.burn > 0) { e.burn -= dt; e.burnAcc = (e.burnAcc || 0) + dt; if (e.burnAcc >= .5) { e.burnAcc = 0; hit(e, e.burnDps * .5, { col: '#ff9a5a', canCrit: false }); if (e.dead) continue; } }
     const dx = P.x - e.x, dz = P.z - e.z, d = Math.hypot(dx, dz) || 1;
-    let sp = e.spd * (e.slow > 0 ? .45 : 1) * (e.frozen > 0 ? 0 : 1);
+    const seen = (-dx * fwx - dz * fwz) / d > viewCos; e.seen = seen;
+    let sp = e.spd * (e.slow > 0 ? .45 : 1) * (e.frozen > 0 ? 0 : 1) * (seen ? 1 : .18);
     if (e.pull) { const px = e.pull.x - e.x, pz = e.pull.z - e.z, pd = Math.hypot(px, pz); if (pd > .6) { e.x += px / pd * Math.min(pd, 7 * dt); e.z += pz / pd * Math.min(pd, 7 * dt); } e.pull = null; sp = 0; }
     if (d > e.r + .55) { e.x += dx / d * sp * dt; e.z += dz / d * sp * dt; }
     else if (e.hitCd <= 0 && e.frozen <= 0) { e.hitCd = .8; damagePlayer(e.dmg); }
@@ -707,11 +709,16 @@ function update(dt) {
 
 // ============================================================ 카메라 · 그리기
 let last = performance.now(), fpsAcc = 0, fpsN = 0, qualityChecked = false;
+let frozen = false;
 function frame(now) {
   requestAnimationFrame(frame);
   let dt = Math.min(.05, (now - last) / 1000); last = now;
+  if (frozen) return;
   if (state === 'play') update(dt);
   else if (state === 'title' || state === 'over') { P.yaw += dt * .08; }
+  drawFrame(dt);
+}
+function drawFrame(dt) {
   // 카메라
   G && (G.shake = Math.max(0, G.shake - dt));
   const sh = G ? G.shake : 0;
@@ -728,9 +735,11 @@ function frame(now) {
   if (state !== 'title' || composer) render();
   if (state === 'play') {
     drawOverlay(dt); hudT -= dt; if (hudT <= 0) { hudT = .1; updateHUD(); } mmT -= dt; if (mmT <= 0) { mmT = .1; drawMinimap(); }
-    if (!qualityChecked && G.t > 2) { fpsAcc += dt; fpsN++; if (fpsN >= 90) { qualityChecked = true; if (fpsAcc / fpsN > 1 / 38) { useBloom = false; DPR = 1; resize(); } } }
+    if (!qualityChecked && !TEST && G.t > 2) { fpsAcc += dt; fpsN++; if (fpsN >= 90) { qualityChecked = true; if (fpsAcc / fpsN > 1 / 38) { useBloom = false; DPR = 1; resize(); } } }
   }
 }
+// 테스트용: 멈춘 채로 n 스텝 진행 후 한 장 그리기
+function stepDraw(n, dt = 1 / 30) { for (let i = 0; i < n; i++) { if (state === 'play' || state === 'sim') update(dt); } hudT = 0; mmT = 0; drawFrame(dt); }
 function render() {
   renderer.autoClear = true;
   if (useBloom && composer) composer.render(); else renderer.render(scene, camera);
@@ -750,6 +759,14 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && sta
 $('bResume').onclick = togglePause;
 $('bQuit').onclick = () => { $('sPause').classList.remove('on'); toTitle(); };
 $('bStart').onclick = start; $('bRetry').onclick = start;
+// 로그인 (포털 · 앱 안에서만) — 랭킹 기록용
+let authed = false;
+if (window.MGH && MGH.embedded && MGH.save) {
+  const sync = () => { $('bLogin').style.display = authed ? 'none' : ''; };
+  if (MGH.save.onAuth) MGH.save.onAuth((u) => { authed = !!u; sync(); });
+  if (MGH.save.user) { try { const u = MGH.save.user(); if (u !== undefined) { authed = !!u; sync(); } } catch { } }
+  $('bLogin').onclick = () => MGH.save.login && MGH.save.login();
+}
 function bestRec() { try { return +localStorage.getItem('wizard:best') || 0; } catch { return 0; } }
 function toTitle() { state = 'title'; $('hud').classList.remove('on'); $('sOver').classList.remove('on'); $('sTitle').classList.add('on'); og.clearRect(0, 0, ov.width, ov.height); showBest(); }
 function showBest() { const b = bestRec(); $('bestTxt').textContent = b ? `최고 기록 ${fmtTime(b)}` : ''; }
@@ -789,7 +806,7 @@ function gameOver() {
     prog('불러오는 중… 숲'); await Promise.all([loadNature(), loadStaff()]);
   } catch (e) { prog('불러오기 실패 — 새로고침 해주세요'); console.error(e); return; }
   buildForest();
-  { const { m, t } = FX.hexshield; const tex = t.clone(); tex.needsUpdate = true; tex.repeat.set(m.w / t.image.width, m.h / t.image.height); hexSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: .55, blending: THREE.AdditiveBlending, depthTest: false, depthWrite: false })); hexSprite.position.set(0, 0, -.6); hexSprite.scale.setScalar(1.3); hexSprite.visible = false; vm.add(hexSprite); }
+  { const { m, t } = FX.hexshield; const tex = t.clone(); tex.needsUpdate = true; tex.repeat.set(m.w / t.image.width, m.h / t.image.height); hexSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: .3, blending: THREE.AdditiveBlending, depthTest: false, depthWrite: false })); hexSprite.position.set(0, 0, -.6); hexSprite.scale.setScalar(1.3); hexSprite.visible = false; vm.add(hexSprite); }
   composer = new EffectComposer(renderer); composer.addPass(new RenderPass(scene, camera));
   bloom = new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), .6, .45, .9); composer.addPass(bloom); composer.addPass(new OutputPass());
   resize(); enemies = []; shots = []; gems = []; effects = []; nums = [];
@@ -798,5 +815,5 @@ function gameOver() {
   for (let i = 0; i < 10; i++) spawnEnemy(MTYPES[i % 6], rand(0, 6.28), rand(9, 22));
   $('bStart').disabled = false; $('bStart').textContent = '사냥 시작'; showBest();
   requestAnimationFrame(frame);
-  if (TEST) window.__wz = { get P() { return P; }, get G() { return G; }, get S() { return S; }, get enemies() { return enemies; }, start, take: (id) => take(SK[id]), setMove: (m) => testMove = m, SK, setState: (s) => state = s, get state() { return state; }, CASTS, update };
+  if (TEST) window.__wz = { get P() { return P; }, get G() { return G; }, get S() { return S; }, get enemies() { return enemies; }, start, take: (id) => take(SK[id]), setMove: (m) => testMove = m, spawnBoss, CASTSX: CASTS, freeze: (f) => frozen = f, stepDraw, get CD() { return CD; }, SK, setState: (s) => state = s, get state() { return state; }, CASTS, update };
 })();

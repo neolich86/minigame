@@ -34,9 +34,9 @@ img,.px{image-rendering:pixelated}
 .bar.b i,.bar.b b{background-image:url(assets/ui/barB.png)}
 .bar.y i,.bar.y b{background-image:url(assets/ui/barY.png)}
 .bar span{position:absolute;inset:0;display:grid;place-items:center;font-size:11px;font-weight:700}
-.stat{display:flex;gap:12px;margin-top:6px;font-size:13px;font-weight:700}
+.stat{display:flex;gap:12px;margin-top:8px;font-size:13px;font-weight:700}
 .stat img{width:16px;vertical-align:-3px;margin-right:3px}
-.boss{position:absolute;left:24px;right:24px;top:calc(150px + env(safe-area-inset-top));text-align:center;display:none}
+.boss{position:absolute;left:24px;right:24px;top:calc(140px + env(safe-area-inset-top));text-align:center;display:none}
 .boss.on{display:block}
 .boss .nm{font-size:15px;font-weight:700;color:#ffcf6a;margin-bottom:4px}
 .boss .bar{height:20px}
@@ -51,8 +51,11 @@ img,.px{image-rendering:pixelated}
 .cross:after{top:11px;left:0;height:4px;width:26px;clip-path:polygon(0 0,35% 0,35% 100%,0 100%,0 0,65% 0,100% 0,100% 100%,65% 100%,65% 0)}
 .cross.lock:before,.cross.lock:after{background:#ff5a4a}
 .bottom{position:absolute;left:10px;right:10px;bottom:calc(14px + env(safe-area-inset-bottom))}
-.xp{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.xp .bar{height:14px}
+.xp{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.xp .bar{height:18px}
+.xp .lab{width:66px;flex:none;font-size:12px;font-weight:700;display:flex;align-items:center;gap:3px}
+.xp .lab img{width:16px}
+.xp:last-of-type{margin-bottom:8px}
 .skills{display:flex;gap:6px;justify-content:center}
 .sk{position:relative;width:50px;height:54px;background:url(assets/ui/frameG.png) center/100% 100% no-repeat;display:grid;place-items:center}
 .sk.o{background-image:url(assets/ui/frameO.png)}
@@ -64,7 +67,7 @@ img,.px{image-rendering:pixelated}
 .joy b{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(255,255,255,.55);border:3px solid rgba(0,0,0,.35)}
 .joy.on{display:block}
 .joy.idle{display:block;opacity:.45}
-.dash{pointer-events:auto;position:absolute;right:18px;bottom:calc(150px + env(safe-area-inset-bottom));width:72px;height:72px;border:10px solid transparent;border-image:url(assets/ui/frameO.png) 9 fill / 10px stretch;display:grid;place-items:center;font-size:12px;font-weight:700;text-align:center;line-height:1.2}
+.dash{pointer-events:auto;position:absolute;right:18px;bottom:calc(178px + env(safe-area-inset-bottom));width:72px;height:72px;border:10px solid transparent;border-image:url(assets/ui/frameO.png) 9 fill / 10px stretch;display:grid;place-items:center;font-size:12px;font-weight:700;text-align:center;line-height:1.2}
 .dash .cd{position:absolute;inset:-4px;background:rgba(0,0,0,.6);clip-path:inset(var(--c) 0 0 0)}
 .hint{position:absolute;left:50%;top:24%;transform:translate(-50%,-50%);font-size:13px;font-weight:700;color:#ffdede;padding:6px 12px;background:rgba(120,0,0,.6);border:2px solid #000;white-space:nowrap;opacity:0;transition:opacity .3s}
 .hint.on{opacity:1}
@@ -114,7 +117,6 @@ img,.px{image-rendering:pixelated}
   <div class="mm"><canvas id="mm" width="224" height="224"></canvas><div class="lb sh" id="mmLb">적 0</div></div>
   <div class="ftop">
     <div class="row"><span class="lvb sh" id="lvTxt">Lv.1</span><span class="timer sh" id="tmTxt">00:00</span><div class="pz sh" id="bPause">II</div></div>
-    <div class="hp"><img class="px" src="assets/ui/heart.png" alt=""><div class="bar r" id="hpBar" style="--v:100%;--s:100%"><i></i><b></b><u></u><span class="sh" id="hpTxt">100/100</span></div></div>
     <div class="stat sh"><span><img class="px" src="assets/ui/star.png" alt="">처치 <b id="killTxt">0</b></span><span id="bossTxt"></span></div>
   </div>
   <div class="boss" id="bossBox"><div class="nm sh" id="bossNm"></div><div class="bar y" id="bossBar" style="--v:100%"><i></i><b></b><span class="sh" id="bossPct"></span></div></div>
@@ -125,7 +127,8 @@ img,.px{image-rendering:pixelated}
   <div class="joy" id="joy"><b id="joyK"></b></div>
   <div class="dash sh" id="bDash"><span id="dashTxt">대시</span><div class="cd" id="dashCd" style="--c:100%"></div></div>
   <div class="bottom">
-    <div class="xp"><div class="bar b" id="xpBar" style="--v:0%"><i></i><b></b></div></div>
+    <div class="xp"><span class="lab sh"><img class="px" src="assets/ui/heart.png" alt="">체력</span><div class="bar r" id="hpBar" style="--v:100%;--s:100%"><i></i><b></b><u></u><span class="sh" id="hpTxt">100 / 100</span></div></div>
+    <div class="xp"><span class="lab sh"><img class="px" src="assets/ui/star.png" alt="">경험치</span><div class="bar b" id="xpBar" style="--v:0%"><i></i><b></b><span class="sh" id="xpTxt">0 / 6</span></div></div>
     <div class="skills" id="skills"></div>
   </div>
 </div>
@@ -134,6 +137,7 @@ img,.px{image-rendering:pixelated}
   <h1 class="sh">마법사 키우기</h1>
   <p class="s sh">사방에서 몰려오는 몬스터를 파이어볼로 쓰러뜨리고<br>레벨업마다 마법을 골라 강해지세요. 3분마다 보스가 나타나요.</p>
   <div class="best sh" id="bestTxt"></div>
+  <button class="btn g" id="bLogin" style="display:none">🔑 로그인하고 랭킹에 기록하기</button>
   <button class="btn" id="bStart" disabled><span class="load" id="loadTxt">불러오는 중…</span></button>
   <div class="how sh">📱 왼쪽을 끌어 이동 · 오른쪽을 끌어 시점 회전 · 대시 버튼<br>⌨️ WASD 이동 · 마우스 끌기 시점 · Space 대시 · P 일시정지<br>공격은 자동 — 시야 안의 적을 향해 파이어볼을 쏴요</div>
   <div class="credit">이펙트 · 3D: Pixel VFX Foundry, ansimuz, Binbun3D, Pipoya, Kay Lousberg(KayKit) · 폰트: Galmuri</div>
