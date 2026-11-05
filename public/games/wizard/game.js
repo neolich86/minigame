@@ -574,7 +574,7 @@ function rel(x, z) { const c = Math.cos(P.yaw), s = Math.sin(P.yaw), dx = x - P.
 const RANGE = 36;
 function drawMinimap() {
   const cv = $('mm'), g = cv.getContext('2d'), C = 112, R0 = 112, k = (R0 - 4) / RANGE;
-  g.clearRect(0, 0, 224, 224); g.save(); g.beginPath(); g.arc(C, C, R0 - 4, 0, 7); g.clip();
+  g.setTransform(cv.width / 224, 0, 0, cv.width / 224, 0, 0); g.clearRect(0, 0, 224, 224); g.save(); g.beginPath(); g.arc(C, C, R0 - 4, 0, 7); g.clip();
   g.fillStyle = 'rgba(28,52,30,.85)'; g.fillRect(0, 0, 224, 224);
   { const [cx, cy] = rel(0, 0); g.fillStyle = 'rgba(120,180,90,.35)'; g.beginPath(); g.arc(C + cx * k, C - cy * k, ARENA * k, 0, 7); g.fill(); }
   for (const o of OBST) { const [rx, ry] = rel(o[0], o[1]); if (Math.abs(rx) > RANGE || Math.abs(ry) > RANGE) continue; g.fillStyle = o[3] === 'tree' ? '#2f6a34' : '#8a8f99'; g.beginPath(); g.arc(C + rx * k, C - ry * k, o[3] === 'tree' ? 5 : 4, 0, 7); g.fill(); }

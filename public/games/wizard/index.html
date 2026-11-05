@@ -19,6 +19,8 @@ img,.px{image-rendering:pixelated}
 .mm canvas{width:112px;height:112px}
 .mm .lb{position:absolute;left:0;right:0;bottom:-15px;text-align:center;font-size:11px;font-weight:700;color:#ffd0d0}
 .ftop{position:absolute;left:132px;right:10px;top:calc(12px + env(safe-area-inset-top))}
+/* 모바일: 미니맵 크게 */
+@media (pointer:coarse),(max-width:600px){.mm,.mm canvas{width:150px;height:150px}.ftop{left:170px}.edgeNote{top:calc(196px + env(safe-area-inset-top))!important}}
 .ftop .row{display:flex;align-items:center;justify-content:space-between;gap:6px}
 .lvb{font-size:14px;font-weight:700;color:#9fe3ff}
 .timer{font-size:20px;font-weight:700}
@@ -116,7 +118,7 @@ img,.px{image-rendering:pixelated}
 <div class="vign" id="vign"></div>
 <div class="shieldfx" id="shieldfx"></div>
 <div id="hud">
-  <div class="mm"><canvas id="mm" width="224" height="224"></canvas><div class="lb sh" id="mmLb">적 0</div></div>
+  <div class="mm"><canvas id="mm" width="320" height="320"></canvas><div class="lb sh" id="mmLb">적 0</div></div>
   <div class="ftop">
     <div class="row"><span class="lvb sh" id="lvTxt">Lv.1</span><span class="timer sh" id="tmTxt">00:00</span><div class="pz sh" id="bPause">II</div></div>
     <div class="stat sh"><span><img class="px" src="assets/ui/star.png" alt="">처치 <b id="killTxt">0</b></span><span id="bossTxt"></span></div>
