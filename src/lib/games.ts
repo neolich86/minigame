@@ -436,6 +436,18 @@ const CATALOG: Game[] = [
     boards: [{ id: "raiden", label: { ko: "점수", en: "Score" }, unit: { ko: "점", en: "pts" }, vs: { label: { ko: "점수", en: "score" }, question: { ko: "점수 대결", en: "Score battle" } } }],
   },
   {
+    id: "wizard",
+    title: { ko: "마법사 키우기", en: "Grow Your Wizard" },
+    desc: {
+      ko: "1인칭으로 사방에서 몰려오는 몬스터를 파이어볼로 쓰러뜨리고, 레벨업마다 번개·메테오·블랙홀 같은 마법을 골라 성장하는 3D 서바이벌",
+      en: "A first-person 3D survivor — blast hordes from every side with fireballs and pick spells like Lightning, Meteor and Black Hole as you level up",
+    },
+    genre: "action",
+    thumb: "/thumbs/wizard.jpg",
+    src: "/games/wizard/index.html",
+    boards: [{ id: "wizard", label: { ko: "생존 시간", en: "Survival" }, unit: { ko: "", en: "" }, format: "time", vs: { label: { ko: "생존", en: "survival" }, question: { ko: "누가 오래 버티나?", en: "Who survives longer?" } } }],
+  },
+  {
     id: "archer",
     title: { ko: "궁수 서바이버", en: "Archer Survivor" },
     desc: {

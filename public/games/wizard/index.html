@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>마법사 키우기</title>
+<script src="/mgh/bridge.js"></script><script src="/mgh/result.js"></script>
+<style>
+@font-face{font-family:G;src:url(assets/ui/Galmuri11.woff2)}
+@font-face{font-family:G;font-weight:700;src:url(assets/ui/Galmuri11-Bold.woff2)}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#0d1a10;overflow:hidden;font-family:G,sans-serif;color:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
+canvas{display:block}
+#gl{position:fixed;inset:0}
+#ov{position:fixed;inset:0;pointer-events:none}
+img,.px{image-rendering:pixelated}
+.sh{text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000,2px 2px #000}
+#hud{position:fixed;inset:0;pointer-events:none;display:none}
+#hud.on{display:block}
+.mm{position:absolute;left:10px;top:calc(10px + env(safe-area-inset-top));width:112px;height:112px}
+.mm canvas{width:112px;height:112px}
+.mm .lb{position:absolute;left:0;right:0;bottom:-15px;text-align:center;font-size:11px;font-weight:700;color:#ffd0d0}
+.ftop{position:absolute;left:132px;right:10px;top:calc(12px + env(safe-area-inset-top))}
+.ftop .row{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.lvb{font-size:14px;font-weight:700;color:#9fe3ff}
+.timer{font-size:20px;font-weight:700}
+.pz{pointer-events:auto;width:34px;height:34px;display:grid;place-items:center;font-size:15px;border:8px solid transparent;border-image:url(assets/ui/frameG.png) 9 fill / 8px stretch;cursor:pointer}
+.hp{display:flex;align-items:center;gap:6px;margin-top:8px}
+.hp img{width:22px}
+.bar{position:relative;flex:1;height:18px;overflow:hidden}
+.bar i,.bar b,.bar u{position:absolute;inset:0;background-size:100% 100%;background-repeat:no-repeat}
+.bar i{filter:grayscale(1) brightness(.28)}
+.bar b{clip-path:inset(0 calc(100% - var(--v)) 0 0)}
+.bar u{clip-path:inset(0 calc(100% - var(--s)) 0 var(--v));filter:grayscale(1) brightness(3.2)}
+.bar.r i,.bar.r b,.bar.r u{background-image:url(assets/ui/barR.png)}
+.bar.b i,.bar.b b{background-image:url(assets/ui/barB.png)}
+.bar.y i,.bar.y b{background-image:url(assets/ui/barY.png)}
+.bar span{position:absolute;inset:0;display:grid;place-items:center;font-size:11px;font-weight:700}
+.stat{display:flex;gap:12px;margin-top:6px;font-size:13px;font-weight:700}
+.stat img{width:16px;vertical-align:-3px;margin-right:3px}
+.boss{position:absolute;left:24px;right:24px;top:calc(150px + env(safe-area-inset-top));text-align:center;display:none}
+.boss.on{display:block}
+.boss .nm{font-size:15px;font-weight:700;color:#ffcf6a;margin-bottom:4px}
+.boss .bar{height:20px}
+.edge{position:absolute;top:var(--y);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:700;color:#ff6a5a}
+.edge.l{left:6px}.edge.r{right:6px}
+.edge i{width:0;height:0;border-top:13px solid transparent;border-bottom:13px solid transparent;filter:drop-shadow(0 0 2px #000)}
+.edge.l i{border-right:17px solid #ff3b2f}.edge.r i{border-left:17px solid #ff3b2f}
+.edge.big{color:#ffd060}.edge.big.l i{border-right-color:#ffb020}.edge.big.r i{border-left-color:#ffb020}
+.cross{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%)}
+.cross:before,.cross:after{content:"";position:absolute;background:#fff;box-shadow:0 0 0 2px #000}
+.cross:before{left:11px;top:0;width:4px;height:26px;clip-path:polygon(0 0,100% 0,100% 35%,0 35%,0 65%,100% 65%,100% 100%,0 100%)}
+.cross:after{top:11px;left:0;height:4px;width:26px;clip-path:polygon(0 0,35% 0,35% 100%,0 100%,0 0,65% 0,100% 0,100% 100%,65% 100%,65% 0)}
+.cross.lock:before,.cross.lock:after{background:#ff5a4a}
+.bottom{position:absolute;left:10px;right:10px;bottom:calc(14px + env(safe-area-inset-bottom))}
+.xp{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.xp .bar{height:14px}
+.skills{display:flex;gap:6px;justify-content:center}
+.sk{position:relative;width:50px;height:54px;background:url(assets/ui/frameG.png) center/100% 100% no-repeat;display:grid;place-items:center}
+.sk.o{background-image:url(assets/ui/frameO.png)}
+.sk canvas{width:38px;height:38px;image-rendering:pixelated}
+.sk em{position:absolute;right:3px;bottom:2px;font-style:normal;font-size:10px;font-weight:700}
+.sk .cd{position:absolute;inset:6px;background:rgba(0,0,0,.6);clip-path:inset(var(--c) 0 0 0)}
+.sk.empty{opacity:.4}
+.joy{position:absolute;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;background:rgba(255,255,255,.1);border:3px solid rgba(255,255,255,.35);display:none}
+.joy b{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(255,255,255,.55);border:3px solid rgba(0,0,0,.35)}
+.joy.on{display:block}
+.joy.idle{display:block;opacity:.45}
+.dash{pointer-events:auto;position:absolute;right:18px;bottom:calc(150px + env(safe-area-inset-bottom));width:72px;height:72px;border:10px solid transparent;border-image:url(assets/ui/frameO.png) 9 fill / 10px stretch;display:grid;place-items:center;font-size:12px;font-weight:700;text-align:center;line-height:1.2}
+.dash .cd{position:absolute;inset:-4px;background:rgba(0,0,0,.6);clip-path:inset(var(--c) 0 0 0)}
+.hint{position:absolute;left:50%;top:24%;transform:translate(-50%,-50%);font-size:13px;font-weight:700;color:#ffdede;padding:6px 12px;background:rgba(120,0,0,.6);border:2px solid #000;white-space:nowrap;opacity:0;transition:opacity .3s}
+.hint.on{opacity:1}
+.banner{position:absolute;left:0;right:0;top:36%;text-align:center;font-size:30px;font-weight:700;color:#ffcf6a;opacity:0;transition:opacity .4s}
+.banner small{display:block;font-size:14px;color:#ffe;margin-top:6px}
+.banner.on{opacity:1}
+.vign{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,transparent 50%,rgba(200,0,0,.55));opacity:0;transition:opacity .15s}
+.shieldfx{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(120,220,255,.35));opacity:0;transition:opacity .2s}
+/* 화면들 */
+.scr{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px 16px;background:rgba(8,10,24,.72);z-index:5}
+.scr.on{display:flex}
+.scr h1{font-size:40px;font-weight:700;color:#ffe066;letter-spacing:2px;margin-bottom:6px}
+.scr h2{font-size:30px;font-weight:700;color:#ffe066;letter-spacing:2px;margin-bottom:4px}
+.scr p.s{font-size:13px;color:#cfd3ff;margin-bottom:16px;text-align:center;line-height:1.6}
+.btn{pointer-events:auto;font-family:G,sans-serif;font-size:16px;font-weight:700;color:#fff;background:none;padding:10px 26px;border:12px solid transparent;border-image:url(assets/ui/frameO.png) 9 fill / 12px stretch;cursor:pointer;margin:5px}
+.btn.g{border-image-source:url(assets/ui/frameG.png)}
+.cards{display:flex;flex-direction:column;gap:10px;width:100%;max-width:420px}
+.card{display:flex;align-items:center;gap:12px;padding:10px 12px;border:12px solid transparent;border-image:url(assets/ui/frameG.png) 9 fill / 12px stretch;cursor:pointer;text-align:left}
+.card.e{border-image-source:url(assets/ui/frameO.png)}
+.card.l{border-image-source:url(assets/ui/frameO.png);background:linear-gradient(90deg,rgba(255,180,40,.18),transparent)}
+.card:active{transform:scale(.98)}
+.card .ic{width:58px;height:58px;flex:none;background:#151a2c;display:grid;place-items:center;border:2px solid #000}
+.card .ic canvas{width:54px;height:54px;image-rendering:pixelated}
+.card h3{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.card h3 .tag{font-size:10px;padding:2px 5px;background:#3a4a8a}
+.card h3 .tag.n{background:#ff5a4a}
+.card h3 .tag.l{background:#c98a10}
+.card .st{display:flex;gap:2px;margin:3px 0}
+.card .st img{width:13px}
+.card .st img.off{filter:grayscale(1) brightness(.4)}
+.card p{font-size:12px;color:#d7dbef;line-height:1.45}
+.res{display:grid;grid-template-columns:auto auto;gap:6px 22px;font-size:15px;margin:10px 0 16px}
+.res b{color:#ffe066;text-align:right}
+#lvfx{width:64px;height:96px;margin-bottom:-12px}
+.how{font-size:12px;color:#c9d0e8;line-height:1.7;text-align:center;margin:10px 0 14px}
+.best{font-size:13px;color:#ffe9a0;margin-bottom:10px}
+.load{font-size:13px;color:#cfd3ff}
+.credit{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:10px;color:#8890b0}
+</style>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.min.js","three/addons/":"./vendor/jsm/"}}</script>
+</head><body>
+<canvas id="gl"></canvas>
+<canvas id="ov"></canvas>
+<div class="vign" id="vign"></div>
+<div class="shieldfx" id="shieldfx"></div>
+<div id="hud">
+  <div class="mm"><canvas id="mm" width="224" height="224"></canvas><div class="lb sh" id="mmLb">적 0</div></div>
+  <div class="ftop">
+    <div class="row"><span class="lvb sh" id="lvTxt">Lv.1</span><span class="timer sh" id="tmTxt">00:00</span><div class="pz sh" id="bPause">II</div></div>
+    <div class="hp"><img class="px" src="assets/ui/heart.png" alt=""><div class="bar r" id="hpBar" style="--v:100%;--s:100%"><i></i><b></b><u></u><span class="sh" id="hpTxt">100/100</span></div></div>
+    <div class="stat sh"><span><img class="px" src="assets/ui/star.png" alt="">처치 <b id="killTxt">0</b></span><span id="bossTxt"></span></div>
+  </div>
+  <div class="boss" id="bossBox"><div class="nm sh" id="bossNm"></div><div class="bar y" id="bossBar" style="--v:100%"><i></i><b></b><span class="sh" id="bossPct"></span></div></div>
+  <div id="edges"></div>
+  <div class="hint sh" id="hint"></div>
+  <div class="banner sh" id="banner"></div>
+  <div class="cross" id="cross"></div>
+  <div class="joy" id="joy"><b id="joyK"></b></div>
+  <div class="dash sh" id="bDash"><span id="dashTxt">대시</span><div class="cd" id="dashCd" style="--c:100%"></div></div>
+  <div class="bottom">
+    <div class="xp"><div class="bar b" id="xpBar" style="--v:0%"><i></i><b></b></div></div>
+    <div class="skills" id="skills"></div>
+  </div>
+</div>
+
+<div class="scr on" id="sTitle">
+  <h1 class="sh">마법사 키우기</h1>
+  <p class="s sh">사방에서 몰려오는 몬스터를 파이어볼로 쓰러뜨리고<br>레벨업마다 마법을 골라 강해지세요. 3분마다 보스가 나타나요.</p>
+  <div class="best sh" id="bestTxt"></div>
+  <button class="btn" id="bStart" disabled><span class="load" id="loadTxt">불러오는 중…</span></button>
+  <div class="how sh">📱 왼쪽을 끌어 이동 · 오른쪽을 끌어 시점 회전 · 대시 버튼<br>⌨️ WASD 이동 · 마우스 끌기 시점 · Space 대시 · P 일시정지<br>공격은 자동 — 시야 안의 적을 향해 파이어볼을 쏴요</div>
+  <div class="credit">이펙트 · 3D: Pixel VFX Foundry, ansimuz, Binbun3D, Pipoya, Kay Lousberg(KayKit) · 폰트: Galmuri</div>
+</div>
+<div class="scr" id="sLevel"></div>
+<div class="scr" id="sPause">
+  <h2 class="sh">일시정지</h2>
+  <div class="cards" id="pauseSkills" style="max-width:360px;margin:10px 0"></div>
+  <button class="btn" id="bResume">계속하기</button>
+  <button class="btn g" id="bQuit">처음으로</button>
+</div>
+<div class="scr" id="sOver">
+  <h2 class="sh">쓰러졌다</h2>
+  <p class="s sh" id="overSub"></p>
+  <div class="res sh"><span>생존 시간</span><b id="oTime"></b><span>도달 레벨</span><b id="oLv"></b><span>처치</span><b id="oKill"></b><span>보스 처치</span><b id="oBoss"></b></div>
+  <div class="best sh" id="oBest"></div>
+  <button class="btn" id="bRetry">다시 도전</button>
+  <button class="btn g" id="bShare" style="display:none">🔥 친구에게 공유하기</button>
+</div>
+<script type="module" src="game.js"></script>
+</body></html>

@@ -296,6 +296,30 @@ export const GAME_SEO: SeoMap = {
       tags: ["Tower defense", "Strategy", "Leaderboard", "Free"],
     },
   },
+  wizard: {
+    ko: {
+      title: "마법사 키우기 - 무료 1인칭 3D 서바이벌 웹게임",
+      h1: "마법사 키우기 — 무료 1인칭 마법 서바이벌",
+      description:
+        "넓은 필드에서 사방으로 몰려오는 몬스터를 파이어볼로 쓰러뜨리고 레벨업마다 연쇄 번개·메테오·블랙홀 같은 마법을 골라 강해지는 무료 1인칭 3D 서바이벌 게임. 생존 시간 랭킹에 도전하세요.",
+      keywords: ["마법사 키우기", "뱀서", "뱀서라이크", "1인칭 게임", "3D 웹게임", "서바이벌 게임", "로그라이크", "마법 게임", "무료 게임", "웹게임"],
+      about: [
+        "마법사 키우기는 1인칭 시점의 뱀서류 서바이벌입니다. 파이어볼은 시야 안의 적에게 자동으로 날아가고, 레벨업할 때마다 다중 파이어볼·연쇄 번개·낙뢰·서리 폭발·눈보라·메테오·불기둥·블랙홀·회오리 같은 마법을 골라 조합을 만들어요.",
+        "왼쪽 위 미니맵의 빨간 점과 화면 가장자리 경고로 뒤에서 다가오는 적을 확인하세요. 3분마다 보스가 나타나고, 로그인하면 생존 시간이 랭킹에 기록됩니다.",
+      ],
+      howTo: ["모바일은 화면 왼쪽을 끌어 이동, 오른쪽을 끌어 시점을 돌립니다.", "PC는 WASD로 이동, 마우스로 끌어 시점 회전, Space로 대시.", "공격은 자동 — 레벨업마다 마법 1개를 골라 강해지세요.", "최대한 오래 살아남으세요!"],
+      tags: ["뱀서", "1인칭", "3D", "서바이벌", "마법", "랭킹", "무료"],
+    },
+    en: {
+      title: "Grow Your Wizard - Free First-Person 3D Survivor Browser Game",
+      h1: "Grow Your Wizard — Free First-Person Magic Survivor",
+      description: "Blast monster hordes coming from every side with auto-cast fireballs and pick spells like Chain Lightning, Meteor and Black Hole each level-up in this free first-person 3D survivor. Climb the survival-time leaderboard.",
+      keywords: ["survivor-like", "first person", "3d browser game", "wizard game", "roguelite", "bullet heaven", "free game", "browser game"],
+      about: ["Grow Your Wizard is a first-person survivor-like. Fireballs fly automatically at enemies in view, and every level-up you choose spells like Multi Fireball, Chain Lightning, Meteor, Fire Pillar and Black Hole.", "Watch the minimap and edge warnings for enemies behind you. A boss appears every 3 minutes and signed-in players are ranked by survival time."],
+      howTo: ["Mobile: drag the left side to move, the right side to look.", "PC: WASD to move, drag the mouse to look, Space to dash.", "Attacks are automatic — pick one spell per level-up.", "Survive as long as you can!"],
+      tags: ["Survivor-like", "First person", "3D", "Survival", "Magic", "Leaderboard", "Free"],
+    },
+  },
   archer: {
     ko: {
       title: "궁수 서바이버 - 무료 뱀서 · 서바이벌 로그라이크 웹게임",
@@ -821,7 +845,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
     items: [
       { title: "온라인 보드게임", text: "친구와 방을 만들어 실시간으로 즐기는 무료 온라인 보드게임. 빈 자리는 AI가 채워 주고, 혼자서도 AI와 바로 대결할 수 있어요.", games: ["catan", "lexio", "dragon-call", "holdem"] },
       { title: "방치형 게임", text: "틀어두기만 해도 진행되는 방치형 타워디펜스와 자동 강화. 도달 라운드와 최고 레벨로 랭킹을 겨뤄보세요.", games: ["random-td", "weapon"] },
-      { title: "뱀서 · 서바이벌", text: "몰려오는 몬스터 속에서 스킬을 골라 성장하는 뱀서류 서바이벌 로그라이크. 생존 시간 랭킹에 도전하세요.", games: ["archer"] },
+      { title: "뱀서 · 서바이벌", text: "몰려오는 몬스터 속에서 스킬을 골라 성장하는 뱀서류 서바이벌 로그라이크. 생존 시간 랭킹에 도전하세요.", games: ["archer", "wizard"] },
       { title: "슈팅 · 타워디펜스", text: "아케이드 종스크롤 비행기 슈팅과 원소 조합 전략 타워디펜스.", games: ["raiden", "element-td"] },
       { title: "카드 뽑기 · 타자 연습", text: "포켓몬·원피스 카드 오리파 시뮬레이터와 세계 지도 타자 연습 게임.", games: ["oripa", "world-typing"] },
       { title: "퍼즐 · 가게", text: "물약을 붓고 섞어 손님의 주문을 채우는 워터 소트 퍼즐 가게. 매일 바뀌는 오늘의 포션으로 최소 이동 랭킹을 겨뤄 보세요.", games: ["potion-atelier"] },
@@ -833,7 +857,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
     items: [
       { title: "Online board games", text: "Free online board games to play live with friends. AI fills empty seats, and you can always play solo against AI.", games: ["catan", "lexio", "dragon-call", "holdem"] },
       { title: "Idle games", text: "Idle tower defense and auto-enhance games that keep going on their own. Compete on round and level leaderboards.", games: ["random-td", "weapon"] },
-      { title: "Survivor-like · Survival", text: "A survivor-like roguelite — grow your skills amid endless hordes and chase the survival-time leaderboard.", games: ["archer"] },
+      { title: "Survivor-like · Survival", text: "A survivor-like roguelite — grow your skills amid endless hordes and chase the survival-time leaderboard.", games: ["archer", "wizard"] },
       { title: "Shooter · Tower defense", text: "An arcade vertical shooter and an elemental strategy tower defense.", games: ["raiden", "element-td"] },
       { title: "Card pulls · Typing", text: "A Pokémon / One Piece oripa card-pull simulator and a world-map typing practice game.", games: ["oripa", "world-typing"] },
       { title: "Puzzle · Shop", text: "A water-sort puzzle shop where you pour and mix potions for customers, with a daily fewest-moves leaderboard.", games: ["potion-atelier"] },
