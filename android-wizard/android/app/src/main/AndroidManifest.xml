@@ -25,10 +25,10 @@
 
         </activity>
 
-        <!-- AdMob 앱 ID — 지금은 구글 테스트 ID. AdMob 에서 '마법사 키우기' 앱을 만든 뒤 실제 앱 ID(ca-app-pub-…~…)로 교체하고 다시 빌드 -->
+        <!-- AdMob 앱 ID (실제 ID — '1인칭 마법사 키우기') -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="ca-app-pub-9826307769121956~5036143099"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"

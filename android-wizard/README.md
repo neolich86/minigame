@@ -9,6 +9,6 @@
 
 스토어 이미지·문구: `store_assets/`
 
-## 출시 전 교체 (지금은 구글 테스트 ID)
-- AdMob 앱 ID: `android/app/src/main/AndroidManifest.xml` → 바꾼 뒤 AAB 다시 빌드
-- 보상형 광고 단위 ID: `public/games/wizard/game.js` 의 `AD_UNIT_REWARD` → 웹 배포만 하면 됨 (앱 재빌드 불필요)
+## 광고 ID
+- AdMob 앱 ID: `android/app/src/main/AndroidManifest.xml` (바꾸면 AAB 다시 빌드)
+- 보상형 광고 단위 ID: `public/games/wizard/game.js` 의 `AD_UNIT_REWARD` (웹 배포만 하면 됨)

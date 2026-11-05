@@ -748,7 +748,7 @@ function render() {
 
 // ============================================================ 보상형 광고 (구글 플레이 앱에서만 — AdMob)
 // 광고 단위 ID 는 웹에 있으니 바꿀 때 앱을 다시 빌드할 필요 없음. (앱 ID 는 android-wizard 의 AndroidManifest.xml)
-const AD_UNIT_REWARD = 'ca-app-pub-3940256099942544/5224354917'; // TODO: 실제 보상형 광고 단위 ID 로 교체 (지금은 구글 테스트 ID)
+const AD_UNIT_REWARD = 'ca-app-pub-9826307769121956/7687366324'; // AdMob '마법사 키우기 이어하기' (보상형)
 const AdBridge = (function () {
   const cap = (function () { try { if (window.Capacitor) return window.Capacitor; } catch { } try { if (window.parent && window.parent !== window) return window.parent.Capacitor; } catch { } return undefined; })();
   const native = !!(cap && cap.isNativePlatform && cap.isNativePlatform());
