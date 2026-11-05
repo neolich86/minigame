@@ -205,7 +205,7 @@ const BOSS_EVERY = 180;
 // 스킬 정의 — kind: fb(파이어볼 강화) · auto(자동 발동) · pass(생존·패시브)
 const R = { n: '일반', r: '희귀', e: '영웅', l: '전설' };
 const SKILLS = [
-  { id: 'aspd', kind: 'fb', rar: 'r', max: 10, name: '연속 시전', ic: ['mp-firebomb', 7], desc: (l) => `파이어볼 공격 속도 +18% (현재 +${Math.round((1.18 ** l - 1) * 100)}%)` },
+  { id: 'aspd', kind: 'fb', rar: 'r', max: 10, name: '연속 시전', ic: ['mp-firebomb', 10], desc: (l) => `파이어볼 공격 속도 +18% (현재 +${Math.round((1.18 ** l - 1) * 100)}%)` },
   { id: 'dmg', kind: 'fb', rar: 'r', max: 10, name: '화력 증폭', ic: ['fireball-impact', 9], desc: (l) => `공격력 +20% (현재 +${Math.round((1.2 ** l - 1) * 100)}%)` },
   { id: 'multi', kind: 'fb', rar: 'e', max: 6, name: '다중 파이어볼', ic: ['fireball-impact', 2], desc: (l) => `파이어볼을 하나 더 발사 (총 ${1 + l}발)` },
   { id: 'pierce', kind: 'fb', rar: 'e', max: 5, name: '관통 화염', ic: ['fireball-impact', 1], desc: (l) => `파이어볼이 적 ${l}명을 관통` },

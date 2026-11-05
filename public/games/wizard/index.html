@@ -19,6 +19,23 @@ img,.px{image-rendering:pixelated}
 .mm canvas{width:112px;height:112px}
 .mm .lb{position:absolute;left:0;right:0;bottom:-15px;text-align:center;font-size:11px;font-weight:700;color:#ffd0d0}
 .ftop{position:absolute;left:132px;right:10px;top:calc(12px + env(safe-area-inset-top))}
+/* 모바일: 레벨업 카드를 화면 가득 크게 (화면 높이에 맞춰 글자·아이콘 크기 조절) */
+@media (pointer:coarse),(max-width:600px){
+  #sLevel{justify-content:flex-start;background:rgba(8,10,24,.93);overflow-y:auto;padding:calc(10px + env(safe-area-inset-top)) 10px calc(12px + env(safe-area-inset-bottom))}
+  #sLevel #lvfx{width:clamp(34px,6vh,52px);height:clamp(51px,9vh,78px);margin-bottom:-8px}
+  #sLevel h2{font-size:clamp(26px,4.4vh,34px)}
+  #sLevel p.s{font-size:clamp(13px,2vh,15px);margin-bottom:10px}
+  #sLevel .cards{max-width:none;flex:1 1 auto;min-height:0;gap:clamp(8px,1.4vh,12px)}
+  #sLevel .card{flex:1 1 0;min-height:max-content;gap:12px;padding:clamp(6px,1.2vh,14px) 12px;border-width:13px;border-image-width:13px;background-color:rgba(20,24,44,.92)}
+  #sLevel .card .ic{width:clamp(60px,10vh,84px);height:clamp(60px,10vh,84px)}
+  #sLevel .card .ic canvas{width:92%;height:92%}
+  #sLevel .card h3{font-size:clamp(17px,2.7vh,21px);gap:7px}
+  #sLevel .card h3 .tag{font-size:clamp(11px,1.6vh,12px);padding:3px 6px}
+  #sLevel .card .st{margin:clamp(3px,.7vh,6px) 0}
+  #sLevel .card .st img{width:clamp(14px,2.2vh,18px)}
+  #sLevel .card p{font-size:clamp(15px,2.35vh,17px);line-height:1.45}
+  #sLevel .btn{font-size:16px;margin-top:10px;padding:10px 26px;flex:none}
+}
 /* 모바일: 미니맵 크게 */
 @media (pointer:coarse),(max-width:600px){.mm,.mm canvas{width:150px;height:150px}.ftop{left:170px}.edgeNote{top:calc(196px + env(safe-area-inset-top))!important}}
 .ftop .row{display:flex;align-items:center;justify-content:space-between;gap:6px}
