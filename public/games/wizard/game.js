@@ -488,8 +488,10 @@ function updateShots(dt) {
 // ============================================================ 자동 발동 마법
 const snowMat = new THREE.SpriteMaterial({ map: dotT, color: 0xffffff, transparent: true, depthWrite: false });
 function nearestEnemies(x, z, r, n = 99) { return enemies.filter((e) => !e.dead && Math.hypot(e.x - x, e.z - z) < r).sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z)).slice(0, n); }
-function densest(r, range) { // 적이 가장 많이 모인 곳
-  let best = null, bc = 0; for (const e of enemies) { if (e.dead || Math.hypot(e.x - P.x, e.z - P.z) > range) continue; let c = 0; for (const o of enemies) if (!o.dead && Math.hypot(o.x - e.x, o.z - e.z) < r) c++; if (e.boss) c += 3; if (c > bc) { bc = c; best = e; } }
+// 지금 화면(시야) 안에 있는 위치인지 — m: 시야 폭 비율 (1 = 화면 끝까지)
+function inView(x, z, m = .85) { const dx = x - P.x, dz = z - P.z, d = Math.hypot(dx, dz) || 1, hf = Math.atan(Math.tan(camera.fov * Math.PI / 360) * camera.aspect); return (-dx * Math.sin(P.yaw) - dz * Math.cos(P.yaw)) / d > Math.cos(hf * m); }
+function densest(r, range, ok) { // 적이 가장 많이 모인 곳 (ok: 고를 수 있는 적만)
+  let best = null, bc = 0; for (const e of enemies) { if (e.dead || Math.hypot(e.x - P.x, e.z - P.z) > range || (ok && !ok(e))) continue; let c = 0; for (const o of enemies) if (!o.dead && Math.hypot(o.x - e.x, o.z - e.z) < r) c++; if (e.boss) c += 3; if (c > bc) { bc = c; best = e; } }
   return best;
 }
 function inArea(x, z, r, fn) { for (const e of enemies) if (!e.dead && Math.hypot(e.x - x, e.z - z) < r + e.r * .5) fn(e); }
@@ -547,18 +549,24 @@ const CASTS = {
     sfx('frost'); return true;
   } },
   meteor: { cd: (l) => 7.5 - l * .5, cast(l) {
-    const pool = enemies.filter((e) => !e.dead && Math.hypot(e.x - P.x, e.z - P.z) < 26 && Math.hypot(e.x - P.x, e.z - P.z) > 5); if (!pool.length) return false;
+    // 항상 내 시야 안의 적에게만 떨어짐
+    const ok = (e) => inView(e.x, e.z) && Math.hypot(e.x - P.x, e.z - P.z) > 6;
+    const pool = enemies.filter((e) => !e.dead && Math.hypot(e.x - P.x, e.z - P.z) < 26 && ok(e)); if (!pool.length) return false;
     for (let i = 0; i < l; i++) {
-      const e = i === 0 ? densest(5, 26) || pool[0] : pool[(Math.random() * pool.length) | 0]; const x = e.x + rand(-1, 1), z = e.z + rand(-1, 1), d0 = i * .35;
+      const e = i === 0 ? densest(5, 26, ok) || pool[0] : pool[(Math.random() * pool.length) | 0]; const x = e.x + rand(-1, 1), z = e.z + rand(-1, 1), d0 = i * .35;
       // 떨어지는 부분(앞 7프레임)만 2.3배 느리게 — 운석이 떨어지는 모습을 볼 수 있게
       const FALL_N = 7, FALL_K = 2.3; anim('meteor-strike', v3(x, 0, z), .2, { ro: 9, delay: d0, slowN: FALL_N, slowK: FALL_K });
       let t = -d0, boom = false; const IMP = FX['meteor-strike'].m.f.slice(0, FALL_N).reduce((a, f) => a + f[3], 0) / 1000 * FALL_K;
       const ring = groundRing(scene, v3(x, 0, z), 12, 0xffd890, 0xff5a10);
+      // 떨어지기 전 바닥 그림자: 점점 커지고 짙어지다가 충돌하는 순간 사라짐
+      const shade = new THREE.Group(); shade.position.set(x, .08, z); scene.add(shade);
+      for (const [r, op] of [[6.5, .4], [4.6, .5], [2.8, .6]]) { const m = new THREE.Mesh(new THREE.CircleGeometry(r, 36), new THREE.MeshBasicMaterial({ color: 0x120804, transparent: true, opacity: op, depthWrite: false, fog: false })); m.rotation.x = -Math.PI / 2; m.userData.op = op; shade.add(m); }
       const scorch = new THREE.Mesh(new THREE.CircleGeometry(5, 32), new THREE.MeshBasicMaterial({ color: 0x1a0d08, transparent: true, opacity: 0, depthWrite: false })); scorch.rotation.x = -Math.PI / 2; scorch.position.set(x, .05, z); scene.add(scorch);
       effects.push({ update(dt) { t += dt; const u = t - IMP; ring.set(Math.max(0, u) * 1.6, u > 0 && u < .7 ? (1 - u / .7) * .5 : 0);
+        if (u < 0) { const pr = clamp((t + d0) / (IMP + d0), 0, 1); shade.visible = true; shade.scale.setScalar(.35 + .65 * pr); shade.children.forEach((m) => m.material.opacity = m.userData.op * (.3 + .7 * pr)); } else shade.visible = false;
         if (u > 0 && !boom) { boom = true; anim('big-explosion', v3(x, 0, z + .5), .1, { ro: 10 }); for (let k = 0; k < 4; k++) anim('mp-firebomb', v3(x + rand(-4, 4), 0, z + rand(-3, 3)), .08, { ro: 10, pv: [32, 54], skip: .28, delay: .08 + k * .06 }); inArea(x, z, 5, (o) => hit(o, atk() * 4, { col: '#ffb070', kb: [(o.x - x) * .4, (o.z - z) * .4] })); sfx('big'); G.shake = Math.max(G.shake, .35); }
         scorch.material.opacity = u > 0 ? Math.min(.5, u * 3) * clamp((3 - u) / 1, 0, 1) : 0;
-        if (u > 3) { this.kill(); return false; } return true; }, kill() { ring.dispose(); scene.remove(scorch); scorch.geometry.dispose(); scorch.material.dispose(); } });
+        if (u > 3) { this.kill(); return false; } return true; }, kill() { ring.dispose(); scene.remove(scorch); scorch.geometry.dispose(); scorch.material.dispose(); scene.remove(shade); shade.children.forEach((m) => { m.geometry.dispose(); m.material.dispose(); }); } });
     }
     return true;
   } },
@@ -1003,5 +1011,5 @@ function gameOver() {
   for (let i = 0; i < 10; i++) spawnEnemy(STAGE_MON[STAGE][i % STAGE_MON[STAGE].length], rand(0, 6.28), rand(9, 22));
   $('bStart').disabled = false; $('bStart').textContent = '사냥 시작'; showBest();
   requestAnimationFrame(frame);
-  if (TEST) window.__wz = { get P() { return P; }, get G() { return G; }, get S() { return S; }, get enemies() { return enemies; }, start, take: (id) => take(SK[id]), setMove: (m) => testMove = m, spawnBoss, nextStage, get STAGE() { return STAGE; }, CASTSX: CASTS, freeze: (f) => frozen = f, stepDraw, get CD() { return CD; }, hurt: (d) => damagePlayer(d), banner, spawnK: (k, ang, dist, o = {}) => spawnEnemy({ k, hp: 20, spd: 40, dmg: 5, xp: 1, size: o.size || 60, fly: o.fly, name: k }, ang, dist, o.boss), buildWorld, MTYPES, BOSSES, SK, setState: (s) => state = s, get state() { return state; }, CASTS, update };
+  if (TEST) window.__wz = { get P() { return P; }, get G() { return G; }, get S() { return S; }, get enemies() { return enemies; }, start, take: (id) => take(SK[id]), setMove: (m) => testMove = m, spawnBoss, nextStage, get STAGE() { return STAGE; }, CASTSX: CASTS, freeze: (f) => frozen = f, stepDraw, get CD() { return CD; }, hurt: (d) => damagePlayer(d), banner, scene, spawnK: (k, ang, dist, o = {}) => spawnEnemy({ k, hp: 20, spd: 40, dmg: 5, xp: 1, size: o.size || 60, fly: o.fly, name: k }, ang, dist, o.boss), buildWorld, MTYPES, BOSSES, SK, setState: (s) => state = s, get state() { return state; }, CASTS, update };
 })();
