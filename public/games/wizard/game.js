@@ -40,31 +40,39 @@ function resize() {
 addEventListener('resize', resize);
 
 // 하늘 · 빛
-scene.add(new THREE.Mesh(new THREE.SphereGeometry(300, 32, 16), new THREE.ShaderMaterial({
+const skyMat = new THREE.ShaderMaterial({
   side: THREE.BackSide, depthWrite: false, fog: false,
   uniforms: { a: { value: new THREE.Color(0x3d6fc4) }, b: { value: new THREE.Color(0x8cb8ec) }, c: { value: new THREE.Color(0xffdca8) } },
   vertexShader: 'varying vec3 p;void main(){p=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
   fragmentShader: 'uniform vec3 a,b,c;varying vec3 p;void main(){float h=p.y;vec3 col=h>0.12?mix(b,a,smoothstep(.12,.6,h)):mix(c,b,smoothstep(-.02,.12,h));gl_FragColor=vec4(col,1.);}',
-})));
+});
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(300, 32, 16), skyMat));
 scene.fog = new THREE.Fog(0xcfe0ea, 40, 130);
-scene.add(new THREE.HemisphereLight(0xdfeaff, 0x4a5a3a, 1.25));
+const hemi = new THREE.HemisphereLight(0xdfeaff, 0x4a5a3a, 1.25); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xfff0d0, 1.8); sun.position.set(-30, 40, -60); scene.add(sun);
-scene.add(new THREE.AmbientLight(0xffffff, .55));
+const amb = new THREE.AmbientLight(0xffffff, .55); scene.add(amb);
 vm.add(new THREE.HemisphereLight(0xeef2ff, 0x404050, 1.6));
 { const s = new THREE.DirectionalLight(0xfff2e0, 1.6); s.position.set(-1, 2, 1); vm.add(s); }
 
-// 풀밭
+// 바닥 (스테이지마다 텍스처 교체)
 let seed = 31; const srnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-{
+function blotchTex(base, cols, n, rmin, rmax, rep, extra) {
   const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
-  g.fillStyle = '#7ec04e'; g.fillRect(0, 0, 256, 256);
-  for (let i = 0; i < 260; i++) {
-    const x = srnd() * 256, y = srnd() * 256, r = 6 + srnd() * 22; g.fillStyle = ['#8ccc58', '#73b545', '#93d260'][(srnd() * 3) | 0] + '88';
+  g.fillStyle = base; g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < n; i++) {
+    const x = srnd() * 256, y = srnd() * 256, r = rmin + srnd() * (rmax - rmin); g.fillStyle = cols[(srnd() * cols.length) | 0];
     for (const dx of [-256, 0, 256]) for (const dy of [-256, 0, 256]) { g.beginPath(); g.ellipse(x + dx, y + dy, r, r * .7, 0, 0, 7); g.fill(); }
   }
-  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(30, 30); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
-  const gr = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshLambertMaterial({ map: t })); gr.rotation.x = -Math.PI / 2; scene.add(gr);
+  if (extra) extra(g);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
 }
+const GROUND = {
+  1: () => blotchTex('#7ec04e', ['#8ccc5888', '#73b54588', '#93d26088'], 260, 6, 28, 30),
+  2: () => blotchTex('#e2c48a', ['#d8b67a88', '#ecd29c88', '#cfa86c66'], 220, 8, 34, 26, (g) => { g.strokeStyle = 'rgba(190,150,95,.35)'; g.lineWidth = 2; for (let y = 8; y < 256; y += 22) { g.beginPath(); for (let x = 0; x <= 256; x += 8) g.lineTo(x, y + Math.sin(x / 20 + y) * 4); g.stroke(); } }),
+  3: () => blotchTex('#3e3a46', ['#4a4555aa', '#34303caa', '#2e3a32aa'], 120, 4, 18, 22, (g) => { g.strokeStyle = 'rgba(20,18,26,.8)'; g.lineWidth = 3; for (let y = 0; y <= 256; y += 32) { g.beginPath(); g.moveTo(0, y); g.lineTo(256, y); g.stroke(); for (let x = (y / 32) % 2 ? 0 : 32; x <= 256; x += 64) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 32); g.stroke(); } } }),
+};
+const groundMat = new THREE.MeshLambertMaterial({ map: GROUND[1]() });
+{ const gr = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), groundMat); gr.rotation.x = -Math.PI / 2; scene.add(gr); }
 const ARENA = 45; // 플레이어가 다닐 수 있는 반경 (27 → 45m)
 
 // ============================================================ 에셋
@@ -102,28 +110,124 @@ function placeStaff() {
 // 마나 보호막 (Pipoya HEX Shield) — 화면 앞에 잠깐 비치는 육각 보호막
 let hexSprite;
 
-// ============================================================ 숲
+// ============================================================ 월드 (스테이지별 맵)
+// 1: 초원 들판 · 2: 황금 사막 · 3: 망자의 고성
 const OBST = []; // [x, z, 반경, 'tree'|'rock']
-function plant(n, list) {
-  if (!list.length) return; const { geo, mat } = NAT[n];
-  const im = new THREE.InstancedMesh(geo, mat, list.length); const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
+const world = new THREE.Group(); scene.add(world);
+let STAGE = 1;
+const STAGES = {
+  1: { name: '초원 들판', sky: [0x3d6fc4, 0x8cb8ec, 0xffdca8], fog: [0xcfe0ea, 40, 130], hemi: [0xdfeaff, 0x4a5a3a, 1.25], sun: [0xfff0d0, 1.8], amb: .55, bloom: .6 },
+  2: { name: '황금 사막', sky: [0x4a78c8, 0xf3c27a, 0xffe2b0], fog: [0xf0d7a8, 38, 125], hemi: [0xfff0d8, 0x9a7a4a, 1.3], sun: [0xffe0b0, 2.1], amb: .6, bloom: .6 },
+  3: { name: '망자의 고성', sky: [0x07040f, 0x2a1640, 0x5a3070], fog: [0x2a1d3a, 18, 85], hemi: [0x8a80c0, 0x201828, .9], sun: [0x9aa0ff, .7], amb: .35, bloom: .75 },
+};
+const instMats = {}; // 스테이지별로 색을 바꾼 KayKit 재질
+function natMat(n, tint) { if (!tint) return NAT[n].mat; const k = n + tint; if (!instMats[k]) { instMats[k] = NAT[n].mat.clone(); instMats[k].color = new THREE.Color(tint); } return instMats[k]; }
+function plant(n, list, tint) {
+  if (!list.length) return; const { geo } = NAT[n];
+  const im = new THREE.InstancedMesh(geo, natMat(n, tint), list.length); const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
   list.forEach(([x, z, sc, ry], i) => { e.set(0, ry, 0); q.setFromEuler(e); m4.compose(v3(x, 0, z), q, v3(sc, sc, sc)); im.setMatrixAt(i, m4); });
-  scene.add(im);
+  world.add(im);
 }
-function buildForest() {
-  seed = 77; const pick = (a) => a[(srnd() * a.length) | 0];
-  const B = {}; const put = (n, x, z, sc) => { (B[n] = B[n] || []).push([x, z, sc, srnd() * 6.28]); };
-  const trees = ['Tree_1_A', 'Tree_1_B', 'Tree_2_A', 'Tree_2_C', 'Tree_3_A', 'Tree_4_A', 'Tree_4_B'];
-  for (let i = 0; i < 720; i++) { const a = srnd() * 6.283, r = ARENA + 4 + srnd() * 60; put(srnd() < .05 ? 'Tree_Bare_1_A' : pick(trees), Math.cos(a) * r, Math.sin(a) * r, 1.5 + srnd() * .9); if (r < ARENA + 21) OBST.push([Math.cos(a) * r, Math.sin(a) * r, 0, 'tree']); }
-  for (let i = 0; i < 55; i++) {
-    const a = srnd() * 6.283, r = 9 + srnd() * (ARENA - 11), x = Math.cos(a) * r, z = Math.sin(a) * r;
-    if (OBST.some((o) => o[2] && Math.hypot(o[0] - x, o[1] - z) < 6)) continue;
-    // 움직이는 공간 안은 시야를 가리지 않게 낮고 작게
-    const n = pick(['Rock_1_E', 'Rock_3_E', 'Bush_2_C', 'Rock_2_B', 'Rock_1_A', 'Bush_4_A']); const sc = n === 'Bush_2_C' ? .45 + srnd() * .2 : .6 + srnd() * .3; put(n, x, z, sc);
-    OBST.push([x, z, n.startsWith('Bush') ? .8 * sc + .1 : .55 * sc + .1, 'rock']);
+// 같은 모양 여러 개 (직접 만든 도형)
+function instances(geo, mat, list) {
+  const im = new THREE.InstancedMesh(geo, mat, list.length); const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
+  list.forEach(([x, y, z, sx, sy, sz, ry, rx = 0, rz = 0], i) => { e.set(rx, ry, rz); q.setFromEuler(e); m4.compose(v3(x, y, z), q, v3(sx, sy, sz)); im.setMatrixAt(i, m4); });
+  world.add(im); return im;
+}
+const flat = (c, o = {}) => new THREE.MeshLambertMaterial({ color: c, flatShading: true, ...o });
+function brickTex(base, light, dark) {
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.fillStyle = dark; g.fillRect(0, 0, 64, 64);
+  for (let r = 0; r < 4; r++) for (let k = -1; k < 3; k++) { const x = k * 24 + (r % 2) * 12, y = r * 16; g.fillStyle = srnd() < .5 ? base : light; g.fillRect(x + 1, y + 1, 22, 14); }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function wallBox(w, h, d, mat, x, y, z, ry = 0) { // 면 크기에 맞춰 벽돌 반복
+  const geo = new THREE.BoxGeometry(w, h, d); const uv = geo.attributes.uv, n = geo.attributes.normal;
+  for (let i = 0; i < uv.count; i++) { const nx = Math.abs(n.getX(i)), ny = Math.abs(n.getY(i)); uv.setXY(i, uv.getX(i) * (nx > .5 ? d : w) / 2.5, uv.getY(i) * (ny > .5 ? d : h) / 2.5); }
+  const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.y = ry; world.add(m); return m;
+}
+let moon;
+function applyEnv(st) {
+  const E = STAGES[st];
+  skyMat.uniforms.a.value.set(E.sky[0]); skyMat.uniforms.b.value.set(E.sky[1]); skyMat.uniforms.c.value.set(E.sky[2]);
+  scene.fog.color.set(E.fog[0]); scene.fog.near = E.fog[1]; scene.fog.far = E.fog[2];
+  hemi.color.set(E.hemi[0]); hemi.groundColor.set(E.hemi[1]); hemi.intensity = E.hemi[2]; sun.color.set(E.sun[0]); sun.intensity = E.sun[1]; amb.intensity = E.amb;
+  if (groundMat.map) groundMat.map.dispose(); groundMat.map = GROUND[st](); groundMat.needsUpdate = true;
+  if (bloom) bloom.strength = E.bloom;
+}
+function buildWorld(st) {
+  STAGE = st; applyEnv(st);
+  while (world.children.length) { const o = world.children.pop(); if (o.isInstancedMesh) o.dispose(); }
+  OBST.length = 0; seed = 77 + st * 1000;
+  const pick = (a) => a[(srnd() * a.length) | 0];
+  const B = {}; const put = (n, x, z, sc, tint = '') => { const k = n + '|' + tint; (B[k] = B[k] || []).push([x, z, sc, srnd() * 6.28]); };
+  const ring = (rmin, rmax) => { const a = srnd() * 6.283, r = rmin + srnd() * (rmax - rmin); return [Math.cos(a) * r, Math.sin(a) * r, r]; };
+  const inside = (rmin = 9) => { for (let k = 0; k < 20; k++) { const [x, z] = ring(rmin, ARENA - 2); if (!OBST.some((o) => o[2] && Math.hypot(o[0] - x, o[1] - z) < 6)) return [x, z]; } return ring(rmin, ARENA - 2); };
+  if (st === 1) { // 초원 들판 — 둘레 숲, 꽃밭, 흙길
+    const trees = ['Tree_1_A', 'Tree_1_B', 'Tree_2_A', 'Tree_2_C', 'Tree_3_A', 'Tree_4_A', 'Tree_4_B'];
+    for (let i = 0; i < 720; i++) { const [x, z, r] = ring(ARENA + 4, ARENA + 64); put(pick(trees), x, z, 1.5 + srnd() * .9); if (r < ARENA + 21) OBST.push([x, z, 0, 'tree']); }
+    for (let i = 0; i < 40; i++) { const [x, z] = inside(); const n = pick(['Rock_1_E', 'Rock_2_B', 'Rock_1_A', 'Bush_4_A', 'Bush_2_C']); const sc = n === 'Bush_2_C' ? .45 + srnd() * .2 : .6 + srnd() * .3; put(n, x, z, sc); OBST.push([x, z, .55 * sc + .1, 'rock']); }
+    for (let i = 0; i < 1400; i++) { const [x, z, r] = ring(3, ARENA + 18); put(pick(['Grass_1_A', 'Grass_2_A', 'Grass_2_C', 'Bush_1_A']), x, z, r < ARENA + 2 ? .4 + srnd() * .3 : .7 + srnd() * .6); }
+    // 꽃: 작은 꽃잎 덩어리 (분홍·노랑·하양·보라)
+    const fg = new THREE.IcosahedronGeometry(.13, 0);
+    [0xff8fb8, 0xffe066, 0xffffff, 0xc59bff].forEach((c) => { const L = []; for (let i = 0; i < 260; i++) { const [x, z] = ring(2, ARENA + 6); L.push([x, .14, z, 1, .7, 1, srnd() * 6]); } instances(fg, flat(c), L); });
+    // 흙길 (가운데를 가로지름)
+    const pathT = blotchTex('#c9a46a', ['#b8925a88', '#d6b47e88'], 60, 4, 14, 1); pathT.repeat.set(1, 16);
+    const pm = new THREE.Mesh(new THREE.PlaneGeometry(5, 160), new THREE.MeshLambertMaterial({ map: pathT, transparent: true, opacity: .92 })); pm.rotation.x = -Math.PI / 2; pm.rotation.z = .5; pm.position.y = .02; world.add(pm);
   }
-  for (let i = 0; i < 1400; i++) { const a = srnd() * 6.283, r = 3 + Math.sqrt(srnd()) * (ARENA + 18); put(pick(['Grass_1_A', 'Grass_2_A', 'Grass_2_C', 'Bush_1_A']), Math.cos(a) * r, Math.sin(a) * r, r < ARENA + 2 ? .4 + srnd() * .3 : .7 + srnd() * .6); }
-  for (const n in B) plant(n, B[n]);
+  if (st === 2) { // 황금 사막 — 모래 언덕, 선인장, 사암 유적
+    const sand = flat(0xe0bd82), sand2 = flat(0xd2a96a);
+    const dunes = []; for (let i = 0; i < 90; i++) { const [x, z] = ring(ARENA + 6, ARENA + 70); const s2 = 6 + srnd() * 12; dunes.push([x, -s2 * .55, z, s2 * 1.6, s2, s2, srnd() * 6]); }
+    instances(new THREE.SphereGeometry(1, 14, 8), sand, dunes.slice(0, 50)); instances(new THREE.SphereGeometry(1, 10, 6), sand2, dunes.slice(50));
+    // 선인장: 몸통 + 팔 두 개
+    const cg = new THREE.CylinderGeometry(.35, .42, 1, 8), cm = flat(0x5f9a48), arm = new THREE.CylinderGeometry(.22, .24, 1, 7);
+    const trunks = [], arms = [];
+    const cactus = (x, z, h) => { trunks.push([x, h / 2, z, 1, h, 1, srnd() * 6]); if (srnd() < .8) { arms.push([x + .55, h * .55, z, 1, .9, 1, 0, 0, -.25]); arms.push([x + .75, h * .72, z, 1, .6, 1, 0, 0, 0]); } if (srnd() < .6) { arms.push([x - .55, h * .45, z, 1, .8, 1, 0, 0, .25]); arms.push([x - .72, h * .6, z, 1, .5, 1, 0, 0, 0]); } };
+    for (let i = 0; i < 70; i++) { const [x, z] = ring(ARENA + 3, ARENA + 40); cactus(x, z, 3 + srnd() * 3); }
+    for (let i = 0; i < 34; i++) { const [x, z] = inside(); cactus(x, z, 1.6 + srnd() * 1.2); OBST.push([x, z, .7, 'rock']); }
+    instances(cg, cm, trunks); instances(arm, cm, arms);
+    // 사암 유적: 부서진 기둥 · 아치 (경계 근처)
+    const stone = new THREE.MeshLambertMaterial({ map: brickTex('#d9b77e', '#e6c890', '#b58f5a') });
+    for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283 + srnd() * .3, r = ARENA + 2 + srnd() * 4, x = Math.cos(a) * r, z = Math.sin(a) * r; const h = 3 + srnd() * 5;
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(.9, 1, h, 10), stone); p.position.set(x, h / 2, z); world.add(p); wallBox(2.4, .5, 2.4, stone, x, h + .25, z);
+      if (i % 3 === 0) { const x2 = Math.cos(a + .1) * r, z2 = Math.sin(a + .1) * r; const p2 = p.clone(); p2.position.set(x2, h / 2, z2); world.add(p2); wallBox(Math.hypot(x2 - x, z2 - z) + 2.4, 1, 1.6, stone, (x + x2) / 2, h + .5, (z + z2) / 2, -Math.atan2(z2 - z, x2 - x)); } }
+    for (let i = 0; i < 30; i++) { const [x, z] = inside(); const n = pick(['Rock_1_E', 'Rock_2_B', 'Rock_1_A', 'Rock_3_A']); const sc = .5 + srnd() * .35; put(n, x, z, sc, '#e8c48c'); OBST.push([x, z, .55 * sc + .1, 'rock']); }
+    for (let i = 0; i < 40; i++) { const [x, z] = ring(ARENA + 4, ARENA + 50); put('Tree_Bare_1_A', x, z, 1.3 + srnd(), '#c89a6a'); }
+    for (let i = 0; i < 300; i++) { const [x, z] = ring(3, ARENA + 10); put('Grass_1_A', x, z, .35 + srnd() * .3, '#c8b070'); }
+  }
+  if (st === 3) { // 망자의 고성 — 성벽 · 탑 · 부서진 기둥 · 묘비 · 마른 나무 · 보라 촛불
+    const wallM = new THREE.MeshLambertMaterial({ map: brickTex('#5a5566', '#666074', '#2c2834') });
+    const R0 = ARENA + 6, N = 26;
+    for (let i = 0; i < N; i++) {
+      const a0 = i / N * 6.283, a1 = (i + 1) / N * 6.283; if (i % 7 === 3) continue; // 무너진 틈
+      const x = Math.cos((a0 + a1) / 2) * R0, z = Math.sin((a0 + a1) / 2) * R0, len = 2 * R0 * Math.sin(Math.PI / N) + .3, h = 7 + (i % 5 === 1 ? -3 : 0);
+      wallBox(len, h, 1.8, wallM, x, h / 2, z, -((a0 + a1) / 2) + Math.PI / 2);
+      for (let k = -2; k <= 2; k += 2) { const ox = Math.cos((a0 + a1) / 2 + Math.PI / 2) * k * len / 5.5, oz = Math.sin((a0 + a1) / 2 + Math.PI / 2) * k * len / 5.5; wallBox(1, 1, 1.9, wallM, x + ox, h + .5, z + oz, -((a0 + a1) / 2) + Math.PI / 2); }
+      if (i % 4 === 0) { const t = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 3, 15, 10), wallM); t.position.set(Math.cos(a0) * R0, 7.5, Math.sin(a0) * R0); world.add(t);
+        const roof = new THREE.Mesh(new THREE.ConeGeometry(3.3, 6, 10), flat(0x3a2a4a)); roof.position.set(Math.cos(a0) * R0, 18, Math.sin(a0) * R0); world.add(roof); }
+    }
+    // 멀리 큰 성
+    { const keep = new THREE.Group(); const mk = (w, h, d, x, z) => { const m = wallBox(w, h, d, wallM, x, h / 2, z); keep.add(m); };
+      mk(26, 26, 14, 0, -95); mk(8, 40, 8, -14, -95); mk(8, 44, 8, 14, -95); mk(6, 32, 6, 0, -86);
+      for (const [x, h] of [[-14, 44], [14, 48], [0, 36]]) { const r2 = new THREE.Mesh(new THREE.ConeGeometry(5, 12, 8), flat(0x2a1e38)); r2.position.set(x, h + 2, x === 0 ? -86 : -95); keep.add(r2); } world.add(keep); }
+    // 부서진 기둥 · 묘비 · 십자가
+    const colM = new THREE.MeshLambertMaterial({ color: 0x6a6478 }), tombM = flat(0x6c6878);
+    const cols = []; for (let i = 0; i < 18; i++) { const [x, z] = inside(); const h = .8 + srnd() * 2.2; cols.push([x, h / 2, z, 1, h, 1, srnd() * 6]); OBST.push([x, z, .8, 'rock']); }
+    instances(new THREE.CylinderGeometry(.55, .65, 1, 8), colM, cols);
+    const tombs = [], cross = []; for (let i = 0; i < 40; i++) { const [x, z] = inside(6); if (srnd() < .65) tombs.push([x, .45, z, .8, .9, .25, srnd() * .6 - .3, 0, srnd() * .2 - .1]); else { cross.push([x, .7, z, .18, 1.4, .18, srnd()]); cross.push([x, 1, z, .8, .18, .18, 0]); } }
+    instances(new THREE.BoxGeometry(1, 1, 1), tombM, tombs); instances(new THREE.BoxGeometry(1, 1, 1), tombM, cross);
+    for (let i = 0; i < 26; i++) { const [x, z] = inside(); put('Tree_Bare_1_A', x, z, .9 + srnd() * .6, '#3a3040'); OBST.push([x, z, .5, 'tree']); }
+    for (let i = 0; i < 60; i++) { const [x, z] = ring(ARENA + 8, ARENA + 40); put('Tree_Bare_1_A', x, z, 1.6 + srnd(), '#2a2230'); }
+    for (let i = 0; i < 400; i++) { const [x, z] = ring(3, ARENA); put('Grass_2_A', x, z, .35 + srnd() * .3, '#4a3a5a'); }
+    // 보라 촛불 (빛 몇 개 + 빛 점)
+    for (let i = 0; i < 14; i++) { const [x, z] = inside(5); const c = new THREE.Mesh(new THREE.CylinderGeometry(.08, .08, .5, 6), flat(0xe8e0d0)); c.position.set(x, .25, z); world.add(c);
+      const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotT, color: 0xc070ff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); f.scale.setScalar(.9); f.position.set(x, .62, z); world.add(f);
+      if (i < 6) { const l = new THREE.PointLight(0xb060ff, 6, 12); l.position.set(x, 1.2, z); world.add(l); } }
+    // 달
+    const disc = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.fillStyle = '#f4f0ff'; g.beginPath(); g.arc(32, 32, 30, 0, 7); g.fill(); g.fillStyle = 'rgba(180,170,210,.5)'; g.beginPath(); g.arc(22, 26, 7, 0, 7); g.arc(40, 40, 5, 0, 7); g.fill(); return new THREE.CanvasTexture(c); })();
+    const mn = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotT, color: 0xb8a8ff, fog: false, depthWrite: false, blending: THREE.AdditiveBlending, transparent: true })); mn.scale.setScalar(34); mn.position.set(-60, 90, -200); world.add(mn);
+    const mn2 = new THREE.Sprite(new THREE.SpriteMaterial({ map: disc, fog: false, transparent: true })); mn2.scale.setScalar(11); mn2.position.copy(mn.position); world.add(mn2);
+  }
+  for (const k in B) { const [n, tint] = k.split('|'); plant(n, B[k], tint || null); }
 }
 
 // ============================================================ 스프라이트 이펙트
@@ -177,23 +281,23 @@ function sfx(kind) {
 }
 
 // ============================================================ 게임 데이터
-const MTYPES = [ // 궁수 키우기 몬스터 (t = 등장 시각 초)
-  { k: 'mon1', t: 0, hp: 11, spd: 40, dmg: 7, xp: 2, size: 60, name: '초록 슬라임' },
-  { k: 'mon9', t: 25, hp: 10, spd: 47, dmg: 7, xp: 2, size: 58, name: '파랑 슬라임' },
-  { k: 'mon2', t: 55, hp: 9, spd: 80, dmg: 6, xp: 2, size: 58, name: '박쥐', fly: 1.6 },
-  { k: 'mon11', t: 85, hp: 8, spd: 92, dmg: 6, xp: 2, size: 52, name: '꿀벌', fly: 1.4 },
-  { k: 'mon7', t: 115, hp: 17, spd: 44, dmg: 9, xp: 3, size: 58, name: '새싹이' },
-  { k: 'mon5', t: 145, hp: 21, spd: 38, dmg: 9, xp: 3, size: 58, name: '버섯' },
-  { k: 'mon12', t: 175, hp: 19, spd: 52, dmg: 10, xp: 3, size: 58, name: '붉은 눈알' },
-  { k: 'mon8', t: 205, hp: 24, spd: 98, dmg: 13, xp: 4, size: 62, name: '멧돼지' },
-  { k: 'mon3', t: 235, hp: 28, spd: 54, dmg: 12, xp: 4, size: 62, name: '스켈레톤' },
-  { k: 'mon6', t: 265, hp: 26, spd: 62, dmg: 13, xp: 4, size: 58, name: '임프' },
-  { k: 'mon15', t: 295, hp: 32, spd: 35, dmg: 14, xp: 5, size: 58, name: '가시성게' },
-  { k: 'mon13', t: 325, hp: 28, spd: 88, dmg: 13, xp: 5, size: 56, name: '날개눈알', fly: 1.5 },
-  { k: 'mon10', t: 355, hp: 44, spd: 50, dmg: 17, xp: 7, size: 62, name: '저승사자' },
-  { k: 'mon4', t: 385, hp: 38, spd: 60, dmg: 16, xp: 6, size: 60, name: '망령', fly: .6 },
-  { k: 'mon14', t: 415, hp: 98, spd: 29, dmg: 22, xp: 12, size: 90, name: '바위골렘' },
-];
+// 스테이지별 몬스터 — t: 그 지역에 들어온 뒤 몇 초부터 등장
+const MT = (k, t, hp, spd, dmg, xp, size, name, fly) => ({ k, t, hp, spd, dmg, xp, size, name, fly });
+const STAGE_MON = {
+  1: [ // 초원 들판 — 귀여운 몬스터
+    MT('mon1', 0, 11, 40, 7, 2, 56, '초록 젤리'), MT('mon1p', 15, 11, 42, 7, 2, 50, '분홍 젤리'), MT('mon9', 40, 12, 46, 7, 2, 56, '파랑 젤리'),
+    MT('mon7', 90, 17, 44, 9, 3, 56, '새싹이'), MT('mon11', 150, 9, 88, 6, 2, 50, '꿀벌', 1.4), MT('mon5', 220, 21, 38, 9, 3, 58, '버섯'), MT('mon2', 320, 12, 78, 8, 3, 58, '박쥐', 1.6),
+  ],
+  2: [ // 황금 사막
+    MT('mon8s', 0, 26, 92, 13, 4, 62, '모래 멧돼지'), MT('mon12s', 0, 22, 52, 11, 4, 58, '모래 눈알'), MT('mon6', 30, 28, 62, 13, 4, 58, '사막 임프'),
+    MT('mon15', 80, 34, 35, 14, 5, 58, '가시성게'), MT('mon2', 140, 16, 82, 10, 4, 60, '동굴 박쥐', 1.6),
+  ],
+  3: [ // 망자의 고성 — 언데드
+    MT('mon3', 0, 32, 54, 13, 5, 64, '스켈레톤'), MT('mon4', 0, 38, 60, 16, 6, 60, '망령', .6), MT('mon13', 40, 30, 88, 14, 5, 56, '날개눈알', 1.5),
+    MT('mon10', 90, 46, 50, 17, 7, 64, '저승사자'), MT('mon12', 150, 30, 55, 15, 6, 58, '핏빛 눈알'), MT('mon14', 210, 100, 29, 22, 12, 90, '바위골렘'),
+  ],
+};
+const MTYPES = [...STAGE_MON[1], ...STAGE_MON[2], ...STAGE_MON[3]];
 const BOSSES = [
   { k: 'boss1', name: '고대 정령목', hp: 1100, spd: 70, dmg: 18 },
   { k: 'boss2', name: '심연의 마신', hp: 1900, spd: 84, dmg: 22 },
@@ -244,6 +348,7 @@ function newGame() {
   P = { x: 0, z: 0, yaw: 0, pitch: -.08, hp: 100, maxHp: 100, shield: 0, shieldT: 0, lv: 1, xp: 0, need: 6, inv: 0, fireT: .3, dashT: 0, bob: 0, kick: 0, vx: 0, vz: 0 };
   G = { t: 0, kills: 0, bossKills: 0, spawnAcc: 0, nextBoss: BOSS_EVERY, bossIdx: 0, boss: null, nextHorde: 50, rerolls: 1, pendingLv: 0, shake: 0, hint: 0, over: false };
   S = {}; CD = {}; enemies = []; shots = []; gems = []; effects = []; nums = []; zones = [];
+  if (STAGE !== 1) buildWorld(1); G.stageT = 0; G.moving = 0;
   camera.position.set(0, 1.9, 0);
   buildSkillBar(); updateHUD(true);
 }
@@ -272,15 +377,17 @@ function spawnEnemy(type, ang, dist, boss) {
 }
 function removeEnemy(e, silent) { scene.remove(e.s); scene.remove(e.sh); e.s.material.dispose(); e.dead = true; }
 function pickType() {
-  const av = MTYPES.filter((m) => G.t >= m.t); const w = av.map((m, i) => 1 + i * .6 + (G.t - m.t < 40 ? 2 : 0));
+  const st = G.t - (G.stageT || 0); const av = STAGE_MON[STAGE].filter((m) => st >= m.t); const w = av.map((m, i) => 1 + i * .6 + (st - m.t < 40 ? 2 : 0));
   let r = Math.random() * w.reduce((a, b) => a + b, 0); for (let i = 0; i < av.length; i++) { r -= w[i]; if (r <= 0) return av[i]; } return av[av.length - 1];
 }
+const BOSS_ORDER = [0, 3, 4, 2, 1]; // 3분 정령목 → 6분 미믹 → 9분 아룡 → 12분 폭군 → 15분 마신 → 반복(강해짐)
 function spawnBoss() {
-  const b = BOSSES[G.bossIdx % BOSSES.length]; const loop = Math.floor(G.bossIdx / BOSSES.length);
+  const b = BOSSES[BOSS_ORDER[G.bossIdx % 5]]; const loop = Math.floor(G.bossIdx / 5);
   const type = { ...b, hp: b.hp * (1 + loop * 1.5), xp: 0, size: 190 };
   const ang = P.yaw + Math.PI + rand(-.8, .8); const e = spawnEnemy(type, -ang, 30, true); G.boss = e; G.bossIdx++;
-  $('bossNm').textContent = '☠ ' + b.name; $('bossBox').classList.add('on');
-  banner(`☠ ${b.name} 출현`, '미니맵의 노란 표시를 확인하세요'); sfx('boss'); G.shake = .5;
+  e.stageBoss = (STAGE === 1 && G.t >= 535) || (STAGE === 2 && G.t >= 895);
+  $('bossNm').textContent = (e.stageBoss ? '👑 지역 보스 · ' : '☠ ') + b.name; $('bossBox').classList.add('on');
+  banner(`${e.stageBoss ? '👑 지역 보스' : '☠'} ${b.name} 출현`, e.stageBoss ? '쓰러뜨리면 다음 지역으로 넘어가요' : '미니맵의 노란 표시를 확인하세요'); sfx('boss'); G.shake = .5;
 }
 function hit(e, dmg, o = {}) {
   if (e.dead) return; let crit = false;
@@ -297,7 +404,8 @@ function killEnemy(e) {
     G.bossKills++; G.boss = null; $('bossBox').classList.remove('on');
     anim('big-explosion', v3(e.x, 0, e.z), .1, { ro: 9 }); sfx('big'); G.shake = .6;
     for (let i = 0; i < 40; i++) dropGem(e.x + rand(-3, 3), e.z + rand(-3, 3), 6);
-    P.hp = Math.min(P.maxHp, P.hp + P.maxHp * .3); banner('보스 처치!', '체력 30% 회복');
+    P.hp = Math.min(P.maxHp, P.hp + P.maxHp * .3);
+    if (e.stageBoss && STAGE < 3) { banner('👑 지역 보스 처치!', '새로운 지역으로 이동합니다…'); G.moving = 2.2; } else banner('보스 처치!', '체력 30% 회복');
   } else dropGem(e.x, e.z, e.xp);
 }
 // 경험치 수정
@@ -539,6 +647,18 @@ function moveTo(nx, nz, teleport) {
   }
 }
 
+// ============================================================ 지역 이동 (지역 보스 처치 후)
+function nextStage() {
+  const fl = $('flash'); fl.style.transition = 'none'; fl.style.opacity = 1; sfx('lvl');
+  for (const e of enemies) removeEnemy(e, true); enemies.length = 0;
+  for (const g of gems) { gainXp(g.v); scene.remove(g.s); } gems.length = 0;
+  for (const f of effects) f.kill && f.kill(); effects.length = 0;
+  buildWorld(STAGE + 1); G.stageT = G.t; G.spawnAcc = -3; G.nextHorde = G.t + 40;
+  P.x = 0; P.z = 0; P.inv = 2;
+  setTimeout(() => { fl.style.transition = 'opacity 1.2s'; fl.style.opacity = 0; }, 80);
+  banner(`${['', '🌼', '🏜️', '🏰'][STAGE]} ${STAGES[STAGE].name}`, '');
+}
+
 // ============================================================ 화면 (HUD)
 function edgeNote() { const n = $('edgeNote'); n.classList.add('on'); clearTimeout(edgeNote.t); edgeNote.t = setTimeout(() => n.classList.remove('on'), 1400); }
 function banner(t, sub = '') { const b = $('banner'); b.innerHTML = `${t}${sub ? `<small>${sub}</small>` : ''}`; b.classList.add('on'); clearTimeout(banner.t); banner.t = setTimeout(() => b.classList.remove('on'), 2400); }
@@ -688,7 +808,8 @@ function update(dt) {
     const dir = Math.abs(ang) < 35 ? '앞쪽' : Math.abs(ang) > 140 ? '뒤쪽' : ang < 0 ? (ang < -90 ? '왼쪽 뒤' : '왼쪽') : (ang > 90 ? '오른쪽 뒤' : '오른쪽');
     hint(`⚠ ${dir}에서 ${n}마리 무리 접근!`);
   }
-  if (G.t >= G.nextBoss) { G.nextBoss += BOSS_EVERY; spawnBoss(); }
+  if (G.t >= G.nextBoss && !G.boss) { G.nextBoss += BOSS_EVERY; spawnBoss(); }
+  if (G.moving > 0) { G.moving -= dt; if (G.moving <= 0) nextStage(); }
   // 적 — 시야(화면) 밖에 있으면 아주 느리게, 보이면 정상 속도
   const fwx = -Math.sin(P.yaw), fwz = -Math.cos(P.yaw), viewCos = Math.cos(Math.atan(Math.tan(camera.fov * Math.PI / 360) * camera.aspect) + .08);
   for (const e of enemies) {
@@ -837,7 +958,7 @@ function start() {
   audio(); newGame(); state = 'play'; last = performance.now();
   $('sTitle').classList.remove('on'); $('sOver').classList.remove('on'); $('hud').classList.add('on');
   joyEl.className = touchUI ? 'joy idle' : 'joy'; placeIdleJoy();
-  banner('사냥 시작!', '공격은 자동 — 몬스터를 피해 다니세요');
+  banner('🌼 초원 들판', '공격은 자동 — 몬스터를 피해 다니세요');
   if (touchUI || Q.has('touchhint')) { const t = $('tut'); t.classList.add('on'); clearTimeout(start.tt); start.tt = setTimeout(() => t.classList.remove('on'), 10000); }
 }
 function gameOver() {
@@ -871,15 +992,15 @@ function gameOver() {
     ]);
     prog('불러오는 중… 숲'); await Promise.all([loadNature(), loadStaff()]);
   } catch (e) { prog('불러오기 실패 — 새로고침 해주세요'); console.error(e); return; }
-  buildForest();
+  buildWorld(+(Q.get('stage') || 1));
   { const { m, t } = FX.hexshield; const tex = t.clone(); tex.needsUpdate = true; tex.repeat.set(m.w / t.image.width, m.h / t.image.height); hexSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: .3, blending: THREE.AdditiveBlending, depthTest: false, depthWrite: false })); hexSprite.position.set(0, 0, -.6); hexSprite.scale.setScalar(1.3); hexSprite.visible = false; vm.add(hexSprite); }
   composer = new EffectComposer(renderer); composer.addPass(new RenderPass(scene, camera));
-  bloom = new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), .6, .45, .9); composer.addPass(bloom); composer.addPass(new OutputPass());
+  bloom = new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), .6, .45, .9); composer.addPass(bloom); composer.addPass(new OutputPass()); bloom.strength = STAGES[STAGE].bloom;
   resize(); enemies = []; shots = []; gems = []; effects = []; nums = [];
   // 타이틀 배경용 몬스터 몇 마리
   G = { t: 0, shake: 0 }; P = { x: 0, z: 0, yaw: 0, pitch: -.05, bob: 0, kick: 0 };
-  for (let i = 0; i < 10; i++) spawnEnemy(MTYPES[i % 6], rand(0, 6.28), rand(9, 22));
+  for (let i = 0; i < 10; i++) spawnEnemy(STAGE_MON[STAGE][i % STAGE_MON[STAGE].length], rand(0, 6.28), rand(9, 22));
   $('bStart').disabled = false; $('bStart').textContent = '사냥 시작'; showBest();
   requestAnimationFrame(frame);
-  if (TEST) window.__wz = { get P() { return P; }, get G() { return G; }, get S() { return S; }, get enemies() { return enemies; }, start, take: (id) => take(SK[id]), setMove: (m) => testMove = m, spawnBoss, CASTSX: CASTS, freeze: (f) => frozen = f, stepDraw, get CD() { return CD; }, hurt: (d) => damagePlayer(d), SK, setState: (s) => state = s, get state() { return state; }, CASTS, update };
+  if (TEST) window.__wz = { get P() { return P; }, get G() { return G; }, get S() { return S; }, get enemies() { return enemies; }, start, take: (id) => take(SK[id]), setMove: (m) => testMove = m, spawnBoss, nextStage, get STAGE() { return STAGE; }, CASTSX: CASTS, freeze: (f) => frozen = f, stepDraw, get CD() { return CD; }, hurt: (d) => damagePlayer(d), banner, spawnK: (k, ang, dist, o = {}) => spawnEnemy({ k, hp: 20, spd: 40, dmg: 5, xp: 1, size: o.size || 60, fly: o.fly, name: k }, ang, dist, o.boss), buildWorld, MTYPES, BOSSES, SK, setState: (s) => state = s, get state() { return state; }, CASTS, update };
 })();
