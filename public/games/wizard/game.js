@@ -242,7 +242,7 @@ function setFrame(s, n, i) { const { m, t } = FX[n]; const f = m.f[clamp(i, 0, m
 function killSprite(s) { scene.remove(s); s.material.map.dispose(); s.material.dispose(); }
 // 프레임 애니메이션 → effects 목록에 들어감
 function anim(n, pos, k, o = {}) {
-  const s = fxSprite(n, pos, k, o); const d = FX[n].m.f.map((f) => f[3] * (o.speed || 1) / 1000); const tot = d.reduce((a, b) => a + b, 0);
+  const s = fxSprite(n, pos, k, o); const d = FX[n].m.f.map((f, i) => f[3] * (o.speed || 1) * (i < (o.slowN || 0) ? o.slowK : 1) / 1000); const tot = d.reduce((a, b) => a + b, 0);
   let t = -(o.delay || 0) + (o.skip || 0); s.visible = false;
   const fx = { s, update(dt) {
     t += dt; if (t < 0) return true; if (o.follow) s.position.copy(o.follow());
@@ -322,7 +322,7 @@ const SKILLS = [
   { id: 'strike', kind: 'auto', rar: 'l', max: 5, name: '낙뢰', ic: ['mp-lightning', 6], desc: (l) => `3.5초마다 벼락 ${l}줄기가 적에게 내리꽂힘` },
   { id: 'frost', kind: 'auto', rar: 'l', max: 5, name: '서리 폭발', ic: ['ice-spike', 9], desc: (l) => `${(7 - l * .4).toFixed(1)}초마다 주변 얼음 폭발, ${(1.2 + l * .3).toFixed(1)}초 빙결` },
   { id: 'blizzard', kind: 'auto', rar: 'l', max: 5, name: '눈보라', ic: ['blizzard', 6], desc: (l) => `9초마다 적 무리에 눈보라 (반경 ${(4 + l * .6).toFixed(1)}m, 둔화)` },
-  { id: 'meteor', kind: 'auto', rar: 'l', max: 5, name: '메테오', ic: ['meteor-strike', 8], desc: (l) => `${12 - l}초마다 거대한 운석 ${l}개 낙하` },
+  { id: 'meteor', kind: 'auto', rar: 'l', max: 5, name: '메테오', ic: ['meteor-strike', 8], desc: (l) => `${(7.5 - l * .5).toFixed(1).replace('.0', '')}초마다 거대한 운석 ${l}개 낙하` },
   { id: 'pillar', kind: 'auto', rar: 'l', max: 5, name: '불기둥', ic: ['fire-pillar', 10], desc: (l) => `7초마다 적 무리에 불기둥 ${1 + Math.floor(l / 2)}개` },
   { id: 'hole', kind: 'auto', rar: 'l', max: 5, name: '블랙홀', ic: ['mp-darkbolt', 6], desc: (l) => `${13 - l}초마다 블랙홀 — 적을 빨아들인 뒤 폭발` },
   { id: 'whirl', kind: 'auto', rar: 'e', max: 5, name: '회오리', ic: ['whirlwind', 6], desc: (l) => `7초마다 회오리 ${l}개가 적을 밀쳐내며 이동` },
@@ -458,7 +458,7 @@ function fireballs() {
   if (staff) staff.userData.glow.scale.setScalar(1.4);
 }
 function explodeAt(p, r, dmg, skip) {
-  anim('boom-d', v3(p.x, 0, p.z), .022 + r * .009, { ro: 9 }); sfx('boom');
+  anim('boom-d', v3(p.x, 0, p.z), .013 + r * .0055, { ro: 9 }); sfx('boom');
   for (const e of enemies) if (!e.dead && e !== skip && Math.hypot(e.x - p.x, e.z - p.z) < r + e.r * .5) hit(e, dmg, { col: '#ffb070' });
 }
 function updateShots(dt) {
@@ -546,16 +546,17 @@ const CASTS = {
     }, kill() { for (const m of [frost, edge]) { scene.remove(m); m.geometry.dispose(); m.material.dispose(); } flakes.forEach((f) => scene.remove(f.sp)); } });
     sfx('frost'); return true;
   } },
-  meteor: { cd: (l) => 12 - l, cast(l) {
+  meteor: { cd: (l) => 7.5 - l * .5, cast(l) {
     const pool = enemies.filter((e) => !e.dead && Math.hypot(e.x - P.x, e.z - P.z) < 26 && Math.hypot(e.x - P.x, e.z - P.z) > 5); if (!pool.length) return false;
     for (let i = 0; i < l; i++) {
       const e = i === 0 ? densest(5, 26) || pool[0] : pool[(Math.random() * pool.length) | 0]; const x = e.x + rand(-1, 1), z = e.z + rand(-1, 1), d0 = i * .35;
-      anim('meteor-strike', v3(x, 0, z), .2, { ro: 9, delay: d0 });
-      let t = -d0, boom = false; const IMP = .42;
-      const ring = groundRing(scene, v3(x, 0, z), 16, 0xfff0b0, 0xff5a10);
+      // 떨어지는 부분(앞 7프레임)만 2.3배 느리게 — 운석이 떨어지는 모습을 볼 수 있게
+      const FALL_N = 7, FALL_K = 2.3; anim('meteor-strike', v3(x, 0, z), .2, { ro: 9, delay: d0, slowN: FALL_N, slowK: FALL_K });
+      let t = -d0, boom = false; const IMP = FX['meteor-strike'].m.f.slice(0, FALL_N).reduce((a, f) => a + f[3], 0) / 1000 * FALL_K;
+      const ring = groundRing(scene, v3(x, 0, z), 12, 0xffd890, 0xff5a10);
       const scorch = new THREE.Mesh(new THREE.CircleGeometry(5, 32), new THREE.MeshBasicMaterial({ color: 0x1a0d08, transparent: true, opacity: 0, depthWrite: false })); scorch.rotation.x = -Math.PI / 2; scorch.position.set(x, .05, z); scene.add(scorch);
-      effects.push({ update(dt) { t += dt; const u = t - IMP; ring.set(Math.max(0, u) * 1.6, u > 0 && u < .7 ? 1 - u / .7 : 0);
-        if (u > 0 && !boom) { boom = true; anim('big-explosion', v3(x, 0, z + .5), .12, { ro: 10 }); for (let k = 0; k < 4; k++) anim('mp-firebomb', v3(x + rand(-4, 4), 0, z + rand(-3, 3)), .08, { ro: 10, pv: [32, 54], skip: .28, delay: .08 + k * .06 }); inArea(x, z, 5, (o) => hit(o, atk() * 4, { col: '#ffb070', kb: [(o.x - x) * .4, (o.z - z) * .4] })); sfx('big'); G.shake = Math.max(G.shake, .35); }
+      effects.push({ update(dt) { t += dt; const u = t - IMP; ring.set(Math.max(0, u) * 1.6, u > 0 && u < .7 ? (1 - u / .7) * .5 : 0);
+        if (u > 0 && !boom) { boom = true; anim('big-explosion', v3(x, 0, z + .5), .1, { ro: 10 }); for (let k = 0; k < 4; k++) anim('mp-firebomb', v3(x + rand(-4, 4), 0, z + rand(-3, 3)), .08, { ro: 10, pv: [32, 54], skip: .28, delay: .08 + k * .06 }); inArea(x, z, 5, (o) => hit(o, atk() * 4, { col: '#ffb070', kb: [(o.x - x) * .4, (o.z - z) * .4] })); sfx('big'); G.shake = Math.max(G.shake, .35); }
         scorch.material.opacity = u > 0 ? Math.min(.5, u * 3) * clamp((3 - u) / 1, 0, 1) : 0;
         if (u > 3) { this.kill(); return false; } return true; }, kill() { ring.dispose(); scene.remove(scorch); scorch.geometry.dispose(); scorch.material.dispose(); } });
     }
@@ -847,7 +848,7 @@ let last = performance.now(), fpsAcc = 0, fpsN = 0, qualityChecked = false;
 let frozen = false;
 function frame(now) {
   requestAnimationFrame(frame);
-  let dt = Math.min(.05, (now - last) / 1000); last = now;
+  let dt = Math.max(0, Math.min(.05, (now - last) / 1000)); last = now;
   if (frozen) return;
   if (state === 'play') update(dt);
   else if (state === 'title' || state === 'over') { P.yaw += dt * .08; }
