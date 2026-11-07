@@ -21,7 +21,7 @@ async function loadAll() {
     document.fonts ? Promise.race([document.fonts.load('16px G'), new Promise((r) => setTimeout(r, 2500))]) : 0,
   ]);
 }
-// 직업·전직 단계별 그림 한 장 (f: 0~5)
+// 직업·전직 단계별 그림 한 장 (f: 0~5). 시트 그림은 왼쪽을 보고 있어서 전투에서는 좌우를 뒤집어 오른쪽을 보게 함
 function drawFig(g, job, T, f, x, y, sc, o = {}) {
   const r = ATL.rows[job + T], cw = ATL.cw, ch = ATL.ch;
   g.save(); g.translate(x, y); if (o.flip) g.scale(-1, 1);
@@ -229,12 +229,12 @@ function drawMember(m) {
   const x = sx(m.x) + (m.atkT > 0 ? Math.sin((.25 - m.atkT) / .25 * Math.PI) * 8 * k : 0), y = sy(m.y), sc = 1.25 * k;
   shadowAt(x, y, 44 * k);
   let f = 3, bob = 0;
-  if (m.dead) { g.save(); g.globalAlpha = .35; g.filter = 'grayscale(1)'; drawFig(g, m.job, S.T, 0, x, y + 2, sc); g.restore(); return; }
+  if (m.dead) { g.save(); g.globalAlpha = .35; g.filter = 'grayscale(1)'; drawFig(g, m.job, S.T, 0, x, y + 2, sc, { flip: 1 }); g.restore(); return; }
   if (B.walking) f = WALK[Math.floor(m.anim) % 4]; else { f = m.atkT > 0 ? 1 : 3; bob = Math.sin(m.anim) * 1.2; }
-  if (m.hitT > 0) { g.save(); g.filter = 'brightness(1.8) sepia(.6) hue-rotate(-30deg)'; drawFig(g, m.job, S.T, f, x + (Math.random() - .5) * 3, y + bob, sc); g.restore(); }
-  else drawFig(g, m.job, S.T, f, x, y + bob, sc);
+  if (m.hitT > 0) { g.save(); g.filter = 'brightness(1.8) sepia(.6) hue-rotate(-30deg)'; drawFig(g, m.job, S.T, f, x + (Math.random() - .5) * 3, y + bob, sc, { flip: 1 }); g.restore(); }
+  else drawFig(g, m.job, S.T, f, x, y + bob, sc, { flip: 1 });
   if (B.buffs.bless > 0) { g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = .35 + .15 * Math.sin(B.t * 6 + m.id); orb(x, y - 40 * k, 14 * k, '255,220,120'); g.restore(); }
-  if (m.crit5 > 0) { g.save(); g.globalAlpha = .55; g.filter = 'brightness(0.4) saturate(2) hue-rotate(250deg)'; drawFig(g, m.job, S.T, f, x - 6 * k, y + bob, sc); g.restore(); }
+  if (m.crit5 > 0) { g.save(); g.globalAlpha = .55; g.filter = 'brightness(0.4) saturate(2) hue-rotate(250deg)'; drawFig(g, m.job, S.T, f, x - 6 * k, y + bob, sc, { flip: 1 }); g.restore(); }
   hpBar(x, y - 104 * k, 34 * k, m.hp / m.st.hp, '#4be06a');
   if (m.sayT > 0) {
     m.sayT -= 1 / 60; g.save(); g.globalAlpha = Math.min(1, m.sayT * 3); g.font = '700 11px G'; g.textAlign = 'center'; g.lineWidth = 3; g.strokeStyle = '#000';
