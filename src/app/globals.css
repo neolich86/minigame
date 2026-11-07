@@ -158,6 +158,8 @@ h1.title { font-family: "Gothic A1", sans-serif; font-weight: 300; font-size: cl
 .badge { font-size: 10.5px; font-weight: 800; padding: 4px 8px; border-radius: 6px; backdrop-filter: blur(4px); letter-spacing: .02em; }
 .badge.online { background: rgba(77, 219, 199, .9); color: #05221d; }
 .badge.rank { background: rgba(255, 184, 77, .92); color: #251703; }
+.badge.hidden-item { background: rgba(30, 30, 40, .88); color: #ffd36a; border: 1px solid rgba(255, 211, 106, .6); }
+.hidden-tag { margin-right: 4px; font-size: .85em; }
 .card-best { font-size: 11.5px; color: var(--gold); font-weight: 700; }
 
 /* 넓은 화면 한 줄 5개 → 4 → 3 → 2 */

@@ -506,6 +506,10 @@ export const GAMES: Game[] = CATALOG.filter((g) => !g.hidden);
 export function kindOf(g: Game): Kind {
   return g.kind ?? "game";
 }
+/** 숨긴 항목 (관리자 화면에서만 목록에 보임) */
+export function hiddenItemsOf(kind: Kind): Game[] {
+  return CATALOG.filter((g) => g.hidden && (g.kind ?? "game") === kind);
+}
 /** 구분별로 보이는 항목 */
 export function itemsOf(kind: Kind): Game[] {
   return GAMES.filter((g) => kindOf(g) === kind);

@@ -6,7 +6,8 @@ import { useApp } from "./AppProvider";
 import { LikeButton } from "./LikeButton";
 import { AdSlot } from "./AdSlot";
 import { useLikes } from "@/lib/likes";
-import { GENRES, KINDS, KIND_INDEX, entryPath, formatScore, itemsOf, type Genre, type Kind } from "@/lib/games";
+import { GENRES, KINDS, KIND_INDEX, entryPath, formatScore, hiddenItemsOf, itemsOf, type Genre, type Kind } from "@/lib/games";
+import { useIsAdmin } from "@/lib/useAdmin";
 import { KIND_SEO } from "@/lib/seo";
 import { fetchMyScores, type ScoreRow } from "@/lib/supabase";
 
@@ -28,11 +29,13 @@ const KIND_DESC = { game: "kindDesc_game", tool: "kindDesc_tool", app: "kindDesc
 export function GameList({ children, kind = "game" }: { children?: ReactNode; kind?: Kind }) {
   const { t, lang, user } = useApp();
   const { counts: likes } = useLikes();
-  // 하트 많은 순 (같으면 원래 순서). 하트 수를 불러오기 전에는 원래 순서
+  const admin = useIsAdmin(user?.id);
+  // 하트 많은 순 (같으면 원래 순서). 하트 수를 불러오기 전에는 원래 순서. 관리자는 숨긴 항목을 맨 뒤에 함께 봄
   const ITEMS = useMemo(() => {
     const base = itemsOf(kind);
-    return base.map((g, i) => ({ g, i, n: likes[g.id] ?? 0 })).sort((a, b) => b.n - a.n || a.i - b.i).map((x) => x.g);
-  }, [kind, likes]);
+    const sorted = base.map((g, i) => ({ g, i, n: likes[g.id] ?? 0 })).sort((a, b) => b.n - a.n || a.i - b.i).map((x) => x.g);
+    return admin ? sorted.concat(hiddenItemsOf(kind)) : sorted;
+  }, [kind, likes, admin]);
   const isGame = kind === "game";
   const hero = kind === "game" ? null : KIND_SEO[kind][lang];
   const [filter, setFilter] = useState<Genre | "all">("all");
@@ -152,6 +155,7 @@ export function GameList({ children, kind = "game" }: { children?: ReactNode; ki
             >
               <div className="thumb">
                 <div className="badges">
+                  {g.hidden && <span className="badge hidden-item">🔒 {lang === "ko" ? "숨김 · 관리자만" : "Hidden · admin"}</span>}
                   {g.online && <span className="badge online">● {t("badgeOnline")}</span>}
                   {g.boards && <span className="badge rank">🏆 {t("badgeRanking")}</span>}
                 </div>
@@ -165,6 +169,7 @@ export function GameList({ children, kind = "game" }: { children?: ReactNode; ki
                 <div className="left">
                   <h3>
                     <span className="idx">{n}</span>
+                    {g.hidden && <span className="hidden-tag">🔒</span>}
                     {title}
                   </h3>
                   <p>{g.desc[lang]}</p>
