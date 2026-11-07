@@ -112,7 +112,7 @@ function handleEvents() {
       case 'dmg': addNum(sx(e.x), sy(e.y) - e.h * k * 1.3, e.d, e.crit, e.c); if (e.crit) addFx('crit-hit', sx(e.x), sy(e.y) - e.h * k * .5, .7 * k); break;
       case 'atk': {
         const m = byId.get(e.who); if (!m) break; const x0 = sx(m.x) + 10 * k, y0 = sy(m.y) - 40 * k, x1 = sx(e.tx), y1 = sy(e.ty) - 20 * k;
-        if (e.job === 'knight') addFx('hit-spark', x1, y1, .9 * k);
+        if (e.job === 'knight' || e.job === 'assassin') addFx('hit-spark', x1, y1, (e.job === 'knight' ? 1 : .75) * k, { dl: .12 });
         else shots.push({ job: e.job, x0, y0, x1, y1, t: 0, d: e.job === 'assassin' ? .14 : .22 });
         break;
       }
@@ -226,7 +226,9 @@ function orb(x, y, r, rgb) { const gr = g.createRadialGradient(x, y, 0, x, y, r 
 function shadowAt(x, y, w) { g.fillStyle = 'rgba(0,0,0,.32)'; g.beginPath(); g.ellipse(x, y, w / 2, w * .16, 0, 0, 7); g.fill(); }
 function hpBar(x, y, w, f, col) { g.fillStyle = '#000'; g.fillRect(x - w / 2 - 1.5, y - 1.5, w + 3, 7); g.fillStyle = '#300'; g.fillRect(x - w / 2, y, w, 4); g.fillStyle = col; g.fillRect(x - w / 2, y, w * Math.max(0, f), 4); }
 function drawMember(m) {
-  const x = sx(m.x), y = sy(m.y), sc = .9 * k;
+  // 근접 직업은 공격할 때 앞으로 한 걸음 내디뎠다 돌아옴
+  const lunge = m.atkT > 0 && JOBS[m.job].melee ? Math.sin((1 - m.atkT / (m.atkD || .4)) * Math.PI) * 12 * k : 0;
+  const x = sx(m.x) + lunge, y = sy(m.y), sc = .9 * k;
   shadowAt(x, y, 44 * k);
   let kind = 'walk', f = 0, bob = 0;
   if (m.dead) { g.save(); g.globalAlpha = .35; g.filter = 'grayscale(1)'; drawFig(g, m.job, S.T, 'walk', 0, x, y + 2, sc); g.restore(); return; }

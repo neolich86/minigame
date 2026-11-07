@@ -2,10 +2,10 @@
 // 좌표: 논리 화면 폭 400. 파티는 왼쪽, 몬스터는 오른쪽에서 다가옴.
 
 export const JOBS = {
-  knight: { names: ['검사', '기사', '성기사'], role: '탱커 · 근접', color: '#6aa8ff', hp: 2.4, atk: .9, aps: .95, cr: .05, melee: 1,
+  knight: { names: ['검사', '기사', '성기사'], role: '탱커 · 근접', color: '#6aa8ff', hp: 2.4, atk: .9, aps: .95, cr: .05, melee: 78,
     desc: '맨 앞에서 공격을 받아내고 앞쪽 적을 한꺼번에 베어요.' },
-  assassin: { names: ['도둑', '암살자', '스토커'], role: '연타 · 치명타', color: '#ff6a8a', hp: 1.15, atk: .62, aps: 1.75, cr: .2,
-    desc: '단검을 빠르게 던지고 치명타로 큰 피해를 줘요.' },
+  assassin: { names: ['도둑', '암살자', '스토커'], role: '연타 · 치명타', color: '#ff6a8a', hp: 1.15, atk: .62, aps: 1.75, cr: .2, melee: 96,
+    desc: '단검으로 빠르게 베고 치명타로 큰 피해를 줘요.' },
   mage: { names: ['메이지', '위저드', '소서러'], role: '원거리 광역', color: '#c08aff', hp: .8, atk: 1.25, aps: .8, cr: .05, splash: .45,
     desc: '불꽃 마법으로 여러 적을 한 번에 공격해요.' },
   priest: { names: ['클레릭', '프리스트', '비숍'], role: '버프 · 디버프 · 공격', color: '#ffe066', hp: 1.05, atk: .85, aps: .95, cr: .05,
@@ -17,7 +17,7 @@ export const SLOT = { knight: [64, -2], assassin: [26, 34], mage: [-8, -34], pri
 export const AX = 112; // 파티 기준점 x
 export const FIELD_W = 400;
 const VIEW_X = 352; // 이 안으로 들어온 적만 공격 (화면 안에서 싸우는 모습이 보이도록)
-const seen = (B, m) => !m.dead && m.x < VIEW_X && Math.abs(m.y) < B.fightY; // fightY: 위아래 메뉴에 가리지 않는 범위
+const seen = (B, m) => !m.dead && m.x < B.reachX && Math.abs(m.y) < B.fightY; // fightY: 위아래 메뉴에 가리지 않는 범위
 
 // 스킬: t = 몇 차 전직부터 쓸 수 있는지 (0 = 처음부터)
 export const SKILLS = {
@@ -144,7 +144,7 @@ export function power(S) {
 // ---------- 전투 ----------
 let UID = 1;
 export function createBattle(S, rnd = Math.random) {
-  const B = { S, rnd, viewY: 300, fightY: 170, t: 0, scroll: 0, walking: true, party: [], mons: [], wave: 0, boss: null, bossT: 0, state: 'walk', pause: 0,
+  const B = { S, rnd, viewY: 300, fightY: 170, reachX: VIEW_X, t: 0, scroll: 0, walking: true, party: [], mons: [], wave: 0, boss: null, bossT: 0, state: 'walk', pause: 0,
     buffs: { bless: 0, iron: 0, mark: 0 }, ev: [], waveDelay: 1.2, earn: { g: 0, e: 0 }, failCool: 0 };
   syncParty(B);
   return B;
@@ -264,7 +264,10 @@ export function step(B, dt) {
   }
 
   // 이동: 가까운 적이 없으면 파티가 걷고(바닥이 왼쪽으로 흐름) 몬스터는 다가옴
-  const fx0 = frontX(B), near = live.some((m) => m.x < fx0 + 140 && Math.abs(m.y) < B.fightY + 30);
+  const fx0 = frontX(B);
+  // 원거리 공격·스킬은 파티 앞 일정 거리 안의 적만 — 멀리서 맞아 죽지 않고 가까이 와서 싸우게
+  B.reachX = Math.min(VIEW_X, fx0 + 160);
+  const near = live.some((m) => m.x < fx0 + 140 && Math.abs(m.y) < B.fightY + 30);
   B.walking = !near; const walkV = B.walking ? 46 : 0;
   B.scroll += walkV * dt;
   for (const m of live) {
@@ -309,7 +312,7 @@ export function step(B, dt) {
     if (m.cd <= 0 && view.length) {
       const J = JOBS[m.job]; let t;
       t = pick(B, m.job === 'priest' ? 'strong' : 'front'); if (!t) continue;
-      if (J.melee && t.x > m.x + 80) { m.cd = .1; continue; }
+      if (J.melee && t.x > m.x + J.melee) { m.cd = .1; continue; }
       m.cd = 1 / m.st.aps; m.atkT = m.atkD = Math.min(.42, .85 / m.st.aps);
       B.ev.push({ e: 'atk', who: m.id, job: m.job, tx: t.x, ty: t.y, tid: t.id });
       dmgMon(B, m, t, 1, { basic: 1, c: m.job === 'priest' ? 'g' : '' });
