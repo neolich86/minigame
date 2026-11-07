@@ -69,14 +69,17 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .skbar{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;padding:16px 6px 6px}
 .sb{aspect-ratio:1;border:2px solid #000;border-radius:8px;position:relative;overflow:hidden;display:grid;place-items:center;font-size:17px}
 .sb:after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.62);clip-path:inset(0 0 var(--c,0%) 0)}
-.sb.lock{opacity:.35}
+.sb.lock .ico{filter:grayscale(1) brightness(.45)}
+.sb .ico{--s:min(32px,8.2vw)}
+.ico{display:inline-block;width:var(--s,28px);height:var(--s,28px);background:url(assets/icons.png) no-repeat;background-size:calc(var(--s,28px) * 21) var(--s,28px);background-position:calc(var(--i) * var(--s,28px) * -1) 0;image-rendering:pixelated;vertical-align:middle;flex:none}
+.buffs div .ico{--s:18px}
 .sb small{position:absolute;bottom:0;left:0;right:0;font-size:8px;text-align:center;z-index:1;font-weight:700}
 .sb.flash{animation:fl .4s}
 @keyframes fl{0%{transform:scale(1.25);filter:brightness(2)}}
 .nav{display:flex;align-items:flex-end;padding:0 4px 6px}
 .nv{flex:1;text-align:center;font-size:11px;font-weight:700;position:relative;pointer-events:auto}
-.nv i{display:block;font-style:normal;width:44px;height:44px;margin:0 auto 2px;border:2px solid #000;border-radius:11px;background:linear-gradient(#5a4ac8,#2a2070);font-size:21px;line-height:40px;box-shadow:0 2px 0 #000}
-.nv.on i{background:linear-gradient(#ffd25a,#d08a10)}
+.nv i{display:grid;place-items:center;font-style:normal;width:46px;height:46px;margin:0 auto 2px;border:2px solid #000;border-radius:11px;background:radial-gradient(circle at 50% 35%,#4a3e9a,#1e1848 80%);font-size:21px;box-shadow:0 2px 0 #000}
+.nv.on i{background:radial-gradient(circle at 50% 35%,#c89a3a,#5a3a10 85%);box-shadow:0 0 0 2px #f5c542,0 2px 0 #000}
 .nv.n:after{content:'';position:absolute;top:-3px;right:calc(50% - 26px);width:10px;height:10px;border-radius:50%;background:#ff3b30;border:2px solid #000}
 /* 아래에서 올라오는 창 */
 #sheet{position:absolute;left:0;right:0;bottom:0;height:62%;background:#1e1a38;border-top:3px solid #000;border-radius:16px 16px 0 0;box-shadow:0 -3px 0 #4a3a90;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .22s;z-index:20;padding-bottom:env(safe-area-inset-bottom)}

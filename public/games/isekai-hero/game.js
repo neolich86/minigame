@@ -257,14 +257,17 @@ function drawMon(m) {
 
 // ---------- HUD ----------
 let dirty = true, hudT = 0;
-const SK_ICON = { quake: '⛰️', iron: '🛡️', wave: '🌙', holy: '⚔️', storm: '🌀', venom: '☠️', hide: '👤', shadow: '🌑', fireball: '🔥', frost: '❄️', arrows: '☄️', stone: '🗿', bless: '🎵', mark: '🔻', chain: '⛓️', cross: '✝️' };
+// 아이콘: VerArc Stash Basic Skills and Buffs (16px → assets/icons.png 64px 한 줄)
+const ICO = { quake: 0, iron: 1, wave: 2, holy: 3, storm: 4, venom: 5, hide: 6, shadow: 7, fireball: 8, frost: 9, arrows: 10, stone: 11, bless: 12, mark: 13, chain: 14, cross: 15, s_atk: 16, s_hp: 17, s_cr: 18, s_cd: 19, s_as: 20 };
+const ic = (n, px) => `<b class="ico" style="--i:${ICO[n]}${px ? `;--s:${px}px` : ''}"></b>`;
+const SK_ICON = new Proxy({}, { get: (_, k) => ic(k, 16) });
 const skEls = {};
 function buildSkillBar() {
   const box = $('skbar'); box.innerHTML = '';
   for (const j of C.members(S)) for (const sk of SKILLS[j]) {
     const d = document.createElement('div'); d.className = 'sb' + (sk.t > S.T ? ' lock' : '');
-    d.style.background = `radial-gradient(circle at 40% 35%, ${JOBS[j].color}, #1a1640 80%)`; d.style.boxShadow = `inset 0 0 0 2px ${JOBS[j].color}`;
-    d.innerHTML = `${sk.t > S.T ? '🔒' : SK_ICON[sk.id]}<small class="sh">${sk.t > S.T ? JOBS[j].names[sk.t] : ''}</small>`; d.title = sk.name;
+    d.style.background = `radial-gradient(circle at 50% 40%, ${JOBS[j].color}55, #14102c 75%)`; d.style.boxShadow = `inset 0 0 0 2px ${JOBS[j].color}`;
+    d.innerHTML = `${ic(sk.id, 0)}<small class="sh">${sk.t > S.T ? JOBS[j].names[sk.t] : ''}</small>`; d.title = sk.name;
     box.appendChild(d); skEls[j + sk.id] = d;
   }
 }
@@ -295,7 +298,7 @@ function updHud() {
   $('cp').textContent = '⚔ 전투력 ' + fmt(C.power(S)); $('gold').textContent = fmt(S.gold);
   $('gps').textContent = S.rate.g > 0 ? `+${fmt(S.rate.g * 60)}/분` : '';
   const bf = [];
-  if (B.buffs.bless > 0) bf.push(['#d8a82a', '🎵', B.buffs.bless]); if (B.buffs.iron > 0) bf.push(['#2a8ad8', '🛡️', B.buffs.iron]); if (B.buffs.mark > 0) bf.push(['#7a3ad8', '🔻', B.buffs.mark]);
+  if (B.buffs.bless > 0) bf.push(['#d8a82a', ic('bless', 18), B.buffs.bless]); if (B.buffs.iron > 0) bf.push(['#2a8ad8', ic('iron', 18), B.buffs.iron]); if (B.buffs.mark > 0) bf.push(['#7a3ad8', ic('mark', 18), B.buffs.mark]);
   $('buffs').innerHTML = bf.map(([c, i, t]) => `<div style="background:${c}">${i}<small>${Math.ceil(t)}</small></div>`).join('');
   // 스테이지
   const boss = B.boss, stg = $('stg'); stg.classList.toggle('boss', !!boss);
@@ -342,7 +345,7 @@ function renderSheet(force) {
   let html = '';
   if (t === 'up') html = UPS.map((u) => {
     const n = S.up[u.id], [cnt, cost] = C.upBulk(u, n, mul, S.gold), maxed = n >= u.max, ok = !maxed && cnt > 0 && S.gold >= cost;
-    const icon = { atk: '⚔️', hp: '❤️', cr: '🎯', cd: '💥', as: '⚡' }[u.id];
+    const icon = ic('s_' + u.id, 32);
     return `<div class="row"><div class="ic">${icon}</div><div class="tx"><b>${u.name} <span style="color:#ffe08a">Lv.${n}</span></b><small>${u.eff(n)}${u.max < Infinity ? ` · 최대 ${u.max}` : ''}</small></div>
       <button class="buy" data-up="${u.id}" ${ok ? '' : 'disabled'}>${maxed ? '최대' : `강화${cnt > 1 ? ' x' + cnt : ''}<br>🪙${fmt(cnt ? cost : C.upCost(u, n))}`}</button></div>`;
   }).join('') + `<div class="note">강화는 동료 모두에게 똑같이 적용돼요. 버튼을 꾹 누르면 계속 강화해요.</div>`;
@@ -362,7 +365,7 @@ function renderSheet(force) {
       `<div class="note">레벨 99가 되면 <b style="color:#ffe08a">${ro(J.names[next])}</b> 전직할 수 있어요.<br>· 이름과 모습이 바뀌고 레벨은 1부터 다시 시작해요.<br>· 기본 능력이 ${C.TM[next] / C.TM[S.T]}배가 되어 레벨 1이어도 지금보다 강해요.<br>· 강화·동료·스테이지는 그대로, 동료도 함께 전직해요.<br>· 새 스킬: ${C.members(S).map((j) => SKILLS[j].filter((s) => s.t === next).map((s) => `${SK_ICON[s.id]} ${s.name}`).join(', ')).join(' · ')}</div>
       <button class="big" id="jobBtn" ${ready ? '' : 'disabled'}>${ready ? `✨ ${ro(J.names[next])} 전직하기` : `레벨 99 필요 (지금 Lv.${S.L})`}</button>`}</div>`;
   }
-  if (t === 'skill') html = C.members(S).map((j) => `<div class="card"><h5 class="sh" style="color:${JOBS[j].color}">${JOBS[j].names[S.T]} · ${JOBS[j].role}</h5>${SKILLS[j].map((s) => `<div class="row" style="margin:6px 0 0;${s.t > S.T ? 'opacity:.5' : ''}"><div class="ic" style="background:radial-gradient(circle at 40% 35%, ${JOBS[j].color}, #1a1640 80%)">${s.t > S.T ? '🔒' : SK_ICON[s.id]}</div><div class="tx"><b>${s.name} <span style="font-size:10px;color:#bdb8e8">재사용 ${s.cd}초</span></b><small>${s.d}${s.t > S.T ? ` · ${JOBS[j].names[s.t]} 전직 시 열림` : ''}</small></div></div>`).join('')}</div>`).join('') + '<div class="note">스킬은 자동으로 사용돼요.</div>';
+  if (t === 'skill') html = C.members(S).map((j) => `<div class="card"><h5 class="sh" style="color:${JOBS[j].color}">${JOBS[j].names[S.T]} · ${JOBS[j].role}</h5>${SKILLS[j].map((s) => `<div class="row" style="margin:6px 0 0;${s.t > S.T ? 'opacity:.5' : ''}"><div class="ic" style="background:radial-gradient(circle at 50% 40%, ${JOBS[j].color}55, #14102c 75%)">${ic(s.id, 32)}</div><div class="tx"><b>${s.name} <span style="font-size:10px;color:#bdb8e8">재사용 ${s.cd}초</span></b><small>${s.d}${s.t > S.T ? ` · ${JOBS[j].names[s.t]} 전직 시 열림` : ''}</small></div></div>`).join('')}</div>`).join('') + '<div class="note">스킬은 자동으로 사용돼요.</div>';
   if (t === 'menu') {
     const cloud = owner ? '☁️ 계정에 자동 저장 중' : MG && MG.save && MG.embedded ? '이 기기에 저장 중 · 로그인하면 계정에 저장돼요' : '이 기기에 자동 저장돼요';
     html = `<div class="card"><h5>${S.name} · ${C.jobName(S.job, S.T)} Lv.${S.L}</h5><p>최고 기록: ${C.stageName(Math.max(S.best, S.s))}<br>플레이 시간: ${Math.floor((S.playSec || 0) / 3600)}시간 ${Math.floor((S.playSec || 0) % 3600 / 60)}분</p></div>
