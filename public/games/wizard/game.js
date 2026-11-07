@@ -370,7 +370,8 @@ function spawnEnemy(type, ang, dist, boss) {
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, alphaTest: .3 }));
   s.center.set(.5, 0); s.scale.set(h * asp, h, 1); s.position.set(x, type.fly || 0, z); scene.add(s);
   const sh = new THREE.Mesh(shadowGeo, shadowMat); sh.rotation.x = -Math.PI / 2; sh.scale.set(h * asp * .9, h * .45, 1); sh.position.set(x, .03, z); scene.add(sh);
-  const hpMul = boss ? 1 + G.t / 400 : 1 + G.t / 90 + (G.t / 260) ** 2;
+  const STAGE_HP = { 1: .8, 2: 1, 3: 1.2 }; // 지역별 몬스터 체력 배율 (초원 80% · 사막 100% · 고성 120%)
+  const hpMul = boss ? 1 + G.t / 400 : (1 + G.t / 90 + (G.t / 260) ** 2) * (STAGE_HP[STAGE] || 1);
   const e = { type, s, sh, x, z, y: type.fly || 0, h, w: h * asp, r: boss ? 1.8 : Math.max(.45, h * asp * .35), hp: type.hp * hpMul, maxHp: type.hp * hpMul, spd: type.spd / 22 * (boss ? 1 : rand(.9, 1.1)), dmg: type.dmg, xp: type.xp || 0,
     boss: !!boss, flash: 0, frozen: 0, slow: 0, burn: 0, burnDps: 0, hitCd: 0, kx: 0, kz: 0, pull: null, dead: false };
   enemies.push(e); return e;
