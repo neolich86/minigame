@@ -459,6 +459,7 @@ const CATALOG: Game[] = [
     thumb: "/thumbs/isekai-hero.jpg",
     src: "/games/isekai-hero/index.html",
     saves: true, // 레벨·골드·동료·스테이지를 계정에 저장
+    hidden: true, // 공격 모션·이동이 부자연스러워 숨김 — 그림 보완 후 다시 공개
   },
   {
     id: "archer",
