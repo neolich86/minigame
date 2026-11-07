@@ -296,6 +296,30 @@ export const GAME_SEO: SeoMap = {
       tags: ["Tower defense", "Strategy", "Leaderboard", "Free"],
     },
   },
+  "isekai-hero": {
+    ko: {
+      title: "이세계 용사 - 무료 픽셀 방치형 RPG 웹게임",
+      h1: "이세계 용사 — 무료 픽셀 방치형 RPG",
+      description:
+        "검사·도둑·메이지·클레릭 중 직업을 골라 이세계로! 파티가 자동으로 사냥하는 무료 픽셀 방치형 RPG. 골드로 능력치를 올리고 동료를 모아 4인 파티를 만들고, 레벨 99에서 전직해 새 모습과 스킬을 얻으세요.",
+      keywords: ["이세계 용사", "방치형 RPG", "방치형 게임", "픽셀 RPG", "자동 사냥", "전직", "키우기 게임", "무료 게임", "웹게임"],
+      about: [
+        "이세계 용사는 세로 화면 픽셀 방치형 RPG입니다. 파티가 길을 따라 오른쪽으로 걸어가며 앞·위·아래에서 몰려오는 몬스터와 자동으로 싸우고, 스킬도 알아서 사용해요.",
+        "골드로 공격력·체력·치명타·공격 속도를 강화하고, 다른 직업의 동료를 데려와 최대 4인 파티를 만드세요. 레벨 99가 되면 전직해 이름과 모습이 바뀌고 새 스킬이 열립니다. 게임을 꺼 두어도 최대 12시간 동안 방치 보상이 쌓여요.",
+      ],
+      howTo: ["직업을 골라 시작하면 파티가 자동으로 사냥합니다.", "아래 성장 메뉴에서 골드로 능력치를 올리세요.", "동료 메뉴에서 다른 직업의 동료를 데려올 수 있어요 (최대 4명).", "토벌 게이지가 차면 보스에 도전하고, 레벨 99에서 전직하세요."],
+      tags: ["방치형", "RPG", "픽셀", "자동 사냥", "전직", "무료"],
+    },
+    en: {
+      title: "Isekai Hero - Free Pixel Idle RPG Browser Game",
+      h1: "Isekai Hero — Free Pixel Idle RPG",
+      description: "Pick a class and get transported to another world! A free pixel idle RPG where your party hunts automatically — upgrade stats with gold, recruit up to 4 heroes and change jobs at level 99.",
+      keywords: ["idle rpg", "pixel rpg", "auto battle", "incremental game", "job change", "free game", "browser game"],
+      about: ["Isekai Hero is a portrait pixel idle RPG. Your party walks right and auto-fights monsters coming from the front, above and below, casting skills on its own.", "Spend gold on attack, HP, crit and attack speed, recruit heroes of other classes for a party of four, and change jobs at level 99 for a new look and skills. Offline rewards pile up for up to 12 hours."],
+      howTo: ["Pick a class — your party hunts automatically.", "Upgrade stats with gold in the Growth menu.", "Recruit companions of other classes (up to 4).", "Fill the hunt gauge to fight the boss, and change jobs at level 99."],
+      tags: ["Idle", "RPG", "Pixel", "Auto battle", "Job change", "Free"],
+    },
+  },
   wizard: {
     ko: {
       title: "마법사 키우기 - 무료 1인칭 3D 서바이벌 웹게임",
@@ -844,7 +868,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
     heading: "어떤 게임이 있나요?",
     items: [
       { title: "온라인 보드게임", text: "친구와 방을 만들어 실시간으로 즐기는 무료 온라인 보드게임. 빈 자리는 AI가 채워 주고, 혼자서도 AI와 바로 대결할 수 있어요.", games: ["catan", "lexio", "dragon-call", "holdem"] },
-      { title: "방치형 게임", text: "틀어두기만 해도 진행되는 방치형 타워디펜스와 자동 강화. 도달 라운드와 최고 레벨로 랭킹을 겨뤄보세요.", games: ["random-td", "weapon"] },
+      { title: "방치형 게임", text: "틀어두기만 해도 진행되는 방치형 RPG·타워디펜스와 자동 강화. 도달 라운드와 최고 레벨로 랭킹을 겨뤄보세요.", games: ["isekai-hero", "random-td", "weapon"] },
       { title: "뱀서 · 서바이벌", text: "몰려오는 몬스터 속에서 스킬을 골라 성장하는 뱀서류 서바이벌 로그라이크. 생존 시간 랭킹에 도전하세요.", games: ["archer", "wizard"] },
       { title: "슈팅 · 타워디펜스", text: "아케이드 종스크롤 비행기 슈팅과 원소 조합 전략 타워디펜스.", games: ["raiden", "element-td"] },
       { title: "카드 뽑기 · 타자 연습", text: "포켓몬·원피스 카드 오리파 시뮬레이터와 세계 지도 타자 연습 게임.", games: ["oripa", "world-typing"] },
@@ -856,7 +880,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
     heading: "What can you play?",
     items: [
       { title: "Online board games", text: "Free online board games to play live with friends. AI fills empty seats, and you can always play solo against AI.", games: ["catan", "lexio", "dragon-call", "holdem"] },
-      { title: "Idle games", text: "Idle tower defense and auto-enhance games that keep going on their own. Compete on round and level leaderboards.", games: ["random-td", "weapon"] },
+      { title: "Idle games", text: "An idle RPG, idle tower defense and auto-enhance games that keep going on their own. Compete on round and level leaderboards.", games: ["isekai-hero", "random-td", "weapon"] },
       { title: "Survivor-like · Survival", text: "A survivor-like roguelite — grow your skills amid endless hordes and chase the survival-time leaderboard.", games: ["archer", "wizard"] },
       { title: "Shooter · Tower defense", text: "An arcade vertical shooter and an elemental strategy tower defense.", games: ["raiden", "element-td"] },
       { title: "Card pulls · Typing", text: "A Pokémon / One Piece oripa card-pull simulator and a world-map typing practice game.", games: ["oripa", "world-typing"] },

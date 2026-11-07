@@ -17,6 +17,7 @@ export const SLOT = { knight: [64, -2], assassin: [26, 34], mage: [-8, -34], pri
 export const AX = 112; // 파티 기준점 x
 export const FIELD_W = 400;
 const VIEW_X = 352; // 이 안으로 들어온 적만 공격 (화면 안에서 싸우는 모습이 보이도록)
+const seen = (B, m) => !m.dead && m.x < VIEW_X && Math.abs(m.y) < B.fightY; // fightY: 위아래 메뉴에 가리지 않는 범위
 
 // 스킬: t = 몇 차 전직부터 쓸 수 있는지 (0 = 처음부터)
 export const SKILLS = {
@@ -143,7 +144,7 @@ export function power(S) {
 // ---------- 전투 ----------
 let UID = 1;
 export function createBattle(S, rnd = Math.random) {
-  const B = { S, rnd, t: 0, scroll: 0, walking: true, party: [], mons: [], wave: 0, boss: null, bossT: 0, state: 'walk', pause: 0,
+  const B = { S, rnd, viewY: 300, fightY: 170, t: 0, scroll: 0, walking: true, party: [], mons: [], wave: 0, boss: null, bossT: 0, state: 'walk', pause: 0,
     buffs: { bless: 0, iron: 0, mark: 0 }, ev: [], waveDelay: 1.2, earn: { g: 0, e: 0 }, failCool: 0 };
   syncParty(B);
   return B;
@@ -164,16 +165,19 @@ function spawnWave(B) {
   for (let i = 0; i < n; i++) {
     const k = R.mons[Math.floor(B.rnd() * R.mons.length)], M = MON[k];
     const hp = monHp(S.s) * M[1] * (.9 + B.rnd() * .2);
-    B.mons.push({ id: UID++, k, h: M[0], fly: !!M[4], x: FIELD_W + 30 + i * 26 + B.rnd() * 30, y: -70 + (i / Math.max(1, n - 1)) * 140 + (B.rnd() - .5) * 20,
+    // 앞(오른쪽) · 위 · 아래 세 방향에서 나타남 — 첫 마리는 항상 앞
+    const ly = -70 + (i / Math.max(1, n - 1)) * 140 + (B.rnd() - .5) * 20, r = B.rnd(), dir = i === 0 || r < .4 ? 0 : r < .7 ? -1 : 1;
+    const x = dir ? 190 + B.rnd() * 150 : FIELD_W + 30 + i * 26 + B.rnd() * 30, y = dir ? dir * (B.viewY + 40 + B.rnd() * 40) : ly;
+    B.mons.push({ id: UID++, k, h: M[0], fly: !!M[4], x, y, ly, dir,
       hp, max: hp, atk: monAtk(S.s) * M[2], cd: 1 + B.rnd(), slow: 0, stun: 0, poison: 0, root: 0, hitT: 0, dead: 0, gold: monGold(S.s), exp: monExp(S.s), name: M[3] });
   }
-  B.mons.sort((a, b) => a.y - b.y); B.wave++;
+  B.wave++;
 }
 export function startBoss(B) {
   const S = B.S, R = regionOf(S.s), last = S.s % 10 === 9;
   B.mons.length = 0;
   const k = last ? R.boss : R.mons[(S.s * 7) % R.mons.length], hp = monHp(S.s) * (last ? 70 : 30);
-  const b = { id: UID++, k, h: last ? 104 : MON[k][0] * 2.1, fly: false, x: FIELD_W + 60, y: 0, hp, max: hp, atk: monAtk(S.s) * (last ? 6 : 4.5), cd: 1.5,
+  const b = { id: UID++, k, h: last ? 104 : MON[k][0] * 2.1, fly: false, x: FIELD_W + 60, y: 0, ly: 0, dir: 0, hp, max: hp, atk: monAtk(S.s) * (last ? 6 : 4.5), cd: 1.5,
     slow: 0, stun: 0, poison: 0, root: 0, hitT: 0, dead: 0, gold: monGold(S.s) * 30, exp: monExp(S.s) * 20, boss: true, name: last ? R.bossName : '대장 ' + MON[k][3] };
   B.mons.push(b); B.boss = b; B.bossT = BOSS_TIME; B.state = 'walk'; B.walking = true; B.ev.push({ e: 'boss', last });
   for (const m of B.party) { m.dead = false; m.hp = m.st.hp; }
@@ -207,12 +211,12 @@ export function gainExp(B, e) {
 export const canBoss = (S) => S.kills >= KILLS_PER_STAGE;
 
 function pick(B, how) {
-  const a = B.mons.filter((m) => !m.dead && m.x < VIEW_X); if (!a.length) return null;
+  const a = B.mons.filter((m) => seen(B, m)); if (!a.length) return null;
   if (how === 'front') return a.reduce((p, c) => (c.x < p.x ? c : p));
   if (how === 'strong') return a.reduce((p, c) => (c.hp > p.hp ? c : p));
   return a[Math.floor(B.rnd() * a.length)];
 }
-const inView = (B) => B.mons.filter((m) => !m.dead && m.x < VIEW_X);
+const inView = (B) => B.mons.filter((m) => seen(B, m));
 
 function castSkill(B, m, sk) {
   const tg = inView(B); if (!tg.length) return false;
@@ -260,18 +264,21 @@ export function step(B, dt) {
   }
 
   // 이동: 가까운 적이 없으면 파티가 걷고(바닥이 왼쪽으로 흐름) 몬스터는 다가옴
-  const fx0 = frontX(B), near = live.some((m) => m.x < fx0 + 140);
+  const fx0 = frontX(B), near = live.some((m) => m.x < fx0 + 140 && Math.abs(m.y) < B.fightY + 30);
   B.walking = !near; const walkV = B.walking ? 46 : 0;
   B.scroll += walkV * dt;
   for (const m of live) {
-    const contact = fx0 + 34 + (m.h > 60 ? 20 : 0) + Math.abs(m.y) * .12;
-    let v = 38 * (m.slow > 0 ? .5 : 1) * (m.stun > 0 || m.root > 0 ? 0 : 1);
-    if (m.x > contact) m.x = Math.max(contact, m.x - (v + walkV) * dt);
+    const contact = fx0 + 34 + (m.h > 60 ? 20 : 0) + Math.abs(m.ly) * .12;
+    const v = (m.dir ? 58 : 38) * (m.slow > 0 ? .5 : 1) * (m.stun > 0 || m.root > 0 ? 0 : 1);
+    const ddx = contact - m.x, ddy = m.ly - m.y, dist = Math.hypot(ddx, ddy);
+    if (dist > .5) { const q = Math.min(dist, v * dt) / dist; m.x += ddx * q; m.y += ddy * q; }
+    if (m.x > contact) m.x = Math.max(contact, m.x - walkV * dt);
+    const arrived = Math.abs(m.x - contact) < 3 && Math.abs(m.y - m.ly) < 3;
     m.slow = Math.max(0, m.slow - dt); m.stun = Math.max(0, m.stun - dt); m.hitT = Math.max(0, m.hitT - dt);
     if (m.poison > 0) { m.poison -= dt; m.hp -= m.poisonD * dt * (B.buffs.mark > 0 ? 1.3 : 1); m.pTick = (m.pTick || 0) + dt; if (m.pTick > .5) { m.pTick = 0; B.ev.push({ e: 'tick', id: m.id, c: 'p' }); } if (m.hp <= 0) kill(B, m); }
     if (m.root > 0) { m.root -= dt; m.hp -= m.chainD * dt * (B.buffs.mark > 0 ? 1.3 : 1); if (m.hp <= 0 && !m.dead) kill(B, m); }
     // 몬스터 공격
-    if (!m.dead && m.x <= contact + 2 && m.stun <= 0) {
+    if (!m.dead && arrived && m.stun <= 0) {
       m.cd -= dt;
       if (m.cd <= 0) {
         m.cd = m.boss ? 1.6 : 1.3;

@@ -286,7 +286,9 @@ function buildParty() {
   }
 }
 function rebuild() { faceCanvas($('avc'), S.job, S.T); buildParty(); buildSkillBar(); dirty = true; }
+let fightPx = 0; // 위 HUD와 아래 메뉴 사이, 전투가 보이는 높이의 절반(px)
 function updHud() {
+  { const wr = $('wrap').getBoundingClientRect(), t = $('stg').getBoundingClientRect().bottom - wr.top, bt = document.querySelector('.bot').getBoundingClientRect().top - wr.top; fightPx = Math.min(Y0 - t, bt - Y0) - 10; }
   $('lv').textContent = 'Lv.' + S.L; $('jb').textContent = C.jobName(S.job, S.T); $('nm').textContent = S.name;
   const need = C.expNeed(S.L, S.T), pct = S.L >= C.MAX_LV ? 100 : Math.min(100, S.exp / need * 100);
   $('xpb').style.width = pct + '%'; $('xpt').textContent = S.L >= C.MAX_LV ? 'MAX' : pct.toFixed(1) + '%';
@@ -469,6 +471,8 @@ function loop(now) {
   const dt = Math.min(.1, Math.max(0, (now - last) / 1000)); last = now;
   if (!$('pick').hidden) { animPick(dt); g.setTransform(DPR, 0, 0, DPR, 0, 0); g.fillStyle = '#120e2a'; g.fillRect(0, 0, W, H); }
   else if (S && B) {
+    B.viewY = (H / 2) / (k * 1.35);
+    if (fightPx) B.fightY = Math.max(90, fightPx / (k * 1.35));
     if (!TEST || !window.__ih.frozen) { const n = Math.ceil(dt / .05); for (let i = 0; i < n; i++) C.step(B, dt / n); }
     handleEvents(); drawFrame(dt);
     hudT -= dt; if (hudT <= 0 || dirty) { hudT = .12; updHud(); }
