@@ -310,7 +310,7 @@ export function step(B, dt) {
       const J = JOBS[m.job]; let t;
       t = pick(B, m.job === 'priest' ? 'strong' : 'front'); if (!t) continue;
       if (J.melee && t.x > m.x + 80) { m.cd = .1; continue; }
-      m.cd = 1 / m.st.aps; m.atkT = .25;
+      m.cd = 1 / m.st.aps; m.atkT = m.atkD = Math.min(.42, .85 / m.st.aps);
       B.ev.push({ e: 'atk', who: m.id, job: m.job, tx: t.x, ty: t.y, tid: t.id });
       dmgMon(B, m, t, 1, { basic: 1, c: m.job === 'priest' ? 'g' : '' });
       if (J.splash) for (const o of view) if (o !== t && !o.dead && Math.abs(o.x - t.x) < 60) dmgMon(B, m, o, J.splash);

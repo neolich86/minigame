@@ -21,20 +21,21 @@ async function loadAll() {
     document.fonts ? Promise.race([document.fonts.load('16px G'), new Promise((r) => setTimeout(r, 2500))]) : 0,
   ]);
 }
-// 직업·전직 단계별 그림 한 장 (f: 0~5). 시트 그림은 왼쪽을 보고 있어서 전투에서는 좌우를 뒤집어 오른쪽을 보게 함
-function drawFig(g, job, T, f, x, y, sc, o = {}) {
-  const r = ATL.rows[job + T], cw = ATL.cw, ch = ATL.ch;
-  g.save(); g.translate(x, y); if (o.flip) g.scale(-1, 1);
-  g.drawImage(IMG.heroes, f * cw, r * ch, cw, ch, -cw * sc / 2, -ch * sc, cw * sc, ch * sc); g.restore();
+// 직업 그림: heroes.json = { knight0: { walk: [[x,y,w,h,발x,발y]...], atk: [...], face: [x,y,크기] }, knight1: ... }
+// 1차 = 0, 2차·최종 = 1 (시트에서 2차와 최종이 같은 그림). 그림은 오른쪽을 보고 있음.
+const fkey = (job, T) => job + (T > 0 ? 1 : 0);
+function drawFig(g, job, T, kind, f, x, y, sc) {
+  const L = ATL[fkey(job, T)][kind], fr = L[f % L.length];
+  g.drawImage(IMG.heroes, fr[0], fr[1], fr[2], fr[3], x - fr[4] * sc, y - fr[5] * sc, fr[2] * sc, fr[3] * sc);
 }
-function figCanvas(cv, job, T, f = 3) {
-  const g = cv.getContext('2d'); cv.width = ATL.cw; cv.height = ATL.ch; g.imageSmoothingEnabled = false; g.clearRect(0, 0, cv.width, cv.height);
-  drawFig(g, job, T, f, ATL.cw / 2, ATL.ch, 1);
+function figCanvas(cv, job, T, f = 0, kind = 'walk') {
+  const g = cv.getContext('2d'); cv.width = 96; cv.height = 128; g.imageSmoothingEnabled = false; g.clearRect(0, 0, 96, 128);
+  drawFig(g, job, T, kind, f, 48, 125, .95);
 }
 function faceCanvas(cv, job, T) {
   const g = cv.getContext('2d'); cv.width = cv.height = 48; g.imageSmoothingEnabled = false; g.clearRect(0, 0, 48, 48);
   const grd = g.createLinearGradient(0, 0, 0, 48); grd.addColorStop(0, '#3a3070'); grd.addColorStop(1, '#1a1640'); g.fillStyle = grd; g.fillRect(0, 0, 48, 48);
-  const r = ATL.rows[job + T]; g.drawImage(IMG.heroes, 7, r * ATL.ch + 2, 46, 46, 0, 2, 48, 48);
+  const fc = ATL[fkey(job, T)].face; g.drawImage(IMG.heroes, fc[0], fc[1], fc[2], fc[2], 0, 2, 48, 48);
 }
 
 // 받침에 따라 '로/으로'
@@ -116,7 +117,7 @@ function handleEvents() {
         break;
       }
       case 'fx': fxEvent(e); break;
-      case 'skill': { const m = byId.get(e.who); if (m) { m.say = e.name; m.sayT = 1.1; } flashSkill(e.sk); break; }
+      case 'skill': { const m = byId.get(e.who); if (m) { m.say = e.name; m.sayT = 1.1; m.atkT = m.atkD = .45; } flashSkill(e.sk); break; }
       case 'kill': addFx('coin-pickup', sx(e.x), sy(e.y) - 16 * k, 1.1 * k); if (e.boss) { shake = .5; } break;
       case 'hurt': { const m = byId.get(e.id); if (m) nums.push({ x: sx(m.x), y: sy(m.y) - 100 * k, t: 0, s: '-' + fmt(e.d), crit: false, c: 'r' }); break; }
       case 'lv': for (const m of B.party) addFx('level-up', sx(m.x), sy(m.y) + 4, 1.1 * k); if (e.L >= C.MAX_LV) banner('레벨 99 달성!', S.T < 2 ? '전직할 수 있어요 — 아래 ✨전직' : '최고 레벨', '#ffe08a'); dirty = true; break;
@@ -224,17 +225,18 @@ function drawFrame(dt) {
 function orb(x, y, r, rgb) { const gr = g.createRadialGradient(x, y, 0, x, y, r * 2.2); gr.addColorStop(0, `rgba(255,255,255,1)`); gr.addColorStop(.3, `rgba(${rgb},.9)`); gr.addColorStop(1, `rgba(${rgb},0)`); g.fillStyle = gr; g.beginPath(); g.arc(x, y, r * 2.2, 0, 7); g.fill(); }
 function shadowAt(x, y, w) { g.fillStyle = 'rgba(0,0,0,.32)'; g.beginPath(); g.ellipse(x, y, w / 2, w * .16, 0, 0, 7); g.fill(); }
 function hpBar(x, y, w, f, col) { g.fillStyle = '#000'; g.fillRect(x - w / 2 - 1.5, y - 1.5, w + 3, 7); g.fillStyle = '#300'; g.fillRect(x - w / 2, y, w, 4); g.fillStyle = col; g.fillRect(x - w / 2, y, w * Math.max(0, f), 4); }
-const WALK = [2, 3, 4, 5];
 function drawMember(m) {
-  const x = sx(m.x) + (m.atkT > 0 ? Math.sin((.25 - m.atkT) / .25 * Math.PI) * 8 * k : 0), y = sy(m.y), sc = 1.25 * k;
+  const x = sx(m.x), y = sy(m.y), sc = .9 * k;
   shadowAt(x, y, 44 * k);
-  let f = 3, bob = 0;
-  if (m.dead) { g.save(); g.globalAlpha = .35; g.filter = 'grayscale(1)'; drawFig(g, m.job, S.T, 0, x, y + 2, sc, { flip: 1 }); g.restore(); return; }
-  if (B.walking) f = WALK[Math.floor(m.anim) % 4]; else { f = m.atkT > 0 ? 1 : 3; bob = Math.sin(m.anim) * 1.2; }
-  if (m.hitT > 0) { g.save(); g.filter = 'brightness(1.8) sepia(.6) hue-rotate(-30deg)'; drawFig(g, m.job, S.T, f, x + (Math.random() - .5) * 3, y + bob, sc, { flip: 1 }); g.restore(); }
-  else drawFig(g, m.job, S.T, f, x, y + bob, sc, { flip: 1 });
+  let kind = 'walk', f = 0, bob = 0;
+  if (m.dead) { g.save(); g.globalAlpha = .35; g.filter = 'grayscale(1)'; drawFig(g, m.job, S.T, 'walk', 0, x, y + 2, sc); g.restore(); return; }
+  if (m.atkT > 0) { kind = 'atk'; f = Math.min(3, Math.floor((1 - m.atkT / (m.atkD || .4)) * 4)); }
+  else if (B.walking) f = Math.floor(m.anim * .9) % 5;
+  else bob = Math.sin(m.anim) * 1.2;
+  if (m.hitT > 0) { g.save(); g.filter = 'brightness(1.8) sepia(.6) hue-rotate(-30deg)'; drawFig(g, m.job, S.T, kind, f, x + (Math.random() - .5) * 3, y + bob, sc); g.restore(); }
+  else drawFig(g, m.job, S.T, kind, f, x, y + bob, sc);
   if (B.buffs.bless > 0) { g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = .35 + .15 * Math.sin(B.t * 6 + m.id); orb(x, y - 40 * k, 14 * k, '255,220,120'); g.restore(); }
-  if (m.crit5 > 0) { g.save(); g.globalAlpha = .55; g.filter = 'brightness(0.4) saturate(2) hue-rotate(250deg)'; drawFig(g, m.job, S.T, f, x - 6 * k, y + bob, sc, { flip: 1 }); g.restore(); }
+  if (m.crit5 > 0) { g.save(); g.globalAlpha = .55; g.filter = 'brightness(0.4) saturate(2) hue-rotate(250deg)'; drawFig(g, m.job, S.T, kind, f, x - 6 * k, y + bob, sc); g.restore(); }
   hpBar(x, y - 104 * k, 34 * k, m.hp / m.st.hp, '#4be06a');
   if (m.sayT > 0) {
     m.sayT -= 1 / 60; g.save(); g.globalAlpha = Math.min(1, m.sayT * 3); g.font = '700 11px G'; g.textAlign = 'center'; g.lineWidth = 3; g.strokeStyle = '#000';
@@ -462,7 +464,7 @@ function showPick() {
 }
 $('startBtn').onclick = () => { if (!pickJob) return; S = C.newSave(pickJob, $('nmIn').value.trim() || '용사'); save(); startGame(); setTimeout(() => toast('파티는 자동으로 사냥해요. 골드로 강해지세요!'), 600); };
 let pickF = 0;
-function animPick(dt) { pickF += dt * 6; document.querySelectorAll('#jobs canvas').forEach((c) => { figCanvas(c, c.dataset.fig, 0, WALK[Math.floor(pickF) % 4]); }); }
+function animPick(dt) { pickF += dt * 6; document.querySelectorAll('#jobs canvas').forEach((c) => { figCanvas(c, c.dataset.fig, 0, Math.floor(pickF) % 5); }); }
 
 // ---------- 시작 · 루프 ----------
 function startGame() {
