@@ -79,6 +79,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .nav{display:flex;align-items:flex-end;padding:0 4px 6px}
 .nv{flex:1;text-align:center;font-size:11px;font-weight:700;position:relative;pointer-events:auto}
 .nv i{display:grid;place-items:center;font-style:normal;width:46px;height:46px;margin:0 auto 2px;border:2px solid #000;border-radius:11px;background:radial-gradient(circle at 50% 35%,#4a3e9a,#1e1848 80%);font-size:21px;box-shadow:0 2px 0 #000}
+.mico{display:block;width:36px;height:36px;background:url(assets/menu.png) no-repeat;background-size:180px 36px;background-position:calc(var(--i) * -36px) 0;image-rendering:pixelated}
 .nv.on i{background:radial-gradient(circle at 50% 35%,#c89a3a,#5a3a10 85%);box-shadow:0 0 0 2px #f5c542,0 2px 0 #000}
 .nv.n:after{content:'';position:absolute;top:-3px;right:calc(50% - 26px);width:10px;height:10px;border-radius:50%;background:#ff3b30;border:2px solid #000}
 /* 아래에서 올라오는 창 */
@@ -159,7 +160,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
       <div class="bossbtn pe" id="bossrow" hidden><button class="sh" id="bossGo">보스 도전 ▶</button><label class="sh"><input type="checkbox" id="autoBoss">자동</label></div></div>
     <div class="party pe" id="party"></div>
     <div class="bot"><div class="skbar" id="skbar"></div>
-      <div class="nav"><button class="nv sh" data-t="up"><i>💪</i>성장</button><button class="nv sh" data-t="comp"><i>🤝</i>동료</button><button class="nv sh" data-t="job"><i>✨</i>전직</button><button class="nv sh" data-t="skill"><i>📜</i>스킬</button><button class="nv sh" data-t="menu"><i>☰</i>메뉴</button></div></div>
+      <div class="nav"><button class="nv sh" data-t="up"><i><b class="mico" style="--i:0"></b></i>성장</button><button class="nv sh" data-t="comp"><i><b class="mico" style="--i:1"></b></i>동료</button><button class="nv sh" data-t="job"><i><b class="mico" style="--i:2"></b></i>전직</button><button class="nv sh" data-t="skill"><i><b class="mico" style="--i:3"></b></i>스킬</button><button class="nv sh" data-t="menu"><i><b class="mico" style="--i:4"></b></i>메뉴</button></div></div>
   </div>
   <div id="sheet"><div class="sh-h"><h4 class="sh" id="shT">성장</h4><button class="x" id="shX">✕</button></div><div class="tabs" id="tabs"></div><div class="mul" id="mul"></div><div class="body" id="shB"></div></div>
   <div id="pick" hidden>
