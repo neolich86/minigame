@@ -449,6 +449,19 @@ const CATALOG: Game[] = [
     boards: [{ id: "wizard", label: { ko: "생존 시간", en: "Survival" }, unit: { ko: "", en: "" }, format: "time", vs: { label: { ko: "생존", en: "survival" }, question: { ko: "누가 오래 버티나?", en: "Who survives longer?" } } }],
   },
   {
+    id: "isekai-hero",
+    title: { ko: "이세계 용사", en: "Isekai Hero" },
+    desc: {
+      ko: "직업을 골라 이세계로! 파티가 자동으로 사냥하는 픽셀 방치형 RPG. 골드로 능력치를 올리고 동료를 모아 4인 파티를 만들고, 레벨 99에서 전직하세요",
+      en: "A pixel idle RPG — pick a class, let your party hunt automatically, recruit up to 4 heroes and change jobs at level 99",
+    },
+    genre: "strategy",
+    thumb: "/thumbs/isekai-hero.jpg",
+    src: "/games/isekai-hero/index.html",
+    saves: true, // 레벨·골드·동료·스테이지를 계정에 저장
+    hidden: true, // 첫 버전 — 주소로만 열림
+  },
+  {
     id: "archer",
     title: { ko: "궁수 서바이버", en: "Archer Survivor" },
     desc: {
