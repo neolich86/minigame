@@ -449,6 +449,18 @@ const CATALOG: Game[] = [
     boards: [{ id: "wizard", label: { ko: "생존 시간", en: "Survival" }, unit: { ko: "", en: "" }, format: "time", vs: { label: { ko: "생존", en: "survival" }, question: { ko: "누가 오래 버티나?", en: "Who survives longer?" } } }],
   },
   {
+    id: "castle-defense",
+    title: { ko: "성을 지켜라", en: "Hold the Castle" },
+    desc: {
+      ko: "헥사 지도 위로 몰려오는 적 군대를 궁수탑·투석기·마법탑과 영웅의 스킬로 막아내는 3D 타워 디펜스. 20웨이브를 버텨 성을 지키세요",
+      en: "A 3D hex tower defense — stop the marching army with archer towers, catapults, mage towers and your hero's skills for 20 waves",
+    },
+    genre: "strategy",
+    thumb: "/thumbs/castle-defense.jpg",
+    src: "/games/castle-defense/index.html",
+    hidden: true, // 첫 버전 — 관리자 확인 중
+  },
+  {
     id: "isekai-hero",
     title: { ko: "이세계 용사", en: "Isekai Hero" },
     desc: {

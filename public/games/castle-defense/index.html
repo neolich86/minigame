@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<link rel="canonical" href="/play/castle-defense">
+<script src="/mgh/bridge.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>성을 지켜라 - 미니게임천국</title>
+<meta name="description" content="헥사 지도 위로 몰려오는 적 군대를 타워와 영웅의 스킬로 막아내는 3D 타워 디펜스. 궁수탑·투석기·마법탑을 세우고 영웅을 움직여 성을 지키세요.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232f6fd6'/%3E%3Cpath d='M14 50V24h8v6h6v-6h8v6h6v-6h8v26z' fill='%23f2f2f2'/%3E%3Crect x='28' y='36' width='8' height='14' fill='%235a3a1a'/%3E%3C/svg%3E">
+<style>
+@font-face{font-family:G;font-weight:700;src:url(/games/isekai-hero/assets/Galmuri11-Bold.woff2) format('woff2');font-display:swap}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#8fd3ff;font-family:G,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#fff;user-select:none;-webkit-user-select:none;touch-action:none;overscroll-behavior:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+[hidden]{display:none!important}
+.sh{text-shadow:2px 0 #2a1a0a,-2px 0 #2a1a0a,0 2px #2a1a0a,0 -2px #2a1a0a,1px 1px #2a1a0a,-1px -1px #2a1a0a}
+#cv,#ov{position:fixed;inset:0;width:100%;height:100%}
+#ov{pointer-events:none}
+/* HUD */
+#hud{position:fixed;inset:0;pointer-events:none}
+#hud button,#hud .pe{pointer-events:auto}
+.top{position:absolute;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top));display:flex;gap:6px;align-items:center}
+.pill{display:flex;align-items:center;gap:5px;background:linear-gradient(#5a3a1e,#3e2612);border:2px solid #2a1a0a;border-radius:12px;padding:5px 10px;font-size:14px;font-weight:700;box-shadow:inset 0 1px 0 #8a5a2e,0 2px 0 rgba(0,0,0,.3)}
+.pill i{font-style:normal}
+#spd{margin-left:auto}
+#banner{position:absolute;left:0;right:0;top:28%;text-align:center;font-size:24px;font-weight:700;opacity:0;pointer-events:none}
+#banner.on{animation:ban 2.2s}
+@keyframes ban{0%{opacity:0;transform:scale(1.4)}12%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0}}
+#nextBtn{position:absolute;left:50%;transform:translateX(-50%);top:calc(52px + env(safe-area-inset-top));padding:8px 16px;font-size:15px;font-weight:700;border:2px solid #2a1a0a;border-radius:12px;background:linear-gradient(#ff7a4a,#c4381c);box-shadow:inset 0 1px 0 #ffb08a,0 3px 0 #2a1a0a;white-space:nowrap;text-align:center;line-height:1.25}
+#nextBtn small{display:block;font-size:10px;opacity:.9}
+.bot{position:absolute;left:8px;right:8px;bottom:calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;align-items:flex-end}
+.hcard{display:flex;align-items:center;gap:6px;background:linear-gradient(#2a3a6a,#1a2448);border:2px solid #0e1430;border-radius:14px;padding:6px 8px 6px 6px;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+.hcard img{width:46px;height:46px;border-radius:10px;background:#3a5aa0;image-rendering:auto;object-fit:cover}
+.hcard .bars{width:74px}
+.hcard b{font-size:12px;display:block}
+.bar{height:7px;background:#0a0a14;border-radius:4px;overflow:hidden;margin-top:3px}
+.bar i{display:block;height:100%;background:#4be06a}
+.bar.x i{background:#5ac8ff}
+.sk{flex:1;max-width:120px;height:64px;border:2px solid #2a1a0a;border-radius:14px;background:linear-gradient(#ffd05a,#d08a10);color:#2a1a0a;position:relative;overflow:hidden;box-shadow:inset 0 1px 0 #fff2b0,0 3px 0 #2a1a0a;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px}
+.sk b{font-size:13px;line-height:1.2}
+.sk small{font-size:9px;opacity:.8}
+.sk:after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.55);clip-path:inset(calc(100% - var(--c,0%)) 0 0 0)}
+.sk em{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font-size:22px;font-weight:700;color:#fff;z-index:1;text-shadow:0 2px 0 #000}
+.sk.off{filter:saturate(.6)}
+/* 타워 메뉴 */
+#menu{position:fixed;transform:translate(-50%,-100%);display:flex;gap:6px;align-items:stretch;background:rgba(40,24,10,.92);border:2px solid #2a1a0a;border-radius:14px;padding:6px;box-shadow:0 4px 0 rgba(0,0,0,.35)}
+#menu button{width:70px;padding:6px 2px;border-radius:10px;background:linear-gradient(#6a4a2a,#4a3018);border:2px solid #2a1a0a;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px}
+#menu button.no{opacity:.45}
+#menu button small{font-size:11px;color:#ffd34a}
+#menu .mt{width:120px;font-size:12px;padding:4px}
+#menu .mt small{display:block;font-size:10px;color:#e8d8c0;margin-top:3px;line-height:1.4}
+.ti{width:34px;height:34px;display:block;background:center/contain no-repeat}
+.ti-archer{background-image:url(assets/ui/t_archer.png)}.ti-cannon{background-image:url(assets/ui/t_cannon.png)}.ti-magic{background-image:url(assets/ui/t_magic.png)}
+.ti{font-style:normal;font-size:24px;line-height:34px;text-align:center}
+/* 영웅 선택 */
+.scr{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 20%,rgba(40,70,140,.75),rgba(10,16,40,.92));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(16px + env(safe-area-inset-top)) 14px calc(16px + env(safe-area-inset-bottom));overflow-y:auto}
+.scr h1{font-size:34px;color:#ffd34a;letter-spacing:2px}
+.scr .sub{font-size:12px;color:#cfe0ff;margin:6px 0 14px;text-align:center;line-height:1.5}
+#heroes{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:100%;max-width:460px}
+.hc{background:linear-gradient(#2a3a6a,#1a2448);border:3px solid #0e1430;border-radius:12px;padding:4px 2px 6px;display:flex;flex-direction:column;align-items:center;position:relative}
+.hc.on{border-color:#ffd34a;box-shadow:0 0 0 2px #2a1a0a}
+.hc img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}
+.hc b{font-size:13px;margin-top:3px}
+.hc small{font-size:9px;color:#bcd0ff}
+.hc em{position:absolute;top:2px;right:4px;font-style:normal;font-size:10px;color:#ffd34a}
+#hInfo{margin:12px 0;font-size:12px;line-height:1.6;color:#e0e8ff;background:rgba(0,0,0,.35);border-radius:10px;padding:10px 12px;width:100%;max-width:460px}
+#hInfo span{color:#ffd34a;font-weight:700}
+.big{min-width:220px;padding:12px 20px;font-size:18px;font-weight:700;border:2px solid #2a1a0a;border-radius:14px;background:linear-gradient(#ffd05a,#d08a10);color:#2a1a0a;box-shadow:inset 0 1px 0 #fff2b0,0 4px 0 #2a1a0a}
+.how{font-size:11px;color:#bcd0ff;margin-top:12px;text-align:center;line-height:1.6}
+.stars{font-size:40px;color:#ffd34a;margin:6px 0}
+#end .box{background:rgba(0,0,0,.45);border-radius:16px;padding:20px;text-align:center}
+#end h2{font-size:26px;color:#ffd34a}
+#end p{font-size:13px;margin:8px 0 16px;color:#e0e8ff}
+#toast{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:rgba(0,0,0,.8);border-radius:10px;padding:8px 14px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.on{opacity:1}
+#flash{position:fixed;inset:0;pointer-events:none;opacity:0}
+#flash.on{animation:fl .4s}
+@keyframes fl{0%{opacity:.35}100%{opacity:0}}
+#load{position:fixed;inset:0;background:#1a2448;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-size:14px;z-index:9}
+#load .lb{width:200px;height:10px;background:#0a0f24;border-radius:6px;overflow:hidden}
+#loadBar{display:block;height:100%;width:0;background:#ffd34a;transition:width .2s}
+</style>
+<script type="importmap">{"imports":{"three":"/games/wizard/vendor/three.module.min.js"}}</script>
+</head>
+<body>
+<canvas id="cv"></canvas><canvas id="ov"></canvas>
+<div id="hud" hidden>
+  <div class="top"><span class="pill sh"><i>🪙</i><span id="gold">0</span></span><span class="pill sh"><i>❤️</i><span id="lives">20</span></span><span class="pill sh"><i>🚩</i><span id="wave">1/20</span></span><button class="pill sh" id="spd">▶ x1</button></div>
+  <button id="nextBtn" class="sh">⚔️ 전투 시작</button>
+  <div id="banner" class="sh"></div>
+  <div class="bot"><div class="hcard pe"><img id="hImg" alt=""><div class="bars"><b class="sh"><span id="hName">기사</span> <span id="hLv">Lv.1</span></b><div class="bar"><i id="hHp"></i></div><div class="bar x"><i id="hXp"></i></div></div></div>
+    <button class="sk" id="sk0"><b>스킬1</b><small>탭해서 사용</small><em></em></button><button class="sk" id="sk1"><b>스킬2</b><small>탭해서 사용</small><em></em></button></div>
+</div>
+<div id="menu" hidden></div>
+<div id="pick" class="scr" hidden>
+  <h1 class="sh">성을 지켜라</h1>
+  <div class="sub">적 군대가 성으로 몰려와요! 영웅을 골라 함께 막아내세요.</div>
+  <div id="heroes"></div>
+  <div id="hInfo"></div>
+  <button class="big" id="go">출전!</button>
+  <div class="how">빈 돌 받침을 눌러 타워를 세우고 · 땅을 눌러 영웅을 움직이고 · 아래 버튼으로 스킬을 써요</div>
+</div>
+<div id="end" class="scr" hidden><div class="box"><h2 class="sh" id="endT">성을 지켜냈어요!</h2><p id="endS"></p><button class="big" id="again">다시 하기</button></div></div>
+<div id="toast"></div><div id="flash"></div>
+<div id="load"><div>성으로 가는 중…</div><div class="lb"><i id="loadBar"></i></div></div>
+<script type="module" src="game.js"></script>
+</body>
+</html>
