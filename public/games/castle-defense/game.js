@@ -17,11 +17,11 @@ renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x8fd3ff);
-scene.fog = new THREE.Fog(0x8fd3ff, 60, 120);
+scene.background = new THREE.Color(0x232838);
+scene.fog = new THREE.Fog(0x232838, 60, 120);
 const camera = new THREE.PerspectiveCamera(32, 1, .5, 300);
 scene.add(new THREE.HemisphereLight(0xdff2ff, 0x5a7a3a, 1.5));
-const sun = new THREE.DirectionalLight(0xfff1d6, 2.4); sun.position.set(-14, 26, 12); sun.castShadow = true;
+const sun = new THREE.DirectionalLight(0xfff1d6, 2.4); sun.position.set(-12, 24, 14); sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 18, bottom: -18, near: 1, far: 70 }); sun.shadow.bias = -.0006;
 scene.add(sun);
 const ov = $('ov'), og = ov.getContext('2d');
@@ -31,11 +31,11 @@ function resize() {
   renderer.setSize(VW, VH, false); ov.width = VW * DPR; ov.height = VH * DPR;
   camera.aspect = VW / VH;
   // 맵 전체(폭 22·깊이 26)가 위 HUD와 아래 메뉴 사이에 들어오도록 거리 조절
-  const tilt = THREE.MathUtils.degToRad(52), vf = THREE.MathUtils.degToRad(camera.fov);
+  const tilt = THREE.MathUtils.degToRad(46), vf = THREE.MathUtils.degToRad(camera.fov);
   const hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);
-  const dW = 10.3 / Math.tan(hf / 2), dH = 14 / Math.tan(vf / 2);
+  const dW = 9.6 / Math.tan(hf / 2), dH = 14 / Math.tan(vf / 2);
   const d = Math.max(dW, dH, 24);
-  camera.position.set(0, Math.sin(tilt) * d, Math.cos(tilt) * d + 1.2); camera.lookAt(0, 0, 1.2);
+  camera.position.set(0, Math.sin(tilt) * d, Math.cos(tilt) * d + 2.2); camera.lookAt(0, 0, 2.2);
   camera.updateProjectionMatrix();
   scene.fog.near = d + 8; scene.fog.far = d + 60;
 }
@@ -44,7 +44,7 @@ addEventListener('resize', resize);
 // ---------- 불러오기 ----------
 const loader = new GLTFLoader();
 const loadG = (u) => new Promise((res, rej) => loader.load(u, res, undefined, rej));
-const HEX_NAMES = 'hex_grass hex_water hex_road_A hex_road_B hex_road_C hex_road_M hex_coast_A building_castle_blue building_tower_A_blue building_tower_B_blue building_tower_base_blue building_tower_catapult_blue building_church_blue building_archeryrange_blue building_barracks_blue building_destroyed building_home_A_red building_home_B_red tent flag_red flag_blue trees_A_large trees_A_medium trees_B_large trees_B_medium trees_A_small tree_single_A tree_single_B mountain_A_grass_trees mountain_B_grass mountain_C mountain_A hills_A_trees hills_B hill_single_A rock_single_A rock_single_C rock_single_E cloud_big cloud_small barrel crate_A_big sack projectile_catapult weaponrack target fence_wood_straight wall_straight waterlily_A waterplant_A resource_stone resource_lumber'.split(' ');
+const HEX_NAMES = 'hex_grass hex_water hex_road_A hex_road_B hex_road_C hex_road_M hex_coast_A building_castle_blue building_tower_A_blue building_tower_B_blue building_tower_base_blue building_tower_catapult_blue building_church_blue building_archeryrange_blue building_barracks_blue building_destroyed building_home_A_red building_home_B_red tent flag_red flag_blue trees_A_large trees_A_medium trees_B_large trees_B_medium trees_A_small tree_single_A tree_single_B mountain_A_grass_trees mountain_B_grass mountain_C mountain_A hills_A_trees hills_B hill_single_A rock_single_A rock_single_C rock_single_E cloud_big cloud_small barrel crate_A_big sack projectile_catapult weaponrack target fence_wood_straight wall_straight waterlily_A waterplant_A resource_stone resource_lumber hex_grass_bottom wall_straight_gate wall_corner_A_outside wall_corner_B_outside building_tower_A_red building_watermill_blue building_windmill_blue mountain_B mountain_C_grass_trees hills_B_trees'.split(' ');
 const WEAPONS = ['sword', 'shield', 'axe', 'staff', 'bow', 'dagger', 'arrow', 'book', 'shield2'];
 const M = {}, W = {};
 let UNITS = null, unitTex = null, FXT = {}, ANIMS = [];
@@ -73,51 +73,66 @@ const world = new THREE.Group(); scene.add(world);
 const dyn = new THREE.Group(); scene.add(dyn);
 let pathPts = [], castlePos = null, spawnPos = null;
 const slots = new Map(); // key -> {t, x, z, tower}
+const TH = new Map(); // 타일 윗면 높이
+const tileH = (q, r) => TH.get(C.key(q, r)) || 0;
 function buildWorld() {
   const statics = [];
   const place = (name, x, z, rot = 0, s = 1, y = 0) => { const o = clone(name); o.position.set(x, y, z); o.rotation.y = rot; o.scale.setScalar(s); statics.push(o); return o; };
-  const rng = mulberry(7);
+  const rot6 = (rng) => Math.floor(rng() * 6) * Math.PI / 3;
+  // 땅 타일: 윗면이 h 인 기둥 (두께 1짜리 타일을 아래로 쌓아 옆면이 보이게)
+  const ground = (name, x, z, h, rot = 0, floor = -1) => { place(name, x, z, rot, 1, h); for (let y = h - 1; y > floor + .01; y -= 1) place('hex_grass_bottom', x, z, 0, 1, y); };
+  const rng = mulberry(11);
   const [lq0, lr0] = MAP.path[MAP.path.length - 1];
   const castleNb = new Set([[-1, 0], [1, 0], [-1, 1], [0, 1]].map(([dq, dr]) => C.key(lq0 + dq, lr0 + dr)));
+  const wallRow = lr0 - 1;
+  // 1) 높이 정하기 — 길·타워 자리는 평지, 길에서 멀수록 언덕·절벽
   for (const t of MAP.tiles) {
-    const [x, z] = C.axToWorld(t.q, t.r);
-    t.x = x; t.z = z;
+    let h = 0; const k = rng();
+    if (t.road || t.slot || castleNb.has(C.key(t.q, t.r)) || t.r === wallRow) h = 0;
+    else if (t.rr >= C.ROWS) h = -.2;               // 앞쪽 바다
+    else if (t.rr < 0) h = k < .5 ? 1.5 : 1;         // 뒤쪽 산맥
+    else if (!t.inside) h = k < .4 ? 1 : .5;         // 양옆 숲 언덕
+    else if (t.near >= 3) h = k < .45 ? 1 : .5;
+    else if (t.near === 2) h = k < .3 ? .5 : 0;
+    TH.set(C.key(t.q, t.r), h);
+  }
+  for (const t of MAP.tiles) {
+    const [x, z] = C.axToWorld(t.q, t.r); t.x = x; t.z = z;
+    const h = tileH(t.q, t.r); t.h = h;
+    const floor = t.inside ? -1 : -2; // 가장자리는 두껍게 (판 옆면)
     if (t.road) {
       const rd = t.road, last = rd.i === MAP.path.length - 1;
-      if (last) { place('hex_grass', x, z); continue; } // 성 자리
-      if (rd.i === 0) { place('hex_road_M', x, z, rotFor([3], [rd.outD])); continue; }
+      if (last) { ground('hex_grass', x, z, 0, 0, floor); continue; }
+      if (rd.i === 0) { ground('hex_road_M', x, z, 0, rotFor([3], [rd.outD]), floor); continue; }
       const e = rd.inD, o = rd.outD, diff = ((o - e) % 6 + 6) % 6;
       const [type, base] = diff === 3 ? ['hex_road_A', [3, 0]] : diff === 2 || diff === 4 ? ['hex_road_B', [3, 1]] : ['hex_road_C', [3, 2]];
-      place(type, x, z, rotFor(base, [e, o]));
+      ground(type, x, z, 0, rotFor(base, [e, o]), floor);
+      if (t.r === wallRow) { const g = place('wall_straight_gate', x, z, 0, 1, 0); }
       continue;
     }
-    // 바깥 테두리: 물·산·숲
-    if (!t.inside) {
-      const edge = t.c < 0 || t.c >= C.COLS;
-      if (t.rr >= C.ROWS && !edge) { place('hex_water', x, z); if (rng() < .3) place(rng() < .5 ? 'waterlily_A' : 'waterplant_A', x + rand(-.4, .4), z + rand(-.4, .4), rng() * 6); continue; }
-      place('hex_grass', x, z);
-      const k = rng();
-      if (t.rr < 0) place(k < .55 ? 'mountain_A_grass_trees' : k < .8 ? 'mountain_B_grass' : 'mountain_C', x, z, Math.floor(rng() * 6) * Math.PI / 3);
-      else place(k < .5 ? 'trees_A_large' : k < .8 ? 'trees_B_large' : 'hills_A_trees', x, z, Math.floor(rng() * 6) * Math.PI / 3);
+    if (h < 0) { // 바다
+      ground('hex_water', x, z, 0, 0, -2);
+      if (rng() < .25) place(rng() < .5 ? 'waterlily_A' : 'waterplant_A', x + rand(-.4, .4), z + rand(-.4, .4), rng() * 6, 1, -.2);
       continue;
     }
-    place('hex_grass', x, z);
+    ground('hex_grass', x, z, h, 0, floor);
+    if (t.r === wallRow) { place('wall_straight', x, z, 0, 1, h); continue; }
     if (castleNb.has(C.key(t.q, t.r))) continue;
     if (t.slot) {
       const s = { t, x, z, tower: null, lv: 0 };
-      // 빈 자리 표시: 돌 받침
       const base = new THREE.Group(); const bm = clone('building_tower_base_blue'); bm.scale.setScalar(.7); base.add(bm);
       const rg = new THREE.Mesh(new THREE.RingGeometry(.62, .78, 6, 1, Math.PI / 6), new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: .75, depthWrite: false })); rg.rotation.x = -Math.PI / 2; rg.position.y = .05; base.add(rg); base.userData.ring = rg;
       base.position.set(x, 0, z); dyn.add(base); s.base = base;
       slots.set(C.key(t.q, t.r), s); continue;
     }
-    // 장식: 길에서 멀수록 숲, 가까우면 풀·돌
     const k = rng();
-    if (t.near >= 3) { if (k < .62) place(k < .25 ? 'trees_A_large' : k < .42 ? 'trees_B_medium' : k < .52 ? 'hills_A_trees' : 'mountain_A_grass_trees', x, z, Math.floor(rng() * 6) * Math.PI / 3); else if (k < .75) place('rock_single_E', x + .2, z - .2, rng() * 6); }
-    else if (t.near === 2) { if (k < .3) place(k < .15 ? 'trees_A_small' : 'tree_single_B', x + rand(-.3, .3), z, rng() * 6); else if (k < .42) place('rock_single_A', x + .3, z, rng() * 6); }
-    else if (k < .25) place(k < .12 ? 'tree_single_A' : 'rock_single_C', x + rand(-.5, .5), z + rand(-.4, .4), rng() * 6, .9);
+    if (t.rr < 0) { place(k < .35 ? 'mountain_A' : k < .6 ? 'mountain_B' : k < .8 ? 'mountain_C_grass_trees' : 'mountain_A_grass_trees', x, z, rot6(rng), 1, h); continue; }
+    if (!t.inside) { place(k < .45 ? 'trees_A_large' : k < .75 ? 'trees_B_large' : k < .9 ? 'hills_B_trees' : 'mountain_C', x, z, rot6(rng), 1, h); continue; }
+    if (t.near >= 3) { if (k < .6) place(k < .25 ? 'trees_A_large' : k < .4 ? 'trees_B_medium' : k < .5 ? 'hills_A_trees' : 'mountain_A_grass_trees', x, z, rot6(rng), 1, h); else if (k < .7) place('rock_single_E', x + .2, z - .2, rng() * 6, 1, h); else if (k < .76) place('building_windmill_blue', x, z, rot6(rng), 1, h); }
+    else if (t.near === 2) { if (k < .3) place(k < .15 ? 'trees_A_small' : 'tree_single_B', x + rand(-.3, .3), z, rng() * 6, 1, h); else if (k < .42) place('rock_single_A', x + .3, z, rng() * 6, 1, h); }
+    else if (k < .22) place(k < .1 ? 'tree_single_A' : 'rock_single_C', x + rand(-.5, .5), z + rand(-.4, .4), rng() * 6, .9, h);
   }
-  // 성 · 적 진영
+  // 성 · 성안 마을
   const [lq, lr] = MAP.path[MAP.path.length - 1], [cx, cz] = C.axToWorld(lq, lr);
   castlePos = new THREE.Vector3(cx, 0, cz);
   place('building_castle_blue', cx, cz, Math.PI);
@@ -125,13 +140,12 @@ function buildWorld() {
   for (const [dq, dr, n] of [[-1, 0, 'building_home_A_red'], [1, 0, 'building_church_blue'], [-1, 1, 'building_barracks_blue'], [0, 1, 'building_archeryrange_blue']]) {
     const t = MAP.tiles.find((u) => u.q === lq + dq && u.r === lr + dr); if (t && !t.road && !t.slot) { t.deco = true; place(n, t.x, t.z, Math.PI); }
   }
+  // 적 진영
   const [sq, sr] = MAP.path[0], [sx0, sz0] = C.axToWorld(sq, sr);
   spawnPos = new THREE.Vector3(sx0, 0, sz0 - 1.2);
   place('tent', sx0 - 1.3, sz0 - .4, .5, .9); place('tent', sx0 + 1.4, sz0 - .3, -.6, .9); place('flag_red', sx0 - .7, sz0 + .3, 0, 1.1); place('flag_red', sx0 + .7, sz0 + .3, 0, 1.1);
-  // 길 위 경로 (타일 중심) — 첫 칸 위쪽에서 시작
   pathPts = [spawnPos.clone(), ...MAP.path.map(([q, r]) => { const [x, z] = C.axToWorld(q, r); return new THREE.Vector3(x, 0, z); })];
-  // 구름
-  for (let i = 0; i < 5; i++) { const c = clone(i % 2 ? 'cloud_big' : 'cloud_small'); c.position.set((i % 2 ? 1 : -1) * rand(12.5, 16), rand(3, 5), rand(-14, 12)); c.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } }); c.userData.v = rand(.2, .5); clouds.push(c); scene.add(c); }
+  for (let i = 0; i < 4; i++) { const c = clone(i % 2 ? 'cloud_big' : 'cloud_small'); c.position.set((i % 2 ? 1 : -1) * rand(12.5, 15), rand(3.5, 5), rand(-14, 12)); c.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } }); c.userData.v = rand(.2, .5); clouds.push(c); scene.add(c); }
   mergeStatic(statics);
 }
 const clouds = [];
@@ -379,6 +393,7 @@ function heroStep(dt) {
     else setTimeout(() => { if (!tgt.dead) { damage(tgt, atk, 'hero'); addFx('dust', tgt.pos, .6, 0xffffff); } }, 160);
   }
   if (h.busyT <= 0) play(moving ? 'Running_A' : 'Idle_A');
+  { const [hq, hr] = C.worldToAx(h.pos.x, h.pos.z); const ty = Math.max(0, tileH(hq, hr)); h.pos.y += (ty - h.pos.y) * Math.min(1, dt * 10); }
   h.obj.position.copy(h.pos);
   const dr = ((h.face - h.obj.rotation.y + Math.PI * 3) % (Math.PI * 2)) - Math.PI; h.obj.rotation.y += dr * Math.min(1, dt * 12);
 }
