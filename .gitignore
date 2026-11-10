@@ -24,3 +24,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# impeccable (디자인 점검) — 실행 중 캐시
+**/.impeccable/hook.cache.json
+.impeccable/live/
