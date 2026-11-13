@@ -18,7 +18,8 @@
   html,body{height:100%}
   body{background:var(--bg);color:var(--text);font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
     display:flex;justify-content:center;-webkit-tap-highlight-color:transparent;user-select:none}
-  #app{width:100%;max-width:760px;display:flex;flex-direction:column;min-height:100%;padding:8px;gap:8px}
+  #app{width:100%;max-width:760px;display:flex;flex-direction:column;height:100vh;height:100dvh;padding:8px;gap:8px}
+  body{overflow:hidden}
   #hud{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
   .chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700;font-size:14px;
     font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -27,9 +28,11 @@
   #tag small{font-weight:600;color:var(--dim);font-size:11px;margin-left:6px;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
   button{font:inherit;color:inherit;cursor:pointer}
   #speed{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700;font-size:14px}
-  #stage{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#0c1411}
-  canvas{display:block;width:100%;height:auto;touch-action:manipulation}
-  #info{position:absolute;left:8px;right:8px;bottom:8px;background:rgba(20,32,27,.94);border:1px solid var(--line);border-radius:10px;
+  #stage{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#0c1411;flex:1;min-height:0;display:flex;flex-direction:column}
+  #fit{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+  canvas{display:block;touch-action:manipulation}
+  #cv{width:100%;height:auto}
+  #info{background:rgba(20,32,27,.94);border-top:1px solid var(--line);
     padding:8px 10px;display:none;align-items:center;gap:10px;font-size:13px}
   #info.on{display:flex}
   #info .t{flex:1;line-height:1.45}
@@ -69,6 +72,7 @@
   .pick .k{font-size:11px;font-weight:800;color:var(--c);border:1px solid var(--c);border-radius:999px;padding:1px 8px}
   .pick .t{font-size:16px;font-weight:800;word-break:keep-all}
   .pick .d{font-size:13px;color:var(--dim);line-height:1.4;word-break:keep-all}
+  @media (max-height:700px){ .card .d{display:none} .card{padding:6px} .card canvas{width:40px;height:40px} #hint{display:none} }
   @media (max-width:520px){
     #tag{display:none}
     #hud{justify-content:space-between}
@@ -89,7 +93,7 @@
     <button id="speed">▶ x1</button>
   </div>
   <div id="stage">
-    <canvas id="cv" width="1080" height="1000"></canvas>
+    <div id="fit"><canvas id="cv" width="1080" height="1000"></canvas></div>
     <div id="info"><div class="t" id="infoText"></div><button id="promo">전직</button><button id="sell">판매</button><button id="closeInfo">닫기</button></div>
     <div id="cards"><h2 id="cardTitle"></h2><div id="cardList"></div></div>
     <div id="over"><h2>방어 실패</h2><p id="overText"></p><button id="retry">다시 하기</button></div>
@@ -505,6 +509,11 @@ $('sell').onclick=()=>{ if(!S.sel) return; S.gold+=Math.floor(S.sel.spent/2); S.
 $('closeInfo').onclick=()=>{ S.sel=null; $('info').classList.remove('on'); };
 $('speed').onclick=()=>{ S.speed=S.speed===1?2:S.speed===2?3:1; $('speed').textContent='▶ x'+S.speed; };
 $('retry').onclick=()=>{ const sp=S.speed; reset(); S.speed=sp; };
+
+// ---------- 화면 맞춤: 맵 전체가 항상 보이도록 남는 공간 안에 캔버스를 넣는다 ----------
+function fit(){ const b=$('fit'), w=b.clientWidth, h=b.clientHeight; if(!w||!h) return;
+  const k=Math.min(w/CW,h/CH); cv.style.width=Math.floor(CW*k)+'px'; cv.style.height=Math.floor(CH*k)+'px'; }
+new ResizeObserver(fit).observe($('fit')); window.addEventListener('resize',fit); fit();
 
 // ---------- 루프 ----------
 let last=0;
