@@ -243,7 +243,7 @@ function isBuffed(h){
   return false;
 }
 // 최종 전직 캐릭터는 처치 경험치로 따로 레벨업한다 (레벨당 공격력 x1.12)
-const LV_MUL=1.12, xpNeed=l=>Math.round(6*Math.pow(1.3,l));
+const XP_SHARE=0.3, LV_MUL=1.12, xpNeed=l=>Math.round(6*Math.pow(1.3,l));
 const atkOf=h=>BASE_ATK*TIER_MUL[h.tier]*M.atk*(h.buffed?CLASSES.priest.buff:1)*Math.pow(LV_MUL,h.lv);
 function gainXp(h,xp){ if(h.tier<2) return; h.xp+=xp;
   let up=false; while(h.xp>=xpNeed(h.lv)){ h.xp-=xpNeed(h.lv); h.lv++; up=true; }
@@ -256,7 +256,9 @@ function hurt(m,dmg,gold,aoe,src){
   if(m.vul>0) dmg*=1.5;
   m.hp-=dmg; m.flash=0.12;
   S.floats.push({x:m.x,y:m.y,t:0,txt:Math.round(dmg),col:m.vul>0?'#ffb04a':gold?'#ffd866':'#ffffff',big:dmg>=BASE_ATK*6});
-  if(m.hp<=0){ const g=Math.round(m.gold*M.gold); S.gold+=g; S.kills++; if(src) gainXp(src,m.xp);
+  if(m.hp<=0){ const g=Math.round(m.gold*M.gold); S.gold+=g; S.kills++; if(src){ gainXp(src,m.xp);
+      // 버프를 준 대주교도 경험치의 30%를 나눠 받는다 (처치한 캐릭터 몫은 그대로)
+      if(src.cls!=='priest') for(const p of S.heroes) if(p.cls==='priest'&&p.tier===2&&dist(p,src)<=buffR()) gainXp(p,m.xp*XP_SHARE); }
     S.floats.push({x:m.x,y:m.y+10,t:0,txt:'+'+g+'G',col:'#f2c14e',big:false,slow:true}); syncHud(); syncBar(); }
 }
 function addFx(name,x,y,scale,lift){ S.fx.push({name,x,y,t:0,scale,lift:lift||0,dur:FXM[name].n*0.05}); }
@@ -474,7 +476,7 @@ function showInfo(h){
   $('infoText').innerHTML='<b style="color:'+c.color+'">'+c.tiers[h.tier]+'</b> '+'★'.repeat(h.tier)+(h.tier===2?' Lv.'+(h.lv+1)+' <span>('+Math.floor(h.xp)+'/'+xpNeed(h.lv)+')</span>':'')+' · 공격 <b>'+Math.round(dmgOf(h))+'</b>'+(h.buffed?' <span style="color:#ffd65a">(버프 x2)</span>':'')+
     '<br><span>'+c.skill+': '+c.sdesc+' · '+(c.scd*M.scd[h.cls]*(1-0.1*h.tier)).toFixed(1)+'초</span>';
   const pb=$('promo');
-  if(h.tier>=2){ pb.textContent='처치로 레벨업'; pb.disabled=true; }
+  if(h.tier>=2){ pb.textContent='처치시 레벨업'; pb.disabled=true; }
   else{ pb.textContent='전직 → '+c.tiers[h.tier+1]+' 💰'+pc; pb.disabled=S.gold<pc; }
   $('sell').textContent='판매 +'+Math.floor(h.spent/2); $('info').classList.add('on');
 }
