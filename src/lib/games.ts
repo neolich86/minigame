@@ -514,8 +514,8 @@ const CATALOG: Game[] = [
     id: "class-td",
     title: { ko: "RPG 디펜스", en: "RPG Defense" },
     desc: {
-      ko: "검사·도둑·마법사·복사를 배치해 몬스터를 막는 타워 디펜스. 자동 스킬과 전직, 3라운드마다 고르는 보상 카드로 조합을 완성하세요",
-      en: "A tower defense where swordsmen, thieves, mages and acolytes are your towers — auto skills, job changes and a reward card every 3 rounds",
+      ko: "검사·도둑·마법사·복사를 배치해 몬스터를 막는 타워 디펜스. 자동 스킬과 전직, 2라운드마다 고르는 보상 카드로 조합을 완성하세요",
+      en: "A tower defense where swordsmen, thieves, mages and acolytes are your towers — auto skills, job changes and a reward card every 2 rounds",
     },
     genre: "strategy",
     thumb: "/thumbs/class-td.jpg",

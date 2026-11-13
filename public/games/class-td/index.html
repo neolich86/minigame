@@ -6,7 +6,7 @@
 <script src="/mgh/bridge.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RPG 디펜스 - 미니게임천국</title>
-<meta name="description" content="검사·도둑·마법사·복사를 배치해 몰려오는 몬스터를 막는 타워 디펜스. 자동 스킬과 전직, 3라운드마다 고르는 보상 카드로 조합을 완성하고 도달 라운드와 시간으로 랭킹을 겨루세요.">
+<meta name="description" content="검사·도둑·마법사·복사를 배치해 몰려오는 몬스터를 막는 타워 디펜스. 자동 스킬과 전직, 2라운드마다 고르는 보상 카드로 조합을 완성하고 도달 라운드와 시간으로 랭킹을 겨루세요.">
 <meta name="robots" content="index,follow">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231d2c25'/%3E%3Cpath d='M32 8l5 30h-10z' fill='%23eef5ee'/%3E%3Crect x='22' y='38' width='20' height='5' rx='2' fill='%23f2c14e'/%3E%3Crect x='29' y='43' width='6' height='12' rx='2' fill='%23e2574c'/%3E%3C/svg%3E">
 <style>
@@ -211,10 +211,10 @@ function startWave(){
   S.wave++;
   const w=S.wave, ts=waveTypes(w), hp=70*Math.pow(1.27,w-1), spd=78+Math.min(40,w*2), g=5+w*0.6;
   let t=0; const push=(k,i)=>{ const T=TYPES[k];
-    S.queue.push({t, type:k, hp:hp*T.hp, spd:spd*T.spd, img:T.imgs[(w+i)%T.imgs.length], boss:false, gold:Math.max(1,Math.round(g*T.gold))}); t+=T.gap; };
+    S.queue.push({t, type:k, hp:hp*T.hp, spd:spd*T.spd, img:T.imgs[(w+i)%T.imgs.length], boss:false, gold:Math.max(1,Math.round(g*T.gold)), xp:T.gold*(1+w/10)}); t+=T.gap; };
   if(ts[0]==='boss'){
     for(let i=0;i<6;i++) push('normal',i);
-    S.queue.push({t:t+0.5, type:'boss', hp:hp*14, spd:55, img:'boss'+(((w/5-1)%5)+1), boss:true, gold:120+w*4});
+    S.queue.push({t:t+0.5, type:'boss', hp:hp*14, spd:55, img:'boss'+(((w/5-1)%5)+1), boss:true, gold:120+w*4, xp:15*(1+w/10)});
     S.wtype='boss';
   }else{
     const base=8+Math.min(14,w*2);
@@ -224,7 +224,7 @@ function startWave(){
   S.banner=3.2; syncHud();
 }
 function spawn(q){ const p=posAt(0);
-  S.mons.push({d:0,x:p.x,y:p.y,hp:q.hp,max:q.hp,spd:q.spd,img:q.img,boss:q.boss,type:q.type,gold:q.gold,flash:0,bob:Math.random()*6,stun:0,vul:0,seen:true}); }
+  S.mons.push({d:0,x:p.x,y:p.y,hp:q.hp,max:q.hp,spd:q.spd,img:q.img,boss:q.boss,type:q.type,gold:q.gold,xp:q.xp,flash:0,bob:Math.random()*6,stun:0,vul:0,seen:true}); }
 
 // ---------- 랭킹 ----------
 // 점수 = 도달 라운드 × 1,000,000 + (999,999 − 게임 시간(초)) — 라운드가 높을수록, 같으면 시간이 짧을수록 위
@@ -242,16 +242,21 @@ function isBuffed(h){
   for(const p of S.heroes) if(p.cls==='priest' && dist(p,h)<=buffR()) return true;
   return false;
 }
-const atkOf=h=>BASE_ATK*TIER_MUL[h.tier]*M.atk*(h.buffed?CLASSES.priest.buff:1);
+// 최종 전직 캐릭터는 처치 경험치로 따로 레벨업한다 (레벨당 공격력 x1.12)
+const LV_MUL=1.12, xpNeed=l=>Math.round(6*Math.pow(1.3,l));
+const atkOf=h=>BASE_ATK*TIER_MUL[h.tier]*M.atk*(h.buffed?CLASSES.priest.buff:1)*Math.pow(LV_MUL,h.lv);
+function gainXp(h,xp){ if(h.tier<2) return; h.xp+=xp;
+  let up=false; while(h.xp>=xpNeed(h.lv)){ h.xp-=xpNeed(h.lv); h.lv++; up=true; }
+  if(up){ addFx('promo',h.x,h.y,2.4,34); shout(h,'Lv.'+(h.lv+1)+'!'); if(S.sel===h) showInfo(h); } }
 const dmgOf=h=>atkOf(h)*CLASSES[h.cls].mult;
 const promoCost=h=>h.tier>=2?0:Math.round(CLASSES[h.cls].cost*TIER_COST[h.tier+1]*M.promo/5)*5;
-function hurt(m,dmg,gold,aoe){
+function hurt(m,dmg,gold,aoe,src){
   if(m.hp<=0) return;
   if(aoe && m.type==='tank') dmg*=0.5;
   if(m.vul>0) dmg*=1.5;
   m.hp-=dmg; m.flash=0.12;
   S.floats.push({x:m.x,y:m.y,t:0,txt:Math.round(dmg),col:m.vul>0?'#ffb04a':gold?'#ffd866':'#ffffff',big:dmg>=BASE_ATK*6});
-  if(m.hp<=0){ const g=Math.round(m.gold*M.gold); S.gold+=g; S.kills++;
+  if(m.hp<=0){ const g=Math.round(m.gold*M.gold); S.gold+=g; S.kills++; if(src) gainXp(src,m.xp);
     S.floats.push({x:m.x,y:m.y+10,t:0,txt:'+'+g+'G',col:'#f2c14e',big:false,slow:true}); syncHud(); syncBar(); }
 }
 function addFx(name,x,y,scale,lift){ S.fx.push({name,x,y,t:0,scale,lift:lift||0,dur:FXM[name].n*0.05}); }
@@ -261,10 +266,10 @@ function strike(h,tx,ty,target){
   const c=CLASSES[h.cls], dmg=dmgOf(h);
   if(c.aoe){
     const r=c.aoe*(h.cls==='mage'?M.mageAoe:1);
-    for(const m of S.mons) if(Math.hypot(m.x-tx,m.y-ty)<=r) hurt(m,dmg,h.buffed,true);
+    for(const m of S.mons) if(Math.hypot(m.x-tx,m.y-ty)<=r) hurt(m,dmg,h.buffed,true,h);
     addFx(c.fx,tx,ty,r*2*FX_/50, h.cls==='priest'?0:14);
   }else if(target){
-    hurt(target,dmg,h.buffed,false); addFx('hit',target.x,target.y,1.3,22);
+    hurt(target,dmg,h.buffed,false,h); addFx('hit',target.x,target.y,1.3,22);
   }
 }
 // 스킬: 쓸 대상이 없으면 false
@@ -273,12 +278,12 @@ function castSkill(h){
   if(h.cls==='knight'){
     let best=null; for(const m of S.mons) if(canTarget(m)&&dist(m,h)<=R&&(!best||m.hp>best.hp)) best=m;
     if(!best) return false;
-    hurt(best,a*3,h.buffed,false); best.stun=Math.max(best.stun,(best.boss?0.5:1)*M.stun);
+    hurt(best,a*3,h.buffed,false,h); best.stun=Math.max(best.stun,(best.boss?0.5:1)*M.stun);
     addFx('smash',best.x,best.y,2.6,26); addFx('slash',best.x,best.y,2.4,26); h.flip=best.x<h.x;
   }else if(h.cls==='thief'){
     let best=null; for(const m of S.mons) if(canTarget(m)&&dist(m,h)<=R*2.8&&(!best||m.hp>best.hp)) best=m;
     if(!best) return false;
-    hurt(best,a*6*M.ambush,h.buffed,false);
+    hurt(best,a*6*M.ambush,h.buffed,false,h);
     addFx('ambush',best.x,best.y,2.6,26); addFx('cross',best.x,best.y,2.2,26);
     S.ghosts.push({h,x:best.x+(best.x<h.x?40:-40),y:best.y,flip:best.x<h.x?false:true,t:0}); h.flip=best.x<h.x;
   }else if(h.cls==='mage'){
@@ -290,7 +295,7 @@ function castSkill(h){
   }else{
     let any=false; for(const m of S.mons) if(m.hp>0&&dist(m,h)<=R){ any=true; break; }
     if(!any) return false;
-    for(const m of S.mons) if(m.hp>0&&dist(m,h)<=R){ m.vul=M.holyDur; hurt(m,a*1.0,false,true); }
+    for(const m of S.mons) if(m.hp>0&&dist(m,h)<=R){ m.vul=M.holyDur; hurt(m,a*1.0,false,true,h); }
     for(const o of S.heroes) if(o!==h&&dist(o,h)<=buffR()) o.haste=M.holyDur;
     S.pulses.push({x:h.x,y:h.y,r:R,t:0}); addFx('holy',h.x,h.y,3,30);
   }
@@ -301,7 +306,7 @@ function update(dt){
   // 웨이브
   if(S.queue.length){ for(const q of S.queue) q.t-=dt; while(S.queue.length&&S.queue[0].t<=0) spawn(S.queue.shift()); }
   else if(!S.mons.length){
-    if(S.wave>0&&S.wave%3===0&&!S.carded){ S.carded=true; offerCards(); return; }
+    if(S.wave>0&&S.wave%2===0&&!S.carded){ S.carded=true; offerCards(); return; }
     S.rest-=dt; if(S.rest<=0){ S.rest=2.5; S.carded=false; startWave(); }
   }
   // 몬스터
@@ -314,7 +319,7 @@ function update(dt){
     if(m.d>=ROUTE_LEN){ m.hp=0; S.life-=m.boss?5:1; syncHud(); }
   }
   // 화상 장판
-  for(const z of S.zones){ z.t+=dt; z.tick-=dt; if(z.tick<=0){ z.tick=0.5; for(const m of S.mons) if(m.hp>0&&Math.hypot(m.x-z.x,m.y-z.y)<=z.r) hurt(m,z.dmg,false,true); } }
+  for(const z of S.zones){ z.t+=dt; z.tick-=dt; if(z.tick<=0){ z.tick=0.5; for(const m of S.mons) if(m.hp>0&&Math.hypot(m.x-z.x,m.y-z.y)<=z.r) hurt(m,z.dmg,false,true,z.h); } }
   S.zones=S.zones.filter(z=>z.t<3);
   // 영웅
   for(const h of S.heroes){
@@ -332,8 +337,8 @@ function update(dt){
     else S.shots.push({h,target:best,tx:best.x,ty:best.y,t:0,dur:0.14,hidden:true});
   }
   for(const s of S.shots){ s.t+=dt; if(s.t<s.dur) continue; s.done=true;
-    if(s.meteor){ for(const m of S.mons) if(Math.hypot(m.x-s.tx,m.y-s.ty)<=s.r) hurt(m,s.dmg,s.buffed,true);
-      addFx('meteor',s.tx,s.ty,s.r*2*FX_/44,20); S.zones.push({x:s.tx,y:s.ty,r:s.r*0.8,t:0,tick:0.5,dmg:s.dmg*0.12}); }
+    if(s.meteor){ for(const m of S.mons) if(Math.hypot(m.x-s.tx,m.y-s.ty)<=s.r) hurt(m,s.dmg,s.buffed,true,s.h);
+      addFx('meteor',s.tx,s.ty,s.r*2*FX_/44,20); S.zones.push({x:s.tx,y:s.ty,r:s.r*0.8,t:0,tick:0.5,dmg:s.dmg*0.12,h:s.h}); }
     else strike(s.h,s.target?s.target.x:s.tx,s.target?s.target.y:s.ty,s.target); }
   S.shots=S.shots.filter(s=>!s.done);
   S.mons=S.mons.filter(m=>m.hp>0);
@@ -383,7 +388,8 @@ function drawHero(h){
   const k=1-Math.max(0,h.scd)/h.smax;
   ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(p.x-21,p.y+10,42,6);
   ctx.fillStyle=k>=1?'#fff':c.color; ctx.fillRect(p.x-20,p.y+11,40*k,4);
-  if(h.tier>0) label('★'.repeat(h.tier),p.x,p.y+30,13,'#ffd65a','#3a2600');
+  if(h.tier>0) label('★'.repeat(h.tier)+(h.tier===2?' Lv.'+(h.lv+1):''),p.x,p.y+30,13,'#ffd65a','#3a2600');
+  if(h.tier===2){ ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(p.x-21,p.y+17,42,4); ctx.fillStyle='#7fe0ff'; ctx.fillRect(p.x-20,p.y+18,40*Math.min(1,h.xp/xpNeed(h.lv)),2); }
   if(h.buffed) label('▲x2',p.x,p.y-104*sc/HS,16,'#ffd65a','#3a2600');
 }
 function drawGhost(g){ const f=HJ[CLASSES.thief.key].atk[3], p=w2s(g.x,g.y+22);
@@ -465,15 +471,15 @@ function buildBar(){
 }
 function showInfo(h){
   const c=CLASSES[h.cls], pc=promoCost(h);
-  $('infoText').innerHTML='<b style="color:'+c.color+'">'+c.tiers[h.tier]+'</b> '+'★'.repeat(h.tier)+' · 공격 <b>'+Math.round(dmgOf(h))+'</b>'+(h.buffed?' <span style="color:#ffd65a">(버프 x2)</span>':'')+
+  $('infoText').innerHTML='<b style="color:'+c.color+'">'+c.tiers[h.tier]+'</b> '+'★'.repeat(h.tier)+(h.tier===2?' Lv.'+(h.lv+1)+' <span>('+Math.floor(h.xp)+'/'+xpNeed(h.lv)+')</span>':'')+' · 공격 <b>'+Math.round(dmgOf(h))+'</b>'+(h.buffed?' <span style="color:#ffd65a">(버프 x2)</span>':'')+
     '<br><span>'+c.skill+': '+c.sdesc+' · '+(c.scd*M.scd[h.cls]*(1-0.1*h.tier)).toFixed(1)+'초</span>';
   const pb=$('promo');
-  if(h.tier>=2){ pb.textContent='최종 전직'; pb.disabled=true; }
+  if(h.tier>=2){ pb.textContent='처치로 레벨업'; pb.disabled=true; }
   else{ pb.textContent='전직 → '+c.tiers[h.tier+1]+' 💰'+pc; pb.disabled=S.gold<pc; }
   $('sell').textContent='판매 +'+Math.floor(h.spent/2); $('info').classList.add('on');
 }
 function place(cls,s){ const c=CLASSES[cls]; if(S.gold<c.cost||S.heroes.some(h=>h.x===s.x&&h.y===s.y)) return null;
-  S.gold-=c.cost; const h={cls,x:s.x,y:s.y,cd:0.3,anim:-1,adur:0.3,sk:false,flip:false,buffed:false,tier:0,haste:0,scd:c.scd*0.5,smax:c.scd,spent:c.cost};
+  S.gold-=c.cost; const h={cls,x:s.x,y:s.y,cd:0.3,anim:-1,adur:0.3,sk:false,flip:false,buffed:false,tier:0,lv:0,xp:0,haste:0,scd:c.scd*0.5,smax:c.scd,spent:c.cost};
   S.heroes.push(h); syncHud(); syncBar(); return h; }
 function promote(h){ const pc=promoCost(h); if(h.tier>=2||S.gold<pc) return false;
   S.gold-=pc; h.spent+=pc; h.tier++; addFx('promo',h.x,h.y,3,34); shout(h,CLASSES[h.cls].tiers[h.tier]+' 전직!'); syncHud(); syncBar(); return true; }
@@ -523,6 +529,7 @@ function frame(t){
   draw(); requestAnimationFrame(frame);
 }
 buildBar(); reset();
+if(new URLSearchParams(location.search).has('test')) window.__ctd={get S(){return S;},get M(){return M;},update,CLASSES,SLOTS,place,promote,pickCard,promoCost,reset};
 requestAnimationFrame(frame);
 })();
 </script>
