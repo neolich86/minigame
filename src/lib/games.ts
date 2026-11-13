@@ -510,6 +510,18 @@ const CATALOG: Game[] = [
     src: "/games/element-td/index.html",
     boards: [{ id: "element-td", label: { ko: "도달 라운드", en: "Round reached" }, unit: { ko: "", en: "" }, format: "roundtime", maxRound: 50 }],
   },
+  {
+    id: "class-td",
+    title: { ko: "직업 디펜스", en: "Class Defense" },
+    desc: {
+      ko: "검사·도둑·마법사·복사를 배치해 몬스터를 막는 타워 디펜스. 자동 스킬과 전직, 3라운드마다 고르는 보상 카드로 조합을 완성하세요",
+      en: "A tower defense where swordsmen, thieves, mages and acolytes are your towers — auto skills, job changes and a reward card every 3 rounds",
+    },
+    genre: "strategy",
+    thumb: "/thumbs/class-td.jpg",
+    src: "/games/class-td/index.html",
+    boards: [{ id: "class-td", label: { ko: "도달 라운드", en: "Round reached" }, unit: { ko: "", en: "" }, format: "roundtime" }],
+  },
 ];
 
 /** 포털에 보이는 모든 항목 (게임·도구·서비스) */

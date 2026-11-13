@@ -148,6 +148,36 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       ],
     },
   },
+  "class-td": {
+    ko: {
+      tips: [
+        "복사를 블록 가운데 쪽에 두고 그 주변 칸에 검사와 도둑을 붙이세요. 노란 원 안의 아군은 데미지가 두 배가 됩니다.",
+        "도둑은 사거리가 짧으니 길 모퉁이 바로 옆 칸에 두세요. 기습은 멀리 있는 체력 높은 적을 노려서 보스 처리에 좋아요.",
+        "중장갑은 범위 공격 피해를 절반만 받고, 떼거리는 숫자가 많아요. 검사·도둑과 마법사를 섞어 두어야 둘 다 막을 수 있어요.",
+        "은신 몬스터는 복사 계열의 사거리 안에서만 조준돼요. 6라운드 전에 복사를 한 명은 배치해 두세요.",
+        "인원을 늘리는 것만큼 전직도 중요해요. 전직하면 공격력이 크게 오르고 스킬 쿨타임도 짧아집니다.",
+      ],
+      faq: [
+        { q: "몇 라운드까지 있나요?", a: "끝이 없어요. 생명이 0이 될 때까지 도달한 라운드가 기록됩니다." },
+        { q: "보상 카드는 언제 나오나요?", a: "3라운드를 깰 때마다 세 장 중 하나를 고를 수 있어요. 직업 전용 카드는 그 직업을 배치했을 때만 나옵니다." },
+        { q: "랭킹 기준은?", a: "도달 라운드가 높을수록, 같으면 걸린 시간이 짧을수록 높아요. 시간은 게임 안의 시간이라 배속과 상관없어요." },
+      ],
+    },
+    en: {
+      tips: [
+        "Put an acolyte near the middle of a block and surround it with swordsmen and thieves — allies inside the yellow circle deal double damage.",
+        "Thieves have short range, so place them right beside corners. Ambush strikes a distant high-HP enemy, which is great against bosses.",
+        "Armored monsters take half damage from area attacks and swarms come in numbers, so mix single-target classes with mages.",
+        "Stealth monsters can only be targeted inside an acolyte's range. Have one placed before round 6.",
+        "Promotions matter as much as headcount: they raise attack sharply and shorten skill cooldowns.",
+      ],
+      faq: [
+        { q: "How many rounds are there?", a: "It is endless. The round you reach before running out of lives is recorded." },
+        { q: "When do reward cards appear?", a: "Every 3 rounds you pick one of three. Class-specific cards only show up if you have that class placed." },
+        { q: "How is ranking decided?", a: "Higher round first, then shorter time. Time is in-game time, so game speed does not matter." },
+      ],
+    },
+  },
   "element-td": {
     ko: {
       tips: [

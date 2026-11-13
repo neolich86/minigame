@@ -296,6 +296,30 @@ export const GAME_SEO: SeoMap = {
       tags: ["Tower defense", "Strategy", "Leaderboard", "Free"],
     },
   },
+  "class-td": {
+    ko: {
+      title: "직업 디펜스 - 무료 타워디펜스 웹게임 (검사·도둑·마법사·복사)",
+      h1: "직업 디펜스 — 직업을 배치하는 타워디펜스",
+      description:
+        "타워 대신 검사·도둑·마법사·복사를 배치해 몰려오는 몬스터를 막는 무료 타워디펜스. 강타·기습·메테오·홀리라이트 자동 스킬과 3단계 전직, 3라운드마다 고르는 보상 카드로 조합을 완성하고 도달 라운드와 시간으로 랭킹을 겨루세요.",
+      keywords: ["직업 디펜스", "타워디펜스", "타워 디펜스 게임", "전략 게임", "전직", "무료 게임", "웹게임"],
+      about: [
+        "직업 디펜스는 타워 대신 네 가지 직업을 길가 36칸에 배치하는 타워디펜스입니다. 검사는 강한 단일 공격과 기절, 도둑은 짧은 사거리의 최고 화력, 마법사는 넓은 범위 공격, 복사는 주변 아군의 데미지를 두 배로 올려 줍니다.",
+        "각 직업은 몇 초마다 스킬을 자동으로 쓰고, 골드로 전직하면 검사는 기사·성기사로, 도둑은 암살자·스토커로, 마법사는 프로페서·대마법사로, 복사는 프리스트·대주교로 강해집니다. 고속·중장갑·떼거리·은신 몬스터가 번갈아 나와 한 직업만으로는 막을 수 없고, 3라운드마다 보상 카드 세 장 중 하나를 골라 조합을 다듬습니다.",
+      ],
+      howTo: ["아래에서 직업을 고른 뒤 잔디 칸을 눌러 배치하세요.", "배치한 캐릭터를 누르면 사거리를 보고 전직하거나 팔 수 있어요.", "3라운드마다 보상 카드 세 장 중 하나를 고르세요.", "생명이 0이 되기 전까지 최대한 높은 라운드에 도달하세요."],
+      tags: ["타워디펜스", "전략", "전직", "랭킹", "무료"],
+    },
+    en: {
+      title: "Class Defense - Free Tower Defense Browser Game",
+      h1: "Class Defense — Tower Defense with Job Classes",
+      description: "A free tower defense where swordsmen, thieves, mages and acolytes replace towers. Auto skills, three job tiers and a reward card every 3 rounds — climb the leaderboard by round reached and time.",
+      keywords: ["tower defense", "strategy game", "job change", "class defense", "free game", "browser game"],
+      about: ["Class Defense puts four job classes on the 36 spots beside the road instead of towers: swordsmen hit one target hard and stun, thieves deal the highest damage at short range, mages hit areas, and acolytes double the damage of nearby allies.", "Every class casts its skill automatically, and gold promotes each one through three tiers. Fast, armored, swarm and stealth monsters take turns, so no single class holds the line — pick one of three reward cards every 3 rounds to shape your build."],
+      howTo: ["Pick a class below, then tap a grass tile to place it.", "Tap a placed hero to see its range, promote it or sell it.", "Choose one of three reward cards every 3 rounds.", "Reach the highest round you can before your lives run out."],
+      tags: ["Tower defense", "Strategy", "Job change", "Leaderboard", "Free"],
+    },
+  },
   "isekai-hero": {
     ko: {
       title: "이세계 용사 - 무료 픽셀 방치형 RPG 웹게임",
@@ -870,7 +894,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
       { title: "온라인 보드게임", text: "친구와 방을 만들어 실시간으로 즐기는 무료 온라인 보드게임. 빈 자리는 AI가 채워 주고, 혼자서도 AI와 바로 대결할 수 있어요.", games: ["catan", "lexio", "dragon-call", "holdem"] },
       { title: "방치형 게임", text: "틀어두기만 해도 진행되는 방치형 타워디펜스와 자동 강화. 도달 라운드와 최고 레벨로 랭킹을 겨뤄보세요.", games: ["random-td", "weapon"] },
       { title: "뱀서 · 서바이벌", text: "몰려오는 몬스터 속에서 스킬을 골라 성장하는 뱀서류 서바이벌 로그라이크. 생존 시간 랭킹에 도전하세요.", games: ["archer", "wizard"] },
-      { title: "슈팅 · 타워디펜스", text: "아케이드 종스크롤 비행기 슈팅과 원소 조합 전략 타워디펜스.", games: ["raiden", "element-td"] },
+      { title: "슈팅 · 타워디펜스", text: "아케이드 종스크롤 비행기 슈팅과 원소 조합·직업 배치 전략 타워디펜스.", games: ["raiden", "element-td", "class-td"] },
       { title: "카드 뽑기 · 타자 연습", text: "포켓몬·원피스 카드 오리파 시뮬레이터와 세계 지도 타자 연습 게임.", games: ["oripa", "world-typing"] },
       { title: "퍼즐 · 가게", text: "물약을 붓고 섞어 손님의 주문을 채우는 워터 소트 퍼즐 가게. 매일 바뀌는 오늘의 포션으로 최소 이동 랭킹을 겨뤄 보세요.", games: ["potion-atelier"] },
       { title: "카지노", text: "0이 하나뿐인 유럽식 룰렛, 출목표가 있는 8덱 바카라, 기본 전략 힌트가 있는 6덱 블랙잭. 100만 원으로 시작해 최고 잔액 랭킹에 도전하세요. 실제 돈은 쓰지 않아요.", games: ["roulette", "baccarat", "blackjack"] },
@@ -882,7 +906,7 @@ export const HOME_SECTIONS: Record<Lang, { heading: string; items: { title: stri
       { title: "Online board games", text: "Free online board games to play live with friends. AI fills empty seats, and you can always play solo against AI.", games: ["catan", "lexio", "dragon-call", "holdem"] },
       { title: "Idle games", text: "Idle tower defense and auto-enhance games that keep going on their own. Compete on round and level leaderboards.", games: ["random-td", "weapon"] },
       { title: "Survivor-like · Survival", text: "A survivor-like roguelite — grow your skills amid endless hordes and chase the survival-time leaderboard.", games: ["archer", "wizard"] },
-      { title: "Shooter · Tower defense", text: "An arcade vertical shooter and an elemental strategy tower defense.", games: ["raiden", "element-td"] },
+      { title: "Shooter · Tower defense", text: "An arcade vertical shooter plus elemental and job-class strategy tower defenses.", games: ["raiden", "element-td", "class-td"] },
       { title: "Card pulls · Typing", text: "A Pokémon / One Piece oripa card-pull simulator and a world-map typing practice game.", games: ["oripa", "world-typing"] },
       { title: "Puzzle · Shop", text: "A water-sort puzzle shop where you pour and mix potions for customers, with a daily fewest-moves leaderboard.", games: ["potion-atelier"] },
       { title: "Casino", text: "Single-zero European roulette, 8-deck baccarat with full scoreboards and 6-deck blackjack with basic-strategy hints — start with ₩1,000,000 and chase the peak-balance leaderboard. No real money.", games: ["roulette", "baccarat", "blackjack"] },
