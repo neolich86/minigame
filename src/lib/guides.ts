@@ -157,7 +157,7 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
         "은신 몬스터는 복사 계열의 사거리 안에서만 조준돼요. 6라운드 전에 복사를 한 명은 배치해 두세요.",
         "인원을 늘리는 것만큼 전직도 중요해요. 전직하면 공격력이 크게 오르고 스킬 쿨타임도 짧아집니다.",
         "최종 전직한 캐릭터는 몬스터를 처치할 때마다 경험치를 얻어 따로 레벨업해요. 마무리 일격을 넣은 캐릭터가 경험치를 받으니, 일찍 최종 전직시킨 캐릭터일수록 더 강해집니다. 대주교는 자기 버프 범위 안의 아군이 처치하면 경험치의 30%를 함께 받아요.",
-        "골드가 남으면 위의 강화 버튼에서 전체 공격력·공격 속도·스킬 쿨타임을 올리거나, 최종 전직한 캐릭터를 눌러 수련으로 레벨을 올리세요. 강화는 살 때마다, 수련은 레벨이 오를수록 비싸집니다.",
+        "36칸을 모두 채우면 직업 선택창 위에 강화가 나타나요. 남는 골드로 전체 공격력·공격 속도·스킬 쿨타임을 올리거나, 최종 전직한 캐릭터를 눌러 수련으로 레벨을 올리세요. 강화는 살 때마다, 수련은 레벨이 오를수록 비싸집니다.",
       ],
       faq: [
         { q: "몇 라운드까지 있나요?", a: "끝이 없어요. 생명이 0이 될 때까지 도달한 라운드가 기록됩니다." },
@@ -173,7 +173,7 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
         "Stealth monsters can only be targeted inside an acolyte's range. Have one placed before round 6.",
         "Promotions matter as much as headcount: they raise attack sharply and shorten skill cooldowns.",
         "Final-tier heroes earn XP for every kill and level up on their own. The hero landing the last hit gets the XP, so heroes promoted early grow the strongest. An archbishop also receives 30% of the XP when an ally inside its buff range gets the kill.",
-        "Spare gold goes into the Upgrade button (attack, attack speed and skill cooldown for everyone) or into Training on a final-tier hero to buy a level. Both get pricier each time.",
+        "Once all 36 spots are filled, an Upgrade row appears above the class cards (attack, attack speed and skill cooldown for everyone). Spare gold goes there or into Training on a final-tier hero to buy a level. Both get pricier each time.",
       ],
       faq: [
         { q: "How many rounds are there?", a: "It is endless. The round you reach before running out of lives is recorded." },

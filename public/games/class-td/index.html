@@ -28,8 +28,8 @@
   #tag small{font-weight:600;color:var(--dim);font-size:11px;margin-left:6px;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
   button{font:inherit;color:inherit;cursor:pointer}
   #speed{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700;font-size:14px}
-  #stage{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#0c1411;flex:1;min-height:0;display:flex;flex-direction:column}
-  #fit{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+  #stage{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#0c1411;flex:0 0 auto;display:flex;flex-direction:column}
+  #fit{display:flex;align-items:center;justify-content:center}
   canvas{display:block;touch-action:manipulation}
   #cv{width:100%;height:auto}
   #info{background:rgba(20,32,27,.94);border-top:1px solid var(--line);
@@ -39,15 +39,12 @@
   #info .t b{font-size:14px}
   #info .t span{color:var(--dim)}
   #sell{background:#5a2b2b;border:1px solid #8a4a4a;border-radius:8px;padding:8px 12px;font-weight:700;white-space:nowrap}
-  #closeInfo,#closeShop{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
-  #shopBtn{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700;font-size:14px}
-  #shopBtn.can{border-color:var(--gold);color:var(--gold)}
-  #shop{background:rgba(20,32,27,.94);border-top:1px solid var(--line);padding:8px 10px;display:none;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+  #closeInfo{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+  #shop{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 8px;display:none;gap:8px;align-items:center;font-size:13px}
   #shop.on{display:flex}
-  #shop .st{width:100%;font-weight:800}
-  #shop .st span{font-weight:500;color:var(--dim);font-size:12px;margin-left:6px}
+  #shop .st{font-weight:800;white-space:nowrap;color:var(--gold)}
   #shopList{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;flex:1;min-width:0}
-  .up{background:var(--panel);border:1px solid var(--gold);border-radius:8px;padding:7px 4px;display:flex;flex-direction:column;gap:2px;align-items:center;min-width:0}
+  .up{background:var(--panel2);border:1px solid var(--gold);border-radius:8px;padding:7px 4px;display:flex;flex-direction:column;gap:2px;align-items:center;min-width:0}
   .up b{font-size:13px}
   .up i{font-style:normal;font-size:11px;color:var(--dim)}
   .up em{font-style:normal;font-weight:700;color:var(--gold);font-size:12px;font-variant-numeric:tabular-nums}
@@ -88,7 +85,7 @@
   @media (max-width:520px){
     #tag{display:none}
     #hud{justify-content:space-between}
-    .chip,#speed,#shopBtn{padding:6px 8px;font-size:12px}
+    .chip,#speed{padding:6px 10px;font-size:13px}
     .card .d{font-size:10px}
     #info{position:static;border-radius:0;border-width:1px 0 0}
     #hint{font-size:11px}
@@ -102,16 +99,15 @@
     <div class="chip">웨이브 <b id="wave">1</b> <span id="wtype"></span></div>
     <div class="chip">💰 <b id="gold">0</b></div>
     <div class="chip">❤️ <b id="life">20</b></div>
-    <button id="shopBtn">⚒ 강화</button>
     <button id="speed">▶ x1</button>
   </div>
   <div id="stage">
     <div id="fit"><canvas id="cv" width="1080" height="1000"></canvas></div>
-    <div id="shop"><div class="st">공용 강화 <span>살 때마다 가격이 1.5배 오릅니다</span></div><div id="shopList"></div><button id="closeShop">닫기</button></div>
     <div id="info"><div class="t" id="infoText"></div><button id="promo">전직</button><button id="sell">판매</button><button id="closeInfo">닫기</button></div>
     <div id="cards"><h2 id="cardTitle"></h2><div id="cardList"></div></div>
     <div id="over"><h2>방어 실패</h2><p id="overText"></p><button id="retry">다시 하기</button></div>
   </div>
+  <div id="shop"><div class="st">⚒ 강화</div><div id="shopList"></div></div>
   <div id="bar"></div>
   <div id="hint">직업을 고른 뒤 잔디 칸을 눌러 배치하세요.</div>
 </div>
@@ -213,7 +209,7 @@ function reset(){
   M=freshMods();
   S={gold:260, life:20, wave:0, heroes:[], mons:[], fx:[], shots:[], floats:[], zones:[], ghosts:[], pulses:[], queue:[], rest:2.5,
      shop:{atk:0,spd:0,cd:0}, pick:null, sel:null, hover:null, speed:1, over:false, kills:0, time:0, wtype:'normal', banner:0, choosing:false, picked:[]};
-  $('over').classList.remove('on'); $('info').classList.remove('on'); $('cards').classList.remove('on'); $('shop').classList.remove('on'); syncHud(); syncBar();
+  $('over').classList.remove('on'); $('info').classList.remove('on'); $('cards').classList.remove('on'); syncHud(); syncBar();
 }
 function waveTypes(w){
   if(w%5===0) return ['boss'];
@@ -274,7 +270,8 @@ function buyShop(i){ const u=SHOP[i], c=shopCost(u); if(S.gold<c) return false; 
 function syncShop(){ let can=false;
   SHOP.forEach((u,i)=>{ const c=shopCost(u), ok=S.gold>=c; can=can||ok; const b=$('up-'+u.k); if(!b) return;
     b.disabled=!ok; b.querySelector('i').textContent=u.d+' · '+S.shop[u.k]+'회'; b.querySelector('em').textContent='💰 '+c; });
-  $('shopBtn').classList.toggle('can',can); }
+  if(!S.shopOn&&S.heroes.length>=SLOTS.length) S.shopOn=true;
+  $('shop').classList.toggle('on',!!S.shopOn); }
 function gainXp(h,xp){ if(h.tier<2) return; h.xp+=xp;
   let up=false; while(h.xp>=xpNeed(h.lv)){ h.xp-=xpNeed(h.lv); h.lv++; up=true; }
   if(up){ addFx('promo',h.x,h.y,2.4,34); shout(h,'Lv.'+(h.lv+1)+'!'); if(S.sel===h) showInfo(h); } }
@@ -487,7 +484,7 @@ function syncHud(){ $('wave').textContent=Math.max(1,S.wave); $('gold').textCont
   $('wtype').textContent=S.wave?typeLabel():'준비'; if(S.sel) showInfo(S.sel); syncShop(); }
 function syncBar(){
   for(const k of ORDER){ const el=$('card-'+k); el.classList.toggle('sel',S.pick===k); el.classList.toggle('poor',S.gold<CLASSES[k].cost); }
-  $('hint').textContent=S.pick?CLASSES[S.pick].name+' 선택됨 — 잔디 칸을 눌러 배치 (다시 누르면 취소)':'직업을 고른 뒤 잔디 칸에 배치하세요. 배치된 캐릭터를 누르면 전직·수련·판매를 할 수 있습니다.';
+  $('hint').textContent=S.pick?CLASSES[S.pick].name+' 선택됨 — 잔디 칸을 눌러 배치 (다시 누르면 취소)':(S.shopOn?'모든 칸을 채웠습니다. 남는 골드로 강화를 사거나, 최종 전직 캐릭터를 눌러 수련하세요.':'직업을 고른 뒤 잔디 칸에 배치하세요. 배치된 캐릭터를 누르면 전직·수련·판매를 할 수 있습니다.');
 }
 function buildBar(){
   const bar=$('bar');
@@ -536,7 +533,7 @@ cv.addEventListener('pointerdown',e=>{
   if(S.over||S.choosing) return;
   const w=evPos(e), s=slotOf(w.x,w.y); if(!s){ S.sel=null; $('info').classList.remove('on'); return; }
   const h=S.heroes.find(h=>h.x===s.x&&h.y===s.y);
-  if(h){ S.sel=h; S.pick=null; h.buffed=isBuffed(h); $('shop').classList.remove('on'); showInfo(h); syncBar(); return; }
+  if(h){ S.sel=h; S.pick=null; h.buffed=isBuffed(h); showInfo(h); syncBar(); return; }
   S.sel=null; $('info').classList.remove('on');
   if(S.pick){ if(S.gold<CLASSES[S.pick].cost){ $('hint').textContent='골드가 부족합니다 ('+CLASSES[S.pick].cost+' 필요)'; return; }
     place(S.pick,s); if(e.pointerType!=='mouse') S.hover=null; }
@@ -545,16 +542,18 @@ $('promo').onclick=()=>{ if(!S.sel) return; if(S.sel.tier>=2?train(S.sel):promot
 $('sell').onclick=()=>{ if(!S.sel) return; S.gold+=Math.floor(S.sel.spent/2); S.heroes=S.heroes.filter(h=>h!==S.sel); S.sel=null;
   $('info').classList.remove('on'); syncHud(); syncBar(); };
 $('closeInfo').onclick=()=>{ S.sel=null; $('info').classList.remove('on'); };
-$('shopBtn').onclick=()=>{ const on=$('shop').classList.toggle('on'); if(on){ S.sel=null; S.pick=null; $('info').classList.remove('on'); syncBar(); } };
-$('closeShop').onclick=()=>$('shop').classList.remove('on');
 SHOP.forEach((u,i)=>{ const b=document.createElement('button'); b.className='up'; b.id='up-'+u.k; b.innerHTML='<b>'+u.t+'</b><i></i><em></em>'; b.onclick=()=>buyShop(i); $('shopList').appendChild(b); });
 $('speed').onclick=()=>{ S.speed=S.speed===1?2:S.speed===2?3:1; $('speed').textContent='▶ x'+S.speed; };
 $('retry').onclick=()=>{ const sp=S.speed; reset(); S.speed=sp; };
 
 // ---------- 화면 맞춤: 맵 전체가 항상 보이도록 남는 공간 안에 캔버스를 넣는다 ----------
-function fit(){ const b=$('fit'), w=b.clientWidth, h=b.clientHeight; if(!w||!h) return;
-  const k=Math.min(w/CW,h/CH); cv.style.width=Math.floor(CW*k)+'px'; cv.style.height=Math.floor(CH*k)+'px'; }
-new ResizeObserver(fit).observe($('fit')); window.addEventListener('resize',fit); fit();
+// 맵을 뺀 나머지(상단 정보·정보창·강화·직업 선택창)의 높이를 재고, 남는 높이와 너비 중 작은 쪽에 맞춘다
+function fit(){ const app=$('app'), w=$('fit').clientWidth; if(!w) return;
+  cv.style.width='0px'; cv.style.height='0px';
+  const used=Math.max($('hint').getBoundingClientRect().bottom,$('bar').getBoundingClientRect().bottom)-$('hud').getBoundingClientRect().top;
+  const avail=Math.max(160,app.clientHeight-16-used);
+  const k=Math.min(w/CW,avail/CH); cv.style.width=Math.floor(CW*k)+'px'; cv.style.height=Math.floor(CH*k)+'px'; }
+const ro=new ResizeObserver(fit); ['app','hud','bar','info','shop'].forEach(id=>ro.observe($(id))); window.addEventListener('resize',fit); fit();
 
 // ---------- 루프 ----------
 let last=0;
