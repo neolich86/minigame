@@ -13,7 +13,7 @@ const FX_NAMES = ['fireball-impact', 'hit-spark', 'crit-hit', 'level-up', 'coin-
 const MON_KEYS = Object.keys(C.MON);
 let ATL = null;
 async function loadAll() {
-  const [meta, heroes] = await Promise.all([fetch('assets/heroes.json').then((r) => r.json()), loadImg('assets/heroes.png')]);
+  const [meta, heroes] = await Promise.all([fetch('assets/heroes.json').then((r) => r.json()), loadImg('assets/heroes.webp')]);
   ATL = meta; IMG.heroes = heroes;
   await Promise.all([
     ...MON_KEYS.map(async (k) => { IMG[k] = await loadImg(`assets/mon/${k}.png`); }),
@@ -21,7 +21,8 @@ async function loadAll() {
     document.fonts ? Promise.race([document.fonts.load('16px G'), new Promise((r) => setTimeout(r, 2500))]) : 0,
   ]);
 }
-// 직업 그림: heroes.json = { knight0: { walk: [[x,y,w,h,발x,발y]...], atk: [...], face: [x,y,크기] }, knight1: ... }
+// 직업 그림: heroes.json = { knight0: { walk: [[x,y,w,h,발x,발y]...], idle: [...], atk: [...], face: [x,y,크기] }, knight1: ... }
+// walk 는 기존 걷기 5컷, idle·atk 는 RPG 디펜스와 같은 공격 모션 시트(대기 1컷 + 공격 4컷)
 // 1차 = 0, 2차·최종 = 1 (시트에서 2차와 최종이 같은 그림). 그림은 오른쪽을 보고 있음.
 const fkey = (job, T) => job + (T > 0 ? 1 : 0);
 function drawFig(g, job, T, kind, f, x, y, sc) {
@@ -232,9 +233,10 @@ function drawMember(m) {
   shadowAt(x, y, 44 * k);
   let kind = 'walk', f = 0, bob = 0;
   if (m.dead) { g.save(); g.globalAlpha = .35; g.filter = 'grayscale(1)'; drawFig(g, m.job, S.T, 'walk', 0, x, y + 2, sc); g.restore(); return; }
-  if (m.atkT > 0) { kind = 'atk'; f = Math.min(3, Math.floor((1 - m.atkT / (m.atkD || .4)) * 4)); }
+  // 평타는 공격 3컷, 스킬(atkD .45)은 마무리 컷까지 4컷. 멈춰 있을 때는 대기 그림
+  if (m.atkT > 0) { const n = (m.atkD || .4) >= .45 ? 4 : 3; kind = 'atk'; f = Math.min(n - 1, Math.floor((1 - m.atkT / (m.atkD || .4)) * n)); }
   else if (B.walking) f = Math.floor(m.anim * .9) % 5;
-  else bob = Math.sin(m.anim) * 1.2;
+  else { kind = 'idle'; bob = Math.sin(m.anim) * 1.2; }
   if (m.hitT > 0) { g.save(); g.filter = 'brightness(1.8) sepia(.6) hue-rotate(-30deg)'; drawFig(g, m.job, S.T, kind, f, x + (Math.random() - .5) * 3, y + bob, sc); g.restore(); }
   else drawFig(g, m.job, S.T, kind, f, x, y + bob, sc);
   if (B.buffs.bless > 0) { g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = .35 + .15 * Math.sin(B.t * 6 + m.id); orb(x, y - 40 * k, 14 * k, '255,220,120'); g.restore(); }
