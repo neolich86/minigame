@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<link rel="canonical" href="/play/witch">
+<script src="/mgh/bridge.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>마녀 키우기 - 미니게임천국</title>
+<meta name="description" content="몰려오는 적 군대를 마녀의 화려한 마법으로 쓸어버리는 픽셀 서바이벌. 레벨업마다 메테오·천둥·블랙홀·화염 용 같은 큰 마법을 골라 15분을 버티세요.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232a1840'/%3E%3Cpath d='M32 6 46 40H18z' fill='%237a3ad8'/%3E%3Crect x='12' y='38' width='40' height='7' rx='3' fill='%235a2aa8'/%3E%3Ccircle cx='46' cy='16' r='5' fill='%23ffd34a'/%3E%3C/svg%3E">
+<style>
+@font-face{font-family:G;font-weight:700;src:url(assets/Galmuri11-Bold.woff2) format('woff2');font-display:swap}
+:root{--ink:#fff7ec;--dim:#d8c8e8;--panel:#2a1840;--edge:#140a22;--gold:#ffd34a;--atk:#ff7a4a;--buff:#5ab8ff;--debuff:#b06aff;--hp:#4be06a;--xp:#ffd34a}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#1a1028;font-family:G,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:var(--ink);user-select:none;-webkit-user-select:none;touch-action:none;overscroll-behavior:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+[hidden]{display:none!important}
+.sh{text-shadow:2px 0 var(--edge),-2px 0 var(--edge),0 2px var(--edge),0 -2px var(--edge),1px 1px var(--edge),-1px -1px var(--edge)}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block}
+/* HUD */
+#hud{position:fixed;inset:0;pointer-events:none}
+#hud button{pointer-events:auto}
+.xpbar{position:absolute;left:0;right:0;top:0;height:calc(18px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top);background:#120a1e}
+.xpbar i{display:block;height:100%;width:0;background:linear-gradient(#ffe58a,#e0a018);transition:width .15s}
+.xpbar b{position:absolute;left:8px;bottom:1px;font-size:12px}
+.top{position:absolute;left:8px;right:8px;top:calc(24px + env(safe-area-inset-top));display:flex;align-items:flex-start;gap:8px}
+.clock{position:absolute;left:50%;transform:translateX(-50%);text-align:center}
+.clock b{display:block;font-size:22px;letter-spacing:1px}
+.clock small{font-size:11px;color:var(--dim)}
+.kills{font-size:13px;margin-left:auto;margin-right:46px;padding-top:4px}
+#pauseBtn{position:absolute;right:0;top:0;width:44px;height:44px;border-radius:12px;background:rgba(20,10,34,.7);border:2px solid var(--edge);font-size:16px}
+.skills{position:absolute;left:8px;top:calc(76px + env(safe-area-inset-top));display:flex;flex-direction:column;gap:5px}
+.skills .row{display:flex;gap:4px;flex-wrap:wrap;max-width:240px}
+.ic{width:30px;height:30px;border-radius:7px;border:2px solid var(--edge);background:#2a1840 url(assets/icons.png) no-repeat;background-size:calc(30px * 34 - 4px * 34) 26px;image-rendering:pixelated;position:relative}
+.ic em{position:absolute;right:-4px;bottom:-5px;font-style:normal;font-size:11px;background:var(--edge);border-radius:4px;padding:0 3px;line-height:14px}
+.ic.atk{border-color:#ff9a5a}.ic.buff{border-color:#5ab8ff;width:24px;height:24px}.ic.debuff{border-color:#b06aff;width:24px;height:24px}.ic.hp{border-color:#4be06a;width:24px;height:24px}.ic.xp{border-color:#ffd34a;width:24px;height:24px}
+#bossBar{position:absolute;left:50%;transform:translateX(-50%);top:calc(84px + env(safe-area-inset-top));width:min(300px,64vw);text-align:center}
+#bossBar b{font-size:13px;color:#ff9a8a}
+#bossBar div{height:12px;margin-top:3px;background:#2a0a10;border:2px solid var(--edge);border-radius:6px;overflow:hidden}
+#bossBar i{display:block;height:100%;background:linear-gradient(#ff6a4a,#c4281c)}
+#banner{position:absolute;left:0;right:0;top:30%;text-align:center;font-size:26px;opacity:0;pointer-events:none}
+#banner small{display:block;font-size:13px;color:var(--dim);margin-top:4px}
+#banner.on{animation:ban 2s}
+@keyframes ban{0%{opacity:0;transform:scale(1.35)}12%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0}}
+#dashBtn{position:absolute;right:16px;bottom:calc(24px + env(safe-area-inset-bottom));width:76px;height:76px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#9a6aff,#4a2a98);border:3px solid var(--edge);box-shadow:0 4px 0 var(--edge);font-size:15px;overflow:hidden}
+#dashBtn:after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.55);clip-path:inset(calc(100% - var(--c,0%)) 0 0 0)}
+.hint{position:absolute;left:0;right:0;bottom:calc(120px + env(safe-area-inset-bottom));text-align:center;font-size:13px;color:var(--dim);transition:opacity .6s}
+/* 화면 (시작·레벨업·일시정지·결과) */
+.scr{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));background:rgba(14,6,26,.78);overflow-y:auto}
+.scr h1{font-size:40px;color:var(--gold);letter-spacing:2px}
+.scr h2{font-size:28px;color:var(--gold)}
+.scr .sub{font-size:13px;color:var(--dim);margin:6px 0 16px;text-align:center;line-height:1.6}
+.big{min-width:220px;min-height:52px;padding:12px 24px;font-size:20px;border:3px solid var(--edge);border-radius:16px;background:linear-gradient(#ffd96a,#e09a18);color:#2a1400;box-shadow:0 4px 0 var(--edge);margin-top:10px}
+.ghost{background:linear-gradient(#5a4090,#3a2468);color:var(--ink)}
+#heroPrev{width:168px;height:224px;image-rendering:pixelated}
+.best{font-size:13px;color:var(--dim);margin-top:10px}
+.how{font-size:12px;color:var(--dim);margin-top:16px;text-align:center;line-height:1.7}
+#lvl h2{margin-bottom:12px}
+#cards{display:flex;flex-direction:column;gap:10px;width:100%;max-width:420px}
+.card{display:flex;align-items:center;gap:12px;text-align:left;padding:12px;border-radius:16px;border:3px solid var(--edge);background:linear-gradient(#3a2458,#24143a);box-shadow:0 4px 0 var(--edge);animation:cin .25s backwards}
+.card:nth-child(2){animation-delay:.05s}.card:nth-child(3){animation-delay:.1s}.card:nth-child(4){animation-delay:.15s}
+@keyframes cin{from{opacity:0;transform:translateY(18px)}}
+.card:active{transform:scale(.97)}
+.card .ci{width:56px;height:56px;flex:none;border-radius:12px;border:3px solid var(--edge);background:#1a1028 url(assets/icons.png) no-repeat;background-size:calc(52px * 34) 52px;image-rendering:pixelated}
+.card b{font-size:17px;display:block}
+.card .tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:6px;margin-right:6px;color:#1a0a00}
+.card small{display:block;font-size:13px;color:var(--dim);margin-top:5px;line-height:1.4}
+.card .lv{font-size:12px;color:var(--gold)}
+.card.atk{border-color:#ff9a5a;background:linear-gradient(#5a2a38,#2e1428)}.card.atk .tag{background:var(--atk)}
+.card.buff .tag{background:var(--buff)}.card.debuff .tag{background:var(--debuff);color:#fff}.card.hp .tag{background:var(--hp)}.card.xp .tag{background:var(--xp)}
+.card.new b:after{text-shadow:none;content:'NEW';font-size:10px;margin-left:6px;padding:1px 5px;border-radius:5px;background:var(--gold);color:#2a1400;vertical-align:middle}
+#rerollBtn{margin-top:12px;min-height:44px;padding:8px 18px;border-radius:12px;border:2px solid var(--edge);background:#3a2468;font-size:14px}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;width:100%;max-width:340px;margin:12px 0}
+.stats div{background:rgba(255,255,255,.07);border-radius:12px;padding:10px 4px;text-align:center}
+.stats small{display:block;font-size:11px;color:var(--dim)}
+.stats b{font-size:20px}
+#pskills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:340px;margin:10px 0}
+#load{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#1a1028;z-index:9;font-size:14px}
+#flash{position:fixed;inset:0;pointer-events:none;opacity:0;background:#ff2a2a}
+#flash.on{animation:fl .35s}
+@keyframes fl{0%{opacity:.28}100%{opacity:0}}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="hud" hidden>
+  <div class="xpbar"><i id="xpFill"></i><b class="sh" id="lvTxt">Lv.1</b></div>
+  <div class="top"><div class="clock sh"><b id="clock">00:00</b><small id="nextTxt"></small></div><span class="kills sh" id="kills">☠ 0</span><button id="pauseBtn" class="sh" aria-label="일시정지">Ⅱ</button></div>
+  <div class="skills"><div class="row" id="atkRow"></div><div class="row" id="subRow"></div></div>
+  <div id="bossBar" hidden><b class="sh" id="bossName">보스</b><div><i id="bossFill"></i></div></div>
+  <div id="banner" class="sh"></div>
+  <div class="hint sh" id="hint">화면을 끌어서 움직여요 · 공격과 마법은 자동!</div>
+  <button id="dashBtn" class="sh">대시</button>
+</div>
+<div id="start" class="scr" hidden>
+  <h1 class="sh">마녀 키우기</h1>
+  <div class="sub">몰려오는 적 군대를 화려한 마법으로 쓸어버리세요!<br>레벨업마다 마법을 골라 15분을 버티면 마지막 보스가 나와요.</div>
+  <canvas id="heroPrev" width="48" height="64"></canvas>
+  <button class="big" id="startBtn">시작</button>
+  <div class="best" id="bestTxt"></div>
+  <div class="how">모바일: 화면을 끌어 이동 · 대시 버튼으로 회피<br>PC: WASD / 방향키 이동 · Space 대시</div>
+</div>
+<div id="lvl" class="scr" hidden><h2 class="sh">레벨 업!</h2><div id="cards"></div><button id="rerollBtn">다시 뽑기</button></div>
+<div id="pause" class="scr" hidden><h2 class="sh">일시정지</h2><div id="pskills"></div><button class="big" id="resumeBtn">계속하기</button><button class="big ghost" id="quitBtn">처음으로</button></div>
+<div id="end" class="scr" hidden><h2 class="sh" id="endTitle">쓰러졌어요…</h2><div class="stats"><div><small>버틴 시간</small><b id="eTime">0:00</b></div><div><small>레벨</small><b id="eLv">1</b></div><div><small>처치</small><b id="eKills">0</b></div></div><div class="best" id="eBest"></div><button class="big" id="againBtn">다시 하기</button></div>
+<div id="flash"></div>
+<div id="load">마녀가 준비 중…</div>
+<script type="module" src="game.js"></script>
+</body>
+</html>

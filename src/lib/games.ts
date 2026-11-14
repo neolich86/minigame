@@ -461,6 +461,18 @@ const CATALOG: Game[] = [
     hidden: true, // 첫 버전 — 관리자 확인 중
   },
   {
+    id: "witch",
+    title: { ko: "마녀 키우기", en: "Grow Your Witch" },
+    desc: {
+      ko: "몰려오는 적 군대를 마녀의 화려한 마법으로 쓸어버리는 픽셀 서바이벌. 레벨업마다 메테오·천둥·블랙홀·화염 용 같은 큰 마법을 골라 15분을 버티세요",
+      en: "A pixel survivor — sweep away marching armies with a witch's huge spells. Pick Meteor, Thunder, Black Hole or Fire Dragon each level-up and survive 15 minutes",
+    },
+    genre: "action",
+    thumb: "/thumbs/witch.jpg",
+    src: "/games/witch/index.html",
+    hidden: true, // 샘플 플레이 — 관리자만
+  },
+  {
     id: "isekai-hero",
     title: { ko: "이세계 용사", en: "Isekai Hero" },
     desc: {
