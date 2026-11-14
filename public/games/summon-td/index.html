@@ -102,8 +102,9 @@
 </div></div>
 <script>
 'use strict';
-const W=420,H=750,BGY=70,PX0=26,PX1=394,PY0=BGY+26,PY1=BGY+394,PERI=2*((PX1-PX0)+(PY1-PY0));
-const COLS=6,ROWS=4,SLOTS=COLS*ROWS,FX0=50,FY0=120,CWD=320/6,CHT=80,LIMIT=50,MAXCAP=SLOTS;
+// 맵 둘레에 여백(위 48·아래 20·좌우 10)을 두어 보스·체력 바·피해 숫자가 잘리지 않게 한다
+const W=420,H=750,BGY=70,PX0=34,PX1=386,PY0=BGY+72,PY1=BGY+376,PERI=2*((PX1-PX0)+(PY1-PY0));
+const COLS=6,ROWS=4,SLOTS=COLS*ROWS,FX0=58,FY0=166,CWD=304/6,CHT=64,LIMIT=50,MAXCAP=SLOTS;
 const fitEl=document.getElementById('fit'),stageEl=document.getElementById('stage'),cv=document.getElementById('cv'),ctx=cv.getContext('2d');
 const $=id=>document.getElementById(id);
 let SCALE=1;
@@ -130,10 +131,10 @@ const BASE=[{"idle":[0,0,244,194,114,190],"atk":[[248,0,302,194,130,190],[554,0,
 // 최종 형태 그림
 const FINAL=[{"idle":[0,0,310,266,128,258],"atk":[[314,0,436,358,146,338],[754,0,444,300,162,280],[1202,0,404,514,168,492]],"skill":[1610,0,658,496,318,468]},{"idle":[0,518,356,292,158,294],"atk":[[360,518,466,294,192,256],[830,518,388,342,106,288],[1222,518,530,350,200,326]],"skill":[1756,518,520,440,280,398]},{"idle":[0,962,476,402,180,356],"atk":[[480,962,622,418,314,382],[1106,962,530,394,232,352]],"skill":[1640,962,638,466,328,394]},{"idle":[0,1432,440,362,156,340],"atk":[[444,1432,624,430,210,384],[1072,1432,572,446,256,400]],"skill":[1648,1432,612,506,244,440]}];
 const CLS=[
- {ko:'검사',fin:'팔라딘',col:'#ff8a76',dmg:22,cd:0.9,range:165,aoe:0,fx:'slash',sfx:'smash',desc:'단일 공격 · 보스에게 1.5배'},
- {ko:'도둑',fin:'섀도우 어쌔신',col:'#7fe3ea',dmg:15,cd:0.6,range:150,aoe:0,fx:'cross',sfx:'ambush',desc:'빠른 단일 공격 · 25% 치명타'},
- {ko:'마법사',fin:'아크메이지',col:'#c3adff',dmg:11,cd:1.3,range:235,aoe:52,fx:'boom',sfx:'meteor',desc:'넓은 범위 공격'},
- {ko:'복사',fin:'홀리 비숍',col:'#ffe795',dmg:7,cd:1.4,range:215,aoe:48,fx:'holy',sfx:'light',desc:'범위 공격 · 옆 칸 아군 공격력 +20%'}];
+ {ko:'검사',fin:'팔라딘',col:'#ff8a76',dmg:22,cd:0.9,range:148,aoe:0,fx:'slash',sfx:'smash',desc:'단일 공격 · 보스에게 1.5배'},
+ {ko:'도둑',fin:'섀도우 어쌔신',col:'#7fe3ea',dmg:15,cd:0.6,range:135,aoe:0,fx:'cross',sfx:'ambush',desc:'빠른 단일 공격 · 25% 치명타'},
+ {ko:'마법사',fin:'아크메이지',col:'#c3adff',dmg:11,cd:1.3,range:210,aoe:52,fx:'boom',sfx:'meteor',desc:'넓은 범위 공격'},
+ {ko:'복사',fin:'홀리 비숍',col:'#ffe795',dmg:7,cd:1.4,range:194,aoe:48,fx:'holy',sfx:'light',desc:'범위 공격 · 옆 칸 아군 공격력 +20%'}];
 const TIER=['1차','2차','3차','각성','최종'];
 const TMUL=[1,2.3,5.3,12.2,30], TSIZE=[1,1.07,1.14,1.22,1], GLOW=[null,'#7fc4ff','#ffcf46','#8cfff0',null];
 const RING=['#98a2b3','#5aaaff','#ffc83c','#78fff0','#ffffff'];
@@ -148,7 +149,7 @@ function newGame(){
   S={gold:100,wave:0,waveT:3,bossWave:false,queue:[],mons:[],units:new Array(SLOTS).fill(null),cap:18,summons:0,
      up:{k0:0,k1:0,k2:0,k3:0,atk:0,spd:0},sel:-1,drag:null,speed:1,over:false,fx:[],floats:[],time:0,banner:null,msg:null,dirty:true,kills:0};
 }
-const slotX=i=>FX0+CWD*((i%COLS)+0.5), slotY=i=>FY0+CHT*(Math.floor(i/COLS)+1)-16;
+const slotX=i=>FX0+CWD*((i%COLS)+0.5), slotY=i=>FY0+CHT*(Math.floor(i/COLS)+1)-11;
 const count=()=>S.units.reduce((n,u)=>n+(u?1:0),0);
 const cost=()=>20+Math.floor(S.summons/2);
 const sellValue=u=>10*Math.pow(2,u.tier);
@@ -258,7 +259,7 @@ function attack(i,u){
     if(u.cls===0&&m.boss)d*=1.5;
     if(u.cls===1&&Math.random()<0.25){d*=2.5;crit=true;}
     m.hp-=d;m.flash=0.1;
-    if(main||crit)addFloat(m.x+(Math.random()*16-8),m.y-26-Math.random()*8,Math.round(d)+'',crit?'#ffe14d':c.col,crit||skill?15:11);
+    if(main||crit)addFloat(Math.max(22,Math.min(W-22,m.x+(Math.random()*16-8))),m.y-(m.boss?40:24)-Math.random()*8,Math.round(d)+'',crit?'#ffe14d':c.col,crit||skill?16:13);
     if(m.hp<=0)killMon(m);};
   if(aoe>0){for(const m of S.mons.slice())if(Math.hypot(m.x-tx,m.y-ty)<=aoe)hit(m,m===best);}
   else hit(best,true);
@@ -271,7 +272,7 @@ function update(dt){
   // 웨이브
   for(let k=S.queue.length-1;k>=0;k--){const q=S.queue[k];q.t-=dt;
     if(q.t<=0){S.queue.splice(k,1);const p=pathPos(0);
-      S.mons.push({d:0,hp:q.hp,maxHp:q.hp,img:q.img,boss:q.boss,spd:q.spd,gold:q.gold,x:p[0],y:p[1],off:q.boss?0:Math.random()*20-10,flash:0,ph:Math.random()*6});}}
+      S.mons.push({d:0,hp:q.hp,maxHp:q.hp,img:q.img,boss:q.boss,spd:q.spd,gold:q.gold,x:p[0],y:p[1],off:q.boss?0:Math.random()*16-8,flash:0,ph:Math.random()*6});}}
   S.waveT-=dt;
   if(!S.queue.length&&!S.mons.length&&S.wave>0&&S.waveT>1.5)S.waveT=1.5;
   if(S.waveT<=0){
@@ -407,7 +408,7 @@ function drawMarks(i,u){
 function drawMon(m){
   const im=IMG.mons[m.img];if(!ok(im))return;
   const sc=m.boss?0.46:0.36,w=im.naturalWidth*sc,h=im.naturalHeight*sc,bob=Math.abs(Math.sin(S.time*8+m.ph))*2.5;
-  const mx=Math.max(3+w/2,Math.min(W-3-w/2,m.x)),my=Math.max(BGY+(m.boss?14:3)+h/2,Math.min(BGY+417-h/2,m.y));
+  const mx=Math.max(3+w/2,Math.min(W-3-w/2,m.x)),my=Math.max(BGY+(m.boss?16:10)+h/2,Math.min(BGY+417-h/2,m.y));
   ctx.fillStyle='rgba(60,30,20,.3)';ctx.beginPath();ctx.ellipse(mx,my+h*0.42,w*0.36,w*0.1,0,0,6.283);ctx.fill();
   ctx.save();ctx.translate(mx+(m.flash>0?Math.random()*3-1.5:0),my);
   if(m.flash>0)ctx.globalAlpha=0.75;
@@ -441,7 +442,7 @@ function draw(){
   for(const m of S.mons)if(m.y>=mid&&m.boss)drawMon(m);
   for(const f of S.fx){const F=FXR[f.name],i=Math.floor(f.t/0.05);if(i<F[1]&&ok(IMG.fx))
     ctx.drawImage(IMG.fx,i*64,F[0]*64,64,64,f.x-f.size/2,f.y-f.size/2,f.size,f.size);}
-  for(const f of S.floats){ctx.globalAlpha=f.t<0.4?1:Math.max(0,1-(f.t-0.4)/0.2);text(f.txt,f.x,f.y-f.t*26,f.size,f.col,'center',2.5);ctx.globalAlpha=1;}
+  for(const f of S.floats){ctx.globalAlpha=f.t<0.4?1:Math.max(0,1-(f.t-0.4)/0.2);text(f.txt,f.x,Math.max(BGY+9,f.y-f.t*26),f.size,f.col,'center',3);ctx.globalAlpha=1;}
 
   // 상단
   ctx.fillStyle='#161b28';ctx.fillRect(0,0,W,BGY);
