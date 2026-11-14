@@ -32,19 +32,20 @@
   #fit{display:flex;align-items:center;justify-content:center}
   canvas{display:block;touch-action:manipulation}
   #cv{width:100%;height:auto}
-  #info{background:rgba(20,32,27,.94);border-top:1px solid var(--line);
-    padding:8px 10px;display:none;align-items:center;gap:10px;font-size:13px}
+  /* 캐릭터 정보창: 직업 선택창 자리를 덮어서 뜬다 (맵 크기는 그대로) */
+  #info{position:absolute;inset:0;z-index:2;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px;
+    display:none;align-items:center;align-content:center;gap:8px;flex-wrap:wrap;font-size:13px;overflow:hidden}
   #info.on{display:flex}
   #info .t{flex:1;line-height:1.45}
   #info .t b{font-size:14px}
   #info .t span{color:var(--dim)}
   #sell{background:#5a2b2b;border:1px solid #8a4a4a;border-radius:8px;padding:8px 12px;font-weight:700;white-space:nowrap}
   #closeInfo{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
-  #shop{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 8px;display:none;gap:8px;align-items:center;font-size:13px}
+  #shop{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:5px 8px;display:none;gap:8px;align-items:center;font-size:13px}
   #shop.on{display:flex}
   #shop .st{font-weight:800;white-space:nowrap;color:var(--gold)}
   #shopList{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;flex:1;min-width:0}
-  .up{background:var(--panel2);border:1px solid var(--gold);border-radius:8px;padding:7px 4px;display:flex;flex-direction:column;gap:2px;align-items:center;min-width:0}
+  .up{background:var(--panel2);border:1px solid var(--gold);border-radius:8px;padding:4px 4px;display:flex;flex-direction:column;gap:0;line-height:1.3;align-items:center;min-width:0}
   .up b{font-size:13px}
   .up i{font-style:normal;font-size:11px;color:var(--dim)}
   .up em{font-style:normal;font-weight:700;color:var(--gold);font-size:12px;font-variant-numeric:tabular-nums}
@@ -54,7 +55,15 @@
   #over h2{font-size:26px}
   #over p{color:var(--dim)}
   #over button{background:var(--gold);color:#2a1e05;border:0;border-radius:10px;padding:12px 22px;font-weight:800;font-size:16px}
+  #dock{position:relative;display:flex;flex-direction:column;gap:6px;flex:0 0 auto}
   #bar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  /* 강화 줄이 나오면 직업 카드를 한 줄짜리로 줄여 맵 크기를 유지한다 */
+  #bar.compact .card{display:grid;grid-template-columns:auto 1fr;column-gap:6px;row-gap:0;align-items:center;text-align:left;padding:5px 6px}
+  #bar.compact .card canvas{grid-row:1/3;width:32px;height:32px;border-radius:8px}
+  #bar.compact .card .n{font-size:13px;line-height:1.2;white-space:nowrap}
+  #bar.compact .card .c{font-size:12px;line-height:1.2;white-space:nowrap}
+  @media (max-width:400px){ #bar.compact .card{padding:5px 3px;column-gap:4px} #bar.compact .card canvas{width:26px;height:26px} #bar.compact .card .n{font-size:12px} #bar.compact .card .c{font-size:11px} #shop .st{display:none} }
+  #bar.compact .card .d{display:none}
   .card{background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:8px 6px 8px;text-align:center;position:relative;
     display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
   .card canvas{width:52px;height:52px;border-radius:10px;background:var(--panel2);image-rendering:pixelated}
@@ -67,7 +76,6 @@
   #hint{font-size:12px;color:var(--dim);text-align:center;min-height:16px}
 
   #wtype{color:var(--dim);font-weight:600;font-size:12px;margin-left:2px}
-  #info{flex-wrap:wrap}
   #info .t{min-width:180px}
   #promo{background:var(--gold);color:#2a1e05;border:0;border-radius:8px;padding:8px 12px;font-weight:800;white-space:nowrap}
   #promo:disabled{background:var(--panel2);color:var(--dim);cursor:default}
@@ -87,7 +95,6 @@
     #hud{justify-content:space-between}
     .chip,#speed{padding:6px 10px;font-size:13px}
     .card .d{font-size:10px}
-    #info{position:static;border-radius:0;border-width:1px 0 0}
     #hint{font-size:11px}
   }
 </style>
@@ -103,12 +110,14 @@
   </div>
   <div id="stage">
     <div id="fit"><canvas id="cv" width="1080" height="1000"></canvas></div>
-    <div id="info"><div class="t" id="infoText"></div><button id="promo">전직</button><button id="sell">판매</button><button id="closeInfo">닫기</button></div>
     <div id="cards"><h2 id="cardTitle"></h2><div id="cardList"></div></div>
     <div id="over"><h2>방어 실패</h2><p id="overText"></p><button id="retry">다시 하기</button></div>
   </div>
-  <div id="shop"><div class="st">⚒ 강화</div><div id="shopList"></div></div>
-  <div id="bar"></div>
+  <div id="dock">
+    <div id="shop"><div class="st">⚒ 강화</div><div id="shopList"></div></div>
+    <div id="bar"></div>
+    <div id="info"><div class="t" id="infoText"></div><button id="promo">전직</button><button id="sell">판매</button><button id="closeInfo">닫기</button></div>
+  </div>
   <div id="hint">직업을 고른 뒤 잔디 칸을 눌러 배치하세요.</div>
 </div>
 <script>const ASSET={"ground": "assets/ground.webp", "heroes": "assets/heroes.png", "fx": "assets/fx.png", "mons": {"mon1": "assets/mon/mon1.png", "mon2": "assets/mon/mon2.png", "mon3": "assets/mon/mon3.png", "mon4": "assets/mon/mon4.png", "mon5": "assets/mon/mon5.png", "mon6": "assets/mon/mon6.png", "mon7": "assets/mon/mon7.png", "mon8": "assets/mon/mon8.png", "mon9": "assets/mon/mon9.png", "mon10": "assets/mon/mon10.png", "mon11": "assets/mon/mon11.png", "mon12": "assets/mon/mon12.png", "mon13": "assets/mon/mon13.png", "mon14": "assets/mon/mon14.png", "mon15": "assets/mon/mon15.png", "boss1": "assets/mon/boss1.png", "boss2": "assets/mon/boss2.png", "boss3": "assets/mon/boss3.png", "boss4": "assets/mon/boss4.png", "boss5": "assets/mon/boss5.png"}};
@@ -271,7 +280,7 @@ function syncShop(){ let can=false;
   SHOP.forEach((u,i)=>{ const c=shopCost(u), ok=S.gold>=c; can=can||ok; const b=$('up-'+u.k); if(!b) return;
     b.disabled=!ok; b.querySelector('i').textContent=u.d+' · '+S.shop[u.k]+'회'; b.querySelector('em').textContent='💰 '+c; });
   if(!S.shopOn&&S.heroes.length>=SLOTS.length) S.shopOn=true;
-  $('shop').classList.toggle('on',!!S.shopOn); }
+  $('shop').classList.toggle('on',!!S.shopOn); $('bar').classList.toggle('compact',!!S.shopOn); }
 function gainXp(h,xp){ if(h.tier<2) return; h.xp+=xp;
   let up=false; while(h.xp>=xpNeed(h.lv)){ h.xp-=xpNeed(h.lv); h.lv++; up=true; }
   if(up){ addFx('promo',h.x,h.y,2.4,34); shout(h,'Lv.'+(h.lv+1)+'!'); if(S.sel===h) showInfo(h); } }
@@ -548,12 +557,18 @@ $('retry').onclick=()=>{ const sp=S.speed; reset(); S.speed=sp; };
 
 // ---------- 화면 맞춤: 맵 전체가 항상 보이도록 남는 공간 안에 캔버스를 넣는다 ----------
 // 맵을 뺀 나머지(상단 정보·정보창·강화·직업 선택창)의 높이를 재고, 남는 높이와 너비 중 작은 쪽에 맞춘다
+// 아래 영역(dock) 높이는 '기본 카드'와 '강화 줄 + 작은 카드' 중 큰 쪽으로 고정해서, 강화가 나타나거나 정보창이 떠도 맵 크기가 변하지 않는다
 function fit(){ const app=$('app'), w=$('fit').clientWidth; if(!w) return;
-  cv.style.width='0px'; cv.style.height='0px';
-  const used=Math.max($('hint').getBoundingClientRect().bottom,$('bar').getBoundingClientRect().bottom)-$('hud').getBoundingClientRect().top;
+  const dock=$('dock'), bar=$('bar'), shop=$('shop'), c0=bar.classList.contains('compact'), s0=shop.classList.contains('on');
+  cv.style.width='0px'; cv.style.height='0px'; dock.style.height='';
+  bar.classList.remove('compact'); shop.classList.remove('on'); const h1=dock.offsetHeight;
+  bar.classList.add('compact'); shop.classList.add('on'); const h2=dock.offsetHeight;
+  bar.classList.toggle('compact',c0); shop.classList.toggle('on',s0);
+  dock.style.height=Math.max(h1,h2)+'px';
+  const used=Math.max($('hint').getBoundingClientRect().bottom,dock.getBoundingClientRect().bottom)-$('hud').getBoundingClientRect().top;
   const avail=Math.max(160,app.clientHeight-16-used);
   const k=Math.min(w/CW,avail/CH); cv.style.width=Math.floor(CW*k)+'px'; cv.style.height=Math.floor(CH*k)+'px'; }
-const ro=new ResizeObserver(fit); ['app','hud','bar','info','shop'].forEach(id=>ro.observe($(id))); window.addEventListener('resize',fit); fit();
+const ro=new ResizeObserver(fit); ['app','hud'].forEach(id=>ro.observe($(id))); window.addEventListener('resize',fit); fit();
 
 // ---------- 루프 ----------
 let last=0;
