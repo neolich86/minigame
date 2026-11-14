@@ -182,6 +182,40 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       ],
     },
   },
+  "summon-td": {
+    ko: {
+      tips: [
+        "소환 비용은 두 번 소환할 때마다 1씩 올라요. 초반에는 소환을 아끼지 말고 조합으로 등급을 올리세요.",
+        "검사와 도둑은 사거리가 짧아요. 길과 가까운 가장자리 칸에 두어야 몬스터를 오래 때립니다.",
+        "복사 옆 칸의 아군은 공격력이 20% 올라요. 강한 유닛을 복사 옆에 붙이세요.",
+        "보스는 검사(보스에게 1.5배)와 도둑(치명타)이 잘 잡아요. 마법사와 복사만 키우면 보스에서 막힙니다.",
+        "최종 형태는 더 합쳐지지 않으니, 최종 형태가 늘어나면 자리가 모자라요. 짝 없는 낮은 등급 유닛은 팔아서 자리를 비우세요.",
+        "후반에는 처치 골드가 늘어나요. 소환 비용이 비싸지면 직업별·공통 강화가 더 이득입니다.",
+      ],
+      faq: [
+        { q: "몇 웨이브까지 있나요?", a: "끝이 없어요. 길 위의 몬스터가 50마리가 되거나 보스를 60초 안에 못 잡을 때까지 도달한 웨이브가 기록됩니다." },
+        { q: "조합은 어떻게 하나요?", a: "같은 직업·같은 등급 유닛 둘을 겹치면 한 단계 올라가요. 1차 → 2차 → 3차 → 각성 → 최종 형태 순서이고, 최종 형태는 더 합쳐지지 않습니다." },
+        { q: "최대 인원은 어떻게 늘리나요?", a: "18명에서 시작해 보스를 잡을 때마다 한 명씩 늘어나요 (최대 24명)." },
+        { q: "랭킹 기준은?", a: "도달 웨이브가 높을수록, 같으면 걸린 시간이 짧을수록 높아요. 시간은 게임 안의 시간이라 배속과 상관없어요." },
+      ],
+    },
+    en: {
+      tips: [
+        "The summon cost rises by 1 every two summons. Early on, summon freely and merge up.",
+        "Swordsmen and thieves have short range — keep them on edge tiles next to the road.",
+        "Allies on a tile next to an acolyte deal 20% more damage, so park your strongest heroes there.",
+        "Swordsmen (1.5x to bosses) and thieves (crits) are your boss killers. Mages and acolytes alone will stall on bosses.",
+        "Final forms cannot merge, so space runs out as they pile up. Sell low-tier heroes with no partner to free tiles.",
+        "Kill gold grows in later waves. Once summons get expensive, class and global upgrades pay off more.",
+      ],
+      faq: [
+        { q: "How many waves are there?", a: "It is endless. Your run ends when 50 monsters are on the road or a boss survives 60 seconds, and the wave you reached is recorded." },
+        { q: "How does merging work?", a: "Stack two heroes of the same class and tier to go up one step: tier 1 → tier 2 → tier 3 → Awakened → final form. Final forms cannot merge." },
+        { q: "How do I raise the unit cap?", a: "It starts at 18 and grows by one for every boss you kill (up to 24)." },
+        { q: "How is ranking decided?", a: "Higher wave first, then shorter time. Time is in-game time, so game speed does not matter." },
+      ],
+    },
+  },
   "element-td": {
     ko: {
       tips: [

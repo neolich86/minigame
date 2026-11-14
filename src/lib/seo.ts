@@ -320,6 +320,30 @@ export const GAME_SEO: SeoMap = {
       tags: ["Tower defense", "Strategy", "Job change", "Leaderboard", "Free"],
     },
   },
+  "summon-td": {
+    ko: {
+      title: "소환 디펜스 - 무료 랜덤 소환 디펜스 웹게임 (조합·보스)",
+      h1: "소환 디펜스 — 뽑고 합치는 랜덤 디펜스",
+      description:
+        "소환할 때마다 검사·도둑·마법사·복사 중 하나가 무작위로 나오는 무료 랜덤 소환 디펜스. 같은 유닛 둘을 조합해 팔라딘·섀도우 어쌔신·아크메이지·홀리 비숍까지 키우고, 도달 웨이브와 시간으로 랭킹을 겨루세요.",
+      keywords: ["소환 디펜스", "랜덤 디펜스", "랜덤 소환 디펜스", "타워디펜스", "조합 디펜스", "전략 게임", "무료 게임", "웹게임"],
+      about: [
+        "소환 디펜스는 골드로 유닛을 뽑아 필드에 세우는 랜덤 디펜스입니다. 소환하면 검사·도둑·마법사·복사 중 하나가 무작위로 나오고, 같은 직업·같은 등급 둘을 조합하면 1차에서 2차, 3차, 각성을 거쳐 최종 형태가 됩니다.",
+        "몬스터는 필드를 둘러싼 길을 계속 돕니다. 길 위의 몬스터가 50마리가 되거나 10웨이브마다 나오는 보스를 60초 안에 잡지 못하면 끝나요. 보스를 잡을 때마다 최대 인원이 한 명씩 늘고, 남는 골드는 직업별·공통 강화에 쓸 수 있습니다.",
+      ],
+      howTo: ["소환 버튼을 눌러 유닛을 뽑으세요.", "같은 직업·같은 등급 유닛을 끌어다 겹치거나 조합 버튼을 눌러 합치세요.", "유닛을 끌어 사거리가 길에 닿는 칸으로 옮기세요.", "보스를 60초 안에 잡으며 최대한 높은 웨이브에 도달하세요."],
+      tags: ["랜덤 디펜스", "소환", "조합", "전략", "랭킹", "무료"],
+    },
+    en: {
+      title: "Summon Defense - Free Random Summon Defense Browser Game",
+      h1: "Summon Defense — Summon, Merge, Defend",
+      description: "A free random summon defense: every summon brings a random swordsman, thief, mage or acolyte. Merge pairs up to their final form and climb the leaderboard by wave reached and time.",
+      keywords: ["summon defense", "random defense", "merge defense", "tower defense", "strategy game", "free game", "browser game"],
+      about: ["Summon Defense is a random defense game where gold buys heroes for your field. Each summon gives a random swordsman, thief, mage or acolyte, and merging two of the same class and tier takes them from tier 1 through tier 2, tier 3 and Awakened to a final form.", "Monsters keep circling the road around the field. The run ends when 50 monsters are on the road or a boss, which arrives every 10 waves, survives for 60 seconds. Every boss kill raises the unit cap by one, and spare gold goes into class and global upgrades."],
+      howTo: ["Tap Summon to draw a hero.", "Drag a hero onto a matching one, or tap Merge, to combine them.", "Drag heroes to tiles where their range reaches the road.", "Beat each boss within 60 seconds and reach the highest wave you can."],
+      tags: ["Random defense", "Summon", "Merge", "Strategy", "Leaderboard", "Free"],
+    },
+  },
   "isekai-hero": {
     ko: {
       title: "이세계 용사 - 무료 픽셀 방치형 RPG 웹게임",

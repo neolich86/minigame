@@ -522,6 +522,19 @@ const CATALOG: Game[] = [
     src: "/games/class-td/index.html",
     boards: [{ id: "class-td", label: { ko: "도달 라운드", en: "Round reached" }, unit: { ko: "", en: "" }, format: "roundtime" }],
   },
+  {
+    id: "summon-td",
+    title: { ko: "소환 디펜스", en: "Summon Defense" },
+    desc: {
+      ko: "소환하면 검사·도둑·마법사·복사 중 하나가 무작위로 등장! 같은 유닛 둘을 조합해 최종 형태까지 키우고, 길을 도는 몬스터와 10웨이브마다 오는 보스를 막으세요",
+      en: "Every summon brings a random swordsman, thief, mage or acolyte — merge pairs up to their final form and hold off the monsters circling the road and a boss every 10 waves",
+    },
+    genre: "strategy",
+    thumb: "/thumbs/summon-td.jpg",
+    src: "/games/summon-td/index.html",
+    boards: [{ id: "summon-td", label: { ko: "도달 웨이브", en: "Wave reached" }, unit: { ko: "", en: "" }, format: "roundtime" }],
+    hidden: true, // 시험판 — 확인 후 공개
+  },
 ];
 
 /** 포털에 보이는 모든 항목 (게임·도구·서비스) */
