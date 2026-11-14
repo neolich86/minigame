@@ -533,7 +533,6 @@ const CATALOG: Game[] = [
     thumb: "/thumbs/summon-td.jpg",
     src: "/games/summon-td/index.html",
     boards: [{ id: "summon-td", label: { ko: "도달 웨이브", en: "Wave reached" }, unit: { ko: "", en: "" }, format: "roundtime" }],
-    hidden: true, // 시험판 — 확인 후 공개
   },
 ];
 
