@@ -161,7 +161,7 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       ],
       faq: [
         { q: "몇 라운드까지 있나요?", a: "끝이 없어요. 생명이 0이 될 때까지 도달한 라운드가 기록됩니다." },
-        { q: "보상 카드는 언제 나오나요?", a: "짝수 라운드를 깰 때마다 세 장 중 하나를 고를 수 있어요. 직업 전용 카드는 그 직업을 배치했을 때만 나옵니다." },
+        { q: "보상 카드는 언제 나오나요?", a: "라운드를 깰 때마다 세 장 중 하나를 고를 수 있어요. 직업 전용 카드는 그 직업을 배치했을 때만 나옵니다." },
         { q: "랭킹 기준은?", a: "도달 라운드가 높을수록, 같으면 걸린 시간이 짧을수록 높아요. 시간은 게임 안의 시간이라 배속과 상관없어요." },
       ],
     },
@@ -177,7 +177,7 @@ export const GUIDES: Record<string, Record<Lang, Guide>> = {
       ],
       faq: [
         { q: "How many rounds are there?", a: "It is endless. The round you reach before running out of lives is recorded." },
-        { q: "When do reward cards appear?", a: "Every 2 rounds you pick one of three. Class-specific cards only show up if you have that class placed." },
+        { q: "When do reward cards appear?", a: "After every round you pick one of three. Class-specific cards only show up if you have that class placed." },
         { q: "How is ranking decided?", a: "Higher round first, then shorter time. Time is in-game time, so game speed does not matter." },
       ],
     },

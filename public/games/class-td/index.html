@@ -6,7 +6,7 @@
 <script src="/mgh/bridge.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RPG 디펜스 - 미니게임천국</title>
-<meta name="description" content="검사·도둑·마법사·복사를 배치해 몰려오는 몬스터를 막는 타워 디펜스. 자동 스킬과 전직, 2라운드마다 고르는 보상 카드로 조합을 완성하고 도달 라운드와 시간으로 랭킹을 겨루세요.">
+<meta name="description" content="검사·도둑·마법사·복사를 배치해 몰려오는 몬스터를 막는 타워 디펜스. 자동 스킬과 전직, 라운드마다 고르는 보상 카드로 조합을 완성하고 도달 라운드와 시간으로 랭킹을 겨루세요.">
 <meta name="robots" content="index,follow">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231d2c25'/%3E%3Cpath d='M32 8l5 30h-10z' fill='%23eef5ee'/%3E%3Crect x='22' y='38' width='20' height='5' rx='2' fill='%23f2c14e'/%3E%3Crect x='29' y='43' width='6' height='12' rx='2' fill='%23e2574c'/%3E%3C/svg%3E">
 <style>
@@ -344,7 +344,7 @@ function update(dt){
   // 웨이브
   if(S.queue.length){ for(const q of S.queue) q.t-=dt; while(S.queue.length&&S.queue[0].t<=0) spawn(S.queue.shift()); }
   else if(!S.mons.length){
-    if(S.wave>0&&S.wave%2===0&&!S.carded){ S.carded=true; offerCards(); return; }
+    if(S.wave>0&&!S.carded){ S.carded=true; offerCards(); return; }
     S.rest-=dt; if(S.rest<=0){ S.rest=2.5; S.carded=false; startWave(); }
   }
   // 몬스터
