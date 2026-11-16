@@ -5,8 +5,8 @@
 <link rel="canonical" href="/play/witch">
 <script src="/mgh/bridge.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>마녀 키우기 - 미니게임천국</title>
-<meta name="description" content="몰려오는 적 군대를 마녀의 화려한 마법으로 쓸어버리는 픽셀 서바이벌. 레벨업마다 메테오·천둥·블랙홀·화염 용 같은 큰 마법을 골라 15분을 버티세요.">
+<title>영웅 키우기 - 미니게임천국</title>
+<meta name="description" content="몰려오는 적 군대를 네 영웅의 화려한 마법으로 쓸어버리는 픽셀 서바이벌. 레벨업마다 메테오·천둥·블랙홀·화염 용 같은 큰 마법을 골라 15분을 버티세요.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232a1840'/%3E%3Cpath d='M32 6 46 40H18z' fill='%237a3ad8'/%3E%3Crect x='12' y='38' width='40' height='7' rx='3' fill='%235a2aa8'/%3E%3Ccircle cx='46' cy='16' r='5' fill='%23ffd34a'/%3E%3C/svg%3E">
 <style>
 @font-face{font-family:G;font-weight:700;src:url(assets/Galmuri11-Bold.woff2) format('woff2');font-display:swap}
@@ -52,7 +52,13 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .scr .sub{font-size:13px;color:var(--dim);margin:6px 0 16px;text-align:center;line-height:1.6}
 .big{min-width:220px;min-height:52px;padding:12px 24px;font-size:20px;border:3px solid var(--edge);border-radius:16px;background:linear-gradient(#ffd96a,#e09a18);color:#2a1400;box-shadow:0 4px 0 var(--edge);margin-top:10px}
 .ghost{background:linear-gradient(#5a4090,#3a2468);color:var(--ink)}
-#heroPrev{width:168px;height:224px;image-rendering:pixelated}
+#heroPrev{width:200px;height:170px}
+#picker{display:flex;gap:8px;margin:4px 0 8px}
+.pick{width:76px;min-height:88px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px;border:3px solid var(--edge);border-radius:14px;background:linear-gradient(#3a2458,#24143a);color:var(--ink);font-size:13px;box-shadow:0 3px 0 var(--edge)}
+.pick canvas{width:52px;height:52px;border-radius:10px;background:#1a1028}
+.pick.on{background:linear-gradient(#ffd96a,#e09a18);color:#2a1400;transform:translateY(-2px)}
+.clsRole{font-size:15px;color:var(--gold)}
+.clsDesc{font-size:12px;color:var(--dim);text-align:center;line-height:1.6;max-width:320px;min-height:38px;margin-top:2px}
 .best{font-size:13px;color:var(--dim);margin-top:10px}
 .how{font-size:12px;color:var(--dim);margin-top:16px;text-align:center;line-height:1.7}
 #lvl h2{margin-bottom:12px}
@@ -93,9 +99,11 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   <button id="dashBtn" class="sh">대시</button>
 </div>
 <div id="start" class="scr" hidden>
-  <h1 class="sh">마녀 키우기</h1>
-  <div class="sub">몰려오는 적 군대를 화려한 마법으로 쓸어버리세요!<br>레벨업마다 마법을 골라 15분을 버티면 마지막 보스가 나와요.</div>
-  <canvas id="heroPrev" width="48" height="64"></canvas>
+  <h1 class="sh">영웅 키우기</h1>
+  <div class="sub">몰려오는 적 군대를 화려한 마법으로 쓸어버리세요!<br>영웅을 골라 15분을 버티면 마지막 보스가 나와요.</div>
+  <canvas id="heroPrev" width="200" height="170"></canvas>
+  <div class="clsRole sh" id="clsRole"></div><div class="clsDesc" id="clsDesc"></div>
+  <div id="picker"></div>
   <button class="big" id="startBtn">시작</button>
   <div class="best" id="bestTxt"></div>
   <div class="how">모바일: 화면을 끌어 이동 · 대시 버튼으로 회피<br>PC: WASD / 방향키 이동 · Space 대시</div>
@@ -104,7 +112,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 <div id="pause" class="scr" hidden><h2 class="sh">일시정지</h2><div id="pskills"></div><button class="big" id="resumeBtn">계속하기</button><button class="big ghost" id="quitBtn">처음으로</button></div>
 <div id="end" class="scr" hidden><h2 class="sh" id="endTitle">쓰러졌어요…</h2><div class="stats"><div><small>버틴 시간</small><b id="eTime">0:00</b></div><div><small>레벨</small><b id="eLv">1</b></div><div><small>처치</small><b id="eKills">0</b></div></div><div class="best" id="eBest"></div><button class="big" id="againBtn">다시 하기</button></div>
 <div id="flash"></div>
-<div id="load">마녀가 준비 중…</div>
+<div id="load">영웅이 준비 중…</div>
 <script type="module" src="game.js"></script>
 </body>
 </html>

@@ -72,13 +72,24 @@ export const MAX_ATK = 5;
 export const cardMax = (id) => CARDS[id].max || (CARDS[id].once ? 99 : 5);
 export function cardDesc(id, nextLv) { const d = CARDS[id].d; return d[Math.min(d.length - 1, nextLv - 1)]; }
 
+// ---------- 영웅 (4직업) ----------
+// basic: 기본 공격 방식 · sig: 처음부터 가진 대표 마법
+export const HEROES = {
+  knight:   { name: '검사',     role: '튼튼한 근접 · 주변을 베기', hp: 140, spd: 1,    rate: .55, basic: 'slash',  sig: 'swords',  d: '검을 휘둘러 앞쪽 적을 한꺼번에 베어요. 체력이 가장 많아요.' },
+  assassin: { name: '도둑',     role: '빠른 연사 · 이동 속도',     hp: 100, spd: 1.12, rate: .36, basic: 'dagger', sig: 'stars',   d: '단검을 빠르게 던지고, 가장 빨리 움직여요.' },
+  mage:     { name: '마법사',   role: '원거리 마법 · 큰 범위',     hp: 90,  spd: 1,    rate: .62, basic: 'orb',    sig: 'meteor',  d: '마력 구슬을 쏘고, 마법 범위가 10% 넓어요.' },
+  priest:   { name: '프리스트', role: '관통 빛 · 회복',            hp: 115, spd: 1,    rate: .7,  basic: 'holy',   sig: 'pillars', d: '적을 꿰뚫는 빛을 쏘고, 체력이 천천히 차올라요.' },
+};
+export const HERO_IDS = Object.keys(HEROES);
 // ---------- 게임 ----------
 let UID = 1;
 export function newGame(o = {}) {
+  const cls = HEROES[o.cls] ? o.cls : 'mage', HC = HEROES[cls];
   const G = {
+    cls, HC,
     t: 0, over: false, win: false, rnd: o.rnd || Math.random,
     view: { w: o.vw || 460, h: o.vh || 820 },
-    h: { x: 0, y: 0, vx: 0, vy: 0, hp: 100, max: 100, face: 0, inv: 0, dash: 0, dashCd: 0, dashDir: [0, 1], dead: false, hurtT: 0, autoDashCd: 0, barrierCd: 0, shield: false, atkT: 0 },
+    h: { x: 0, y: 0, vx: 0, vy: 0, hp: HC.hp, max: HC.hp, face: 0, fx: 1, atkD: .3, inv: 0, dash: 0, dashCd: 0, dashDir: [0, 1], dead: false, hurtT: 0, autoDashCd: 0, barrierCd: 0, shield: false, atkT: 0 },
     lv: 1, xp: 0, kills: 0, gold: 0,
     sk: {},               // 카드 레벨
     cd: {},               // 스킬 재사용
@@ -87,6 +98,7 @@ export function newGame(o = {}) {
     rerolls: 0, pending: 0, choices: null,
     stats: { dmg: 0 },
   };
+  G.sk[HC.sig] = 1; G.cd[HC.sig] = .8;
   return G;
 }
 const R = (G, a, b) => a + G.rnd() * (b - a);
@@ -95,8 +107,8 @@ const L = (G, id) => G.sk[id] || 0;
 export function S(G) {
   const k = (id) => L(G, id);
   return {
-    atk: Math.pow(1.15, k('atk')), aspd: Math.pow(1.15, k('aspd')), cdr: Math.pow(.9, k('cdr')), area: 1 + .15 * k('area'),
-    orbs: 1 + k('multi'), crit: .05 + .08 * k('crit'), critD: 1.6 + .2 * k('crit'), speed: 175 * (1 + .1 * k('speed')),
+    atk: Math.pow(1.15, k('atk')), aspd: Math.pow(1.15, k('aspd')), cdr: Math.pow(.9, k('cdr')), area: (1 + .15 * k('area')) * (G.cls === 'mage' ? 1.1 : 1),
+    orbs: 1 + k('multi'), crit: .05 + .08 * k('crit'), critD: 1.6 + .2 * k('crit'), speed: 175 * (G.HC ? G.HC.spd : 1) * (1 + .1 * k('speed')),
     xp: 1 + .2 * k('wisdom'), magnet: 105 * (1 + .4 * k('magnet')),
   };
 }
@@ -365,21 +377,32 @@ export function step(G, dt, input = { x: 0, y: 0 }) {
   // 영웅 이동
   h.inv = Math.max(0, h.inv - dt); h.dashCd = Math.max(0, h.dashCd - dt); h.autoDashCd = Math.max(0, h.autoDashCd - dt); h.hurtT = Math.max(0, h.hurtT - dt); h.atkT = Math.max(0, h.atkT - dt);
   if (L(G, 'barrier') && !h.shield) { h.barrierCd -= dt; if (h.barrierCd <= 0) h.shield = true; }
-  if (L(G, 'regen')) h.hp = Math.min(h.max, h.hp + h.max * .01 * L(G, 'regen') * dt);
+  if (L(G, 'regen') || G.cls === 'priest') h.hp = Math.min(h.max, h.hp + h.max * (.01 * L(G, 'regen') + (G.cls === 'priest' ? .006 : 0)) * dt);
   if (h.dash > 0) { h.dash -= dt; h.x += h.dashDir[0] * 820 * dt; h.y += h.dashDir[1] * 820 * dt; }
   else {
     const il = Math.min(1, Math.hypot(input.x, input.y));
     if (il > .05) { const a = Math.atan2(input.y, input.x); h.vx = Math.cos(a) * st.speed * il; h.vy = Math.sin(a) * st.speed * il; h.dashDir = [Math.cos(a), Math.sin(a)]; } else { h.vx = h.vy = 0; }
     h.x += h.vx * dt; h.y += h.vy * dt;
+    if (Math.abs(h.vx) > 5 && h.atkT <= 0) h.fx = h.vx > 0 ? 1 : -1;
   }
   spawnStep(G, dt);
-  // 기본 공격: 마력 구슬
+  // 기본 공격 (직업마다 다름)
   G.cd.basic = (G.cd.basic ?? .2) - dt * st.aspd;
   if (G.cd.basic <= 0) {
-    const tg = G.mons.filter((m) => !m.dead && dist(m, h) < 430).sort((a, b) => dist(a, h) - dist(b, h));
+    const HC = G.HC, range = HC.basic === 'slash' ? 120 : 430;
+    const tg = G.mons.filter((m) => !m.dead && dist(m, h) < range).sort((a, b) => dist(a, h) - dist(b, h));
     if (tg.length) {
-      G.cd.basic = .62; h.atkT = .18;
-      for (let i = 0; i < st.orbs; i++) { const t = tg[i % tg.length], a = Math.atan2(t.y - (h.y - 22), t.x - h.x) + (i - (st.orbs - 1) / 2) * .12; G.shots.push({ k: 'orb', x: h.x, y: h.y - 22, vx: Math.cos(a) * 560, vy: Math.sin(a) * 560, t: 0, life: 1, d: 15, r: 9 }); }
+      G.cd.basic = HC.rate; h.atkT = h.atkD = Math.min(.32, HC.rate * .8); h.fx = tg[0].x >= h.x ? 1 : -1;
+      const sy = h.y - 24;
+      if (HC.basic === 'slash') {
+        const a0 = Math.atan2(tg[0].y - h.y, tg[0].x - h.x), R2 = 105 * st.area * (1 + .12 * (st.orbs - 1));
+        for (const m of G.mons) { if (m.dead) continue; const d = Math.hypot(m.x - h.x, m.y - h.y); if (d > R2 + m.r) continue; let da = Math.abs(Math.atan2(m.y - h.y, m.x - h.x) - a0); if (da > Math.PI) da = 6.283 - da; if (da < 1.25 || d < 30) { hit(G, m, 24, { kb: 70 }); if (L(G, 'mark')) m.mark = 4; } }
+        G.ev.push({ e: 'fx', k: 'slash', x: h.x, y: h.y - 18, a: a0, r: R2 });
+      } else {
+        const sp = HC.basic === 'dagger' ? 760 : HC.basic === 'holy' ? 500 : 560, dmg = HC.basic === 'dagger' ? 10 : HC.basic === 'holy' ? 14 : 15;
+        const n = st.orbs + (HC.basic === 'dagger' ? 1 : 0);
+        for (let i = 0; i < n; i++) { const t = tg[i % tg.length], a = Math.atan2(t.y - 16 - sy, t.x - h.x) + (i - (n - 1) / 2) * .12; G.shots.push({ k: HC.basic, x: h.x, y: sy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, t: 0, life: 1, d: dmg, r: HC.basic === 'holy' ? 12 : 8, pierce: HC.basic === 'holy' ? 3 : 0, hitIds: null }); }
+      }
       G.ev.push({ e: 'cast' });
     } else G.cd.basic = .05;
   }
@@ -401,7 +424,11 @@ export function step(G, dt, input = { x: 0, y: 0 }) {
     s.x += s.vx * dt; s.y += s.vy * dt;
     let hitM = null; for (const m of G.mons) { if (m.dead) continue; if (Math.hypot(m.x - s.x, m.y - m.r - s.y) < m.r + (s.r || 8)) { hitM = m; break; } }
     if (hitM) {
-      if (s.k === 'orb') { hit(G, hitM, s.d, { kb: 18 }); if (L(G, 'mark')) hitM.mark = 4; G.ev.push({ e: 'fx', k: 'orbhit', x: s.x, y: s.y }); }
+      if (s.k === 'orb' || s.k === 'dagger' || s.k === 'holy') {
+        if (s.hitIds && s.hitIds.has(hitM.id)) { if (s.t > s.life) G.shots.splice(i, 1); continue; }
+        hit(G, hitM, s.d, { kb: 18 }); if (L(G, 'mark')) hitM.mark = 4; G.ev.push({ e: 'fx', k: s.k === 'holy' ? 'holyhit' : 'orbhit', x: s.x, y: s.y });
+        if (s.pierce > 0) { s.pierce--; (s.hitIds = s.hitIds || new Set()).add(hitM.id); continue; }
+      }
       else { hit(G, hitM, s.d, { c: 'y' }); G.ev.push({ e: 'fx', k: s.boom ? 'starboom' : 'orbhit', x: s.x, y: s.y }); if (s.boom) for (const m of near(G, s.x, s.y, 50)) if (m !== hitM) hit(G, m, s.d * .6, { quiet: 1 }); }
       G.shots.splice(i, 1); continue;
     }

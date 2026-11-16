@@ -462,10 +462,10 @@ const CATALOG: Game[] = [
   },
   {
     id: "witch",
-    title: { ko: "마녀 키우기", en: "Grow Your Witch" },
+    title: { ko: "영웅 키우기", en: "Grow Your Heroes" },
     desc: {
-      ko: "몰려오는 적 군대를 마녀의 화려한 마법으로 쓸어버리는 픽셀 서바이벌. 레벨업마다 메테오·천둥·블랙홀·화염 용 같은 큰 마법을 골라 15분을 버티세요",
-      en: "A pixel survivor — sweep away marching armies with a witch's huge spells. Pick Meteor, Thunder, Black Hole or Fire Dragon each level-up and survive 15 minutes",
+      ko: "검사·도둑·마법사·프리스트 중 한 명을 골라 몰려오는 적 군대를 쓸어버리는 서바이벌. 레벨업마다 메테오·천둥·블랙홀·화염 용 같은 큰 마법을 골라 15분을 버티세요",
+      en: "A survivor game — pick a Knight, Rogue, Mage or Priest and sweep away marching armies. Pick Meteor, Thunder, Black Hole or Fire Dragon each level-up and survive 15 minutes",
     },
     genre: "action",
     thumb: "/thumbs/witch.jpg",
