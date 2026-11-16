@@ -196,7 +196,8 @@ function drawMon(m, dt) {
 // 지속 스킬·장판
 function drawZones() {
   for (const z of G.zones) {
-    if (z.k === 'meteor' || z.k === 'pillar') {
+    if (z.k === 'meteor') continue; // 떨어지는 모습·그림자 없이 바닥 충돌 이펙트만
+    if (z.k === 'pillar') {
       if (z.done) continue; const u = z.t / z.at, x = tx(z.x), y = ty(z.y), r = z.r * Z;
       g.fillStyle = z.k === 'meteor' ? `rgba(40,10,0,${.15 + .35 * u})` : `rgba(255,230,120,${.1 + .25 * u})`; g.beginPath(); g.ellipse(x, y, r * (.4 + .6 * u), r * .5 * (.4 + .6 * u), 0, 0, 7); g.fill();
       if (z.k === 'meteor') { g.save(); g.globalCompositeOperation = 'lighter'; const mx = x + (1 - u) * 260 * Z, my = y - (1 - u) * 420 * Z; glow(mx, my, (z.big ? 70 : 26) * Z, '255,120,30'); g.strokeStyle = 'rgba(255,160,60,.6)'; g.lineWidth = (z.big ? 26 : 10) * Z; g.beginPath(); g.moveTo(mx, my); g.lineTo(mx + 70 * Z, my - 110 * Z); g.stroke(); g.restore(); }
