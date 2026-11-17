@@ -25,10 +25,10 @@ button:disabled{cursor:default;opacity:.45}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,#8bd05a,#4f9d3a);width:0}
 .stage{position:relative;border-radius:14px;overflow:hidden;border:3px solid #6b4a26;box-shadow:0 6px 18px rgba(80,60,20,.25);background:#7cc25a}
 canvas#cv{display:block;width:100%;height:auto;touch-action:none}
-.place{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:center;gap:8px}
-.place button{height:40px;padding:0 18px;border-radius:12px;font-weight:800;color:#fff;background:var(--good);box-shadow:0 3px 0 rgba(0,0,0,.2)}
+.place{position:fixed;left:0;right:0;bottom:calc(12px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:8px;z-index:6;padding-top:8px}
+.place button{height:44px;padding:0 18px;border-radius:12px;font-weight:800;color:#fff;background:var(--good);box-shadow:0 3px 0 rgba(0,0,0,.2)}
 .place button.no{background:#8c7a63}
-.place .msg{position:absolute;bottom:50px;left:0;right:0;text-align:center;font-size:12.5px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.place .msg{position:absolute;bottom:52px;left:50%;transform:translateX(-50%);white-space:nowrap;padding:5px 12px;border-radius:999px;background:rgba(50,32,12,.85);font-size:12.5px;font-weight:700;color:#fff}
 .sub{display:flex;align-items:center;gap:8px;margin:6px 2px 0;font-size:12px;color:var(--dim)}
 .sub .sp{flex:1}
 .sbtn{height:28px;padding:0 10px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:12px;font-weight:700}
