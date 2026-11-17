@@ -22,4 +22,6 @@ must("</style>", "#btnVs{display:none!important}\n</style>");
 fs.writeFileSync(path.join(out, "index.html"), html);
 fs.copyFileSync(path.join(root, "public/mgh/bridge.js"), path.join(out, "public/mgh/bridge.js"));
 fs.copyFileSync(path.join(root, "public/mgh/i18n/archer.js"), path.join(out, "public/mgh/i18n/archer.js"));
+// 새 그림(힉스필드) — index.html 이 assets/ 로 불러온다
+fs.cpSync(path.join(root, "public/games/archer/assets"), path.join(out, "public/assets"), { recursive: true });
 console.log("web/ ready");

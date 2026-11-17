@@ -7,6 +7,7 @@
     "충격 화살": "Impact Arrow", "현자의 통찰": "Sage's Insight", "도약 화살": "Ricochet Arrow",
     "가시 장판": "Spike Trap", "벼락": "Thunderbolt", "운석 낙하": "Meteor Fall", "블랙홀": "Black Hole",
     "지뢰": "Landmine", "부메랑": "Boomerang", "행운의 룰렛": "Lucky Roulette",
+    "서리 화살": "Frost Arrow", "그림자 분신": "Shadow Clone", "화살비": "Arrow Rain", "궤도 화살": "Orbiting Arrows",
   };
   var MON = {
     "초록 슬라임": "Green Slime", "파랑 슬라임": "Blue Slime", "박쥐": "Bat", "꿀벌": "Bee", "새싹이": "Sprout",
@@ -47,6 +48,10 @@
     "운석이 동시에 2개 떨어집니다": "Two meteors fall at once",
     "낙하 지점에 화염 장판 생성 (지속 피해)": "Impact leaves a burning field (damage over time)",
     "폭발 범위가 크게 증가합니다": "Explosion radius greatly increased",
+    "분신 1명이 함께 화살을 쏩니다 (공격력의 40%)": "A shadow clone fires arrows with you (40% ATK)",
+    "분신이 2명으로 늘어납니다": "Two shadow clones",
+    "분신의 공격력이 60%로 오릅니다": "Clone damage rises to 60%",
+    "분신도 멀티샷·폭발 화살 효과를 받습니다": "Clones also get Multishot and Explosive Arrow",
     "+체력 회복": "+HP restored",
     "방어!": "Blocked!",
     "몬스터 전멸!": "Monsters wiped out!",
@@ -85,6 +90,9 @@
       [/^3초마다 주변에 지뢰 (\d+)개 설치 — 밟으면 폭발 \(반경 (\d+), 피해 ([\d.]+)×공격력\)$/, "Every 3s, plant $1 mine(s) nearby — they explode when stepped on (radius $2, $3×ATK)"],
       [/^2\.2초마다 (적 방향 \+ 반대 방향 2개를 )?던져 왕복하며 관통 타격 \(크기 (\d+), 피해 ([\d.]+)×공격력, 왕복 각 1회\)$/, function (_, two, sz, d) { return "Every 2.2s throw " + (two ? "2 boomerangs (one at the enemy, one opposite) " : "a boomerang ") + "that pierces on the way out and back (size " + sz + ", " + d + "×ATK, once per leg)"; }],
       [/^(\d+)초마다 슬롯머신이 돌아 7초간 무작위 버프 \(공속×2 \/ 이속×3 \/ 치명타100% \/ 공격력×2 \/ 무적\)$/, "Every $1s a slot machine grants a random 7s buff (ATK SPD×2 / Speed×3 / Crit 100% / ATK×2 / Invincible)"],
+      [/^화살에 맞은 적이 (\d+)% 느려지고, (\d+)% 확률로 1초 얼어붙습니다$/, "Hit enemies are slowed $1% and have a $2% chance to freeze for 1s"],
+      [/^(\d)초마다 적이 가장 많은 곳에 2초 동안 화살비 \(범위 (\d+), 초당 ([\d.]+)×공격력\)$/, "Every $1s, arrows rain for 2s where enemies are thickest (radius $2, $3×ATK per second)"],
+      [/^화살 (\d)개가 주위를 돌며 닿는 적을 벱니다 \(피해 ([\d.]+)×공격력\)$/, "$1 arrows orbit you and slash enemies they touch ($2×ATK)"],
       [/^(일반|고급|희귀|전설) · Lv (\d+)\/(\d+)$/, function (_, r, a, b) { return RAR[r] + " · Lv " + a + "/" + b; }],
       [/^생존 ([\d:]+) · LV (\d+) · 처치 (\d+)$/, "Survived $1 · LV $2 · Kills $3"],
       [/^보스 (\d+)체를 쓰러뜨렸다\. 다음엔 더 멀리\.$/, "You defeated $1 boss(es). Go further next time."],
