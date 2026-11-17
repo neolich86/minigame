@@ -1861,7 +1861,7 @@ function draw(){
     // 낙하하는 운석 본체 (예고 후반부에 하늘에서 접근)
     if(k>0.35 && NEW.F){
       const fall = clamp((k-0.35)/0.65,0,1);
-      fxDraw('meteor', m.x+(1-fall)*160, m.y-(1-fall)*420, 96+fall*20, .62, .72);
+      fxDraw('meteor', m.x, m.y-(1-fall)*420, 96+fall*20, .62, .72, 0.76);   // 그림의 대각선 꼬리를 위로 세워 수직 낙하
     } else if(k>0.35){
       const fall = clamp((k-0.35)/0.65,0,1);
       ctx.save();
