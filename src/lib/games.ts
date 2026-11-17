@@ -187,8 +187,8 @@ const CATALOG: Game[] = [
     id: "dragon-ranch",
     title: { ko: "드래곤 목장", en: "Dragon Ranch" },
     desc: {
-      ko: "둥지를 짓고 알을 부화시켜 용을 키우는 작은 목장. 밭에서 먹이를 길러 용을 키우고, 두 용을 짝지어 새로운 용을 도감에 모아 보세요",
-      en: "A tiny ranch for raising dragons — hatch eggs, grow feed, and pair dragons to discover new species",
+      ko: "둥지를 짓고 알을 부화시켜 용을 키우는 작은 목장. 아기 용을 어른으로 키우고, 낮·밤·진화석에 따라 3가지 모습으로 진화시켜 도감 44칸을 채워 보세요",
+      en: "A tiny ranch for raising dragons — hatch eggs, grow them up, and evolve each into sun, moon or elemental forms to fill a 44-entry dex",
     },
     genre: "casual",
     thumb: "/thumbs/dragon-ranch.jpg",
