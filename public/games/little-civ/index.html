@@ -84,6 +84,15 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .btn.w{background:#fff;color:var(--ink)}.btn.g{background:var(--good)}
 .toast{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.9);opacity:0;background:rgba(47,42,69,.94);color:#fff;padding:10px 16px;border-radius:14px;font-weight:800;font-size:14.5px;z-index:20;transition:.2s;pointer-events:none;text-align:center;max-width:86vw}
 .toast.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+/* 튜토리얼 */
+#tutHi{position:fixed;z-index:9;border:3px solid #ffd65a;border-radius:16px;pointer-events:none;box-shadow:0 0 0 4px rgba(255,214,90,.35);animation:hi 1s infinite}
+@keyframes hi{50%{box-shadow:0 0 0 10px rgba(255,214,90,0)}}
+#tut{position:fixed;left:10px;right:10px;z-index:11;max-width:420px;margin:0 auto;background:var(--card);border:3px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 var(--ink);padding:12px 14px;animation:pin .22s}
+#tut p{margin:4px 0 8px;font-size:14px;line-height:1.55}#tut small{color:var(--dim);font-size:12px}
+.tstep{font-size:11.5px;font-weight:900;color:var(--acc)}
+.trow{display:flex;gap:8px;justify-content:flex-end;align-items:center}
+.tskip{min-height:44px;padding:0 10px;font-size:12.5px;font-weight:800;color:var(--dim)}
+.tnext{min-height:44px;padding:0 18px;border-radius:12px;background:var(--acc);color:#fff;font-weight:900;border:2.5px solid var(--ink);box-shadow:0 3px 0 var(--ink)}
 /* 타이틀 */
 #title{position:fixed;inset:0;z-index:12;background:#2a79b4 center top/cover no-repeat;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:24px 24px calc(36px + env(safe-area-inset-bottom))}
 #title::before{content:'';position:absolute;left:0;right:0;bottom:0;height:45%;background:linear-gradient(transparent,rgba(20,40,70,.65))}
@@ -112,6 +121,8 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 </div>
 <div id="sheet" hidden><div id="sheetIn"></div></div>
 <div class="dim" id="cardDim" hidden><div class="pop" id="card"></div></div>
+<div id="tutHi" hidden></div>
+<div id="tut" hidden></div>
 <div class="toast" id="toast"></div>
 <div id="title" style="background-image:url(assets/title.webp)"><div class="box"><h1>나만의 문명 만들기<small>MY LITTLE CIVILIZATION</small></h1><p>작은 섬에 생명을 탄생시키고, 문명이 스스로 자라는 걸 지켜보세요</p><button class="btn" id="newBtn">시작하기</button><button class="btn w" id="contBtn" hidden>이어하기</button></div></div>
 <div id="load">섬을 만드는 중…</div>

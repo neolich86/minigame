@@ -140,6 +140,7 @@ function draw(t) {
     g.font = `800 ${Math.max(11, 12 * Math.min(1.3, cam.s * 1.2))}px Pretendard,system-ui`; const tw = g.measureText(s).width + 14;
     g.fillStyle = 'rgba(40,30,60,.82)'; rr(X - tw / 2, Y, tw, 20, 10); g.fill(); g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(s, X, Y + 10.5);
   }
+  if (tut >= 0 && TUT[tut].ring && w.tribes[0]) { const tb = w.tribes[0], p = (t / 900) % 1; g.strokeStyle = `rgba(255,214,90,${1 - p})`; g.lineWidth = 4; g.beginPath(); g.arc(sx((tb.cx + .5) * TS), sy((tb.cy + .5) * TS), (tb.radius + .3) * TS * cam.s * (.85 + p * .15), 0, 6.283); g.stroke(); }
   drawFx(t);
 }
 function rr(x, y, w2, h2, r) { g.beginPath(); g.roundRect ? g.roundRect(x, y, w2, h2, r) : g.rect(x, y, w2, h2); }
@@ -243,11 +244,11 @@ function pickTool(kind, id, name, desc) {
   if (kind === 'life') { const i = +id; if (w.tribes.some((tb) => tb.sp === i)) return toast('이미 섬에 살고 있어요'); if (w.tribes.length >= C.slots(w)) return toast(w.tribes.length === 1 ? '첫 종족이 농경 시대가 되면 열려요' : '종족이 부족 국가 시대가 되면 열려요'); }
   tool = { kind, id }; hint(kind === 'terra' ? `${name}: 땅을 누르거나 끌어서 칠해요 · ${desc}` : kind === 'power' ? `${name}: 마을이나 땅을 눌러요 · ${desc}` : `${name}: 섬의 땅을 눌러 탄생시켜요 · ${desc}`); hud();
 }
-function hint(s) { $('hint').textContent = s; $('hint').hidden = !s; }
+function hint(s) { $('hint').textContent = s; $('hint').hidden = !s || tut >= 0; }
 let toastT = 0; function toast(s) { const e = $('toast'); e.textContent = s; e.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => e.classList.remove('on'), 1800); }
 
 // ---------- 종족 상세 ----------
-function openTribe(id) { selTb = id; $('sheet').hidden = false; $('sheet').dataset.k = ''; fillTribe(true); }
+function openTribe(id) { tutStat.sheet++; selTb = id; $('sheet').hidden = false; $('sheet').dataset.k = ''; fillTribe(true); }
 function fillTribe(full) {
   const tb = w.tribes[selTb]; if (!tb) return; const sp = C.SPECIES[tb.sp], r = tb._r || C.rates(w, tb), el = $('sheetIn');
   const key = tb.era + '|' + tb.techs.length + '|' + (tb.research || '');
@@ -326,13 +327,13 @@ const tileAt = (px, py) => [Math.floor(ix(px) / TS), Math.floor(iy(py) / TS)];
 function applyAt(px, py) {
   const [x, y] = tileAt(px, py); const i = y * C.W + x; if (i === lastTile) return; lastTile = i;
   const r = C.terraform(w, tool.id, x, y);
-  if (r.ok) { terrDirty = true; fx.push({ k: 'spark', x: (x + .5) * TS, y: (y + .5) * TS, t: 0, life: .5 }); C.territory(w); }
+  if (r.ok) { tutStat.terra[tool.id] = (tutStat.terra[tool.id] || 0) + 1; terrDirty = true; fx.push({ k: 'spark', x: (x + .5) * TS, y: (y + .5) * TS, t: 0, life: .5 }); C.territory(w); }
   else if (r.msg) toast(r.msg);
 }
 function tapAt(px, py) {
   const [x, y] = tileAt(px, py); if (!C.inb(x, y)) return;
   if (tool && tool.kind === 'power') {
-    const r = C.usePower(w, tool.id, x, y); if (!r.ok) return toast(r.msg || '');
+    const r = C.usePower(w, tool.id, x, y); if (!r.ok) return toast(r.msg || ''); tutStat.power[tool.id] = 1;
     const X = (x + .5) * TS, Y = (y + .5) * TS;
     fx.push({ k: { rain: 'rain', bolt: 'bolt' }[tool.id] || 'ring', x: X, y: Y, t: 0, life: tool.id === 'rain' ? 1.6 : 1 }); fx.push({ k: 'txt', s: r.msg, x: X, y: Y - 30, t: 0, life: 1.6 });
     if (tool.id === 'quake') { shake = 1; terrDirty = true; } if (tool.id === 'rain') terrDirty = true;
@@ -386,6 +387,7 @@ function start(cont) {
   agents.length = 0; syncAgents(); terrDirty = true; fitCam(true); cam.x = WW / 2; cam.y = WH / 2;
   tab = 'life'; buildTools();
   if (!w.tribes.length) { hint('🐣 아래에서 종족을 골라 섬에 첫 생명을 탄생시켜 보세요'); }
+  if (!cont && !tutDone()) tutStart(0);
   save();
 }
 function ending() {
@@ -410,6 +412,7 @@ function frame(now) {
     saveT += dt; if (saveT > 5) { saveT = 0; save(); }
   }
   if (shake > 0) { shake -= dt * 1.5; cam.x += (Math.random() - .5) * 6 * shake; cam.y += (Math.random() - .5) * 6 * shake; }
+  if (tut >= 0) tutTick();
   draw(now);
   requestAnimationFrame(frame);
 }
@@ -430,16 +433,71 @@ async function boot() {
   $('cardDim').onclick = (e) => { if (e.target === $('cardDim') && card && !card.choice && card.k !== 'away') closeCard(); };
   addEventListener('visibilitychange', () => { if (document.hidden) save(); });
   setupAuth();
-  if (TEST) window.__civ = { C, get w() { return w; }, set w(v) { w = v; }, step: (n, dt = 1) => { for (let k = 0; k < n; k++) C.step(w, dt); }, start, cam, openTribe, showCard, get card() { return card; }, closeCard, syncAgents, setTool: (kind, id) => (tool = { kind, id }), tapAt, redraw: () => (terrDirty = true) };
+  if (TEST) window.__civ = { C, get w() { return w; }, set w(v) { w = v; }, step: (n, dt = 1) => { for (let k = 0; k < n; k++) C.step(w, dt); }, start, cam, openTribe, showCard, get card() { return card; }, closeCard, syncAgents, setTool: (kind, id) => (tool = { kind, id }), tapAt, redraw: () => (terrDirty = true), get tut() { return tut; }, tutStart, tutStat };
   requestAnimationFrame(frame);
+}
+// ---------- 튜토리얼 ----------
+const TUT_KEY = 'mgh:little-civ:tut';
+const tutStat = { terra: {}, power: {}, sheet: 0 };
+let tut = -1, tutBase = 0;
+const tutDone = () => { try { return localStorage.getItem(TUT_KEY) === '1'; } catch (e) { return false; } };
+const mana = (n) => { if (w.mana < n) w.mana = n; };
+const openFirst = () => { if (w.tribes[0] && $('sheet').hidden) openTribe(0); };
+const TUT = [
+  { t: '안녕하세요, 신님! 👋<br>이 작은 섬은 아직 텅 비어 있어요. 생명을 탄생시키고 살기 좋은 환경을 만들어 주면, 주민들이 <b>스스로 일하고 문명을 키워요.</b>', next: '좋아요' },
+  { sel: '.tool[data-kind=life][data-id="0"]', t: '먼저 첫 종족을 골라요.<br>🐰 <b>토토족</b>을 눌러 보세요. 초원을 좋아하고 식량이 잘 늘어요.', on: () => { tab = 'life'; buildTools(); }, done: () => tool && tool.kind === 'life' },
+  { t: '섬의 <b>초록 땅</b>을 아무 곳이나 눌러 탄생시켜요.<br>가운데쯤이 넓게 퍼지기 좋아요.', done: () => w.tribes.length > 0, back: () => !(tool && tool.kind === 'life') && !w.tribes.length ? 1 : -1 },
+  { sel: '#resg', t: '마을 정보예요. 주민이 모으는 <b>자원 7가지</b>:<br>🍎 식량 — 먹고 인구가 늘어요<br>🪵 목재 — 집을 지어요<br>🪨 돌 · 철 · 🪙 금 — 큰 건물과 후반 발전<br>📘 지식 — 기술 연구 · ⚡ 에너지 — 산업 시대부터<br>오른쪽 숫자는 1초에 늘거나 줄어드는 양이에요.', on: openFirst, next: '다음' },
+  { sel: '#tEra', t: '<b>다음 시대 조건</b>이 목표예요.<br>그 시대의 기술을 모두 배우고, 인구와 자원을 채우면 다음 시대로 넘어가요.<br>원시 → 농경 → 부족 국가 → 왕국 → 산업 → 미래 → 🚀 우주!', on: openFirst, next: '다음' },
+  { sel: '.tab[data-tab=terra]', t: '자원은 <b>땅</b>에서 나와요. 주민은 자기 영토(점선 안)에서만 일해요.<br>🌱 <b>지형</b>을 눌러 보세요.', ring: 1, on: closeSheet, done: () => tab === 'terra' },
+  { sel: '.tool[data-id=tree]', t: '🌳 <b>나무</b>를 고르고 점선 안 초원을 눌러요. 손가락으로 끌면 여러 칸을 한 번에 심어요.<br>숲 → 목재, 목재 → 집, 집 → 인구! <small>(3칸 심기)</small>', ring: 1, on: () => mana(40), done: () => (tutStat.terra.tree || 0) >= 3 },
+  { sel: '.tool[data-id=mount]', t: '이번엔 ⛰ <b>산</b>을 하나 만들어요.<br>산에서 돌·철·금이 나와요. 농경 시대부터 꼭 필요해요.<br><small>호수는 식량, 화산은 금이 많이 나와요.</small>', ring: 1, on: () => mana(20), done: () => (tutStat.terra.mount || 0) >= 1 },
+  { sel: '.mana', t: '땅을 바꾸고 능력을 쓰면 <b>✨ 신력</b>이 줄어요.<br>신력은 시간이 지나면 다시 차고, 주민이 많을수록 빨리 차요.', next: '다음' },
+  { sel: '.tab[data-tab=power]', t: '⚡ <b>신의 능력</b>으로 문명을 직접 도울 수 있어요. 눌러 보세요.', done: () => tab === 'power' },
+  { sel: '.tool[data-id=wisdom]', t: '💡 <b>지혜</b>를 고르고 마을을 눌러요.<br>45초 동안 연구가 2배 빨라져요.<br><small>비는 식량, 풍요는 인구, 번개는 에너지를 줘요.</small>', ring: 1, on: () => { mana(40); delete w.cds.wisdom; }, done: () => tutStat.power.wisdom },
+  { sel: '.chip', t: '위의 <b>종족 칩</b>이나 마을을 누르면 언제든 정보를 볼 수 있어요.<br>눌러서 지금 연구 중인 기술을 확인해 봐요.', on: () => (tutBase = tutStat.sheet), done: () => tutStat.sheet > tutBase },
+  { sel: '#techs', t: '📘 지식이 모이면 기술을 하나씩 배워요. <b>먼저 배우고 싶은 기술을 누르면</b> 순서가 바뀌어요.<br>💬 안내가 뜨면 부족한 걸 채워 주세요.', on: openFirst, next: '다음' },
+  { sel: '#spd', t: '▶ 버튼으로 속도를 2배·4배로 올려요. 📜에서 섬의 역사와 도움말을 다시 볼 수 있어요.<br>자리를 비워도 문명은 천천히 자라요. <b>농경 시대가 되면 두 번째 종족</b>이 열려요.<br>이제 마음껏 키워 보세요!', on: closeSheet, next: '시작!' },
+];
+function tutStart(i) { tut = i; tutEnter(); }
+function tutEnter() {
+  const st = TUT[tut]; if (st.on) st.on();
+  const b = $('tut'); b.hidden = false;
+  b.innerHTML = `<div class="tstep">${tut + 1} / ${TUT.length}</div><p>${st.t}</p><div class="trow"><button class="tskip" id="tutSkip">건너뛰기</button>${st.next ? `<button class="tnext" id="tutNext">${st.next}</button>` : ''}</div>`;
+  $('tutSkip').onclick = tutEnd; if (st.next) $('tutNext').onclick = tutAdvance;
+  hint(''); setTimeout(() => { const el = st.sel && document.querySelector(st.sel); if (el && el.closest('#tools')) el.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); }, 50); tutPlace();
+}
+function tutAdvance() { if (tut >= TUT.length - 1) return tutEnd(); tut++; tutEnter(); }
+function tutEnd() { tut = -1; $('tut').hidden = true; $('tutHi').hidden = true; try { localStorage.setItem(TUT_KEY, '1'); } catch (e) { } }
+function tutPlace() {
+  const st = TUT[tut], hi = $('tutHi'), b = $('tut'), el = st.sel && document.querySelector(st.sel);
+  let low = false;
+  if (el) {
+    if (el.closest('#sheet')) el.scrollIntoView({ block: 'nearest' });
+    const r = el.getBoundingClientRect(); hi.hidden = false;
+    Object.assign(hi.style, { left: r.left - 5 + 'px', top: r.top - 5 + 'px', width: r.width + 10 + 'px', height: r.height + 10 + 'px' });
+    low = r.top + r.height / 2 > innerHeight * .5;
+  } else hi.hidden = true;
+  const sheetOpen = !$('sheet').hidden;
+  if (low || sheetOpen) { b.style.top = 'calc(8px + env(safe-area-inset-top))'; b.style.bottom = 'auto'; }
+  else { b.style.top = 'auto'; b.style.bottom = ($('hudBot').getBoundingClientRect().height + 18) + 'px'; }
+}
+function tutTick() {
+  if (card && card.k !== 'menu') { $('tut').hidden = true; $('tutHi').hidden = true; return; }
+  $('tut').hidden = false; const st = TUT[tut];
+  if (w.nextEv < 30) w.nextEv = 30; // 튜토리얼 중엔 사건 쉬기
+  if (st.back && st.back() >= 0) { tut = st.back(); tutEnter(); return; }
+  if (st.done && st.done()) return tutAdvance();
+  tutPlace();
 }
 let newArm = 0;
 function confirmNew() { if (Date.now() - newArm < 3000) return true; newArm = Date.now(); $('newBtn').textContent = '정말요? 한 번 더 누르면 새 섬'; return false; }
 function openMenu() {
   $('card').innerHTML = `<h2>📜 섬의 역사</h2><div class="log">${w.log.slice().reverse().map((l) => `<div class="nrow ${l.kind}"><small>${Math.floor(l.t / 10) + 1}년</small> ${l.m}</div>`).join('') || '<p class="dimt">아직 기록이 없어요</p>'}</div>
   <h3>어떻게 하나요?</h3><p class="dimt">🐣 생명: 종족을 탄생시켜요 (농경 시대·부족 국가가 되면 한 종족씩 더)<br>🌱 지형: 숲·호수·산을 만들어 주면 종족이 알아서 자원을 모아요<br>⚡ 신의 능력: 축복·비·번개·지진·풍요·지혜로 문명을 도와요<br>마을을 누르면 연구할 기술과 부족한 것을 볼 수 있어요. 자리를 비워도 천천히 자라요.</p>
-  <button class="btn w" id="pz">${paused ? '다시 진행' : '잠깐 멈추기'}</button><button class="btn" id="ok">닫기</button>`;
+  <button class="btn w" id="tutAgain">🎓 튜토리얼 다시 보기</button><button class="btn w" id="pz">${paused ? '다시 진행' : '잠깐 멈추기'}</button><button class="btn" id="ok">닫기</button>`;
   card = { k: 'menu' }; $('cardDim').hidden = false;
   $('card').querySelector('#ok').onclick = closeCard; $('card').querySelector('#pz').onclick = () => { paused = !paused; closeCard(); hud(); };
+  $('card').querySelector('#tutAgain').onclick = () => { closeCard(); paused = false; tutStart(w.tribes.length ? 3 : 0); };
 }
 boot();
