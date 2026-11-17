@@ -139,6 +139,11 @@ function draw(t) {
     const X = sx((tb.cx + .5) * TS), Y = sy((tb.cy + .9) * TS) + 6; const s = `${C.SPECIES[tb.sp].name} · ${tb.pop}명`;
     g.font = `800 ${Math.max(11, 12 * Math.min(1.3, cam.s * 1.2))}px Pretendard,system-ui`; const tw = g.measureText(s).width + 14;
     g.fillStyle = 'rgba(40,30,60,.82)'; rr(X - tw / 2, Y, tw, 20, 10); g.fill(); g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(s, X, Y + 10.5);
+    const bs = buffsOf(tb); if (bs.length) {
+      const bt = bs.map((b) => `${(BUFF[b.name] || ['✨'])[0]} ${b.name} ×${+b.m.toFixed(1)} ${Math.ceil(b.t)}초`).join('  ');
+      g.font = `800 ${Math.max(11, 11.5 * Math.min(1.3, cam.s * 1.2))}px Pretendard,system-ui`; const bw = g.measureText(bt).width + 14, by = Y + 24;
+      g.fillStyle = bs.some((b) => b.m < 1) ? 'rgba(200,70,60,.9)' : 'rgba(255,200,60,.95)'; rr(X - bw / 2, by, bw, 20, 10); g.fill(); g.fillStyle = bs.some((b) => b.m < 1) ? '#fff' : '#3a2a10'; g.fillText(bt, X, by + 10.5);
+    }
   }
   if (tut >= 0 && TUT[tut].ring && w.tribes[0]) { const tb = w.tribes[0], p = (t / 900) % 1; g.strokeStyle = `rgba(255,214,90,${1 - p})`; g.lineWidth = 4; g.beginPath(); g.arc(sx((tb.cx + .5) * TS), sy((tb.cy + .5) * TS), (tb.radius + .3) * TS * cam.s * (.85 + p * .15), 0, 6.283); g.stroke(); }
   drawFx(t);
@@ -206,7 +211,7 @@ function hud() {
   $('score').textContent = C.score(w).toLocaleString(); $('year').textContent = `${Math.floor(w.time / 10) + 1}년`;
   // 종족 칩
   const box = $('tribes'); if (box.childElementCount !== w.tribes.length) { box.innerHTML = ''; for (const tb of w.tribes) { const d = document.createElement('button'); d.className = 'chip panel'; d.onclick = () => openTribe(tb.id); d.append(folkCanvas(tb.sp, tb.era, 34)); const s = document.createElement('span'); d.append(s); d.dataset.era = -1; box.append(d); } }
-  w.tribes.forEach((tb, i) => { const d = box.children[i]; if (+d.dataset.era !== tb.era) { d.firstChild.replaceWith(folkCanvas(tb.sp, tb.era, 34)); d.dataset.era = tb.era; } d.lastChild.innerHTML = `<b>${C.SPECIES[tb.sp].name}</b><small>${C.ERAS[tb.era]} · ${tb.pop}명</small>`; d.classList.toggle('warn', C.needs(w, tb).some((n) => n.k === 'food')); });
+  w.tribes.forEach((tb, i) => { const d = box.children[i]; if (+d.dataset.era !== tb.era) { d.firstChild.replaceWith(folkCanvas(tb.sp, tb.era, 34)); d.dataset.era = tb.era; } const bi = buffsOf(tb).map((b) => (BUFF[b.name] || ['✨'])[0]).join(''); d.lastChild.innerHTML = `<b>${C.SPECIES[tb.sp].name}${bi ? ` <i class="bi">${bi}</i>` : ''}</b><small>${C.ERAS[tb.era]} · ${tb.pop}명</small>`; d.classList.toggle('warn', C.needs(w, tb).some((n) => n.k === 'food')); });
   // 도구 버튼 (신력·쿨다운)
   document.querySelectorAll('.tool').forEach((b) => {
     const id = b.dataset.id, kind = b.dataset.kind; let dis = false, cd = '';
@@ -247,6 +252,12 @@ function pickTool(kind, id, name, desc) {
 function hint(s) { $('hint').textContent = s; $('hint').hidden = !s || tut >= 0; }
 let toastT = 0; function toast(s) { const e = $('toast'); e.textContent = s; e.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => e.classList.remove('on'), 1800); }
 
+// ---------- 적용 중인 능력 ----------
+const BUFF = { 축복: ['✨', '모든 생산'], 황금시대: ['👑', '모든 생산'], 비: ['🌧', '식량 생산'], 풍년: ['🌾', '식량 생산'], 가뭄: ['☀️', '식량 생산'], 지혜: ['💡', '연구 속도'], 발명가: ['🧪', '연구 속도'] };
+const buffsOf = (tb, k) => w.buffs.filter((b) => (b.tb === tb.id || b.tb < 0) && (!k || b.k === k));
+const mulTxt = (m) => (m >= 1 ? `×${+m.toFixed(1)} 증가` : `×${+m.toFixed(1)} 감소`);
+const buffLine = (b) => { const [e, what] = BUFF[b.name] || ['✨', '생산']; return `<div class="buff${b.m < 1 ? ' bad' : ''}">${e} <b>${b.name}</b>: ${what} ${mulTxt(b.m)} 적용 중<span>${Math.ceil(b.t)}초</span></div>`; };
+
 // ---------- 종족 상세 ----------
 function openTribe(id) { tutStat.sheet++; selTb = id; $('sheet').hidden = false; $('sheet').dataset.k = ''; fillTribe(true); }
 function fillTribe(full) {
@@ -259,7 +270,7 @@ function fillTribe(full) {
     el.append(head);
     const g2 = document.createElement('div'); g2.className = 'resg'; g2.id = 'resg';
     for (const k of C.RES) { const d = document.createElement('div'); d.className = 'rs'; d.dataset.k = k; d.append(icon(k, 22)); d.insertAdjacentHTML('beforeend', `<span><b></b><small></small></span>`); g2.append(d); }
-    el.append(g2);
+    el.insertAdjacentHTML('beforeend', '<div id="tBuff" class="note"></div>'); el.append(g2);
     el.insertAdjacentHTML('beforeend', `<h3>연구</h3><div id="tRes" class="note"></div><div class="techs" id="techs"></div><h3>다음 시대 조건</h3><div id="tEra" class="note"></div><div id="tNeed"></div><h3>일하는 주민</h3><div id="tJobs" class="jobs"></div>`);
     const nt = C.nextTech(tb), techs = el.querySelector('#techs');
     for (const t of C.TECHS.filter((q) => q.era === tb.era)) {
@@ -272,8 +283,11 @@ function fillTribe(full) {
     el.querySelector('#sheetX').onclick = closeSheet;
   }
   el.querySelector('#tPop').innerHTML = `👥 <b>${tb.pop}</b> / ${C.capOf(tb)}명 · 🏠 집 ${tb.houses.length}채 · 영토 ${tb.radius}`;
-  for (const d of el.querySelectorAll('.rs')) { const k = d.dataset.k; d.querySelector('b').textContent = fmtN(tb.res[k]); const v = r[k]; d.querySelector('small').textContent = `${C.RNAME[k]} ${v >= 0 ? '+' : ''}${(v).toFixed(2)}/초`; d.classList.toggle('neg', v < -0.001); }
+  for (const d of el.querySelectorAll('.rs')) { const k = d.dataset.k; d.querySelector('b').textContent = fmtN(tb.res[k]); const v = r[k]; d.querySelector('small').textContent = `${C.RNAME[k]} ${v >= 0 ? '+' : ''}${(v).toFixed(2)}/초`; d.classList.toggle('neg', v < -0.001); const fb = k === 'food' ? buffsOf(tb, 'food') : k === 'know' ? buffsOf(tb, 'know') : []; let em = d.querySelector('em'); if (!em) { em = document.createElement('em'); d.querySelector('span').append(em); } em.textContent = fb.map((b) => `${(BUFF[b.name] || ['✨'])[0]} ${b.name} ×${+b.m.toFixed(1)}`).join(' '); d.classList.toggle('buffed', fb.some((b) => b.m >= 1)); }
+  el.querySelector('#tBuff').innerHTML = buffsOf(tb, 'all').map(buffLine).join('');
   const nt = C.nextTech(tb); el.querySelector('#tRes').innerHTML = nt ? `<div class="nrow">📘 지금 연구: <b>${nt.name}</b> <span class="bar2"><i style="width:${Math.min(100, tb.res.know / nt.cost * 100)}%"></i></span> ${Math.floor(tb.res.know)}/${nt.cost}</div>` : `<div class="nrow">이 시대의 기술을 모두 익혔어요</div>`;
+  el.querySelector('#tRes').insertAdjacentHTML('beforeend', buffsOf(tb, 'know').map(buffLine).join(''));
+  { const fr = el.querySelector('#tFood'); if (fr) fr.remove(); const fb = buffsOf(tb, 'food'); if (fb.length) { const g2 = el.querySelector('#resg'); g2.insertAdjacentHTML('afterend', `<div id="tFood" class="note" style="margin-top:6px">${fb.map(buffLine).join('')}</div>`); } }
   const miss = C.eraReady(tb); el.querySelector('#tEra').innerHTML = miss == null ? '<div class="nrow">🚀 우주 로켓을 연구하면 우주로 나가요!</div>' : miss.length ? miss.map((m) => `<div class="nrow">⬜ ${m}</div>`).join('') : '<div class="nrow">✅ 곧 다음 시대로!</div>';
   const nd = C.needs(w, tb); el.querySelector('#tNeed').innerHTML = nd.map((n) => `<div class="need">💬 ${n.m}</div>`).join('');
   const J = { farmer: '🌾 농부', lumber: '🪓 나무꾼', miner: '⛏ 광부', scholar: '📚 학자', soldier: '🛡 병사', engineer: '⚙ 기술자' };

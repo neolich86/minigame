@@ -67,6 +67,13 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .nrow.good{border-color:#bfe8d2}.nrow.bad{border-color:#f5c2c3}.nrow.era{border-color:#ffd88a;background:#fffaeb}
 .nrow small{color:var(--dim);flex:none}
 .bar2{flex:1;height:8px;border-radius:8px;background:#eadfc8;overflow:hidden}.bar2 i{display:block;height:100%;background:#7b6cff}
+.buff{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:700;background:#fff6d6;border:2px solid #ffd65a;border-radius:10px;padding:6px 9px;animation:glow 1.6s infinite}
+.buff b{font-weight:900}.buff span{margin-left:auto;font-weight:900;color:#a8740a;font-variant-numeric:tabular-nums}
+.buff.bad{background:#ffecec;border-color:#f5a3a3;animation:none}.buff.bad span{color:var(--bad)}
+@keyframes glow{50%{box-shadow:0 0 0 3px rgba(255,214,90,.35)}}
+.rs em{font-style:normal;font-size:11px;font-weight:900;color:#a8740a}.rs em:empty{display:none}
+.rs.buffed{border-color:#ffd65a;background:#fffaf0}
+.chip .bi{font-style:normal;font-size:12px}
 .need{margin-top:6px;font-size:13px;font-weight:800;color:#b25b16;background:#fff1df;border-radius:10px;padding:7px 10px}
 .jobs{display:flex;flex-wrap:wrap;gap:5px}.jobs span{font-size:12.5px;font-weight:800;background:#f1e6d1;border-radius:999px;padding:4px 9px}
 /* 카드 */
