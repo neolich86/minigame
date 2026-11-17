@@ -81,6 +81,12 @@ const hfov = () => Math.atan(Math.tan(camera.fov * Math.PI / 360) * camera.aspec
 
 // ============================================================ 에셋
 const TL = new THREE.TextureLoader();
+// 힉스필드로 만든 먼 배경(지역별 파노라마)과 성벽 돌 텍스처 — 없으면 예전 모습 그대로
+const BACK = {}, WALLT = {};
+async function loadPainted() {
+  const ld = (u) => TL.loadAsync(u).then((t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; }).catch(() => null);
+  await Promise.all([1, 2, 3].map(async (st) => { BACK[st] = await ld(`assets/bg/back${st}.webp`); WALLT[st] = await ld(`assets/bg/wall${st}.webp`); }));
+}
 const near = (t) => { t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.SRGBColorSpace; return t; };
 const FX = {};
 async function loadFx(n) { const [m, t] = await Promise.all([fetch(`assets/fx/${n}.json`).then((r) => r.json()), TL.loadAsync(`assets/fx/${n}.png`)]); FX[n] = { m, t: near(t) }; }
@@ -228,16 +234,22 @@ function buildWorld(st) {
       if (i < 6) { const l = new THREE.PointLight(0xb060ff, 6, 12); l.position.set(x, 1.2, z); world.add(l); } }
     // 달
     const disc = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.fillStyle = '#f4f0ff'; g.beginPath(); g.arc(32, 32, 30, 0, 7); g.fill(); g.fillStyle = 'rgba(180,170,210,.5)'; g.beginPath(); g.arc(22, 26, 7, 0, 7); g.arc(40, 40, 5, 0, 7); g.fill(); return new THREE.CanvasTexture(c); })();
-    const mn = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotT, color: 0xb8a8ff, fog: false, depthWrite: false, blending: THREE.AdditiveBlending, transparent: true })); mn.scale.setScalar(34); mn.position.set(-60, 90, -200); world.add(mn);
-    const mn2 = new THREE.Sprite(new THREE.SpriteMaterial({ map: disc, fog: false, transparent: true })); mn2.scale.setScalar(11); mn2.position.copy(mn.position); world.add(mn2);
+    const mn = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotT, color: 0xb8a8ff, fog: false, depthWrite: false, blending: THREE.AdditiveBlending, transparent: true })); mn.scale.setScalar(34); mn.position.set(-60, 90, -200); if (!BACK[3]) world.add(mn);
+    const mn2 = new THREE.Sprite(new THREE.SpriteMaterial({ map: disc, fog: false, transparent: true })); mn2.scale.setScalar(11); mn2.position.copy(mn.position); if (!BACK[3]) world.add(mn2); // 그림 배경에 달이 있으면 생략
   }
   for (const k in B) { const [n, tint] = k.split('|'); plant(n, B[k], tint || null); }
   buildWall(st);
+  if (BACK[st]) { // 먼 배경 파노라마: 앞쪽 반원을 두르는 원통 안쪽면
+    const t = BACK[st]; t.wrapS = THREE.MirroredRepeatWrapping; t.repeat.set(2, 1);
+    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(190, 190, 150, 48, 1, true, Math.PI * .35, Math.PI * 1.3), new THREE.MeshBasicMaterial({ map: t, side: THREE.BackSide, fog: false }));
+    cyl.position.y = 150 / 2 - 45; world.add(cyl);
+  }
 }
 // 성벽: 발밑 통로 · 앞쪽 흉벽(톱니) · 바깥 벽면 · 양 끝 탑 · 화로
 function buildWall(st) {
   const C = { 1: ['#a29c8e', '#b2ac9c', '#6e695e'], 2: ['#d9b77e', '#e6c890', '#a8844e'], 3: ['#5a5566', '#666074', '#2c2834'] }[st];
-  const m = new THREE.MeshLambertMaterial({ map: brickTex(...C) }), top = new THREE.MeshLambertMaterial({ color: new THREE.Color(C[2]).multiplyScalar(1.25) });
+  let wm = brickTex(...C); if (WALLT[st]) { wm = WALLT[st].clone(); wm.wrapS = wm.wrapT = THREE.RepeatWrapping; wm.repeat.set(.42, .42); wm.needsUpdate = true; }
+  const m = new THREE.MeshLambertMaterial({ map: wm }), top = new THREE.MeshLambertMaterial({ color: new THREE.Color(C[2]).multiplyScalar(1.25) });
   const L = 2 * WALL_X + 40;
   wallBox(L, WALLH, 3, m, 0, WALLH / 2, -.2); // 벽 몸체 (앞면 z=-1.7)
   { const ditch = new THREE.Mesh(new THREE.PlaneGeometry(L, 2.6), flat(st === 3 ? 0x2a2434 : st === 2 ? 0xb8925a : 0x5a7a3a)); ditch.rotation.x = -Math.PI / 2; ditch.position.set(0, .03, -3.1); world.add(ditch); } // 성벽 앞 해자 자리
@@ -1043,7 +1055,7 @@ function gameOver() {
       ...MTYPES.map((m) => loadMon(m.k)), ...BOSSES.map((b) => loadMon(b.k)),
       document.fonts.load('16px G'), document.fonts.load('700 16px G'),
     ]);
-    prog('불러오는 중… 숲'); await Promise.all([loadNature(), loadStaff()]);
+    prog('불러오는 중… 숲'); await Promise.all([loadNature(), loadStaff(), loadPainted()]);
   } catch (e) { prog('불러오기 실패 — 새로고침 해주세요'); console.error(e); return; }
   buildWorld(+(Q.get('stage') || 1));
   { const { m, t } = FX.hexshield; const tex = t.clone(); tex.needsUpdate = true; tex.repeat.set(m.w / t.image.width, m.h / t.image.height); hexSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: .3, blending: THREE.AdditiveBlending, depthTest: false, depthWrite: false })); hexSprite.position.set(0, 0, -.6); hexSprite.scale.setScalar(1.3); hexSprite.visible = false; vm.add(hexSprite); }

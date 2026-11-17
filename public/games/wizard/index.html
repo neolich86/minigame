@@ -113,6 +113,12 @@ img,.px{image-rendering:pixelated}
 /* 화면들 */
 .scr{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px 16px;background:rgba(8,10,24,.72);z-index:5}
 .scr.on{display:flex}
+#sTitle{justify-content:space-between;padding:calc(56px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));background:linear-gradient(rgba(10,14,40,.55),rgba(10,14,40,0) 26%,rgba(10,14,40,0) 52%,rgba(8,10,24,.78) 72%,rgba(8,10,24,.92)),url(assets/title.webp) center 38%/cover #1a2a48}
+#sTitle .tTop,#sTitle .tBot{display:flex;flex-direction:column;align-items:center;width:100%}
+#sTitle h1{font-size:46px;text-shadow:0 3px 0 #7a3a10,3px 0 #2a1408,-3px 0 #2a1408,0 -3px #2a1408,0 6px 14px rgba(0,0,0,.5)}
+#sTitle p.s{color:#fff;margin-bottom:0}
+#sTitle .credit{position:static;margin-top:10px;font-size:11px;color:#a8b0d0}
+
 .scr h1{font-size:40px;font-weight:700;color:#ffe066;letter-spacing:2px;margin-bottom:6px}
 .scr h2{font-size:30px;font-weight:700;color:#ffe066;letter-spacing:2px;margin-bottom:4px}
 .scr p.s{font-size:13px;color:#cfd3ff;margin-bottom:16px;text-align:center;line-height:1.6}
@@ -171,13 +177,17 @@ img,.px{image-rendering:pixelated}
 </div>
 
 <div class="scr on" id="sTitle">
-  <h1 class="sh">마법사 키우기</h1>
-  <p class="s sh">성벽 위에서 몰려오는 몬스터를 파이어볼로 막아내고<br>레벨업마다 마법을 골라 강해지세요. 3분마다 보스가 나타나요.</p>
-  <div class="best sh" id="bestTxt"></div>
-  <button class="btn g" id="bLogin" style="display:none">🔑 로그인하고 랭킹에 기록하기</button>
-  <button class="btn" id="bStart" disabled><span class="load" id="loadTxt">불러오는 중…</span></button>
-  <div class="how sh">📱 화면을 좌우로 끌어 성벽 위를 이동 · 대시 버튼<br>⌨️ A·D(←·→) 이동 · Space 대시 · P 일시정지<br>공격은 자동 — 앞에서 오는 적에게 파이어볼을 쏴요</div>
-  <div class="credit">이펙트 · 3D: Pixel VFX Foundry, ansimuz, Binbun3D, Pipoya, Kay Lousberg(KayKit) · 폰트: Galmuri</div>
+  <div class="tTop">
+    <h1 class="sh">마법사 키우기</h1>
+    <p class="s sh">성벽으로 몰려오는 몬스터를 막아내세요!<br>레벨업마다 마법을 골라 강해져요.<br>3분마다 보스가 나타나요.</p>
+  </div>
+  <div class="tBot">
+    <div class="best sh" id="bestTxt"></div>
+    <button class="btn g" id="bLogin" style="display:none">🔑 로그인하고 랭킹에 기록하기</button>
+    <button class="btn" id="bStart" disabled><span class="load" id="loadTxt">불러오는 중…</span></button>
+    <div class="how sh">📱 화면을 좌우로 끌어 성벽 위를 이동 · 대시 버튼<br>⌨️ A·D(←·→) 이동 · Space 대시 · P 일시정지<br>공격은 자동 — 앞에서 오는 적에게 파이어볼을 쏴요</div>
+    <div class="credit">이펙트 · 3D: Pixel VFX Foundry, ansimuz, Binbun3D, Pipoya, Kay Lousberg(KayKit) · 일러스트·배경: Higgsfield AI · 폰트: Galmuri</div>
+  </div>
 </div>
 <div class="scr" id="sLevel"></div>
 <div class="scr" id="sPause">
