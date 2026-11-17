@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<link rel="canonical" href="/play/whodunit">
+<script src="/mgh/bridge.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>범인은 바로 너! - 미니게임천국</title>
+<meta name="description" content="북적이는 축제 광장에서 숨은 증거를 찾고 용의자들의 알리바이를 확인해 범인을 지목하는 숨은그림 추리 게임. 매번 다른 사건, 친구에게 사건을 출제해 기록 대결도 할 수 있어요.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ffcf5a'/%3E%3Ccircle cx='28' cy='28' r='14' fill='none' stroke='%233a2a4a' stroke-width='6'/%3E%3Cpath d='M38 38l14 14' stroke='%233a2a4a' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{--ink:#3a2a4a;--dim:#7a6c88;--card:#fffaf2;--line:#e8d9c4;--acc:#ff7a59;--acc2:#ffcf5a;--good:#3fb27f;--bad:#e5484d;--bg:#2e2440}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;user-select:none;-webkit-user-select:none;touch-action:none;overscroll-behavior:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+[hidden]{display:none !important}
+#cv{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+/* 위 */
+#top{position:fixed;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top));display:flex;flex-direction:column;gap:6px;z-index:3;pointer-events:none}
+.bar{display:flex;align-items:center;gap:6px;pointer-events:auto}
+.case{flex:1;min-width:0;background:rgba(255,250,242,.95);border:2.5px solid var(--ink);border-radius:14px;padding:5px 10px;box-shadow:0 3px 0 var(--ink)}
+.case b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.case small{display:block;font-size:11px;color:var(--dim)}
+.timer{min-width:66px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--ink);color:#fff;border-radius:12px;font-weight:800;font-size:17px;font-variant-numeric:tabular-nums}
+.ibtn{width:44px;height:44px;border-radius:12px;background:rgba(255,250,242,.95);border:2.5px solid var(--ink);box-shadow:0 3px 0 var(--ink);font-size:20px;display:flex;align-items:center;justify-content:center}
+#sus{display:flex;gap:5px;pointer-events:auto}
+.su{flex:1;aspect-ratio:1/1.12;max-width:64px;border-radius:12px;background:rgba(255,250,242,.92);border:2.5px solid var(--ink);position:relative;overflow:hidden;display:flex;align-items:flex-end;justify-content:center}
+.su canvas{width:100%;height:100%}
+.su.hide canvas{filter:brightness(0) opacity(.25)}
+.su i{position:absolute;left:0;right:0;bottom:0;font-style:normal;font-size:10.5px;font-weight:800;background:rgba(58,42,74,.85);color:#fff;text-align:center;line-height:15px}
+.su.x::after{content:'';position:absolute;inset:0;background:linear-gradient(45deg,transparent 46%,var(--bad) 46%,var(--bad) 54%,transparent 54%)}
+.su.new{animation:pop .5s}
+@keyframes pop{40%{transform:scale(1.18)}}
+/* 아래 */
+#bot{position:fixed;left:8px;right:8px;bottom:calc(10px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:8px;z-index:3}
+#evs{flex:1;display:flex;gap:6px;justify-content:center;background:rgba(255,250,242,.93);border:2.5px solid var(--ink);border-radius:999px;padding:5px 8px;box-shadow:0 3px 0 var(--ink)}
+.ev{width:48px;height:48px;border-radius:50%;background:#fff;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;position:relative}
+.ev canvas{width:40px;height:40px}
+.ev.hide canvas{filter:brightness(0) opacity(.22)}
+.ev.got{border-color:var(--good);background:#eafff3}
+.ev.got::after{content:'✓';position:absolute;right:-3px;top:-3px;width:18px;height:18px;border-radius:50%;background:var(--good);color:#fff;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center}
+#accuse{height:58px;padding:0 14px;border-radius:16px;background:linear-gradient(#ff8d6b,#ef5a3c);color:#fff;font-weight:900;font-size:15px;border:2.5px solid var(--ink);box-shadow:0 4px 0 var(--ink);line-height:1.1}
+#hintBtn{position:fixed;right:10px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:3}
+/* 팝업 */
+.dim{position:fixed;inset:0;background:rgba(30,20,45,.55);z-index:10;display:flex;align-items:center;justify-content:center;padding:16px}
+.pop{width:100%;max-width:380px;max-height:86vh;overflow:auto;background:var(--card);border:3px solid var(--ink);border-radius:20px;box-shadow:0 6px 0 var(--ink);padding:16px;animation:pin .22s}
+@keyframes pin{from{transform:scale(.9);opacity:0}}
+.pop h2{margin:0 0 4px;font-size:21px}
+.pop h3{margin:0;font-size:17px}
+.pop p{margin:6px 0;font-size:14px;line-height:1.55}
+.pop .dimt{color:var(--dim);font-size:12.5px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin-top:10px;border-radius:14px;background:var(--acc);color:#fff;font-weight:900;font-size:16px;border:2.5px solid var(--ink);box-shadow:0 3px 0 var(--ink)}
+.btn.w{background:#fff;color:var(--ink)}
+.btn.g{background:var(--good)}
+.row{display:flex;gap:10px;align-items:center}
+.who{display:flex;gap:12px;align-items:center}
+.who canvas{width:88px;height:96px;flex:none;background:#fff3e2;border-radius:14px;border:2px solid var(--line)}
+.bubble{position:relative;background:#fff;border:2px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:10px;font-size:14.5px;line-height:1.5}
+.tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.tag{font-size:11.5px;font-weight:800;padding:2px 7px;border-radius:999px;background:#f1e6d6}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.pick{border:2.5px solid var(--line);border-radius:14px;background:#fff;padding:4px 2px 6px;text-align:center;font-size:12.5px;font-weight:800}
+.pick canvas{width:64px;height:70px;display:block;margin:0 auto}
+.pick.on{border-color:var(--acc);background:#fff1ea}
+.pick.x{opacity:.4}
+.note{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.nrow{display:flex;gap:8px;align-items:center;background:#fff;border:2px solid var(--line);border-radius:12px;padding:6px 8px;font-size:13px}
+.nrow canvas{width:38px;height:42px;flex:none}
+.nrow b{font-size:13.5px}
+.nrow.x{opacity:.45;text-decoration:line-through}
+.nrow button{margin-left:auto;min-width:44px;height:36px;border-radius:10px;background:#f1e6d6;font-weight:800;font-size:12px}
+.big{font-size:44px;text-align:center;margin:4px 0}
+.cmp{display:flex;gap:8px;margin-top:8px}
+.cmp div{flex:1;background:#fff;border:2px solid var(--line);border-radius:12px;padding:8px;text-align:center}
+.cmp b{display:block;font-size:22px}
+.toast{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%) scale(.9);opacity:0;background:rgba(58,42,74,.94);color:#fff;padding:10px 16px;border-radius:14px;font-weight:800;font-size:15px;z-index:20;transition:.2s;pointer-events:none;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;z-index:30;background:var(--bg)}
+.title{text-align:center}
+.title h1{margin:0;font-size:32px;letter-spacing:-1px;color:var(--ink)}
+.title h1 span{color:var(--acc)}
+.credit{font-size:11px;color:var(--dim);text-align:center;margin-top:10px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="top" hidden>
+  <div class="bar"><div class="case"><b id="cTitle"></b><small id="cSub"></small></div><div class="timer" id="timer">0:00</div><button class="ibtn" id="noteBtn" aria-label="수첩">📒</button></div>
+  <div id="sus"></div>
+</div>
+<button class="ibtn" id="hintBtn" hidden aria-label="힌트">🔍</button>
+<div id="bot" hidden><div id="evs"></div><button id="accuse">범인<br>지목!</button></div>
+<div class="dim" id="dim" hidden><div class="pop" id="pop"></div></div>
+<div class="toast" id="toast"></div>
+<div id="load">사건 현장으로 가는 중…</div>
+<script type="module" src="game.js"></script>
+</body>
+</html>

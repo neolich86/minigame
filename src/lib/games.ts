@@ -461,6 +461,18 @@ const CATALOG: Game[] = [
     hidden: true, // 첫 버전 — 관리자 확인 중
   },
   {
+    id: "whodunit",
+    title: { ko: "범인은 바로 너!", en: "It's You, Culprit!" },
+    desc: {
+      ko: "북적이는 축제 광장에서 용의자를 찾아 알리바이를 듣고, 숨은 증거를 모아 범인을 지목하는 숨은그림 추리 게임. 매번 다른 사건, 친구에게 사건을 출제해 기록 대결",
+      en: "A seek-and-find mystery — find suspects in a crowded festival plaza, hear their alibis, collect hidden clues and point out the culprit. A new case every time; challenge friends with the same case",
+    },
+    genre: "casual",
+    thumb: "/thumbs/whodunit.jpg",
+    src: "/games/whodunit/index.html",
+    hidden: true, // 첫 버전 — 관리자만
+  },
+  {
     id: "witch",
     title: { ko: "영웅 키우기", en: "Grow Your Heroes" },
     desc: {
