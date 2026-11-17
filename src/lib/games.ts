@@ -461,6 +461,19 @@ const CATALOG: Game[] = [
     hidden: true, // 첫 버전 — 관리자 확인 중
   },
   {
+    id: "little-civ",
+    title: { ko: "나만의 문명 만들기", en: "My Little Civilization" },
+    desc: {
+      ko: "작은 섬에 생명을 탄생시키고 숲·호수·산을 만들어 주면 토끼·두더지·개구리 종족이 스스로 원시 시대부터 우주 진출까지 문명을 키워요. 축복·비·번개 같은 신의 능력으로 도와주는 신 시뮬레이션",
+      en: "A cozy god sim — spark life on a tiny island, shape forests, lakes and mountains, and watch rabbit, mole and frog tribes grow from the stone age to space. Help them with blessings, rain and lightning",
+    },
+    genre: "strategy",
+    thumb: "/thumbs/little-civ.jpg",
+    src: "/games/little-civ/index.html",
+    saves: true,
+    hidden: true, // 첫 버전 — 관리자만
+  },
+  {
     id: "whodunit",
     title: { ko: "범인은 바로 너!", en: "It's You, Culprit!" },
     desc: {
