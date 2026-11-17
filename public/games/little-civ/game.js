@@ -9,6 +9,8 @@ const TS = 48, WW = C.W * TS, WH = C.H * TS;
 const ICO = { food: 0, wood: 1, stone: 2, iron: 3, gold: 4, know: 5, energy: 6, bless: 7, rain: 8, bolt: 9, quake: 10, plenty: 11, wisdom: 12, grass: 13, tree: 14, lake: 15, mount: 16, volc: 17, egg: 18, hand: 19 };
 const NAT = { tree: [0, 1, 2], pine: [3, 4], palm: 5, rock: 6, mount: 7, snow: 8, volc: 9, bush: 10, reed: 11 };
 const WORK = { field: 0, school: 1, factory: 2, power: 3, rocket: 4 };
+const EX = { wtree: 0, under: 1, float: 2, ship: 3, cactus: 4, snowpine: 5, ice: 6, pier: 7 };
+const HOME = [(C.ISLES[0][0] + .5) * TS, (C.ISLES[0][1] + .5) * TS];
 
 const cv = $('cv'), g = cv.getContext('2d');
 let W = 0, H = 0, DPR = 1;
@@ -16,12 +18,12 @@ const IMG = {}; let ART = null;
 const load = (src) => new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; });
 
 let w = null, speed = 1, tool = null, paused = false, card = null, selTb = -1, terrDirty = true;
-const cam = { x: WW / 2, y: WH / 2, s: .5 };
+const cam = { x: HOME[0], y: HOME[1], s: .5 };
 const agents = []; // 화면용 주민
 const fx = []; // 효과
 function resize() { W = innerWidth; H = innerHeight; DPR = Math.min(2, devicePixelRatio || 1); cv.width = W * DPR; cv.height = H * DPR; fitCam(); }
 const minS = () => Math.min(W / WW, H / WH) * 1.15;
-function fitCam(reset) { const m = minS(); if (reset) cam.s = Math.max(m, W / WW * 1.25); cam.s = Math.max(m, Math.min(2.2, cam.s)); clampCam(); }
+function fitCam(reset) { const m = minS(); if (reset) cam.s = Math.max(m, W / (28 * TS) * 1.25); cam.s = Math.max(m, Math.min(2.2, cam.s)); clampCam(); }
 function clampCam() { cam.x = Math.max(0, Math.min(WW, cam.x)); cam.y = Math.max(0, Math.min(WH, cam.y)); }
 const sx = (x) => (x - cam.x) * cam.s + W / 2, sy = (y) => (y - cam.y) * cam.s + H / 2;
 const ix = (x) => (x - W / 2) / cam.s + cam.x, iy = (y) => (y - H / 2) / cam.s + cam.y;
@@ -35,7 +37,7 @@ function spr(c, img, f, x, y, k, flip, ax = .5, ay = 1) {
 }
 function icon(name, s = 22) {
   const c = document.createElement('canvas'); c.width = c.height = s * 2; c.style.width = c.style.height = s + 'px';
-  const f = ART && ART.ico[ICO[name]]; if (f && IMG.ico) { const k = s * 2 / Math.max(f[2], f[3]); c.getContext('2d').drawImage(IMG.ico, f[0], f[1], f[2], f[3], (s * 2 - f[2] * k) / 2, (s * 2 - f[3] * k) / 2, f[2] * k, f[3] * k); }
+  const ex = name in EX, im = ex ? IMG.ex : IMG.ico, f = ART && (ex ? ART.ex[EX[name]] : ART.ico[ICO[name]]); if (f && im) { const k = s * 2 / Math.max(f[2], f[3]); c.getContext('2d').drawImage(im, f[0], f[1], f[2], f[3], (s * 2 - f[2] * k) / 2, (s * 2 - f[3] * k) / 2, f[2] * k, f[3] * k); }
   c.className = 'ic'; return c;
 }
 function folkCanvas(sp, era, s = 64) {
@@ -50,30 +52,37 @@ function blob(x, y, r, col) { tg.fillStyle = col; tg.beginPath(); tg.arc(x, y, r
 function layer(test, r, col) { // 이웃끼리 이어 붙인 둥근 덩어리
   tg.fillStyle = col; tg.beginPath(); const t = w.t, h = TS * r;
   for (let y = 0; y < C.H; y++) for (let x = 0; x < C.W; x++) {
-    if (!test(t[y * C.W + x])) continue; const cx = (x + .5) * TS, cy = (y + .5) * TS;
+    const T2 = (xx, yy) => test(t[yy * C.W + xx], yy * C.W + xx);
+    if (!T2(x, y)) continue; const cx = (x + .5) * TS, cy = (y + .5) * TS;
     tg.moveTo(cx + h, cy); tg.arc(cx, cy, h, 0, 6.283);
-    if (x + 1 < C.W && test(t[y * C.W + x + 1])) tg.rect(cx, cy - h, TS, h * 2);
-    if (y + 1 < C.H && test(t[(y + 1) * C.W + x])) tg.rect(cx - h, cy, h * 2, TS);
-    if (x + 1 < C.W && y + 1 < C.H && test(t[y * C.W + x + 1]) && test(t[(y + 1) * C.W + x]) && test(t[(y + 1) * C.W + x + 1])) tg.rect(cx, cy, TS, TS);
+    if (x + 1 < C.W && T2(x + 1, y)) tg.rect(cx, cy - h, TS, h * 2);
+    if (y + 1 < C.H && T2(x, y + 1)) tg.rect(cx - h, cy, h * 2, TS);
+    if (x + 1 < C.W && y + 1 < C.H && T2(x + 1, y) && T2(x, y + 1) && T2(x + 1, y + 1)) tg.rect(cx, cy, TS, TS);
   }
   tg.fill();
 }
 function drawTerrain() {
   const t = w.t; tg.clearRect(0, 0, WW, WH);
   const land = (v) => v !== C.T.SEA, green = (v) => v !== C.T.SEA && v !== C.T.SAND, rock = (v) => v === C.T.MOUNT || v === C.T.VOLC, lake = (v) => v === C.T.LAKE;
-  layer(land, 1.15, 'rgba(127,211,230,.55)'); layer(land, .95, COL.shallow); layer(land, .7, COL.sand); layer(green, .58, '#7cc35a'); layer(green, .52, COL.grass);
+  layer(land, 1.15, 'rgba(127,211,230,.55)'); layer(land, .95, COL.shallow); layer(land, .7, COL.sand);
+  const BG = [['#7cc35a', COL.grass], ['#d9b56d', '#ebcf8e'], ['#c9dce8', '#f1f7fb'], ['#4fa43d', '#6cc24f'], ['#8c8a63', '#a9a77a']];
+  BG.forEach(([a, b], k) => { const gb = (v, i) => green(v) && C.bioAt(w, i) === k; layer(gb, .58, a); layer(gb, .52, b); });
   // 풀빛 얼룩
-  for (let y = 0; y < C.H; y++) for (let x = 0; x < C.W; x++) if (green(t[y * C.W + x]) && hash(x, y) < .35) { tg.fillStyle = hash(y, x) < .5 ? 'rgba(70,140,50,.12)' : 'rgba(200,240,140,.16)'; tg.beginPath(); tg.arc((x + hash(x, y + 9)) * TS, (y + hash(x + 9, y)) * TS, TS * (.4 + hash(x + 3, y) * .5), 0, 6.283); tg.fill(); }
+  for (let y = 0; y < C.H; y++) for (let x = 0; x < C.W; x++) if (green(t[y * C.W + x]) && C.bioAt(w, y * C.W + x) !== 2 && hash(x, y) < .35) { tg.fillStyle = hash(y, x) < .5 ? 'rgba(70,140,50,.12)' : 'rgba(200,240,140,.16)'; tg.beginPath(); tg.arc((x + hash(x, y + 9)) * TS, (y + hash(x + 9, y)) * TS, TS * (.4 + hash(x + 3, y) * .5), 0, 6.283); tg.fill(); }
   layer(rock, .5, COL.dirt);
   layer(lake, .62, '#3d9ccf'); layer(lake, .54, COL.lake); layer(lake, .3, 'rgba(160,225,250,.35)');
   // 풀 무늬
   tg.fillStyle = 'rgba(60,120,40,.25)';
-  for (let y = 0; y < C.H; y++) for (let x = 0; x < C.W; x++) { const v = t[y * C.W + x]; if (v !== C.T.GRASS && v !== C.T.FOREST) continue; for (let k = 0; k < 3; k++) { const px = (x + hash(x * 3 + k, y)) * TS, py = (y + hash(x, y * 3 + k)) * TS; tg.fillRect(px, py, 2, 6); tg.fillRect(px + 4, py + 1, 2, 5); } }
+  for (let y = 0; y < C.H; y++) for (let x = 0; x < C.W; x++) { const v = t[y * C.W + x]; if ((v !== C.T.GRASS && v !== C.T.FOREST) || [1, 2].includes(C.bioAt(w, y * C.W + x))) continue; for (let k = 0; k < 3; k++) { const px = (x + hash(x * 3 + k, y)) * TS, py = (y + hash(x, y * 3 + k)) * TS; tg.fillRect(px, py, 2, 6); tg.fillRect(px + 4, py + 1, 2, 5); } }
   // 밭
   for (let y = 0; y < C.H; y++) for (let x = 0; x < C.W; x++) if (t[y * C.W + x] === C.T.FIELD) {
     const f = ART.work[WORK.field]; if (f && IMG.work) { const k = TS * 1.02 / Math.max(f[2], f[3]); tg.drawImage(IMG.work, f[0], f[1], f[2], f[3], (x + .5) * TS - f[2] * k / 2, (y + .5) * TS - f[3] * k / 2, f[2] * k, f[3] * k); }
     else { tg.fillStyle = COL.field; tg.fillRect(x * TS + 3, y * TS + 3, TS - 6, TS - 6); }
   }
+  // 아직 못 찾은 바다·섬: 구름
+  const fog = (v, i) => !w.seen[i];
+  layer(fog, .95, 'rgba(225,236,248,.97)');
+  for (let y = 0; y < C.H; y++) for (let x = 0; x < C.W; x++) if (!w.seen[y * C.W + x] && hash(x * 5, y * 3) < .45) { tg.fillStyle = hash(x, y * 7) < .5 ? 'rgba(255,255,255,.9)' : 'rgba(200,214,232,.55)'; tg.beginPath(); tg.arc((x + hash(x, y + 2)) * TS, (y + hash(x + 2, y)) * TS, TS * (.5 + hash(x + 7, y) * .6), 0, 6.283); tg.fill(); }
   terrDirty = false;
 }
 
@@ -86,18 +95,23 @@ function drawSea(t) {
 }
 
 function territoryLines() {
-  if (!w.own) return; const own = w.own;
+  if (!w.own) return; const own = w.own, S = TS * cam.s;
+  const x0 = Math.max(0, Math.floor(ix(0) / TS) - 1), x1 = Math.min(C.W - 1, Math.ceil(ix(W) / TS) + 1), y0 = Math.max(0, Math.floor(iy(0) / TS) - 1), y1 = Math.min(C.H - 1, Math.ceil(iy(H) / TS) + 1);
+  const o = (xx, yy) => (C.inb(xx, yy) ? own[yy * C.W + xx] : -1);
   for (const tb of w.tribes) {
-    const col = C.SPECIES[tb.sp].color; g.strokeStyle = col; g.lineWidth = Math.max(2, 3 * cam.s); g.setLineDash([8 * cam.s, 6 * cam.s]); g.beginPath();
-    for (let y = 0; y < C.H; y++) for (let x = 0; x < C.W; x++) {
-      if (own[y * C.W + x] !== tb.id) continue; const o = (xx, yy) => (C.inb(xx, yy) ? own[yy * C.W + xx] : -1);
-      const X = sx(x * TS), Y = sy(y * TS), S = TS * cam.s;
-      if (o(x, y - 1) !== tb.id) { g.moveTo(X, Y); g.lineTo(X + S, Y); }
-      if (o(x, y + 1) !== tb.id) { g.moveTo(X, Y + S); g.lineTo(X + S, Y + S); }
-      if (o(x - 1, y) !== tb.id) { g.moveTo(X, Y); g.lineTo(X, Y + S); }
-      if (o(x + 1, y) !== tb.id) { g.moveTo(X + S, Y); g.lineTo(X + S, Y + S); }
+    const col = C.SPECIES[tb.sp].color, edge = new Path2D(), fill = new Path2D();
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      if (own[y * C.W + x] !== tb.id) continue;
+      const X = sx(x * TS), Y = sy(y * TS); fill.rect(X, Y, S + .5, S + .5);
+      if (o(x, y - 1) !== tb.id) { edge.moveTo(X, Y); edge.lineTo(X + S, Y); }
+      if (o(x, y + 1) !== tb.id) { edge.moveTo(X, Y + S); edge.lineTo(X + S, Y + S); }
+      if (o(x - 1, y) !== tb.id) { edge.moveTo(X, Y); edge.lineTo(X, Y + S); }
+      if (o(x + 1, y) !== tb.id) { edge.moveTo(X + S, Y); edge.lineTo(X + S, Y + S); }
     }
-    g.stroke(); g.setLineDash([]);
+    g.globalAlpha = .16; g.fillStyle = col; g.fill(fill); g.globalAlpha = 1;
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    g.strokeStyle = 'rgba(30,20,45,.6)'; g.lineWidth = Math.max(4, 6 * cam.s); g.stroke(edge);
+    g.strokeStyle = col; g.lineWidth = Math.max(2.5, 3.6 * cam.s); g.stroke(edge);
   }
 }
 
@@ -110,9 +124,14 @@ function draw(t) {
   const items = [];
   const x0 = Math.max(0, Math.floor(ix(0) / TS) - 1), x1 = Math.min(C.W - 1, Math.ceil(ix(W) / TS) + 1), y0 = Math.max(0, Math.floor(iy(0) / TS) - 1), y1 = Math.min(C.H - 1, Math.ceil(iy(H) / TS) + 2);
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
-    const v = w.t[y * C.W + x], cx = (x + .5) * TS, cy = (y + .5) * TS;
-    if (v === C.T.FOREST) { for (let k = 0; k < 2; k++) { const hx = hash(x * 7 + k, y * 5), hy = hash(x * 3, y * 11 + k); const pine = hash(x, y) < .3; const fi = pine ? NAT.pine[k % 2] : NAT.tree[Math.floor(hx * 3)]; items.push({ y: cy + (hy - .5) * TS * .5 + k * 6, n: 1, f: ART.nat[fi], x: cx + (k ? 1 : -1) * TS * .2 + (hx - .5) * 8, k: .3 }); } }
-    else if (v === C.T.MOUNT) items.push({ y: cy + TS * .4, f: ART.nat[hash(x, y) < .35 ? NAT.snow : NAT.mount], x: cx, k: .42, img: IMG.nat });
+    const ii = y * C.W + x; if (!w.seen[ii]) continue;
+    const v = w.t[ii], cx = (x + .5) * TS, cy = (y + .5) * TS, bio = C.bioAt(w, ii);
+    if (v === C.T.FOREST) { for (let k = 0; k < 2; k++) { const hx = hash(x * 7 + k, y * 5), hy = hash(x * 3, y * 11 + k); const yy = cy + (hy - .5) * TS * .5 + k * 6, xx = cx + (k ? 1 : -1) * TS * .2 + (hx - .5) * 8;
+      if (bio === 1) items.push({ y: yy, n: 1, img: IMG.ex, f: ART.ex[EX.cactus], x: xx, k: .26 });
+      else if (bio === 2) items.push({ y: yy, n: 1, img: IMG.ex, f: ART.ex[EX.snowpine], x: xx, k: .3 });
+      else { const pine = bio !== 3 && hash(x, y) < .3; const fi = bio === 3 && hx < .35 ? NAT.palm : pine ? NAT.pine[k % 2] : NAT.tree[Math.floor(hx * 3)]; items.push({ y: yy, n: 1, f: ART.nat[fi], x: xx, k: .3 }); } } }
+    else if (v === C.T.MOUNT) items.push({ y: cy + TS * .4, f: ART.nat[bio === 2 || hash(x, y) < .35 ? NAT.snow : NAT.mount], x: cx, k: .42, img: IMG.nat });
+    else if (v === C.T.GRASS && bio === 2 && hash(y, x) < .07) items.push({ y: cy + 8, img: IMG.ex, f: ART.ex[EX.ice], x: cx, k: .2 });
     else if (v === C.T.VOLC) items.push({ y: cy + TS * .4, f: ART.nat[NAT.volc], x: cx, k: .5, img: IMG.nat, volc: 1 });
     else if (v === C.T.SAND && hash(x, y) < .08) items.push({ y: cy + 8, f: ART.nat[NAT.palm], x: cx, k: .26 });
     else if (v === C.T.GRASS && hash(y, x) < .05) items.push({ y: cy + 8, f: ART.nat[hash(x, y * 2) < .5 ? NAT.bush : NAT.rock], x: cx, k: .2 });
@@ -123,22 +142,26 @@ function draw(t) {
     items.push({ y: (tb.cy + .9) * TS, f: ART.bld[6 + era], x: (tb.cx + .5) * TS, k: .4, img: IMG.bld, tb: tb.id });
     for (const i of tb.houses) items.push({ y: ((i / C.W | 0) + .85) * TS, f: ART.bld[era], x: (i % C.W + .5) * TS, k: .24, img: IMG.bld });
     for (const q of tb.works) if (q.k !== 'field') items.push({ y: ((q.i / C.W | 0) + .9) * TS, f: ART.work[WORK[q.k]], x: (q.i % C.W + .5) * TS, k: .3, img: IMG.work });
+    for (const c of tb.cols) { items.push({ y: (c.y + .9) * TS, f: ART.bld[6 + era], x: (c.x + .5) * TS, k: .28, img: IMG.bld }); items.push({ y: (c.y + .95) * TS, f: ART.ex[EX.pier], x: (c.x + 1.1) * TS, k: .2, img: IMG.ex }); }
+    if (tb.wonder != null) { const wid = ['wtree', 'under', 'float'].find((q) => tb.techs.includes(q)); if (wid) items.push({ y: ((tb.wonder / C.W | 0) + .95) * TS, f: ART.ex[EX[wid]], x: (tb.wonder % C.W + .5) * TS, k: .42, img: IMG.ex }); }
   }
   for (const a of agents) items.push({ y: a.y, agent: a });
   items.sort((p, q) => p.y - q.y);
   for (const it of items) {
     if (it.agent) { drawAgent(it.agent, t); continue; }
     const k = it.k * cam.s * (it.tb === selTb && it.tb !== undefined ? 1.06 : 1);
-    if (it.n) { const sway = Math.sin(t / 800 + it.x * .05) * .03; g.save(); g.translate(sx(it.x), sy(it.y)); g.rotate(sway); spr(g, IMG.nat, it.f, 0, 0, k); g.restore(); }
+    if (it.n) { const sway = Math.sin(t / 800 + it.x * .05) * .03; g.save(); g.translate(sx(it.x), sy(it.y)); g.rotate(sway); spr(g, it.img || IMG.nat, it.f, 0, 0, k); g.restore(); }
     else spr(g, it.img || IMG.nat, it.f, sx(it.x), sy(it.y), k);
     if (it.volc && Math.random() < .3) fx.push({ k: 'smoke', x: it.x + (Math.random() - .5) * 10, y: it.y - TS * 1.2, t: 0, life: 2 });
   }
   territoryLines();
   // 마을 이름
+  g.font = `800 ${Math.max(11, 12 * Math.min(1.3, cam.s * 1.2))}px Pretendard,system-ui`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const tb of w.tribes) for (const c of tb.cols) { const X = sx((c.x + .5) * TS), Y = sy((c.y + .9) * TS) + 6, s2 = `🚩 ${C.SPECIES[tb.sp].name} 개척지`, tw = g.measureText(s2).width + 14; g.fillStyle = C.SPECIES[tb.sp].color; rr(X - tw / 2, Y, tw, 20, 10); g.fill(); g.fillStyle = '#fff'; g.fillText(s2, X, Y + 10.5); }
   for (const tb of w.tribes) {
     const X = sx((tb.cx + .5) * TS), Y = sy((tb.cy + .9) * TS) + 6; const s = `${C.SPECIES[tb.sp].name} · ${tb.pop}명`;
     g.font = `800 ${Math.max(11, 12 * Math.min(1.3, cam.s * 1.2))}px Pretendard,system-ui`; const tw = g.measureText(s).width + 14;
-    g.fillStyle = 'rgba(40,30,60,.82)'; rr(X - tw / 2, Y, tw, 20, 10); g.fill(); g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(s, X, Y + 10.5);
+    g.fillStyle = 'rgba(40,30,60,.85)'; rr(X - tw / 2, Y, tw, 20, 10); g.fill(); g.strokeStyle = C.SPECIES[tb.sp].color; g.lineWidth = 2.5; g.stroke(); g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(s, X, Y + 10.5);
     const bs = buffsOf(tb); if (bs.length) {
       const bt = bs.map((b) => `${(BUFF[b.name] || ['✨'])[0]} ${b.name} ×${+b.m.toFixed(1)} ${Math.ceil(b.t)}초`).join('  ');
       g.font = `800 ${Math.max(11, 11.5 * Math.min(1.3, cam.s * 1.2))}px Pretendard,system-ui`; const bw = g.measureText(bt).width + 14, by = Y + 24;
@@ -171,7 +194,8 @@ function moveAgents(dt) {
       const js = Object.entries(tb.jobs || {}).filter(([, v]) => v > 0); const tot = js.reduce((s, [, v]) => s + v, 0);
       let r = Math.random() * tot, job = 'farmer'; for (const [k, v] of js) { r -= v; if (r <= 0) { job = k; break; } }
       a.job = job; let tiles = [];
-      if (JOB_T[job] && JOB_T[job].length) for (let i = 0; i < w.t.length; i++) if (w.own && w.own[i] === tb.id && JOB_T[job].includes(w.t[i])) tiles.push(i);
+      const hi = w.isl[tb.cy * C.W + tb.cx];
+      if (JOB_T[job] && JOB_T[job].length) for (let i = 0; i < w.t.length; i++) if (w.own && w.own[i] === tb.id && w.isl[i] === hi && JOB_T[job].includes(w.t[i])) tiles.push(i);
       if (job === 'scholar' || job === 'engineer') tiles = tb.works.filter((q) => q.k !== 'field').map((q) => q.i);
       if (!tiles.length || Math.random() < .25) tiles = [...tb.houses, tb.cy * C.W + tb.cx];
       const i = tiles[Math.floor(Math.random() * tiles.length)];
@@ -199,7 +223,7 @@ function drawFx(t) {
     else if (e.k === 'rain') { g.strokeStyle = `rgba(200,230,255,${.8 * (1 - p)})`; g.lineWidth = 2; for (let k = 0; k < 40; k++) { const rx = X + (hash(k, 1) - .5) * 200 * cam.s, ry = Y + ((hash(k, 2) + p * 3) % 1 - .5) * 200 * cam.s; g.beginPath(); g.moveTo(rx, ry); g.lineTo(rx - 3, ry + 12); g.stroke(); } }
     else if (e.k === 'bolt') { if (p < .5) { g.strokeStyle = '#fff6a8'; g.lineWidth = 5; g.beginPath(); let bx = X, by = Y - 400; g.moveTo(bx, by); for (let k = 0; k < 8; k++) { bx += (hash(k, e.x | 0) - .5) * 40; by += 50; g.lineTo(bx, by); } g.stroke(); g.fillStyle = `rgba(255,255,220,${.5 - p})`; g.fillRect(0, 0, W, H); } }
     else if (e.k === 'spark') { g.fillStyle = `rgba(255,230,120,${1 - p})`; for (let k = 0; k < 12; k++) { const a = k / 12 * 6.283 + e.x, r = p * 60 * cam.s; g.beginPath(); g.arc(X + Math.cos(a) * r, Y + Math.sin(a) * r - p * 20, 4 * cam.s, 0, 6.283); g.fill(); } }
-    else if (e.k === 'shake') { /* 화면 흔들림은 main에서 */ }
+    else if (e.k === 'ship') { const q = Math.min(1, p * 1.25), bx = e.x + (e.tx - e.x) * q, by = e.y + (e.ty - e.y) * q; spr(g, IMG.ex, ART.ex[EX.ship], sx(bx), sy(by) + Math.sin(e.t * 6) * 3, .3 * cam.s, e.tx < e.x); }
     else if (e.k === 'txt') { g.globalAlpha = 1 - p; g.font = '900 16px Pretendard,system-ui'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.strokeStyle = 'rgba(40,30,60,.8)'; g.lineWidth = 4; g.strokeText(e.s, X, Y - p * 40); g.fillText(e.s, X, Y - p * 40); g.globalAlpha = 1; }
   }
 }
@@ -218,10 +242,12 @@ function hud() {
     if (kind === 'terra') dis = w.mana < C.TOOLS.find((t) => t.id === id).cost;
     if (kind === 'power') { const p = C.POWERS.find((t) => t.id === id); dis = w.mana < p.cost || !!w.cds[id] || !w.tribes.length; if (w.cds[id]) cd = Math.ceil(w.cds[id]); }
     if (kind === 'life') { dis = w.tribes.length >= C.slots(w) || w.tribes.some((tb) => tb.sp === +id); }
+    if (kind === 'ship') { dis = w.mana < 30 || !!w.cds.ship || w.found.length >= C.ISLES.length; if (w.cds.ship) cd = Math.ceil(w.cds.ship); }
+    if (kind === 'settle') { const tb = w.tribes[+id]; dis = !tb || tb.cols.length >= 2 || tb.res.wood < C.COLONY_COST.wood || tb.res.stone < C.COLONY_COST.stone || w.found.length < 2; }
     b.classList.toggle('dis', dis); b.classList.toggle('on', tool && tool.id === id && tool.kind === kind); const c = b.querySelector('.cd'); if (c) c.textContent = cd;
   });
   if (selTb >= 0 && !$('sheet').hidden) fillTribe();
-  if (hud.sl !== C.slots(w)) { hud.sl = C.slots(w); if (tab === 'life') { hud.sl = C.slots(w); setTimeout(buildTools); } }
+  const sig = C.slots(w) + '|' + C.sailors(w).length; if (hud.sl !== sig) { hud.sl = sig; setTimeout(buildTools); }
   $('spd').textContent = paused ? '⏸' : `▶ ${speed}×`;
 }
 
@@ -239,15 +265,18 @@ function buildTools() {
     b.onclick = () => pickTool(kind, id, name, desc); row.append(b);
   };
   if (tab === 'terra') C.TOOLS.forEach((t) => add('terra', t.id, t.name, t.cost, t.desc, t.id));
-  if (tab === 'power') C.POWERS.forEach((p) => add('power', p.id, p.name, p.cost, p.desc, p.id));
-  if (tab === 'life') C.SPECIES.forEach((s, i) => add('life', String(i), s.name, null, s.desc, 'egg', w && w.tribes.some((tb) => tb.sp === i) ? '탄생함' : (w && w.tribes.length >= C.slots(w) ? '🔒' : '')));
+  if (tab === 'power') { C.POWERS.forEach((p) => add('power', p.id, p.name, p.cost, p.desc, p.id)); if (w && C.sailors(w).length) add('ship', 'ship', '탐험선', 30, '가장 가까운 새 섬을 찾아요', 'ship'); }
+  if (tab === 'life') { C.SPECIES.forEach((s, i) => add('life', String(i), s.name, null, s.desc, 'egg', w && w.tribes.some((tb) => tb.sp === i) ? '탄생함' : (w && w.tribes.length >= C.slots(w) ? '🔒' : ''))); if (w) for (const tb of C.sailors(w)) add('settle', String(tb.id), C.SPECIES[tb.sp].name.replace('족', '') + ' 개척', null, `새 섬에 ${C.SPECIES[tb.sp].name} 마을을 세워요 (목재 ${C.COLONY_COST.wood} · 돌 ${C.COLONY_COST.stone})`, 'pier', `${tb.cols.length}/2곳`); }
   document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t.dataset.tab === tab));
   hud();
 }
 function pickTool(kind, id, name, desc) {
   if (tool && tool.kind === kind && tool.id === id) { tool = null; hint(''); hud(); return; }
   if (kind === 'life') { const i = +id; if (w.tribes.some((tb) => tb.sp === i)) return toast('이미 섬에 살고 있어요'); if (w.tribes.length >= C.slots(w)) return toast(w.tribes.length === 1 ? '첫 종족이 농경 시대가 되면 열려요' : '종족이 부족 국가 시대가 되면 열려요'); }
-  tool = { kind, id }; hint(kind === 'terra' ? `${name}: 땅을 누르거나 끌어서 칠해요 · ${desc}` : kind === 'power' ? `${name}: 마을이나 땅을 눌러요 · ${desc}` : `${name}: 섬의 땅을 눌러 탄생시켜요 · ${desc}`); hud();
+  if (kind === 'ship' && w.found.length >= C.ISLES.length) return toast('주변 섬을 모두 찾았어요');
+  if (kind === 'settle' && w.found.length < 2) return toast('먼저 ⚡ 신의 능력의 탐험선으로 새 섬을 찾아요');
+  tool = { kind, id }; if (kind === 'ship') { hint('탐험선: 찾고 싶은 쪽의 바다(구름)를 눌러요'); hud(); return; } if (kind === 'settle') { hint(`${name}: 찾은 새 섬의 평평한 땅을 눌러요 · 목재 ${C.COLONY_COST.wood} · 돌 ${C.COLONY_COST.stone}`); hud(); return; }
+  hint(kind === 'terra' ? `${name}: 땅을 누르거나 끌어서 칠해요 · ${desc}` : kind === 'power' ? `${name}: 마을이나 땅을 눌러요 · ${desc}` : `${name}: 섬의 땅을 눌러 탄생시켜요 · ${desc}`); hud();
 }
 function hint(s) { $('hint').textContent = s; $('hint').hidden = !s || tut >= 0; }
 let toastT = 0; function toast(s) { const e = $('toast'); e.textContent = s; e.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => e.classList.remove('on'), 1800); }
@@ -271,19 +300,25 @@ function fillTribe(full) {
     const g2 = document.createElement('div'); g2.className = 'resg'; g2.id = 'resg';
     for (const k of C.RES) { const d = document.createElement('div'); d.className = 'rs'; d.dataset.k = k; d.append(icon(k, 22)); d.insertAdjacentHTML('beforeend', `<span><b></b><small></small></span>`); g2.append(d); }
     el.insertAdjacentHTML('beforeend', '<div id="tBuff" class="note"></div>'); el.append(g2);
-    el.insertAdjacentHTML('beforeend', `<h3>연구</h3><div id="tRes" class="note"></div><div class="techs" id="techs"></div><h3>다음 시대 조건</h3><div id="tEra" class="note"></div><div id="tNeed"></div><h3>일하는 주민</h3><div id="tJobs" class="jobs"></div>`);
+    el.insertAdjacentHTML('beforeend', `<h3>🤝 교역</h3><div id="tTrade" class="note"></div><h3>연구</h3><div id="tRes" class="note"></div><div class="techs" id="techs"></div><h3>다음 시대 조건</h3><div id="tEra" class="note"></div><div id="tNeed"></div><h3>일하는 주민</h3><div id="tJobs" class="jobs"></div>`);
     const nt = C.nextTech(tb), techs = el.querySelector('#techs');
-    for (const t of C.TECHS.filter((q) => q.era === tb.era)) {
+    for (const t of C.techsFor(tb, tb.era)) {
       const b = document.createElement('button'); const got = tb.techs.includes(t.id), ok = (t.req || []).every((q) => tb.techs.includes(q));
       b.className = 'tech' + (got ? ' got' : '') + (nt && nt.id === t.id ? ' cur' : '') + (!ok ? ' lock' : '');
-      b.innerHTML = `<b>${got ? '✓ ' : ''}${t.name}</b><small>${t.desc}</small><i>${got ? '완료' : '📘 ' + t.cost}</i>`;
+      b.innerHTML = `<b>${got ? '✓ ' : ''}${t.wonder ? '🏛 ' : t.id === 'sail' ? '⛵ ' : ''}${t.name}</b><small>${t.desc}</small><i>${got ? '완료' : '📘 ' + t.cost}</i>`;
       if (!got && ok) b.onclick = () => { tb.research = t.id; fillTribe(true); toast(`'${t.name}'부터 연구해요`); };
       techs.append(b);
     }
     el.querySelector('#sheetX').onclick = closeSheet;
   }
-  el.querySelector('#tPop').innerHTML = `👥 <b>${tb.pop}</b> / ${C.capOf(tb)}명 · 🏠 집 ${tb.houses.length}채 · 영토 ${tb.radius}`;
-  for (const d of el.querySelectorAll('.rs')) { const k = d.dataset.k; d.querySelector('b').textContent = fmtN(tb.res[k]); const v = r[k]; d.querySelector('small').textContent = `${C.RNAME[k]} ${v >= 0 ? '+' : ''}${(v).toFixed(2)}/초`; d.classList.toggle('neg', v < -0.001); const fb = k === 'food' ? buffsOf(tb, 'food') : k === 'know' ? buffsOf(tb, 'know') : []; let em = d.querySelector('em'); if (!em) { em = document.createElement('em'); d.querySelector('span').append(em); } em.textContent = fb.map((b) => `${(BUFF[b.name] || ['✨'])[0]} ${b.name} ×${+b.m.toFixed(1)}`).join(' '); d.classList.toggle('buffed', fb.some((b) => b.m >= 1)); }
+  el.querySelector('#tPop').innerHTML = `👥 <b>${tb.pop}</b> / ${C.capOf(tb)}명 · 🏠 집 ${tb.houses.length}채 · 영토 ${tb.radius}${tb.cols.length ? ` · 🚩 개척지 ${tb.cols.map((c) => C.BIOMES[C.ISLES[c.isl][4]].name).join('·')}` : ''}`;
+  { const RE = { food: '🍎', iron: '⛓', gold: '🪙', know: '📘' }, rows = [];
+    const spec = sp.spec.map((k) => RE[k] + ' ' + C.RNAME[k]).join('·');
+    for (const k in tb._imp || {}) { const from = w.tribes.find((b) => b.sp === C.SPEC_OF(k)); rows.push(`<div class="nrow good">📥 ${from ? C.SPECIES[from.sp].name : ''}에게서 ${RE[k] || ''} <b>${C.RNAME[k]}</b> 받는 중 <b style="margin-left:auto">+${tb._imp[k].toFixed(2)}/초</b></div>`); }
+    for (const k in tb._exp || {}) rows.push(`<div class="nrow">📤 ${[...new Set(tb._exp[k])].map((i) => C.SPECIES[w.tribes[i].sp].name).join('·')}에게 ${RE[k] || ''} ${C.RNAME[k]}을 나눠 줘요 <small style="margin-left:auto">대가로 🪙</small></div>`);
+    if (!rows.length) rows.push(`<div class="nrow">특산물은 ${spec}이에요. 다른 종족과 영토가 닿을 때 '교류'를 고르면 서로 특산물을 나눠요.</div>`);
+    el.querySelector('#tTrade').innerHTML = rows.join(''); }
+  for (const d of el.querySelectorAll('.rs')) { const k = d.dataset.k; d.querySelector('b').textContent = fmtN(tb.res[k]); const v = r[k]; d.querySelector('small').textContent = `${C.RNAME[k]} ${v >= 0 ? '+' : ''}${(v).toFixed(2)}/초`; d.classList.toggle('neg', v < -0.001); d.classList.toggle('spec', C.isSpec(tb, k)); const imp = (tb._imp || {})[k]; d.querySelector('small').textContent += imp ? ` (교역 +${imp.toFixed(1)})` : ''; const fb = k === 'food' ? buffsOf(tb, 'food') : k === 'know' ? buffsOf(tb, 'know') : []; let em = d.querySelector('em'); if (!em) { em = document.createElement('em'); d.querySelector('span').append(em); } em.textContent = fb.map((b) => `${(BUFF[b.name] || ['✨'])[0]} ${b.name} ×${+b.m.toFixed(1)}`).join(' '); d.classList.toggle('buffed', fb.some((b) => b.m >= 1)); }
   el.querySelector('#tBuff').innerHTML = buffsOf(tb, 'all').map(buffLine).join('');
   const nt = C.nextTech(tb); el.querySelector('#tRes').innerHTML = nt ? `<div class="nrow">📘 지금 연구: <b>${nt.name}</b> <span class="bar2"><i style="width:${Math.min(100, tb.res.know / nt.cost * 100)}%"></i></span> ${Math.floor(tb.res.know)}/${nt.cost}</div>` : `<div class="nrow">이 시대의 기술을 모두 익혔어요</div>`;
   el.querySelector('#tRes').insertAdjacentHTML('beforeend', buffsOf(tb, 'know').map(buffLine).join(''));
@@ -302,12 +337,17 @@ function showCard(ev) {
   if (ev.k === 'era') { d.append(folkCanvas(tb.sp, tb.era, 110)); add(`<h2>${C.ERAS[tb.era]}!</h2><p>${C.SPECIES[tb.sp].name}이 ${C.ERAS[tb.era]}에 들어섰어요. 집과 마을이 새 모습으로 바뀌어요.</p>${tb.era === 1 && w.tribes.length < 2 ? '<p class="good">🐣 두 번째 종족을 탄생시킬 수 있어요!</p>' : ''}${tb.era === 2 && w.tribes.length < 3 ? '<p class="good">🐣 세 번째 종족을 탄생시킬 수 있어요!</p>' : ''}<button class="btn" id="ok">좋아요</button>`); }
   else if (ev.k === 'meet') {
     const A = w.tribes[ev.a], B = w.tribes[ev.b]; const row = document.createElement('div'); row.className = 'meet'; row.append(folkCanvas(A.sp, A.era, 80)); row.insertAdjacentHTML('beforeend', '<b>🤝</b>'); row.append(folkCanvas(B.sp, B.era, 80)); d.append(row);
-    add(`<h2>다른 종족 발견!</h2><p>${C.SPECIES[A.sp].name}과 ${C.SPECIES[B.sp].name}이 서로를 만났어요. 어떻게 이끌까요?</p><button class="btn g" id="trade">교류해요 <small>(지식 +15%, 금 수입 ↑)</small></button><button class="btn w" id="war">경쟁해요 <small>(센 쪽이 자원을 빼앗아요)</small></button>`);
+    add(`<h2>다른 종족 발견!</h2><p>${C.SPECIES[A.sp].name}과 ${C.SPECIES[B.sp].name}이 서로를 만났어요. 어떻게 이끌까요?</p><button class="btn g" id="trade">교류해요 <small>(서로 특산물을 나눠요: ${C.SPECIES[A.sp].spec.map((k) => C.RNAME[k]).join('·')} ↔ ${C.SPECIES[B.sp].spec.map((k) => C.RNAME[k]).join('·')})</small></button><button class="btn w" id="war">경쟁해요 <small>(센 쪽이 자원을 빼앗아요)</small></button>`);
+  } else if (ev.k === 'island') {
+    const B = C.BIOMES[C.ISLES[ev.isl][4]]; add(`<div class="big">${B.icon}</div><h2>새 섬 발견! ${B.name}</h2><p>${B.desc}</p><p class="good">🐣 생명 탭의 🚩 개척으로 마을을 세워 보세요<br><small>(목재 ${C.COLONY_COST.wood} · 돌 ${C.COLONY_COST.stone})</small></p><button class="btn" id="go">섬 보러 가기</button>`);
+  } else if (ev.k === 'wonder') {
+    const t2 = C.TECH[ev.id]; const c2 = icon(ev.id, 120); c2.style.margin = '0 auto'; c2.style.display = 'block'; d.append(c2); add(`<h2>불가사의 완성! ${t2.name}</h2><p>${t2.desc}</p><button class="btn" id="ok">멋져요</button>`);
   } else if (ev.k === 'plague') add(`<div class="big">🦠</div><h2>전염병</h2><p>${ev.m}</p><button class="btn g" id="heal">치유하기 ✨20</button><button class="btn w" id="no">그냥 둬요 (인구 -20%)</button>`);
   else add(`<div class="big">${{ harvest: '🌾', inventor: '💡', golden: '👑', drought: '☀️', volcano: '🌋', fire: '🔥' }[ev.k] || '✨'}</div><h2>${{ harvest: '풍년', inventor: '위대한 발명가', golden: '황금시대', drought: '가뭄', volcano: '화산 폭발', fire: '산불' }[ev.k] || '사건'}</h2><p>${ev.m}</p><button class="btn" id="ok">${ev.hint === 'rain' ? '비 내리러 가기' : '확인'}</button>`);
   $('cardDim').hidden = false;
   const on = (id, fn) => { const b = d.querySelector('#' + id); if (b) b.onclick = () => { fn(); closeCard(); }; };
   on('ok', () => { if (ev.hint === 'rain') { tab = 'power'; buildTools(); pickTool('power', 'rain', '비', '식량 +, 가뭄 해소'); } });
+  on('go', () => { cam.x = (C.ISLES[ev.isl][0] + .5) * TS; cam.y = (C.ISLES[ev.isl][1] + .5) * TS; cam.s = Math.max(cam.s, .7); clampCam(); tab = 'life'; buildTools(); });
   on('trade', () => C.resolveMeet(w, ev.a, ev.b, 'trade')); on('war', () => C.resolveMeet(w, ev.a, ev.b, 'war'));
   on('heal', () => { if (!C.resolvePlague(w, ev.tb, true)) toast('신력이 부족해서 치유하지 못했어요'); }); on('no', () => C.resolvePlague(w, ev.tb, false));
   if (ev.k === 'volcano') { shake = 1; fx.push({ k: 'ring', x: (ev.x + .5) * TS, y: (ev.y + .5) * TS, t: 0, life: 1.2, col: 'rgba(255,120,40,.9)' }); terrDirty = true; }
@@ -353,6 +393,17 @@ function tapAt(px, py) {
     if (tool.id === 'quake') { shake = 1; terrDirty = true; } if (tool.id === 'rain') terrDirty = true;
     tool = null; hint(''); hud(); return;
   }
+  if (tool && tool.kind === 'ship') {
+    const r = C.explore(w, x, y); if (!r.ok) return toast(r.msg);
+    const k = r.isl, sail = C.sailors(w).map((b) => [b, Math.hypot(b.cx - C.ISLES[k][0], b.cy - C.ISLES[k][1])]).sort((a, b) => a[1] - b[1])[0][0];
+    fx.push({ k: 'ship', x: (sail.cx + .5) * TS, y: (sail.cy + .5) * TS, tx: (C.ISLES[k][0] + .5) * TS, ty: (C.ISLES[k][1] + .5) * TS, t: 0, life: 3 });
+    terrDirty = true; tool = null; hint(''); hud(); save(); return;
+  }
+  if (tool && tool.kind === 'settle') {
+    const r = C.settle(w, +tool.id, x, y); if (!r.ok) return toast(r.msg);
+    fx.push({ k: 'ring', x: (x + .5) * TS, y: (y + .5) * TS, t: 0, life: 1.2 }); fx.push({ k: 'spark', x: (x + .5) * TS, y: (y + .5) * TS, t: 0, life: .8 });
+    toast('🚩 개척 마을을 세웠어요!'); terrDirty = true; tool = null; hint(''); buildTools(); save(); return;
+  }
   if (tool && tool.kind === 'life') {
     const r = C.spawnTribe(w, +tool.id, x, y); if (!r.ok) return toast(r.msg);
     fx.push({ k: 'ring', x: (x + .5) * TS, y: (y + .5) * TS, t: 0, life: 1.2 }); fx.push({ k: 'spark', x: (x + .5) * TS, y: (y + .5) * TS, t: 0, life: .8 });
@@ -363,7 +414,7 @@ function tapAt(px, py) {
 }
 
 // ---------- 저장 ----------
-function save() { if (!w || TEST) return; try { const o = { ...w, t: Array.from(w.t), own: undefined, at: Date.now() }; o.tribes = w.tribes.map((b) => ({ ...b, _c: undefined, _r: undefined })); localStorage.setItem(KEY, JSON.stringify(o)); cloudStore(o); } catch (e) { } }
+function save() { if (!w || TEST) return; try { const o = { ...w, t: Array.from(w.t), seen: Array.from(w.seen), isl: Array.from(w.isl), own: undefined, touch: undefined, at: Date.now() }; o.tribes = w.tribes.map((b) => ({ ...b, _c: undefined, _r: undefined, _imp: undefined, _exp: undefined })); localStorage.setItem(KEY, JSON.stringify(o)); cloudStore(o); } catch (e) { } }
 // 로그인하면 계정에도 저장 (30초에 한 번)
 const MG = window.MGH || null; let owner = null, cloudAt = null, cloudLast = 0;
 function cloudStore(o, now) {
@@ -378,14 +429,14 @@ function setupAuth() {
       const r = await MG.save.load(); cloudAt = (r && r.updatedAt) || null; const d = r && r.data;
       const sc = (o) => (o && o.tribes ? o.tribes.reduce((s2, b) => s2 + b.era * 1000 + b.pop, 0) + (o.stars || 0) * 1e5 : -1);
       const loc = w && w.tribes ? w : loadSave();
-      if (d && d.t && d.owner === owner && sc(d) > sc(loc)) {
+      if (d && d.t && d.v === 2 && d.owner === owner && sc(d) > sc(loc)) {
         localStorage.setItem(KEY, JSON.stringify(d)); toast('☁️ 계정 기록을 불러왔어요');
         if ($('title').hidden) start(true); else { $('contBtn').hidden = false; }
-      } else if (loc) cloudStore({ ...loc, t: Array.from(loc.t), own: undefined, tribes: loc.tribes.map((b) => ({ ...b, _c: undefined, _r: undefined })), at: Date.now() }, true);
+      } else if (loc) cloudStore({ ...loc, t: Array.from(loc.t), own: undefined, seen: Array.from(loc.seen), isl: Array.from(loc.isl), touch: undefined, tribes: loc.tribes.map((b) => ({ ...b, _c: undefined, _r: undefined, _imp: undefined, _exp: undefined })), at: Date.now() }, true);
     } catch (e) { }
   });
 }
-function loadSave() { try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!s || !s.t) return null; s.t = Uint8Array.from(s.t); return s; } catch (e) { return null; } }
+function loadSave() { try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!s || !s.t || s.v !== 2) return null; s.t = Uint8Array.from(s.t); s.seen = Uint8Array.from(s.seen); s.isl = Int8Array.from(s.isl); return s; } catch (e) { return null; } }
 function offline(sec) {
   const pops = w.tribes.map((b) => b.pop), eras = w.tribes.map((b) => b.era), n = Math.floor(Math.min(sec, 4 * 3600) * .5); // 자리 비움은 절반 속도
   for (let k = 0; k < n; k++) { C.step(w, 1); for (const ev of w.events) { if (ev.k === 'meet') C.resolveMeet(w, ev.a, ev.b, 'trade'); if (ev.k === 'plague') C.resolvePlague(w, ev.tb, false); } w.events = []; if (w.done) break; }
@@ -398,7 +449,7 @@ function start(cont) {
   if (s) { w = s; C.territory(w); offline((Date.now() - (s.at || Date.now())) / 1000); }
   else { const stars = w ? w.stars : (loadSave() || {}).stars || 0; w = C.newWorld(Q.get('seed') ? +Q.get('seed') : undefined); w.stars = stars; C.territory(w); }
   $('title').hidden = true; $('hudTop').hidden = false; $('hudBot').hidden = false;
-  agents.length = 0; syncAgents(); terrDirty = true; fitCam(true); cam.x = WW / 2; cam.y = WH / 2;
+  agents.length = 0; syncAgents(); terrDirty = true; fitCam(true); cam.x = HOME[0]; cam.y = HOME[1];
   tab = 'life'; buildTools();
   if (!w.tribes.length) { hint('🐣 아래에서 종족을 골라 섬에 첫 생명을 탄생시켜 보세요'); }
   if (!cont && !tutDone()) tutStart(0);
@@ -435,8 +486,8 @@ function frame(now) {
 async function boot() {
   resize(); addEventListener('resize', resize);
   ART = await (await fetch('assets/art.json')).json();
-  const [folk, bld, work, nat, ico, title] = await Promise.all(['folk', 'bld', 'work', 'nat', 'ico'].map((n) => load(`assets/${n}.webp`)).concat(load('assets/title.webp')));
-  Object.assign(IMG, { folk, bld, work, nat, ico, title });
+  const [folk, bld, work, nat, ico, exImg, title] = await Promise.all(['folk', 'bld', 'work', 'nat', 'ico', 'ex'].map((n) => load(`assets/${n}.webp`)).concat(load('assets/title.webp')));
+  Object.assign(IMG, { folk, bld, work, nat, ico, title, ex: exImg });
   $('load').hidden = true;
   const has = !!loadSave(); $('contBtn').hidden = !has; $('newBtn').textContent = has ? '새 섬 만들기' : '시작하기';
   $('newBtn').onclick = () => { if (has && !confirmNew()) return; start(false); };
