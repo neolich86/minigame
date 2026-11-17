@@ -168,51 +168,6 @@ canvas{display:block;image-rendering:auto}
 #slotMachine.landed .slotWindow{border-color:var(--gold)}
 @keyframes slotShake{0%{transform:translateY(-2px)}50%{transform:translateY(2px)}100%{transform:translateY(-2px)}}
 @keyframes slotLand{0%{transform:scale(1.25)}100%{transform:scale(1)}}
-/* ===== 새 디자인 (힉스필드 아트에 맞춘 밝은 판타지 UI) ===== */
-.bar{height:18px;border-radius:10px;border:2px solid #2a1a0c;background:rgba(20,14,8,.78);box-shadow:none}
-.bar > i{border-radius:8px}
-#xpFill{background:linear-gradient(180deg,#a8f0ff,#3cb6ef 60%,#2385c4)}
-#hpFill{background:linear-gradient(180deg,#ff9a8a,#e23b2e 60%,#a4211a)}
-.bar b{font-size:11px}
-#hud > .bar{margin-left:62px}
-.topRow{position:relative}
-.lvBadge{position:absolute;left:0;top:-2px;z-index:2;width:54px;min-width:0;height:60px;padding:0;border:0;border-radius:0;
-  clip-path:polygon(50% 0,100% 18%,100% 70%,50% 100%,0 70%,0 18%);background:linear-gradient(#ffe48f,#f2a623);
-  color:#5a3006;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;filter:drop-shadow(0 3px 0 #6b3a06);box-shadow:none;white-space:pre;text-align:center}
-.topRow .bar{margin-left:62px}
-#statLine{margin-left:62px;color:#fff;font-size:13px}
-#timeTxt{padding:2px 14px;border-radius:10px;background:linear-gradient(#8a5a2e,#6b4423);border:2px solid #3a220e;box-shadow:0 3px 0 #2a1608;color:#fff;font-size:17px}
-#btnPause{border-radius:12px;border:2px solid #3a220e;background:linear-gradient(#8a5a2e,#6b4423);box-shadow:0 3px 0 #2a1608;color:#fff;width:42px;height:42px;top:calc(76px + env(safe-area-inset-top))}
-#chips{gap:5px;max-width:min(calc(100% - 56px),340px);margin-top:4px}
-.chip{position:relative;width:38px;height:38px;padding:0;border-radius:10px;background:rgba(30,20,10,.72);border:2px solid var(--rc,#9aa6b2);justify-content:center}
-.chip img{width:32px;height:32px}
-.chip u{position:absolute;right:-4px;bottom:-5px;min-width:16px;height:16px;border-radius:8px;background:#1d140c;border:1.5px solid #fff;color:#fff;font-size:10px;text-align:center;line-height:13px}
-#hpBoss .nm{color:#ffd1c4;font-size:12px;letter-spacing:1px}
-#hpBoss .bar{height:12px;border-color:#5a0e0e}
-.veil{background:rgba(12,10,6,.72)}
-#start{background:#1b2a17 center top/cover no-repeat;justify-content:flex-end;padding-bottom:calc(44px + env(safe-area-inset-bottom))}
-#start::before{content:'';position:absolute;inset:auto 0 0 0;height:50%;background:linear-gradient(transparent,rgba(10,16,8,.9));pointer-events:none}
-#start > *{position:relative}
-#start .title{font-size:clamp(38px,11vw,56px);background:linear-gradient(#fff7d6,#ffc23a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 #5a2c04) drop-shadow(0 0 14px rgba(255,170,40,.55))}
-#start .sub{color:#ffeccc;text-shadow:0 1px 4px #000}
-.btn{border-radius:16px;border:3px solid #6b3a06;background:linear-gradient(#ffe07a,#f59e1b);color:#4a2400;box-shadow:0 5px 0 #6b3a06}
-.btn.ghost{background:linear-gradient(#fff6e0,#e9d5a8);color:#4a2a10;border-color:#6b4423;box-shadow:0 4px 0 #6b4423}
-#lvup{background:rgba(10,8,4,.66)}
-.lvHead h2{font-size:clamp(28px,8vw,40px);color:#ffcf4a;text-shadow:0 3px 0 #7a3d06,0 0 18px rgba(255,180,40,.6)}
-.lvHead p{color:#ffe9bf;letter-spacing:1px}
-#cards{flex-direction:column;align-items:center;gap:12px;max-width:380px}
-.card{flex:none;width:100%;max-width:360px;min-width:0;flex-direction:row;align-items:center;text-align:left;gap:12px;padding:12px 14px;border-radius:18px;
-  background:linear-gradient(#fff8e6,#f3dfb4);border:3px solid var(--rc);box-shadow:0 5px 0 color-mix(in srgb,var(--rc) 55%,#3a220e),0 0 20px color-mix(in srgb,var(--rc) 45%,transparent);overflow:visible}
-.card::after{display:none}
-.card:hover{border-color:var(--rc);box-shadow:0 5px 0 color-mix(in srgb,var(--rc) 55%,#3a220e),0 0 26px var(--rc)}
-.card .ic{width:68px;height:68px;border-radius:16px;background:radial-gradient(#fff,#f1dcae);padding:4px}
-.card h3{font-size:17px;color:#2a1a0a}
-.card p{font-size:12.5px;color:#5a4630;min-height:0;margin-top:2px}
-.card .lvl{font-size:11px;color:color-mix(in srgb,var(--rc) 70%,#3a220e);margin-top:4px}
-.card .key{left:auto;right:10px;top:auto;bottom:6px;color:#a08a6a}
-.newTag{right:12px;top:-10px;border-radius:999px;padding:2px 8px;font-size:10px;background:var(--rc);color:#fff}
-.card .tx{flex:1;min-width:0}
-.stat{background:rgba(30,20,10,.75);border-color:#6b4423;border-radius:12px}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -242,7 +197,7 @@ canvas{display:block;image-rendering:auto}
 <div id="stick"><div class="ring"></div><div class="nub" id="nub"></div></div>
 
 <!-- start -->
-<div class="veil show" id="start" style="background-image:url(assets/title.webp)">
+<div class="veil show" id="start">
   <div class="title">궁수 서바이버</div>
   <div class="sub">
     사방에서 몰려오는 몬스터를 처치하세요.<br>
@@ -302,12 +257,14 @@ const MONSTER_KEYS = Array.from({length:15},(_,i)=>'mon'+(i+1));
 const BOSS_KEYS = Array.from({length:5},(_,i)=>'boss'+(i+1));
 
 /* ---------------------------------------------------------- 새 그림 (힉스필드, assets/) */
+const NEW_ART = false;   // true 로 바꾸면 힉스필드 새 그림(assets/)을 다시 씀
 const NEW = {};
 const MON_IDX = {mon1:0,mon9:1,mon2:2,mon11:3,mon7:4,mon5:5,mon12:6,mon8:7,mon3:8,mon6:9,mon15:10,mon13:11,mon10:12,mon4:13,mon14:14};
 const ICON_IDS = ['aspd','multi','pierce','aoe','shield','dmg','speed','magnet','hp','crit','regen','knock','xp','bounce','trap','bolt','meteor','blackhole','mine','boom','roulette','clone','rain','orbit','frost'];
 const FXI = {arrow:0,boom:1,meteor:2,hole:3,bolt:4,boomer:5,mine:6,trap:7,shield:8,gem:9,fire:10,slot:11,farrow:12,ice:13,snow:14,smoke:15};
 const HERO_F = {idle_0:0,idle_1:1,idle_2:0,run_0:2,run_1:3,run_2:4,run_3:3,atk_0:5,atk_1:5,atk_2:6,atk_3:6,atk_4:7};
 function loadNew(cb){
+  if(!NEW_ART) return cb();
   fetch('assets/art.json').then(r=>r.json()).then(a=>{
     NEW.art=a; const ks=['hero','mon','boss','fx','ico','ground']; let n=0;
     ks.forEach(k=>{ const im=new Image(); im.onload=im.onerror=()=>{ if(++n===ks.length){ try{applyNew()}catch(e){} cb(); } }; im.src='assets/'+k+'.webp'; NEW[k]=im; });
@@ -818,6 +775,31 @@ const ICONS = {
       g.beginPath();g.arc(S*.5+Math.cos(a)*S*.38,S*.5+Math.sin(a)*S*.38,S*.05,0,TAU);g.fill();
     }
     g.beginPath();g.arc(S*.5,S*.5,S*.10,0,TAU);g.fill();
+  },
+  clone(g,S,c){ // 사람 둘 (뒤는 흐리게)
+    const man=(x,a)=>{ g.globalAlpha=a; g.fillStyle=c; g.beginPath();g.arc(x,S*.32,S*.11,0,TAU);g.fill();
+      g.beginPath();g.moveTo(x-S*.16,S*.84);g.quadraticCurveTo(x-S*.16,S*.48,x,S*.48);g.quadraticCurveTo(x+S*.16,S*.48,x+S*.16,S*.84);g.closePath();g.fill(); };
+    man(S*.36,.4); man(S*.6,1); g.globalAlpha=1;
+  },
+  rain(g,S,c){ // 위에서 떨어지는 화살 셋
+    g.strokeStyle=c;g.fillStyle=c;g.lineWidth=S*.07;g.lineCap='round';
+    for(const [x,y] of [[.28,.14],[.52,.26],[.76,.12]]){
+      g.beginPath();g.moveTo(S*x,S*y);g.lineTo(S*x,S*(y+.5));g.stroke();
+      g.beginPath();g.moveTo(S*(x-.08),S*(y+.44));g.lineTo(S*x,S*(y+.6));g.lineTo(S*(x+.08),S*(y+.44));g.closePath();g.fill();
+    }
+  },
+  orbit(g,S,c){ // 원 궤도 위의 화살촉
+    g.strokeStyle=c;g.lineWidth=S*.06;g.setLineDash([S*.09,S*.07]);g.beginPath();g.arc(S*.5,S*.5,S*.32,0,TAU);g.stroke();g.setLineDash([]);
+    g.fillStyle=c;g.beginPath();g.arc(S*.5,S*.5,S*.07,0,TAU);g.fill();
+    for(const a of [-.6,1.5,3.6]){ const x=S*.5+Math.cos(a)*S*.32,y=S*.5+Math.sin(a)*S*.32;
+      g.save();g.translate(x,y);g.rotate(a+Math.PI/2);g.beginPath();g.moveTo(S*.12,0);g.lineTo(-S*.06,-S*.08);g.lineTo(-S*.06,S*.08);g.closePath();g.fill();g.restore(); }
+  },
+  frost(g,S,c){ // 눈송이
+    g.strokeStyle=c;g.lineWidth=S*.075;g.lineCap='round';
+    for(let i=0;i<3;i++){ const a=i/3*Math.PI; g.save();g.translate(S*.5,S*.5);g.rotate(a);
+      g.beginPath();g.moveTo(-S*.36,0);g.lineTo(S*.36,0);
+      for(const d of [-.24,.24]){ g.moveTo(S*d,0);g.lineTo(S*d+Math.sign(d)*S*.09,-S*.09);g.moveTo(S*d,0);g.lineTo(S*d+Math.sign(d)*S*.09,S*.09); }
+      g.stroke();g.restore(); }
   }
 };
 function iconCanvas(name,col){
@@ -1955,7 +1937,11 @@ function draw(){
   drawPlayer();
   // 떨어지는 화살비
   for(const r of rains) for(const d of r.drops){
-    const q=d.t/0.26; if(!fxDraw('arrow', d.x, d.y-(1-q)*260, 34, .92, .5, Math.PI/2, Math.min(1,q*3))){ ctx.fillStyle='#ffd34d'; ctx.fillRect(d.x-1.5,d.y-(1-q)*260-14,3,14); }
+    const q=d.t/0.26; if(!fxDraw('arrow', d.x, d.y-(1-q)*260, 34, .92, .5, Math.PI/2, Math.min(1,q*3))){
+      ctx.save(); ctx.translate(d.x, d.y-(1-q)*260); ctx.rotate(Math.PI/2); ctx.globalAlpha=Math.min(1,q*3);
+      ctx.strokeStyle='rgba(255,184,64,.35)'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(-34,0); ctx.lineTo(-10,0); ctx.stroke();
+      if(IMG.arrow) ctx.drawImage(IMG.arrow,-30,-4,34,8); else { ctx.fillStyle='#ffd34d'; ctx.fillRect(-28,-2,28,4); }
+      ctx.restore(); }
   }
   // 궤도 화살
   if(P.orbit>0){
@@ -1964,7 +1950,7 @@ function draw(){
     for(let k=0;k<n;k++){
       const a=P.orbA+k/n*TAU, ox=P.x+Math.cos(a)*R, oy=P.y-10+Math.sin(a)*R;
       ctx.save(); ctx.shadowColor='#ffd34d'; ctx.shadowBlur=14;
-      if(!fxDraw('arrow', ox, oy, 46, .5, .5, a+Math.PI/2)){ ctx.fillStyle='#ffd34d'; ctx.beginPath(); ctx.arc(ox,oy,6,0,TAU); ctx.fill(); }
+      if(!fxDraw('arrow', ox, oy, 46, .5, .5, a+Math.PI/2)){ ctx.translate(ox,oy); ctx.rotate(a+Math.PI/2); if(IMG.arrow) ctx.drawImage(IMG.arrow,-19,-4.5,38,9); else { ctx.fillStyle='#ffd34d'; ctx.fillRect(-16,-2.5,32,5); } }
       ctx.restore();
     }
   }
@@ -1998,7 +1984,7 @@ function draw(){
     const k=1-f.t/f.life;
     ctx.globalAlpha=k;
     if(f.smoke){
-      fxDraw('smoke', f.x, f.y, 70*(0.7+0.5*(1-k)), .5,.5, 0, k);
+      if(!fxDraw('smoke', f.x, f.y, 70*(0.7+0.5*(1-k)), .5,.5, 0, k)){ ctx.fillStyle='#7a4fd6'; ctx.globalAlpha=k*0.5; ctx.beginPath(); ctx.arc(f.x,f.y,26*(0.6+0.6*(1-k)),0,TAU); ctx.fill(); }
     } else if(f.freeze && NEW.F){
       fxDraw('snow', f.x, f.y, 44*(0.6+0.6*(1-k)), .5,.5, (1-k)*1.5, k);
     } else if(f.iceburst){
@@ -2284,7 +2270,7 @@ function syncHUD(){
   hpTxt.textContent=`${Math.ceil(P.hp)} / ${P.hpMax}`;
   xpFill.style.transform=`scaleX(${clamp(P.xp/P.xpNeed,0,1)})`;
   xpTxt.textContent=`${Math.floor(P.xp)} / ${P.xpNeed}`;
-  lvTxt.textContent='LV\n'+P.lv;
+  lvTxt.textContent='LV '+P.lv;
   killTxt.textContent='☠ '+game.kills;
   timeTxt.textContent=fmtTime(game.t);
   shieldTxt.textContent = P.shieldMax? '🛡 '+P.shield+'/'+P.shieldMax : '';
@@ -2310,7 +2296,7 @@ function syncChips(){
   for(const id in P.ups){
     const u=UPMAP[id];
     const d=document.createElement('div');d.className='chip';d.title=u.name;d.style.setProperty('--rc',RC[u.rar]);
-    d.innerHTML=`<img src="${iconCanvas(u.ic,RC[u.rar]).toDataURL()}" alt="${u.name}"><u>${P.ups[id]}</u>`;
+    d.innerHTML=`${u.name}<u>${P.ups[id]}</u>`;
     chipsEl.appendChild(d);
   }
 }
