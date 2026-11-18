@@ -149,19 +149,21 @@ function tick(dt, noRender) {
 function draw(dt) {
   const fd = f ? f.d : RAMP_D, fy = f ? f.y : (st.lv.ramp || 0) * 20 + 191, v = f ? f.v : 0;
   // 높을수록 멀리, 빠를수록 살짝 멀리 → 속도감
-  const want = Math.max(1.5, Math.min(3.6, (H * 0.5) / (fy + 35))) * (1 - Math.min(.28, Math.max(0, v - 28) / 160));
+  // 가깝게 당겨서 실제로 빠르게 지나가 보이게 (높이 날면 땅은 화면 아래로 벗어남)
+  const want = Math.max(3.2, Math.min(5, (H * 0.55) / (fy + 20))) * (1 - Math.min(.2, Math.max(0, v - 28) / 200));
   scale += (want - scale) * Math.min(1, dt * 1.5); camY += (fy - camY) * Math.min(1, dt * 4);
   const px = W * 0.3, py = H * 0.46, sx = (d) => px + (d - fd) * scale, sy = (y) => py - (y - camY) * scale;
   const reg = Math.min(2, C.regionAt(Math.max(0, fd))), P = PAL[reg];
   // 하늘 그림 (느린 시차) — 지역 경계에서 겹쳐 바뀜
   const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, P.sky[0]); g.addColorStop(1, P.sky[1]); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  const drawSky = (im, alpha) => { if (!ok(im) || alpha <= 0) return; const bh = H, bw = bh * im.naturalWidth / im.naturalHeight, off = -((fd * 0.12) % bw + bw) % bw, by = Math.min(0, sy(0) - bh * 0.88); ctx.globalAlpha = alpha; for (let x = off; x < W; x += bw) ctx.drawImage(im, x, by, bw + 1, bh); ctx.globalAlpha = 1; };
+  const drawSky = (im, alpha) => { if (!ok(im) || alpha <= 0) return; const bh = H, bw = bh * im.naturalWidth / im.naturalHeight, off = -((fd * 0.6) % bw + bw) % bw, by = Math.min(0, sy(0) - bh * 0.88); ctx.globalAlpha = alpha; for (let x = off; x < W; x += bw) ctx.drawImage(im, x, by, bw + 1, bh); ctx.globalAlpha = 1; };
   const nb = C.REGIONS[reg + 1] ? C.REGIONS[reg + 1].from : 1e9, mix = reg < 2 ? Math.max(0, Math.min(1, (fd - (nb - 250)) / 250)) : 0;
   drawSky(SKY[reg], 1); if (mix > 0) drawSky(SKY[reg + 1], mix);
   ctx.fillStyle = 'rgba(220,235,255,.18)'; ctx.fillRect(0, 0, W, H);
   // 먼 언덕 (중간 시차)
-  ctx.fillStyle = P.far; ctx.globalAlpha = .55; ctx.beginPath(); ctx.moveTo(0, H);
-  for (let x = 0; x <= W + 8; x += 8) { const wx = fd * 0.45 + x / scale; ctx.lineTo(x, sy(0) - farHill(wx) * scale * 0.55 - 6); }
+  const hb = Math.min(sy(0), H * 0.97);   // 높이 날 때도 화면 아래쪽에 언덕이 보이게
+  ctx.fillStyle = P.far; ctx.globalAlpha = .7; ctx.beginPath(); ctx.moveTo(0, H);
+  for (let x = 0; x <= W + 8; x += 8) { const wx = fd * 0.55 + x / 2.2; ctx.lineTo(x, hb - farHill(wx) * 1.4 - 6); }
   ctx.lineTo(W, H); ctx.fill(); ctx.globalAlpha = 1;
   // 절벽 + 점프대
   const CT = (f ? f.st.startY : fy + 9) - 24;
@@ -221,8 +223,8 @@ function draw(dt) {
     ctx.restore();
   }
   // 앞쪽 구름 (빠른 시차) + 속도선
-  for (const c of clouds) { const x = ((c.x - fd * c.p * scale * .5) % (W + 400) + W + 400) % (W + 400) - 200, y = c.y; ctx.globalAlpha = .55; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.ellipse(x, y, 60 * c.s, 18 * c.s, 0, 0, 6.283); ctx.ellipse(x + 30 * c.s, y - 10 * c.s, 34 * c.s, 16 * c.s, 0, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1; }
-  const sp = f ? Math.max(0, (v - 26) / 30) + (f.boostT > 0 || f.rocketOn ? .7 : 0) : 0;
+  for (const c of clouds) { const x = ((c.x - fd * c.p * scale * 1.2) % (W + 400) + W + 400) % (W + 400) - 200, y = c.y; ctx.globalAlpha = .55; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.ellipse(x, y, 60 * c.s, 18 * c.s, 0, 0, 6.283); ctx.ellipse(x + 30 * c.s, y - 10 * c.s, 34 * c.s, 16 * c.s, 0, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1; }
+  const sp = f && state === 'fly' ? Math.max(0, (v - 12) / 30) + (f.boostT > 0 || f.rocketOn ? .7 : 0) : 0;
   if (sp > 0.05) { ctx.strokeStyle = `rgba(255,255,255,${Math.min(.6, sp * .5)})`; ctx.lineWidth = 2; const n = Math.round(6 + sp * 14); for (let i = 0; i < n; i++) { const y = (i * 97.3 + T * 50) % H, x = ((i * 211.7 - T * (v * 18)) % (W + 200) + W + 200) % (W + 200) - 100, L = 40 + sp * 80; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + L, y); ctx.stroke(); } }
 }
 requestAnimationFrame(loop);

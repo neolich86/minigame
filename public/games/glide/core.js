@@ -2,7 +2,7 @@
 // 좌표: d = 앞으로 간 거리(m), y = 고도(m), lat = 옆 위치(m)
 export const G = 9.8, K0 = 0.0021, M0 = 210;   // 공기 저항 K·V², 유도 저항 M/V²
 export const STALL = 9, VMAX = 75, GOAL = 10000;
-export const PACE = 1.5;   // 화면 진행 배속 — 물리는 그대로, 시간이 1.5배 빨리 흐름 (화면 속도 표시도 ×PACE)
+export const PACE = 2.2;   // 화면 진행 배속 — 물리는 그대로, 시간이 1.5배 빨리 흐름 (화면 속도 표시도 ×PACE)
 export const RING = { boost: 16, climb: 22, r: 9, startAlt: 140, fade: 900, gap: 0.1 };   // 멀리 갈수록 링 힘이 약해지고(fade) 간격이 넓어짐(gap)
 export const ringFade = (d) => 1 / (1 + d / RING.fade);
 export function tune(o) { Object.assign(RING, o.RING || {}); }

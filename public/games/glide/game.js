@@ -53,11 +53,11 @@ const sky = new THREE.Mesh(new THREE.CylinderGeometry(3200, 3200, 2600, 48, 1, t
 let curReg = 0;
 function setSky(i) { if (skyTex[i]) { skyMat.map = skyTex[i]; skyMat.needsUpdate = true; } scene.fog.color.set(LOOK[i].fog); scene.background.set(LOOK[i].bg); }
 function canvasTex(w, h, draw, rep) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d')); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; if (rep) t.repeat.set(rep[0], rep[1]); return t; }
-function groundTex(cols) { return canvasTex(256, 256, (g) => { g.fillStyle = cols[0]; g.fillRect(0, 0, 256, 256); for (let i = 0; i < 1400; i++) { g.fillStyle = cols[1 + (i % 4)]; g.globalAlpha = .35; const s = 2 + Math.random() * 10; g.fillRect(Math.random() * 256, Math.random() * 256, s, s * .6); } }, [60, 60]); }
+function groundTex(cols) { return canvasTex(256, 256, (g) => { g.fillStyle = cols[0]; g.fillRect(0, 0, 256, 256); for (let i = 0; i < 1400; i++) { g.fillStyle = cols[1 + (i % 4)]; g.globalAlpha = .35; const s = 2 + Math.random() * 10; g.fillRect(Math.random() * 256, Math.random() * 256, s, s * .6); } }, [320, 320]); }
 function rockTex(cols) { return canvasTex(64, 256, (g) => { for (let y = 0; y < 256; y += 16) { g.fillStyle = cols[(y / 16) % cols.length]; g.fillRect(0, y, 64, 16 + Math.random() * 6); } }, [4, 1]); }
 // 땅 3구간 (협곡 · 설원 · 바다)
 const SEG = [[700, -3000], [-3000, -6000], [-6000, -C.GOAL - 1500]];
-const waterTex = canvasTex(128, 128, (g) => { g.fillStyle = '#2a9fd0'; g.fillRect(0, 0, 128, 128); g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 2; for (let i = 0; i < 26; i++) { const x = Math.random() * 128, y = Math.random() * 128; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + 6, y - 3, x + 12, y); g.stroke(); } }, [120, 120]);
+const waterTex = canvasTex(128, 128, (g) => { g.fillStyle = '#2a9fd0'; g.fillRect(0, 0, 128, 128); g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 2; for (let i = 0; i < 26; i++) { const x = Math.random() * 128, y = Math.random() * 128; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + 6, y - 3, x + 12, y); g.stroke(); } }, [480, 480]);
 SEG.forEach(([z0, z1], i) => {
   const len = z0 - z1, geo = new THREE.PlaneGeometry(7000, len, 140, Math.round(len / 50)); geo.rotateX(-Math.PI / 2);
   const p = geo.attributes.position;
@@ -80,7 +80,18 @@ function buildTerrain() {
   for (const m of C.mesaList()) { const geo = m.reg === 1 ? new THREE.CylinderGeometry(m.w * .45, m.w * 1.05, m.h * 1.3, 7, 1) : new THREE.CylinderGeometry(m.w * .85, m.w * 1.05, m.h, 7, 1); const mesh = new THREE.Mesh(geo, rockMat[m.reg]); mesh.position.set(m.lat, (m.reg === 1 ? m.h * 1.3 : m.h) / 2, -m.d); mesh.rotation.y = m.d; terrainGroup.add(mesh); }
   for (let i = 0; i < 150; i++) { const d = Math.random() * (C.GOAL + 800), reg = Math.min(2, C.regionAt(d)), side = Math.random() < .5 ? -1 : 1, h = (reg === 1 ? 180 : 60) + Math.random() * (reg === 1 ? 320 : 140), w = 80 + Math.random() * 200;
     const geo = reg === 1 ? new THREE.ConeGeometry(w * 1.2, h, 7) : new THREE.CylinderGeometry(w * .85, w * 1.05, h, 7); const mesh = new THREE.Mesh(geo, rockMat[reg]); mesh.position.set(side * (420 + Math.random() * 1400), h / 2, -d); terrainGroup.add(mesh); }
-  // 하늘 코인
+  // 길가 덤불·돌·눈 바위: 비행 경로 양옆에 촘촘히 (가까이 지나가는 물체로 속도감)
+  const n = 1400, dummy = new THREE.Object3D();
+  const bush = new THREE.InstancedMesh(new THREE.ConeGeometry(2.2, 5, 6), new THREE.MeshLambertMaterial({ color: 0xffffff }), n), rock = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1.8), new THREE.MeshLambertMaterial({ color: 0xffffff }), n);
+  const col = new THREE.Color(); let bi = 0, ri = 0;
+  for (let k = 0; k < n * 2; k++) {
+    const d = (k / (n * 2)) * 6000 + Math.random() * 4, reg = C.regionAt(d), lat = (Math.random() - .5) * 180, sc = .6 + Math.random() * 1.4;
+    if (reg >= 2) continue;
+    dummy.position.set(lat, C.baseGround(d) + (reg === 1 ? Math.abs(lat) * .02 : 0), -d); dummy.rotation.set(0, Math.random() * 6, 0); dummy.scale.setScalar(sc); dummy.updateMatrix();
+    if (k % 2 && bi < n) { bush.setMatrixAt(bi, dummy.matrix); bush.setColorAt(bi, col.set(reg === 1 ? 0x2f6b45 : 0x6f8a3a)); bi++; }
+    else if (ri < n) { rock.setMatrixAt(ri, dummy.matrix); rock.setColorAt(ri, col.set(reg === 1 ? 0xeef4fb : 0x9a4a2a)); ri++; }
+  }
+  bush.count = bi; rock.count = ri; terrainGroup.add(bush, rock);
 }
 const coinGeo = new THREE.CylinderGeometry(2.6, 2.6, .5, 20); coinGeo.rotateX(Math.PI / 2);
 const coinMat = new THREE.MeshLambertMaterial({ color: 0xffd23a, emissive: 0xb07800, fog: false });
@@ -216,6 +227,7 @@ function tick(dt, noRender) {
   const want = gpos.clone().addScaledVector(fw, -back).add(v3(0, 6.5 - a * 6, 0));
   camPos.lerp(want, Math.min(1, dt * 5)); cam.position.copy(camPos);
   camLook.lerp(gpos.clone().addScaledVector(fw, 60).add(v3(0, a * 25 + 2, 0)), Math.min(1, dt * 6)); cam.lookAt(camLook); cam.rotateZ(-bank * .35);
+  { const base = cam.aspect < 1 ? 74 : 60, want = base + (f && state === 'fly' ? Math.min(16, Math.max(0, f.v - 22) * .45) + (f.boostT > 0 || f.rocketOn ? 6 : 0) : 0); if (Math.abs(cam.fov - want) > .05) { cam.fov += (want - cam.fov) * Math.min(1, dt * 3); cam.updateProjectionMatrix(); } }
   sky.position.set(cam.position.x, 700, cam.position.z);
   // 링 · 코인
   if (f) {
