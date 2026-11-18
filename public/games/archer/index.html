@@ -885,7 +885,7 @@ const UPGRADES = [
     l===1?`분신 1명이 함께 화살을 쏩니다 (공격력의 40%)`:
     l===2?`분신이 2명으로 늘어납니다`:
     l===3?`분신의 공격력이 60%로 오릅니다`:
-    `분신도 멀티샷·폭발 화살 효과를 받습니다`,
+    `분신도 폭발·도약 화살 효과를 받습니다 (멀티샷 제외)`,
     apply:p=>p.clone++},
   {id:'rain', ic:'rain', rar:'l', max:5, name:'화살비', desc:l=>`${l>=4?4:5}초마다 적이 가장 많은 곳에 2초 동안 화살비 (범위 ${90+l*12}, 초당 ${((0.22+0.06*l)*10).toFixed(1)}×공격력)`,
     apply:p=>p.rain++},
@@ -970,7 +970,12 @@ function lateMul(){ const L=lateL(); return (1+0.5*Math.min(L,1))*(1+0.30*L+0.03
 // 보스를 잡을 때마다 일반 몬스터가 한 단계씩 강해진다 (체력은 단계마다 1.45배씩 곱으로 불어남·공격·속도·출현량)
 function furyMul(){ const f = game.fury||0; return {hp:Math.pow(1.45,f), dmg:1+0.30*f, spd:1+Math.min(0.35,0.06*f), rate:1+0.12*f}; }
 // 캐릭터 Lv50부터 몬스터 각성: 체력 ×1.6 시작, 레벨마다 ×1.07 / 공격력 ×1.35, 레벨마다 ×1.035 / 속도 최대 +30%
-function lvMul(){ const L=(P?P.lv:0)-49; if(L<=0) return null; return {hp:1.6*Math.pow(1.07,L), dmg:1.35*Math.pow(1.035,L), spd:1+Math.min(0.3,L*0.012)}; }
+const LVT = {start:20, hpG:1.045, dmgG:1.025, jump:1.6, djump:1.35};   // ?test 에서 __ar.LVT 로 조정
+function lvMul(){
+  const lvl=P?P.lv:0, L=lvl-LVT.start; if(L<=0) return null;
+  const aw=lvl>=50, A=lvl-49;
+  return {hp:Math.pow(LVT.hpG,L)*(aw?LVT.jump:1), dmg:Math.pow(LVT.dmgG,L)*(aw?LVT.djump:1), spd:1+(aw?Math.min(0.3,A*0.012):0), aw};
+}
 function timeScale(){ const m = game.t/60; return (1 + m*0.30 + Math.pow(m,1.85)*0.030) * lateMul() }
 function elemForTime(){
   const t = game.t;
@@ -1001,7 +1006,7 @@ function spawnEnemy(){
     size:M.size, face:1, ph:rnd(TAU), flash:0, kx:0, ky:0, boss:false, hitT:0, trapT:0,
     freezeT:0, chill:0, slowT:0
   });
-  const LM=lvMul(); if(LM){ const e=enemies[enemies.length-1]; e.hp*=LM.hp; e.hpMax*=LM.hp; e.dmg*=LM.dmg; e.spd*=LM.spd; e.awk=1; }
+  const LM=lvMul(); if(LM){ const e=enemies[enemies.length-1]; e.hp*=LM.hp; e.hpMax*=LM.hp; e.dmg*=LM.dmg; e.spd*=LM.spd; if(LM.aw) e.awk=1; }
 }
 // 떼 몬스터: 한곳에 몰려 나오고 약함 → 한 번에 쓸어 담는 맛
 function spawnPack(n){
@@ -1024,7 +1029,7 @@ function spawnBoss(tier){
   if(P.meteor>0) estDPS += (P.meteor>=2?2:1)*P.dmg*(2.4+P.meteor*0.5)/6.5;
   if(P.blackhole>0) estDPS += P.dmg*(2.0+P.blackhole*0.6)/11;
   if(P.mine>0) estDPS += P.mine*P.dmg*(2.2+P.mine*0.45)/3*0.35;
-  if(P.clone>0) estDPS += (P.dmg*P.aspd/0.56)*(P.clone>=2?2:1)*(P.clone>=3?0.6:0.4)*(P.clone>=4?(1+(P.multi-1)*0.4):1);
+  if(P.clone>0) estDPS += (P.dmg*P.aspd/0.56)*(P.clone>=2?2:1)*(P.clone>=3?0.6:0.4);
   if(P.rain>0) estDPS += P.dmg*(0.22+0.06*P.rain)*20/(P.rain>=4?4:5)*0.6;
   if(P.orbit>0) estDPS += P.dmg*(0.8+0.2*P.orbit)*2*0.35;
   if(P.boom>0) estDPS += (P.boom>=4?2:1)*P.dmg*(1.2+P.boom*0.6)*1.6/2.2;
@@ -1154,6 +1159,7 @@ function update(dt){
   let mx=0,my=0;
   if(keys['a']||keys['arrowleft'])mx--; if(keys['d']||keys['arrowright'])mx++;
   if(keys['w']||keys['arrowup'])my--;  if(keys['s']||keys['arrowdown'])my++;
+  if(TMV){ mx+=TMV[0]; my+=TMV[1]; }
   if(touch.on){mx+=touch.dx;my+=touch.dy}
   const ml=Math.hypot(mx,my);
   if(ml>1){mx/=ml;my/=ml}
@@ -1217,7 +1223,7 @@ function update(dt){
         let best=null,bd=P.range*P.range;
         for(const e of enemies){ const d=dist2(c.x,c.y,e.x,e.y); if(d<bd){bd=d;best=e} }
         if(best){
-          const base=Math.atan2(best.y-c.y,best.x-c.x), full=P.clone>=4, nn=full?P.multi:1, spread=Math.min(0.52,0.11*(nn-1));
+          const base=Math.atan2(best.y-c.y,best.x-c.x), full=P.clone>=4, nn=1, spread=0;   // 분신은 멀티샷 없음 (4레벨: 폭발·도약만)
           c.face=Math.cos(base)>0?1:-1;
           for(let k=0;k<nn;k++) shoot(base+(nn>1?(k/(nn-1)-0.5)*2*spread:0), {x:c.x,y:c.y,mul:P.clone>=3?0.6:0.4,full});
           c.atkT=0.56/(P.aspd*(P.buffType==='aspd2'?2:1)); c.atk=0;
@@ -2641,10 +2647,11 @@ function loop(now){
 }
 
 /* ---------- 테스트 훅 (?test) ---------- */
+let TMV=null;
 if(new URLSearchParams(location.search).has('test')) window.__ar = {
   get P(){return P}, get game(){return game}, get enemies(){return enemies}, start:()=>startGame(),
   up(id,n=1){ const u=UPGRADES.find(x=>x.id===id); for(let i=0;i<n;i++){ u.apply(P); P.ups[id]=(P.ups[id]||0)+1; } },
-  lv(n){ P.lv=n; P.xpNeed=1e15; }, lvup(){ syncChips(); queueLevelUp(); }, step(t){ for(let i=0;i<t*30;i++) update(1/30); }
+  lv(n){ P.lv=n; P.xpNeed=1e15; }, mv(x,y){ TMV=(x||y)?[x,y]:null; }, get cards(){ return cardsEl.children; }, LVT, lvup(){ syncChips(); queueLevelUp(); }, step(t){ for(let i=0;i<t*30;i++) update(1/30); }
 };
 /* ---------- 부팅 ---------- */
 (function boot(){

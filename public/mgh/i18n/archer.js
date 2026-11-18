@@ -51,7 +51,7 @@
     "분신 1명이 함께 화살을 쏩니다 (공격력의 40%)": "A shadow clone fires arrows with you (40% ATK)",
     "분신이 2명으로 늘어납니다": "Two shadow clones",
     "분신의 공격력이 60%로 오릅니다": "Clone damage rises to 60%",
-    "분신도 멀티샷·폭발 화살 효과를 받습니다": "Clones also get Multishot and Explosive Arrow",
+    "분신도 폭발·도약 화살 효과를 받습니다 (멀티샷 제외)": "Clones also get Explosive and Bouncing Arrow (not Multishot)",
     "+체력 회복": "+HP restored",
     "방어!": "Blocked!",
     "몬스터 전멸!": "Monsters wiped out!",
