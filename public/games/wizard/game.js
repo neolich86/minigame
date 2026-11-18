@@ -441,7 +441,7 @@ function targets(maxN) {
   const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw); const list = [];
   for (const e of enemies) {
     if (e.dead) continue; const dx = e.x - P.x, dz = e.z - P.z, d = Math.hypot(dx, dz); if (d > 32 || d < .3) continue;
-    const ang = Math.acos(clamp((dx * fx + dz * fz) / d, -1, 1)); if (ang > .62) continue;
+    const ang = Math.acos(clamp((dx * fx + dz * fz) / d, -1, 1)); if (ang > (ONE() ? .87 : .62)) continue;
     list.push({ e, sc: ang * 12 + d * .35 - (e.boss ? 4 : 0) });
   }
   list.sort((a, b) => a.sc - b.sc); return list.slice(0, maxN).map((x) => x.e);
@@ -616,10 +616,19 @@ const keys = {};
 addEventListener('keydown', (e) => { keys[e.code] = true; if (e.code === 'Space') { e.preventDefault(); dash(); } if (e.code === 'KeyP' || e.code === 'Escape') togglePause(); audio(); });
 addEventListener('keyup', (e) => { keys[e.code] = false; });
 let joy = null, look = null, testMove = null; const joyEl = $('joy'), joyK = $('joyK');
-const touchUI = matchMedia('(pointer:coarse)').matches;
+const touchUI = matchMedia('(pointer:coarse)').matches || Q.has('touchhint');
+// 모바일 조작: 'one' = 한 손가락(위아래 앞뒤 · 좌우 회전), 'two' = 왼쪽 이동 + 오른쪽 시점
+let CTRL = 'one'; try { CTRL = localStorage.getItem('mgh:wizard:ctrl') || 'one'; } catch (e) { }
+const ONE = () => touchUI && CTRL === 'one';
+function applyCtrlUI() {
+  const t = $('tut'); if (t) t.innerHTML = ONE() ? '<div class="tut l" style="left:50%;top:62%;transform:translateX(-50%)"><div class="fg">👆</div><div class="tl sh">위아래로 끌면 앞뒤 · 좌우로 끌면 회전</div></div>' : '<div class="tut l"><div class="fg">👆</div><div class="tl sh">끌어서 이동</div></div><div class="tut r"><div class="fg">👆</div><div class="tl sh">끌어서 시점 회전</div></div>';
+  const h = document.querySelector('#sTitle .how'); if (h && touchUI) h.innerHTML = (ONE() ? '📱 화면을 위아래로 끌어 앞뒤로 · 좌우로 끌어 회전 · 대시 버튼' : '📱 왼쪽을 끌어 이동 · 오른쪽을 끌어 시점 회전 · 대시 버튼') + '<br>공격은 자동 — 앞쪽의 적을 향해 파이어볼을 쏴요';
+  const b = $('bCtrl'); if (b) { b.style.display = touchUI ? '' : 'none'; b.textContent = '조작: ' + (ONE() ? '한 손가락 (끌어서 이동·회전)' : '두 손가락 (이동 + 시점)'); }
+  if (!joy) placeIdleJoy();
+}
 $('gl').addEventListener('pointerdown', (e) => {
   audio(); if (state !== 'play') return;
-  if (e.pointerType !== 'mouse' && e.clientX < W * .45 && !joy) {
+  if (e.pointerType !== 'mouse' && (ONE() || e.clientX < W * .45) && !joy) {
     joy = { id: e.pointerId, x: e.clientX, y: e.clientY, dx: 0, dy: 0 }; joyEl.style.left = e.clientX + 'px'; joyEl.style.top = e.clientY + 'px'; joyEl.className = 'joy on'; joyK.style.transform = '';
   } else if (!look) look = { id: e.pointerId, x: e.clientX, y: e.clientY };
   $('gl').setPointerCapture(e.pointerId);
@@ -630,7 +639,7 @@ $('gl').addEventListener('pointermove', (e) => {
 });
 const endPtr = (e) => { if (joy && e.pointerId === joy.id) { joy = null; joyEl.className = touchUI ? 'joy idle' : 'joy'; placeIdleJoy(); } if (look && e.pointerId === look.id) look = null; };
 $('gl').addEventListener('pointerup', endPtr); $('gl').addEventListener('pointercancel', endPtr);
-function placeIdleJoy() { if (touchUI) { joyEl.style.left = '80px'; joyEl.style.top = (H - 230) + 'px'; } }
+function placeIdleJoy() { if (touchUI) { joyEl.style.left = (ONE() ? W / 2 : 80) + 'px'; joyEl.style.top = (H - 230) + 'px'; } }
 $('bDash').addEventListener('pointerdown', (e) => { e.stopPropagation(); audio(); dash(); });
 $('bPause').addEventListener('pointerdown', (e) => { e.stopPropagation(); togglePause(); });
 function dash() {
@@ -643,7 +652,7 @@ function dash() {
 function moveInput() {
   let x = 0, z = 0;
   if (keys.KeyW || keys.ArrowUp) z -= 1; if (keys.KeyS || keys.ArrowDown) z += 1; if (keys.KeyA || keys.ArrowLeft) x -= 1; if (keys.KeyD || keys.ArrowRight) x += 1;
-  if (joy) { x += joy.dx; z += joy.dy; }
+  if (joy) { if (ONE()) z += Math.abs(joy.dy) < .15 ? 0 : joy.dy; else { x += joy.dx; z += joy.dy; } }
   if (testMove) { x += testMove[0]; z += testMove[1]; }
   const l = Math.hypot(x, z); if (l > 1) { x /= l; z /= l; } return [x, z];
 }
@@ -799,6 +808,7 @@ function update(dt) {
   const [mx, mz] = moveInput(); const c = Math.cos(P.yaw), s = Math.sin(P.yaw); const sp = moveSpd();
   const wx = (mx * c + mz * s) * sp, wz = (-mx * s + mz * c) * sp; if (mx || mz) moveTo(P.x + wx * dt, P.z + wz * dt); P.bob += Math.hypot(mx, mz) * dt * 9;
   if (keys.KeyQ) P.yaw += dt * 2.4; if (keys.KeyE) P.yaw -= dt * 2.4;
+  if (joy && ONE()) { const ax = Math.abs(joy.dx); if (ax > .1) P.yaw -= Math.sign(joy.dx) * Math.pow((ax - .1) / .9, 1.3) * 2.7 * dt; P.pitch += (-.08 - P.pitch) * Math.min(1, dt * 3); }   // 한 손가락: 좌우 = 회전
   P.inv -= dt; P.dashT = Math.max(0, P.dashT - dt);
   // 재생 · 보호막
   if (lv('regen')) P.hp = Math.min(P.maxHp, P.hp + lv('regen') * .6 * dt);
@@ -951,6 +961,8 @@ function renderPauseSkills() {
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play') togglePause(); if (AC) { if (document.hidden) AC.suspend(); else AC.resume(); } });
 $('bResume').onclick = togglePause;
+$('bCtrl').onclick = () => { CTRL = ONE() ? 'two' : 'one'; try { localStorage.setItem('mgh:wizard:ctrl', CTRL); } catch (e) { } applyCtrlUI(); };
+applyCtrlUI();
 $('bQuit').onclick = () => { $('sPause').classList.remove('on'); toTitle(); };
 $('bStart').onclick = start; $('bRetry').onclick = start;
 // 로그인 (포털 · 앱 안에서만) — 랭킹 기록용
