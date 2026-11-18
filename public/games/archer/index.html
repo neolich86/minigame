@@ -245,6 +245,7 @@ canvas{display:block;image-rendering:auto}
   <div class="title" style="font-size:clamp(24px,7vw,40px)">일시정지</div>
   <div class="sub" id="pauseStats"></div>
   <button class="btn" id="btnResume">계속하기</button>
+  <button class="btn ghost" id="btnShake">화면 흔들림: 켜짐</button>
   <button class="btn ghost" id="btnQuit">처음부터</button>
 </div>
 
@@ -968,6 +969,8 @@ function lateL(){ return Math.max(0,(game.t-900)/60) }   // 15분 이후 경과 
 function lateMul(){ const L=lateL(); return (1+0.5*Math.min(L,1))*(1+0.30*L+0.03*L*L) }
 // 보스를 잡을 때마다 일반 몬스터가 한 단계씩 강해진다 (체력은 단계마다 1.45배씩 곱으로 불어남·공격·속도·출현량)
 function furyMul(){ const f = game.fury||0; return {hp:Math.pow(1.45,f), dmg:1+0.30*f, spd:1+Math.min(0.35,0.06*f), rate:1+0.12*f}; }
+// 캐릭터 Lv50부터 몬스터 각성: 체력 ×1.6 시작, 레벨마다 ×1.07 / 공격력 ×1.35, 레벨마다 ×1.035 / 속도 최대 +30%
+function lvMul(){ const L=(P?P.lv:0)-49; if(L<=0) return null; return {hp:1.6*Math.pow(1.07,L), dmg:1.35*Math.pow(1.035,L), spd:1+Math.min(0.3,L*0.012)}; }
 function timeScale(){ const m = game.t/60; return (1 + m*0.30 + Math.pow(m,1.85)*0.030) * lateMul() }
 function elemForTime(){
   const t = game.t;
@@ -998,6 +1001,7 @@ function spawnEnemy(){
     size:M.size, face:1, ph:rnd(TAU), flash:0, kx:0, ky:0, boss:false, hitT:0, trapT:0,
     freezeT:0, chill:0, slowT:0
   });
+  const LM=lvMul(); if(LM){ const e=enemies[enemies.length-1]; e.hp*=LM.hp; e.hpMax*=LM.hp; e.dmg*=LM.dmg; e.spd*=LM.spd; e.awk=1; }
 }
 // 떼 몬스터: 한곳에 몰려 나오고 약함 → 한 번에 쓸어 담는 맛
 function spawnPack(n){
@@ -1070,7 +1074,8 @@ function spawnBoss(tier){
 }
 
 /* ---------------------------------------------------------- 이펙트 */
-function shake(t,m){ game.shakeT=Math.max(game.shakeT,t); game.shakeM=Math.max(game.shakeM,m) }
+let SHAKE_ON = true; try{ SHAKE_ON = localStorage.getItem('mgh:archer:shake')!=='0'; }catch(e){}
+function shake(t,m){ if(!SHAKE_ON) return; game.shakeT=Math.max(game.shakeT,t); game.shakeM=Math.max(game.shakeM,m) }
 function burst(x,y,n,col,sp=170,life=.45,size=3){
   if(fx.length>1400) n=Math.min(n,1); else if(fx.length>900) n=Math.ceil(n/3);
   for(let i=0;i<n;i++){
@@ -1709,6 +1714,13 @@ function killEnemy(e, idx){
     else if(r<0.0017) dropMimicBox(e.x,e.y);
   }
 }
+function awakenBanner(){
+  const L=(window.MGH&&MGH.L)?MGH.L:(k)=>k;
+  bossWord.textContent = L('몬스터 각성','MONSTERS AWAKEN');
+  bossSub.textContent = P.lv===50 ? L('Lv50 · 몬스터가 훨씬 강해진다','Lv50 · monsters grow far stronger') : L(`Lv${P.lv} · 각성이 더 깊어진다`,`Lv${P.lv} · the awakening deepens`);
+  bossEl.classList.remove('play'); void bossEl.offsetWidth; bossEl.classList.add('play');
+  ring(P.x,P.y,260,'#ff3c3c',.8); shake(0.4,8);
+}
 function dropGem(x,y,v){ gems.push({x,y,v,ph:rnd(TAU),pull:false}) }
 function dropNuke(x,y){ gems.push({x,y,v:0,ph:rnd(TAU),pull:true,nuke:true}) }
 function dropTimeStop(x,y){ gems.push({x,y,v:0,ph:rnd(TAU),pull:true,timestop:true}) }
@@ -1744,6 +1756,7 @@ function gainXP(v){
     P.xpNeed = Math.floor(7 + P.lv*5.5 + Math.pow(P.lv,1.9));
     ring(P.x,P.y,120,'#ffd34d',.55);
     burst(P.x,P.y,18,'#ffd34d',260,.6,3);
+    if(P.lv===50 || (P.lv>50 && P.lv%10===0)) awakenBanner();
     queueLevelUp();
   }
 }
@@ -2159,6 +2172,12 @@ function drawShadow(x,y,rx){
 }
 
 function drawEnemy(e){
+  if(e.awk && !e.boss){   // 각성 몬스터: 붉은 기운
+    const t=performance.now()/1000+e.ph, pr=e.r*(1.7+Math.sin(t*4)*0.12);
+    const rg=ctx.createRadialGradient(e.x,e.y,0,e.x,e.y,pr);
+    rg.addColorStop(0,'rgba(255,40,40,.32)'); rg.addColorStop(1,'rgba(120,0,0,0)');
+    ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(e.x,e.y,pr,0,TAU); ctx.fill();
+  }
   if(e.boss){
     const t=performance.now()/1000, pr=e.r*(2.3+Math.sin(t*2.4)*0.14);
     const rg=ctx.createRadialGradient(e.x,e.y,0,e.x,e.y,pr);
@@ -2600,6 +2619,9 @@ function startGame(){
 $('btnStart').onclick=tryStart;
 $('btnRetry').onclick=startGame;
 $('btnResume').onclick=togglePause;
+function shakeLabel(){ const on=SHAKE_ON; $('btnShake').textContent = (window.MGH&&MGH.L) ? MGH.L(`화면 흔들림: ${on?'켜짐':'꺼짐'}`, `Screen shake: ${on?'ON':'OFF'}`) : `화면 흔들림: ${on?'켜짐':'꺼짐'}`; }
+$('btnShake').onclick=e=>{ e.stopPropagation(); SHAKE_ON=!SHAKE_ON; try{ localStorage.setItem('mgh:archer:shake', SHAKE_ON?'1':'0'); }catch(_){} if(!SHAKE_ON&&game){ game.shakeT=0; game.shakeM=0; } shakeLabel(); };
+shakeLabel();
 $('btnQuit').onclick=()=>{pauseEl.classList.remove('show');game.paused=false;startGame()};
 $('btnPause').onclick=e=>{e.stopPropagation();togglePause()};
 
