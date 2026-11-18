@@ -1,4 +1,4 @@
-// 활공 대모험 밸런스 봇: node scripts/sim-glide.mjs [판수] [실력 0~1]
+// 윈드 러너 밸런스 봇: node scripts/sim-glide.mjs [판수] [실력 0~1]
 // 링을 노려 조종(실력만큼 조준 오차), 착지마다 코인으로 가장 싼 강화/글라이더 구매
 const C = await import(new URL('../public/games/glide/core.js', import.meta.url));
 const N = +(process.argv[2] || 120), SKILL = +(process.argv[3] || 0.6), DT = 1 / 30; if (process.argv[4]) C.tune(JSON.parse(process.argv[4]));

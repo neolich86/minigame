@@ -462,7 +462,7 @@ const CATALOG: Game[] = [
   },
   {
     id: "glide",
-    title: { ko: "활공 대모험", en: "Glide Adventure" },
+    title: { ko: "윈드 러너", en: "Sky Voyager" },
     desc: {
       ko: "점프대에서 뛰어내려 글라이더로 하늘을 날아요. 링을 통과해 다시 솟구치고, 코인으로 날개를 강화하고 더 좋은 글라이더를 사서 10km 너머 하늘 섬까지 날아가는 3D 비행 게임",
       en: "Leap off the ramp and glide! Fly through rings to soar again, upgrade your wings, buy better gliders and reach the sky island 10 km away",

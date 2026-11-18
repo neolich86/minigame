@@ -1,4 +1,4 @@
-// 활공 대모험 — 3D 화면 · 입력 · HUD · 격납고 · 저장
+// 윈드 러너 — 3D 화면 · 입력 · HUD · 격납고 · 저장
 import * as THREE from 'three';
 import * as C from './core.js';
 
