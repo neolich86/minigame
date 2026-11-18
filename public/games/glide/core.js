@@ -46,19 +46,16 @@ export function stats(s) {
 }
 
 // ---------- 지형 ----------
-const mesas = []; let coinRows = [];
+const mesas = [];
 export function terrainSeed(seed) {
   mesas.length = 0; let s = seed >>> 0; const R = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
   for (let d = 500; d < GOAL - 300; d += 240 + R() * 480) {
     const reg = regionAt(d);
     mesas.push({ d, w: 60 + R() * 120, h: reg === 2 ? 25 + R() * 45 : 35 + R() * 80, lat: (R() - .5) * 280, reg });
   }
-  coinRows = [];
-  for (let d = 350; d < GOAL; d += 260 + R() * 420) coinRows.push({ d, y: 40 + R() * 150, lat: (R() - .5) * 60, n: 5 + Math.floor(R() * 5), got: 0 });
-  return { mesas, coinRows };
+  return { mesas };
 }
 export const mesaList = () => mesas;
-export const coinList = () => coinRows;
 export function ground(d, lat = 0) {
   const reg = regionAt(d);
   let h = reg === 2 ? 0 : 6 * Math.sin(d * .013) + 4 * Math.sin(d * .031 + 1);
@@ -72,7 +69,7 @@ export function ground(d, lat = 0) {
 // ---------- 비행 ----------
 export function newFlight(s, opt = {}) {
   const st = stats(s);
-  return { st, d: 0, y: st.startY, lat: 0, v: 30, a: 0.12, yaw: 0, t: 0, liftT: 0, boostT: 0, rings: [], nextRing: 0, got: 0, coins: 0, picked: 0,
+  return { st, d: 0, y: st.startY, lat: 0, v: 30, a: 0.12, yaw: 0, t: 0, liftT: 0, boostT: 0, rings: [], nextRing: 0, coinRows: [], nextCoin: 250, got: 0, picked: 0,
     fuel: st.fuel + (opt.adFuel ? 3 : 0), fuelMax: st.fuel + (opt.adFuel ? 3 : 0), rocketOn: false, armor: st.armor, bounces: 0, stall: 0, over: false, crashed: false, maxY: st.startY };
 }
 // input: { pitch: 목표 기수각, turn: -1~1, rocket: bool }
@@ -116,11 +113,18 @@ export function step(f, input, dt) {
     } else if (dd > 5) r.miss = true;
   }
   f.rings = f.rings.filter((r) => r.d > f.d - 150);
-  // 하늘 코인 (줄 하나 = 앞뒤로 n개, 6m 간격)
-  for (const c of coinRows) {
-    if (c.d > f.d + 5 || c.d + c.n * 6 < f.d - 5) continue;
-    for (let i = 0; i < c.n; i++) { if (c.got & (1 << i)) continue; const cd = c.d + i * 6; if (Math.abs(cd - f.d) < 3 && Math.hypot(f.y - c.y, f.lat - c.lat) < 5 + st.ringR * 0.25) { c.got |= 1 << i; f.picked++; } }
+  // 하늘 코인: 지금 날아가는 방향·활강 경로 앞에 한 줄로 (지나간 줄은 지움)
+  if (f.d > f.nextCoin && f.d < GOAL - 300) {
+    const ahead = 110 + f.v * 3, slope = Math.min(0.25, Math.max(0.05, -Math.tan(Math.min(0, f.a)) || 0.12));
+    const cd = f.d + ahead * Math.cos(f.yaw), cl = f.lat + ahead * Math.sin(f.yaw), cy = Math.max(ground(cd, cl) + 10, f.y - ahead * slope);
+    f.coinRows.push({ d: cd, lat: cl, y: cy, yaw: f.yaw, slope, n: 6 + Math.floor(Math.random() * 4), got: 0 });
+    f.nextCoin = cd + 200 + Math.random() * 250;
   }
+  for (const c of f.coinRows) for (let i = 0; i < c.n; i++) {
+    if (c.got & (1 << i)) continue; const p = coinPos(c, i);
+    if (Math.abs(p.d - f.d) < Math.max(3, f.v * dt * 1.2) && Math.hypot(f.y - p.y, f.lat - p.lat) < 4.5 + st.ringR * 0.25) { c.got |= 1 << i; f.picked++; }
+  }
+  f.coinRows = f.coinRows.filter((c) => coinPos(c, c.n - 1).d > f.d - 100);
   // 도착 / 충돌
   if (f.d >= GOAL) { f.over = true; f.goal = true; return; }
   const gh = ground(f.d, f.lat);
@@ -129,6 +133,8 @@ export function step(f, input, dt) {
     f.y = gh; f.over = true; f.crashed = true;
   }
 }
+// 코인 줄의 i번째 위치 (줄은 지나가는 방향으로 7m 간격, 활강 기울기만큼 내려감)
+export function coinPos(c, i) { const s = i * 7; return { d: c.d + s * Math.cos(c.yaw), lat: c.lat + s * Math.sin(c.yaw), y: c.y - s * c.slope }; }
 // 이어하기 (광고)
 export function revive(f) { f.over = false; f.crashed = false; f.y += 60; f.v = Math.max(f.v, 28); f.a = 0.2; f.liftT = 1.2; }
 // 판 정산

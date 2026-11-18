@@ -32,7 +32,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
 #rocket i{position:absolute;inset:-7px;border-radius:50%;background:conic-gradient(#ffe066 var(--f,100%),rgba(0,0,0,.35) 0);-webkit-mask:radial-gradient(transparent 38px,#000 39px);mask:radial-gradient(transparent 38px,#000 39px)}
 #rocket.on{transform:scale(.94);filter:brightness(1.2)}
 #rocket.empty{filter:grayscale(1) brightness(.7)}
-#hint{position:fixed;left:50%;top:60%;transform:translateX(-50%);font-weight:800;font-size:14px;pointer-events:none;white-space:nowrap;transition:opacity .5s;text-align:center;line-height:1.6;z-index:3}
+#hint{position:fixed;left:50%;top:30%;transform:translateX(-50%);font-weight:800;font-size:14px;pointer-events:none;white-space:nowrap;transition:opacity .5s;text-align:center;line-height:1.6;z-index:3}
 #stall{position:fixed;left:50%;top:27%;transform:translateX(-50%);color:#ff6a4a;font-weight:900;font-size:20px;opacity:0;z-index:3;pointer-events:none}
 #banner{position:fixed;left:50%;top:22%;transform:translate(-50%,0);font-weight:900;font-size:26px;opacity:0;transition:opacity .6s;pointer-events:none;z-index:3;text-align:center}
 #banner small{display:block;font-size:13px}
@@ -94,7 +94,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
 <div class="hud sh"><div class="pill"><small>고도</small><span id="alt">0</span>m</div><div class="pill" id="dist">0 m</div><div class="pill"><small>링 · 코인</small>⭕<span id="rings">0</span> 🪙<span id="cn">0</span></div></div>
 <div id="prog"><i id="progI"></i><u id="progMe">🪂</u></div>
 <div id="hint" class="sh">👆 화면을 끌어서 조종<br>위로 = 기수 올리기 · 아래로 = 급강하 · 좌우 = 회전<br>⭕ 링을 통과하면 다시 솟아올라요!</div>
-<div id="stall" class="sh">⚠ 실속! 기수를 내리세요</div>
+<div id="stall" class="sh">⚠ 너무 느려요! 아래로 끌어 속도를 올리세요</div>
 <div id="banner" class="sh"></div>
 <div id="pop" class="sh"></div>
 <div id="joy"><b id="joyK"></b></div><div id="ringAim"></div>

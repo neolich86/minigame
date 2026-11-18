@@ -81,12 +81,10 @@ function buildTerrain() {
   for (let i = 0; i < 150; i++) { const d = Math.random() * (C.GOAL + 800), reg = Math.min(2, C.regionAt(d)), side = Math.random() < .5 ? -1 : 1, h = (reg === 1 ? 180 : 60) + Math.random() * (reg === 1 ? 320 : 140), w = 80 + Math.random() * 200;
     const geo = reg === 1 ? new THREE.ConeGeometry(w * 1.2, h, 7) : new THREE.CylinderGeometry(w * .85, w * 1.05, h, 7); const mesh = new THREE.Mesh(geo, rockMat[reg]); mesh.position.set(side * (420 + Math.random() * 1400), h / 2, -d); terrainGroup.add(mesh); }
   // 하늘 코인
-  coinMeshes = [];
-  for (const c of C.coinList()) for (let i = 0; i < c.n; i++) { const m = new THREE.Mesh(coinGeo, coinMat); m.position.set(c.lat, c.y, -(c.d + i * 6)); m.userData = { c, i }; terrainGroup.add(m); coinMeshes.push(m); }
 }
-const coinGeo = new THREE.CylinderGeometry(1.6, 1.6, .35, 18); coinGeo.rotateX(Math.PI / 2);
-const coinMat = new THREE.MeshLambertMaterial({ color: 0xffcf3a, emissive: 0x8a5a00 });
-let coinMeshes = [];
+const coinGeo = new THREE.CylinderGeometry(2.6, 2.6, .5, 20); coinGeo.rotateX(Math.PI / 2);
+const coinMat = new THREE.MeshLambertMaterial({ color: 0xffd23a, emissive: 0xb07800, fog: false });
+const coinObjs = new Map();   // 코인 줄 → 메쉬 목록
 // 출발 절벽 + 점프대
 const cliffMat = rockMat[0];
 const cliff = new THREE.Mesh(new THREE.BoxGeometry(260, 1, 500), cliffMat); scene.add(cliff);
@@ -133,7 +131,7 @@ function start(adFuel) {
   C.terrainSeed(Math.floor(Math.random() * 1e6)); buildTerrain(); setGliderTex();
   f = C.newFlight(st, { adFuel }); placeCliff(f.st.startY); revived = false;
   state = 'launch'; launchT = 0; curReg = 0; setSky(0); ctl = null; rocketHold = false;
-  for (const t of trails) t.pts = []; for (const [, o] of ringObjs) scene.remove(o); ringObjs.clear();
+  for (const t of trails) t.pts = []; for (const [, o] of ringObjs) scene.remove(o); ringObjs.clear(); for (const [, ms] of coinObjs) ms.forEach((m) => scene.remove(m)); coinObjs.clear();
   show(''); hudVisible(true); $('hint').style.opacity = 1; rb.hidden = !(f.fuelMax > 0); buildProg();
   camPos.set(0, f.st.startY + 6, 30);
 }
@@ -215,9 +213,9 @@ function tick(dt, noRender) {
   if (f) { rb.style.setProperty('--f', (f.fuelMax ? f.fuel / f.fuelMax * 100 : 0) + '%'); rb.classList.toggle('on', !!on); rb.classList.toggle('empty', f.fuel <= 0); }
   // 카메라
   const back = 17 + (f ? Math.max(0, f.v - 25) * .12 : 0);
-  const want = gpos.clone().addScaledVector(fw, -back).add(v3(0, 4.8 - a * 6, 0));
+  const want = gpos.clone().addScaledVector(fw, -back).add(v3(0, 6.5 - a * 6, 0));
   camPos.lerp(want, Math.min(1, dt * 5)); cam.position.copy(camPos);
-  camLook.lerp(gpos.clone().addScaledVector(fw, 30).add(v3(0, a * 20 - 2, 0)), Math.min(1, dt * 6)); cam.lookAt(camLook); cam.rotateZ(-bank * .35);
+  camLook.lerp(gpos.clone().addScaledVector(fw, 60).add(v3(0, a * 25 + 2, 0)), Math.min(1, dt * 6)); cam.lookAt(camLook); cam.rotateZ(-bank * .35);
   sky.position.set(cam.position.x, 700, cam.position.z);
   // 링 · 코인
   if (f) {
@@ -225,7 +223,9 @@ function tick(dt, noRender) {
     for (const [r, o] of ringObjs) if (!f.rings.includes(r)) { scene.remove(o); ringObjs.delete(r); }
     const nr = f.rings.find((r) => !r.hit && !r.miss && r.d > f.d), ra = $('ringAim');
     if (nr && state === 'fly') { const p = v3(nr.lat, nr.y, -nr.d).project(cam); if (p.z < 1) { ra.style.display = 'block'; ra.style.left = Math.max(20, Math.min(innerWidth - 20, (p.x + 1) / 2 * innerWidth)) + 'px'; ra.style.top = Math.max(90, Math.min(innerHeight - 90, (1 - p.y) / 2 * innerHeight)) + 'px'; } else ra.style.display = 'none'; } else ra.style.display = 'none';
-    for (const m of coinMeshes) { const { c, i } = m.userData; if (c.got & (1 << i)) { if (m.visible) { m.scale.multiplyScalar(1.2); if (m.scale.x > 2.5) m.visible = false; m.position.y += dt * 20; } } else m.rotation.y += dt * 3; }
+    for (const c of f.coinRows) { if (!coinObjs.has(c)) { const ms = []; for (let i = 0; i < c.n; i++) { const m = new THREE.Mesh(coinGeo, coinMat); const p = C.coinPos(c, i); m.position.set(p.lat, p.y, -p.d); scene.add(m); ms.push(m); } coinObjs.set(c, ms); }
+      coinObjs.get(c).forEach((m, i) => { if (c.got & (1 << i)) { if (m.visible) { m.scale.multiplyScalar(1.2); m.position.y += dt * 20; if (m.scale.x > 2.5) m.visible = false; } } else m.rotation.y += dt * 3; }); }
+    for (const [c, ms] of coinObjs) if (!f.coinRows.includes(c)) { ms.forEach((m) => scene.remove(m)); coinObjs.delete(c); }
   }
   // 날개 끝 리본
   if (f && state === 'fly') {
