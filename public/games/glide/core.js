@@ -2,6 +2,7 @@
 // 좌표: d = 앞으로 간 거리(m), y = 고도(m), lat = 옆 위치(m)
 export const G = 9.8, K0 = 0.0021, M0 = 210;   // 공기 저항 K·V², 유도 저항 M/V²
 export const STALL = 9, VMAX = 75, GOAL = 10000;
+export const PACE = 1.5;   // 화면 진행 배속 — 물리는 그대로, 시간이 1.5배 빨리 흐름 (화면 속도 표시도 ×PACE)
 export const RING = { boost: 16, climb: 22, r: 9, startAlt: 140, fade: 900, gap: 0.1 };   // 멀리 갈수록 링 힘이 약해지고(fade) 간격이 넓어짐(gap)
 export const ringFade = (d) => 1 / (1 + d / RING.fade);
 export function tune(o) { Object.assign(RING, o.RING || {}); }
@@ -56,12 +57,14 @@ export function terrainSeed(seed) {
   return { mesas };
 }
 export const mesaList = () => mesas;
+export function baseGround(d) { return regionAt(d) === 2 ? 0 : 6 * Math.sin(d * .013) + 4 * Math.sin(d * .031 + 1); }
 export function ground(d, lat = 0, flat = false) {   // flat = 2D: 길 위(옆 위치가 가까운) 바위산만
   const reg = regionAt(d);
   let h = reg === 2 ? 0 : 6 * Math.sin(d * .013) + 4 * Math.sin(d * .031 + 1);
   for (const m of mesas) {
-    if (Math.abs(d - m.d) > m.w || (flat ? Math.abs(m.lat) > m.w * 1.2 : Math.abs(lat - m.lat) > m.w * .8)) continue;
-    const t = Math.abs(d - m.d) / m.w; h = Math.max(h, t < .75 ? m.h : m.h * (1 - (t - .75) / .25));
+    if (Math.abs(d - m.d) > m.w || (flat ? Math.abs(m.lat) > m.w * .8 : Math.abs(lat - m.lat) > m.w * .8)) continue;
+    const mh = flat ? m.h * 0.32 : m.h;   // 2D는 옆으로 못 피하니 바위산을 낮게 (보고 기수를 들면 넘을 수 있게)
+    const t = Math.abs(d - m.d) / m.w; h = Math.max(h, t < .75 ? mh : mh * (1 - (t - .75) / .25));
   }
   return h;
 }
@@ -69,7 +72,7 @@ export function ground(d, lat = 0, flat = false) {   // flat = 2D: 길 위(옆 �
 // ---------- 비행 ----------
 export function newFlight(s, opt = {}) {
   const st = stats(s);
-  return { st, flat: !!opt.flat, rr: st.ringR * (opt.flat ? 2.2 : 1), d: 0, y: st.startY, lat: 0, v: 30, a: 0.12, yaw: 0, t: 0, liftT: 0, boostT: 0, rings: [], nextRing: 0, coinRows: [], nextCoin: 250, got: 0, picked: 0,
+  return { st, flat: !!opt.flat, rr: st.ringR * (opt.flat ? 1.3 : 1), d: 0, y: st.startY, lat: 0, v: 30, a: 0.12, yaw: 0, t: 0, liftT: 0, boostT: 0, rings: [], nextRing: 0, coinRows: [], nextCoin: 250, got: 0, picked: 0,
     fuel: st.fuel + (opt.adFuel ? 3 : 0), fuelMax: st.fuel + (opt.adFuel ? 3 : 0), rocketOn: false, armor: st.armor, bounces: 0, stall: 0, over: false, crashed: false, maxY: st.startY };
 }
 // input: { pitch: 목표 기수각, turn: -1~1, rocket: bool }
@@ -83,7 +86,7 @@ export function step(f, input, dt) {
   const drag = st.K * f.v * f.v + st.M / Math.max(25, f.v * f.v);
   f.rocketOn = !!input.rocket && f.fuel > 0;
   let thrust = (f.boostT > 0 ? 14 : 0);
-  if (f.rocketOn) { thrust += 22; f.fuel = Math.max(0, f.fuel - dt); }
+  if (f.rocketOn) { thrust += 22; f.fuel = Math.max(0, f.fuel - dt / PACE); }   // 연료는 실제 초 기준
   f.v += (-G * Math.sin(f.a) - drag + thrust) * dt;
   f.v = Math.max(4, Math.min(VMAX, f.v));
   f.boostT = Math.max(0, f.boostT - dt);
@@ -99,9 +102,9 @@ export function step(f, input, dt) {
   if (f.y < RING.startAlt && f.d > f.nextRing && f.d < GOAL - 200) {
     const ahead = 140 + f.v * 4;
     const rd = f.d + ahead * Math.cos(f.yaw), rl = f.flat ? 0 : f.lat + ahead * Math.sin(f.yaw) + (Math.random() - .5) * 50;
-    const ry = Math.max(ground(rd, rl, f.flat) + 14, f.y - ahead * 0.2 + (Math.random() - .6) * 24);
-    f.rings.push({ d: rd, lat: rl, y: ry, yaw: f.yaw, hit: false, miss: false });
-    f.nextRing = rd + 90 + Math.random() * 120 + rd * RING.gap;
+    const gr = ground(rd, rl, f.flat), ry = Math.max(gr + 14, f.y - ahead * 0.2 + (Math.random() - .6) * 24);
+    if (gr > 8 && ry > f.y - 5) f.nextRing = f.d + 40;   // 바위산 위라 닿기 힘든 자리 → 조금 뒤에 다시
+    else { f.rings.push({ d: rd, lat: rl, y: ry, yaw: f.yaw, hit: false, miss: false }); f.nextRing = rd + 90 + Math.random() * 120 + rd * RING.gap; }
   }
   for (const r of f.rings) {
     if (r.hit || r.miss) continue;
@@ -128,6 +131,9 @@ export function step(f, input, dt) {
   // 도착 / 충돌
   if (f.d >= GOAL) { f.over = true; f.goal = true; return; }
   const gh = ground(f.d, f.lat, f.flat);
+  // 2D: 바위산에 부딪히면 끝나지 않고 속도를 잃으며 위로 튕김 (바닥에 닿아야 끝)
+  if (f.flat && f.y <= gh && gh > baseGround(f.d) + 3 && gh - f.y < 12) {   // 윗부분을 스치면 튕김, 정면으로 박으면 끝
+    f.y = gh + 2; f.v = Math.max(11, f.v * 0.5); f.a = 0.05; f.bumps = (f.bumps || 0) + 1; return; }
   if (f.y <= gh) {
     if (f.armor > 0) { f.armor--; f.bounces++; f.y = gh + 2; f.a = 0.35; f.liftT = 1.2; f.ringE = 1; f.v = Math.max(f.v, 24); return; }
     f.y = gh; f.over = true; f.crashed = true;

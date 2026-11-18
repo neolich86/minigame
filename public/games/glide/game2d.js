@@ -129,17 +129,18 @@ function tick(dt, noRender) {
   T += dt;
   if (f && state === 'launch') { launchT += dt; f.d = RAMP_D + Math.min(1, launchT / 1.4) ** 2 * -RAMP_D; f.y = f.st.startY - 9 + (f.d - RAMP_D) / -RAMP_D * 9; if (launchT >= 1.4) { f.d = 0; f.y = f.st.startY; state = 'fly'; lastGot = 0; } }
   else if (f && state === 'fly') {
-    C.step(f, { pitch: hold ? 0.34 : -0.14, turn: 0, rocket: rocketHold }, dt);
+    C.step(f, { pitch: hold ? 0.34 : -0.14, turn: 0, rocket: rocketHold }, dt * C.PACE);
     if (f.t > (st.tut ? 4 : 9)) $('hint').style.opacity = 0;
     if (f.got > lastGot) { pop('⭕ 링 통과! 상승!'); lastGot = f.got; }
     if (f.bounces && f.bounces > (f._b || 0)) { f._b = f.bounces; pop('🛡️ 튕겨 올랐다!'); }
+    if (f.bumps && f.bumps > (f._m || 0)) { f._m = f.bumps; pop('💥 바위에 부딪혀 속도 감소!'); }
     const reg = Math.min(2, C.regionAt(f.d)); if (reg !== curReg) { curReg = reg; banner(C.REGIONS[reg].name, `${fmt(C.REGIONS[reg].from)} m 돌파!`); }
     if (f.over) landed();
     trail.push({ d: f.d, y: f.y, b: f.boostT > 0 || f.liftT > 0 || f.rocketOn }); if (trail.length > 36) trail.shift();
   }
   if (f) {
     $('dist').textContent = `${fmt(Math.max(0, f.d))} m`; $('alt').textContent = Math.max(0, Math.round(f.y - C.ground(Math.max(0, f.d), 0, true))); $('rings').textContent = f.got; $('cn').textContent = f.picked;
-    $('spd').textContent = `${Math.round(f.v * 3.6)} km/h`; $('vbar').style.width = Math.min(100, f.v / C.VMAX * 100) + '%'; $('vb').className = 'b' + (f.boostT > 0 || f.rocketOn ? ' boost' : '');
+    $('spd').textContent = `${Math.round(f.v * 3.6 * C.PACE)} km/h`; $('vbar').style.width = Math.min(100, f.v / C.VMAX * 100) + '%'; $('vb').className = 'b' + (f.boostT > 0 || f.rocketOn ? ' boost' : '');
     $('stall').style.opacity = f.stall > .2 ? 1 : 0; const pr = Math.max(0, Math.min(1, f.d / C.GOAL)); $('progI').style.width = pr * 100 + '%'; $('progMe').style.left = pr * 100 + '%';
     rb.style.setProperty('--f', (f.fuelMax ? f.fuel / f.fuelMax * 100 : 0) + '%'); rb.classList.toggle('on', !!(f.rocketOn && state === 'fly')); rb.classList.toggle('empty', f.fuel <= 0);
   }

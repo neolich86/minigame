@@ -195,7 +195,7 @@ function tick(dt, noRender) {
   inTurn += (tx - inTurn) * Math.min(1, dt * 6); inPitch = -0.14 + (-ty) * (ty < 0 ? 0.48 : 0.5);
   if (f && state === 'launch') { launchT += dt; f.d = RAMP_D + Math.min(1, launchT / 1.4) ** 2 * -RAMP_D; f.y = f.st.startY + 1 + (f.d - RAMP_D) * .11; if (launchT >= 1.4) { f.d = 0; f.y = f.st.startY + 4; state = 'fly'; lastGot = 0; lastPicked = 0; } }
   else if (f && state === 'fly') {
-    C.step(f, { pitch: inPitch, turn: inTurn, rocket: rocketHold }, dt);
+    C.step(f, { pitch: inPitch, turn: inTurn, rocket: rocketHold }, dt * C.PACE);
     if (f.t > (st.tut ? 4 : 9)) $('hint').style.opacity = 0;
     if (f.got > lastGot) { pop(`⭕ 링 통과! 상승!`); lastGot = f.got; }
     if (f.picked > lastPicked) { lastPicked = f.picked; }
@@ -239,7 +239,7 @@ function tick(dt, noRender) {
   waterTex.offset.y = T * 0.02;
   if (f) {
     $('dist').textContent = `${fmt(Math.max(0, f.d))} m`; $('alt').textContent = Math.max(0, Math.round(f.y - C.ground(Math.max(0, f.d), f.lat))); $('rings').textContent = f.got; $('cn').textContent = f.picked;
-    $('spd').textContent = `${Math.round(f.v * 3.6)} km/h`; $('vbar').style.width = Math.min(100, f.v / C.VMAX * 100) + '%'; $('vb').className = 'b' + (f.boostT > 0 || f.rocketOn ? ' boost' : '');
+    $('spd').textContent = `${Math.round(f.v * 3.6 * C.PACE)} km/h`; $('vbar').style.width = Math.min(100, f.v / C.VMAX * 100) + '%'; $('vb').className = 'b' + (f.boostT > 0 || f.rocketOn ? ' boost' : '');
     $('stall').style.opacity = f.stall > .2 ? 1 : 0; const pr = Math.max(0, Math.min(1, f.d / C.GOAL)); $('progI').style.width = pr * 100 + '%'; $('progMe').style.left = pr * 100 + '%';
   }
   if (!noRender) R.render(scene, cam);
