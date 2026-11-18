@@ -2466,7 +2466,13 @@ function showLevelUp(){
     if(!chosen.includes(u)) chosen.push(u);
     if(chosen.length>=avail.length) break;
   }
-  if(full && !avail.some(u=>P.ups[u.id])) chosen.splice(0, chosen.length, ...EXTRA, ...chosen.slice(0,1));   // 가진 10개가 모두 최대 → 회복·힘 카드 + 교체 카드 하나
+  if(full){   // 슬롯이 차면: 교체 카드는 최대 1장, 나머지는 가진 스킬 강화(없으면 회복·힘 카드)
+    const own = avail.filter(u=>P.ups[u.id]).sort(()=>Math.random()-.5), swaps = chosen.filter(u=>!P.ups[u.id]);
+    const pickN = [...own.slice(0, 2)];
+    for(const x of EXTRA) if(pickN.length < 2) pickN.push(x);
+    if(swaps.length) pickN.push(swaps[0]); else if(own[2]) pickN.push(own[2]); else if(pickN.length < 3) for(const x of EXTRA) if(!pickN.includes(x) && pickN.length < 3) pickN.push(x);
+    chosen.splice(0, chosen.length, ...pickN);
+  }   // 가진 10개가 모두 최대 → 회복·힘 카드 + 교체 카드 하나
   else for(const x of EXTRA) if(chosen.length<3 && (chosen.length < 2 || avail.length===0)) chosen.push(x);   // 고를 게 부족하면 회복·힘 카드
   lastChosen = chosen; renderCards(chosen);
 }
@@ -2492,6 +2498,9 @@ function renderCards(chosen){
     card.onkeydown=e=>{if(e.key==='Enter'||e.key===' ')go()};
     cardsEl.appendChild(card);
   });
+  const skip = document.createElement('button'); skip.className = 'swapBack'; skip.textContent = '건너뛰기 (체력 20% 회복)';
+  skip.onclick = () => finishPick({ id:'_skip', apply:p=>{ p.hp=Math.min(p.hpMax, p.hp+p.hpMax*0.2) } });
+  cardsEl.appendChild(skip);
   lvupEl.classList.add('show');
   if(!chosen.length){ lvQueue=0; game.picking=false; lvupEl.classList.remove('show') }
 }
