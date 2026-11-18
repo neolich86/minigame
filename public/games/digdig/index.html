@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<link rel="canonical" href="/play/digdig">
+<script src="/mgh/bridge.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>파고파고 대모험 - 미니게임천국</title>
+<meta name="description" content="벽을 톡톡 두드려 공룡 화석을 캐고, 박물관을 채운 뒤 로켓을 타고 우주 소행성의 외계 유물까지 캐는 발굴 게임.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23d9a86c'/%3E%3Cpath d='M18 46l22-22' stroke='%236b3a06' stroke-width='7' stroke-linecap='round'/%3E%3Cpath d='M30 14c10 0 20 6 22 16-8-6-16-8-26-6z' fill='%23a0a8b0' stroke='%23333' stroke-width='3'/%3E%3C/svg%3E">
+<style>
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:'Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;color:#fff;user-select:none;-webkit-user-select:none;touch-action:none;overscroll-behavior:none}
+body{background:#2a1a0c}
+body.dino{background:linear-gradient(#8fd3ff 0%,#cfeaff 35%,#f3d7a6 36%,#d9a86c 100%)}
+body.space{background:radial-gradient(ellipse at 30% 20%,#3a2a6e 0%,#140c2e 45%,#05030d 100%)}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+#gl{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+#beam{position:fixed;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:3}
+#hud > *{pointer-events:auto}
+.top{position:absolute;left:10px;right:10px;top:calc(10px + env(safe-area-inset-top));display:flex;gap:6px}
+.pill{background:rgba(30,18,8,.74);border:2px solid rgba(255,255,255,.25);border-radius:14px;padding:6px 10px;font-weight:900;font-size:15px;display:flex;align-items:center;gap:6px;min-height:44px}
+.space .pill,.space .side,.space .icb{background:rgba(10,12,40,.78);border-color:#4fd8ff66}
+.depth{flex:1;min-width:0;flex-direction:column;align-items:stretch;justify-content:center;gap:3px}
+.depth small{display:block;font-size:11px;font-weight:700;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{height:8px;border-radius:6px;background:rgba(255,255,255,.2);overflow:hidden}.bar i{display:block;height:100%;width:4%;background:linear-gradient(90deg,#ffd34a,#ff8a2a)}
+.space .bar i{background:linear-gradient(90deg,#4fd8ff,#b06fff)}
+.side{position:absolute;right:10px;top:calc(64px + env(safe-area-inset-top));width:100px;background:rgba(30,18,8,.74);border:2px solid rgba(255,255,255,.25);border-radius:14px;padding:6px;text-align:center;font-size:12px;font-weight:900}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px}
+.slots div{aspect-ratio:1;border-radius:8px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center}
+.slots img{width:88%;height:88%;object-fit:contain;filter:brightness(0) opacity(.35)}
+.slots .on{background:rgba(255,220,120,.3);box-shadow:inset 0 0 0 2px #ffd34a}.slots .on img{filter:none}
+#inc{position:absolute;left:10px;top:calc(64px + env(safe-area-inset-top));font-size:12px;font-weight:900;padding:4px 9px;border-radius:999px;background:rgba(30,18,8,.6)}
+#boost{position:absolute;left:10px;top:calc(92px + env(safe-area-inset-top));font-size:12px;font-weight:900;padding:4px 9px;border-radius:999px;background:#ff8a2a;color:#3a1a00;animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+.tool{position:fixed;right:-8px;bottom:calc(150px + env(safe-area-inset-bottom));width:200px;z-index:2;pointer-events:none;transform-origin:85% 95%;transition:transform .07s}
+.tool.hit{transform:rotate(-34deg) translate(-18px,-8px)}
+.space .tool.hit{transform:translate(-6px,6px) rotate(-4deg)}
+.icons{position:absolute;left:10px;right:10px;bottom:calc(84px + env(safe-area-inset-bottom));display:flex;gap:6px;align-items:flex-end}
+.icb{position:relative;width:52px;height:52px;border-radius:14px;background:rgba(30,18,8,.74);border:2px solid rgba(255,255,255,.3);font-size:24px;display:flex;align-items:center;justify-content:center}
+.icb i{position:absolute;right:-4px;bottom:-5px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;background:#1d140c;border:1.5px solid #fff;font-size:11px;font-style:normal;font-weight:900;line-height:17px}
+.icb i:empty{display:none}
+.icb.on{border-color:#ff5a2c;box-shadow:0 0 0 3px rgba(255,90,44,.5);animation:pulse .6s infinite}
+.icb.dis{opacity:.55}
+#evolve{margin-left:auto;align-self:center;padding:8px 12px;border-radius:14px;background:linear-gradient(#b8f07a,#4fbf3a);border:3px solid #24600e;box-shadow:0 3px 0 #24600e;color:#0d2a04;font-weight:900;font-size:13px;line-height:1.2;text-align:center}
+#evolve small{display:block;font-size:11px}#evolve.dis{filter:grayscale(.8) brightness(.9)}
+#ups{position:absolute;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));display:flex;gap:6px}
+.up{flex:1;min-height:62px;border-radius:16px;border:3px solid #6b3a06;background:linear-gradient(#ffe07a,#f59e1b);color:#4a2400;box-shadow:0 4px 0 #6b3a06;padding:5px 2px;text-align:center;font-weight:900;font-size:13px;line-height:1.25}
+.up b{display:block}.up small{display:block;font-size:11px;font-weight:800;opacity:.9}
+.up.dis{filter:grayscale(.7) brightness(.85)}
+.space .up{border-color:#1b2a6b;background:linear-gradient(#9feaff,#3a8cff);color:#061238;box-shadow:0 4px 0 #1b2a6b}
+.pop{position:fixed;z-index:4;font-weight:900;font-size:16px;pointer-events:none;text-shadow:0 2px 0 #3a1a00,0 0 6px #000;animation:fly .9s forwards}
+@keyframes fly{to{transform:translateY(-60px);opacity:0}}
+.toast{position:fixed;left:50%;top:24%;transform:translateX(-50%);z-index:6;width:max-content;max-width:86vw;background:rgba(30,18,8,.9);border:3px solid #ffd34a;border-radius:16px;padding:10px 14px;font-weight:800;font-size:14px;display:flex;align-items:center;gap:10px;opacity:0;transition:.25s;pointer-events:none}
+.toast.on{opacity:1}.toast img{width:52px;height:52px;object-fit:contain}.toast b{font-size:16px}
+.space .toast{background:rgba(10,12,40,.92);border-color:#4fd8ff}
+#tut{position:fixed;left:16px;right:16px;top:44%;z-index:5;text-align:center;padding:10px 14px;border-radius:16px;background:rgba(30,18,8,.86);border:2px solid #ffd34a;font-weight:800;font-size:14.5px;line-height:1.5;pointer-events:none;animation:pulse 1.6s infinite}
+#ping{position:fixed;z-index:3;width:90px;height:90px;margin:-45px 0 0 -45px;border-radius:50%;border:4px solid #4fff9a;pointer-events:none;opacity:0}
+#ping.on{animation:ping 1s 3}
+@keyframes ping{0%{transform:scale(.3);opacity:1}100%{transform:scale(1.4);opacity:0}}
+.boom{position:fixed;z-index:4;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;background:radial-gradient(#fff3a0,#ff8a2a 50%,transparent 70%);pointer-events:none;animation:boom .55s forwards}
+@keyframes boom{to{transform:scale(14);opacity:0}}
+/* 카드 */
+#dim{position:fixed;inset:0;z-index:10;background:rgba(10,6,2,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+#card{width:100%;max-width:370px;max-height:88vh;overflow:auto;background:linear-gradient(#fff8e6,#f3dfb4);color:#2a1a0a;border:3px solid #6b3a06;border-radius:20px;box-shadow:0 6px 0 #6b3a06;padding:16px;text-align:center;animation:pin .25s}
+@keyframes pin{from{transform:scale(.85);opacity:0}}
+#card h2{font-size:21px;margin:6px 0}#card p{font-size:14px;line-height:1.55;margin:6px 0;color:#5a4630}
+#card .good{color:#2f8a3e;font-weight:900}#card .dimt{font-size:12.5px}
+#card img.big{max-width:100%;max-height:200px;object-fit:contain}
+#card .emo{font-size:52px}
+.btns{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.btn{min-height:50px;border-radius:14px;border:3px solid #6b3a06;background:linear-gradient(#ffe07a,#f59e1b);color:#4a2400;box-shadow:0 3px 0 #6b3a06;font-weight:900;font-size:15px;padding:6px 10px;line-height:1.25}
+.btn small{display:block;font-size:11.5px;font-weight:700}
+.btn.g{background:linear-gradient(#9ff0a8,#3fbf62);border-color:#1d5a2a;box-shadow:0 3px 0 #1d5a2a;color:#06240e}
+.btn.w{background:#fff;border-color:#b89a70;box-shadow:0 3px 0 #b89a70}
+.btn:disabled{opacity:.6}
+.mus{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
+.ex{background:#fff;border:2px solid #e3cfa8;border-radius:12px;padding:4px;display:flex;flex-direction:column;align-items:center}
+.ex img{width:100%;height:64px;object-fit:contain}.ex b{font-size:12.5px}.ex small{font-size:11px;color:#8a6a40}
+.ex.no img{filter:brightness(0) opacity(.2)}
+/* 타이틀 */
+#title{position:fixed;inset:0;z-index:12;background:#3a2210 center top/cover no-repeat;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:24px 24px calc(40px + env(safe-area-inset-bottom))}
+#title::before{content:'';position:absolute;inset:auto 0 0 0;height:45%;background:linear-gradient(transparent,rgba(30,16,4,.88));pointer-events:none}
+#title .in{position:relative;width:100%;max-width:340px;text-align:center}
+#title h1{font-size:44px;line-height:1.05;letter-spacing:-1px;background:linear-gradient(#fff7d6,#ffc23a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 #5a2c04) drop-shadow(0 0 12px rgba(255,170,40,.5))}
+#title h1 small{display:block;font-size:13px;letter-spacing:5px;-webkit-text-fill-color:#ffd977;filter:none;margin-top:4px}
+#title p{margin:12px 0 16px;font-size:14px;line-height:1.55;color:#ffeccc;text-shadow:0 1px 4px #000}
+#go{width:100%;height:60px;border-radius:18px;background:linear-gradient(#ffe07a,#f59e1b);border:3px solid #6b3a06;box-shadow:0 5px 0 #6b3a06;color:#4a2400;font-size:21px;font-weight:900}
+</style>
+</head>
+<body class="dino">
+<canvas id="gl"></canvas><canvas id="beam"></canvas>
+<div id="hud" hidden>
+  <div class="top"><div class="pill" id="money"></div><div class="pill depth"><div id="depthT"></div><div class="bar"><i id="depthBar"></i></div></div></div>
+  <div id="inc"></div><div id="boost" hidden></div>
+  <div class="side"><div id="sideT"></div><div class="slots" id="slots"></div></div>
+  <div class="icons">
+    <button class="icb" id="museum" aria-label="박물관">🏛</button>
+    <button class="icb" id="dyna" aria-label="다이너마이트">🧨<i></i></button>
+    <button class="icb" id="radar" aria-label="레이더">📡<i></i></button>
+    <button class="icb" id="gift" aria-label="판매 2배" hidden>🎁<i></i></button>
+    <button id="evolve" hidden></button>
+  </div>
+  <div id="ups"></div>
+</div>
+<img class="tool" id="tool" alt="">
+<div id="ping"></div>
+<div id="tut" hidden></div>
+<div class="toast" id="toast"></div>
+<div id="dim" hidden><div id="card"></div></div>
+<div id="title" style="background-image:url(assets/title.webp)"><div class="in"><h1>파고파고 대모험<small>DIGDIG ADVENTURE</small></h1><p>벽을 톡톡 두드려 공룡 화석을 캐고,<br>박물관을 채운 뒤 우주로 떠나요!</p><button id="go">발굴 시작</button></div></div>
+<script type="importmap">{"imports":{"three":"/games/wizard/vendor/three.module.min.js"}}</script>
+<script type="module" src="game.js"></script>
+</body>
+</html>

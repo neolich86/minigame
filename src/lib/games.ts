@@ -461,6 +461,19 @@ const CATALOG: Game[] = [
     hidden: true, // 첫 버전 — 관리자 확인 중
   },
   {
+    id: "digdig",
+    title: { ko: "파고파고 대모험", en: "DigDig Adventure" },
+    desc: {
+      ko: "벽을 톡톡 두드려 랩터·티라노·브라키오사우루스의 화석을 캐고, 박물관을 채운 뒤 로켓을 타고 우주 소행성의 외계 유물까지 캐는 발굴 게임",
+      en: "Tap the wall to dig up raptor, T-rex and brachiosaurus fossils, fill your museum, then rocket to space to mine alien relics from asteroids",
+    },
+    genre: "casual",
+    thumb: "/thumbs/digdig.jpg",
+    src: "/games/digdig/index.html",
+    saves: true,
+    hidden: true, // 첫 버전 — 관리자만
+  },
+  {
     id: "little-civ",
     title: { ko: "나만의 문명 만들기", en: "My Little Civilization" },
     desc: {
