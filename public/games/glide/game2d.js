@@ -157,6 +157,7 @@ function draw(dt) {
   const drawSky = (im, alpha) => { if (!ok(im) || alpha <= 0) return; const bh = H, bw = bh * im.naturalWidth / im.naturalHeight, off = -((fd * 0.12) % bw + bw) % bw, by = Math.min(0, sy(0) - bh * 0.88); ctx.globalAlpha = alpha; for (let x = off; x < W; x += bw) ctx.drawImage(im, x, by, bw + 1, bh); ctx.globalAlpha = 1; };
   const nb = C.REGIONS[reg + 1] ? C.REGIONS[reg + 1].from : 1e9, mix = reg < 2 ? Math.max(0, Math.min(1, (fd - (nb - 250)) / 250)) : 0;
   drawSky(SKY[reg], 1); if (mix > 0) drawSky(SKY[reg + 1], mix);
+  ctx.fillStyle = 'rgba(220,235,255,.18)'; ctx.fillRect(0, 0, W, H);
   // 먼 언덕 (중간 시차)
   ctx.fillStyle = P.far; ctx.globalAlpha = .55; ctx.beginPath(); ctx.moveTo(0, H);
   for (let x = 0; x <= W + 8; x += 8) { const wx = fd * 0.45 + x / scale; ctx.lineTo(x, sy(0) - farHill(wx) * scale * 0.55 - 6); }
@@ -206,13 +207,17 @@ function draw(dt) {
   // 바람 자국
   if (trail.length > 2) { ctx.lineCap = 'round'; for (let k = 1; k < trail.length; k++) { const a = trail[k - 1], b = trail[k], q = k / trail.length; ctx.strokeStyle = b.b ? `rgba(255,225,110,${q})` : `rgba(130,220,255,${q * .8})`; ctx.lineWidth = 2 + q * 5; ctx.beginPath(); ctx.moveTo(sx(a.d) - 18, sy(a.y) - 16); ctx.lineTo(sx(b.d) - 18, sy(b.y) - 16); ctx.stroke(); } }
   // 글라이더 + 로켓 불꽃
-  const gi = Math.max(0, C.GLIDERS.findIndex((x) => x.id === st.glider)), G2 = ok(SIDE[gi]) ? SIDE[gi] : SIDE[0];
-  if (ok(G2)) {
-    const gw = 118, gh = gw * G2.naturalHeight / G2.naturalWidth, a = f ? f.a : 0;
-    ctx.save(); ctx.translate(sx(fd), sy(fy) - (state === 'launch' || !f ? 16 : 0)); ctx.rotate(-a * 0.9 + (f && f.stall ? Math.sin(T * 30) * .05 * f.stall : 0));
-    if (f && f.rocketOn && state === 'fly') { const L = 30 + Math.random() * 18; const fg = ctx.createLinearGradient(-gw * .45, 0, -gw * .45 - L, 0); fg.addColorStop(0, '#fff3a0'); fg.addColorStop(.4, '#ff9a3a'); fg.addColorStop(1, 'rgba(255,60,20,0)'); ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(-gw * .4, gh * .12 - 8); ctx.lineTo(-gw * .45 - L, gh * .12); ctx.lineTo(-gw * .4, gh * .12 + 8); ctx.fill(); }
-    if (f && (f.boostT > 0 || f.liftT > 0)) { ctx.shadowColor = '#ffe066'; ctx.shadowBlur = 24; }
-    ctx.drawImage(G2, -gw * 0.55, -gh * 0.6, gw, gh); ctx.restore();
+  const gi = Math.max(0, C.GLIDERS.findIndex((x) => x.id === st.glider)), G2 = ok(SIDE[gi]) ? SIDE[gi] : ok(SIDE[0]) ? SIDE[0] : null;
+  {
+    // 글라이더: 화면 높이에 맞춰 크게, 어두운 테두리 그림자로 배경과 구분 (그림이 아직 없으면 단순한 모양)
+    const gw = Math.max(120, Math.min(190, H * 0.19)), gh = G2 ? gw * G2.naturalHeight / G2.naturalWidth : gw * .62, a = f ? f.a : 0;
+    const gx = sx(fd), gy = sy(fy) - (state === 'launch' || !f ? 16 : 0);
+    ctx.save(); ctx.translate(gx, gy); ctx.rotate((Number.isFinite(a) ? -a * 0.9 : 0) + (f && f.stall ? Math.sin(T * 30) * .05 * f.stall : 0));
+    if (f && f.rocketOn && state === 'fly') { const L = 34 + Math.random() * 22; const fg = ctx.createLinearGradient(-gw * .45, 0, -gw * .45 - L, 0); fg.addColorStop(0, '#fff3a0'); fg.addColorStop(.4, '#ff9a3a'); fg.addColorStop(1, 'rgba(255,60,20,0)'); ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(-gw * .4, gh * .12 - 9); ctx.lineTo(-gw * .45 - L, gh * .12); ctx.lineTo(-gw * .4, gh * .12 + 9); ctx.fill(); }
+    ctx.shadowColor = f && (f.boostT > 0 || f.liftT > 0) ? '#ffe066' : 'rgba(20,10,40,.75)'; ctx.shadowBlur = f && (f.boostT > 0 || f.liftT > 0) ? 26 : 10;
+    if (G2) ctx.drawImage(G2, -gw * 0.55, -gh * 0.6, gw, gh);
+    else { ctx.fillStyle = '#f3dca8'; ctx.strokeStyle = '#7a4a22'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-gw * .5, -gh * .1); ctx.quadraticCurveTo(0, -gh * .6, gw * .45, -gh * .1); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#7a4a22'; ctx.beginPath(); ctx.ellipse(0, gh * .15, gw * .22, gh * .1, 0, 0, 6.283); ctx.fill(); }
+    ctx.restore();
   }
   // 앞쪽 구름 (빠른 시차) + 속도선
   for (const c of clouds) { const x = ((c.x - fd * c.p * scale * .5) % (W + 400) + W + 400) % (W + 400) - 200, y = c.y; ctx.globalAlpha = .55; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.ellipse(x, y, 60 * c.s, 18 * c.s, 0, 0, 6.283); ctx.ellipse(x + 30 * c.s, y - 10 * c.s, 34 * c.s, 16 * c.s, 0, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1; }
