@@ -68,12 +68,27 @@ SEG.forEach(([z0, z1], i) => {
 });
 const rockMat = LOOK.map((L) => [new THREE.MeshLambertMaterial({ map: rockTex(L.rock) }), new THREE.MeshLambertMaterial({ color: L.top }), new THREE.MeshLambertMaterial({ color: L.top })]);
 let terrainGroup = new THREE.Group(); scene.add(terrainGroup);
-// 하늘 섬 (도착 지점)
-const isle = new THREE.Group(); scene.add(isle);
-{ const top = new THREE.Mesh(new THREE.CylinderGeometry(260, 220, 30, 24), new THREE.MeshLambertMaterial({ color: 0x6fbf4a })); const rock = new THREE.Mesh(new THREE.ConeGeometry(220, 300, 24), new THREE.MeshLambertMaterial({ color: 0x8a7a66 })); rock.rotation.x = Math.PI; rock.position.y = -165; isle.add(top, rock);
-  for (let i = 0; i < 14; i++) { const t = new THREE.Mesh(new THREE.ConeGeometry(14, 50, 7), new THREE.MeshLambertMaterial({ color: 0x3f8a3a })); const a = Math.random() * 6.28, r = 60 + Math.random() * 170; t.position.set(Math.cos(a) * r, 40, Math.sin(a) * r); isle.add(t); }
-  const gate = new THREE.Mesh(new THREE.TorusGeometry(40, 3, 10, 48), new THREE.MeshBasicMaterial({ color: 0xffd34a })); gate.position.set(0, 60, 240); isle.add(gate);
-  isle.position.set(0, 120, -C.GOAL - 260); }
+// 🏁 결승선 + 하늘 섬 (도착 지점)
+{ const goal = new THREE.Group(); scene.add(goal);
+  const pm = new THREE.MeshLambertMaterial({ color: 0xffd34a, emissive: 0x6a4a00 });
+  for (const x of [-90, 90]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(4, 5, 460, 12), pm); p.position.set(x, 230, 0); goal.add(p); }
+  const chk = canvasTex(64, 64, (g) => { for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) { g.fillStyle = (x + y) % 2 ? '#222' : '#fff'; g.fillRect(x * 8, y * 8, 8, 8); } }, [12, 1]);
+  for (let h = 40; h <= 440; h += 100) { const b = new THREE.Mesh(new THREE.PlaneGeometry(180, 9), new THREE.MeshBasicMaterial({ map: chk, side: THREE.DoubleSide, fog: false })); b.position.set(0, h, 0); goal.add(b); }
+  const curtain = new THREE.Mesh(new THREE.PlaneGeometry(180, 460), new THREE.MeshBasicMaterial({ color: 0xffe680, transparent: true, opacity: .14, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); curtain.position.y = 230; goal.add(curtain);
+  const sign = canvasTex(256, 96, (g) => { g.fillStyle = '#e2382a'; g.fillRect(0, 0, 256, 96); g.strokeStyle = '#fff'; g.lineWidth = 8; g.strokeRect(4, 4, 248, 88); g.fillStyle = '#fff'; g.font = '900 60px system-ui'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('GOAL', 128, 50); });
+  const sg = new THREE.Mesh(new THREE.PlaneGeometry(90, 34), new THREE.MeshBasicMaterial({ map: sign, side: THREE.DoubleSide, fog: false })); sg.position.set(0, 470, 0); goal.add(sg);
+  goal.position.set(0, 0, -C.GOAL);
+  // 하늘 섬: 잔디 윗면(고도 ISLE.top) + 흙 테두리 + 바위 뿌리 + 폭포 + 나무·천막·착륙 데크
+  const isle = new THREE.Group(), R0 = 220, Y = C.ISLE.top, L = (c) => new THREE.MeshLambertMaterial({ color: c });
+  const grass = new THREE.Mesh(new THREE.CylinderGeometry(R0, R0, 6, 40), L(0x6fc04a)); grass.position.y = Y - 3; isle.add(grass);
+  const dirt = new THREE.Mesh(new THREE.CylinderGeometry(R0 + 2, R0 * .9, 26, 40), L(0x8a6a44)); dirt.position.y = Y - 19; isle.add(dirt);
+  const root = new THREE.Mesh(new THREE.ConeGeometry(R0 * .9, 260, 14), L(0x7a6a58)); root.rotation.x = Math.PI; root.position.y = Y - 32 - 130; isle.add(root);
+  for (let i = 0; i < 4; i++) { const a = -Math.PI / 2 + (i - 1.5) * .5, wf = new THREE.Mesh(new THREE.PlaneGeometry(16, 150), new THREE.MeshBasicMaterial({ color: 0x8fe4ff, transparent: true, opacity: .8, side: THREE.DoubleSide })); wf.position.set(Math.cos(a) * (R0 + 4), Y - 90, Math.sin(a) * (R0 + 4)); wf.lookAt(0, Y - 90, 0); isle.add(wf); }
+  for (let i = 0; i < 26; i++) { const a = Math.random() * 6.283, r = 40 + Math.random() * (R0 - 60); const tr = new THREE.Group(); const trunk = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2.2, 10, 6), L(0x7a4a22)); trunk.position.y = 5; const top = new THREE.Mesh(new THREE.SphereGeometry(8 + Math.random() * 5, 10, 8), L(i % 3 ? 0x4fa83a : 0x6cc24a)); top.position.y = 15; tr.add(trunk, top); tr.position.set(Math.cos(a) * r, Y, Math.sin(a) * r); if (Math.abs(tr.position.x) < 30 && tr.position.z > 0) continue; isle.add(tr); }
+  [0xe2382a, 0x3f7fe0, 0x9a4ad6, 0xf59e1b].forEach((c, i) => { const t = new THREE.Mesh(new THREE.ConeGeometry(9, 14, 8), L(c)); t.position.set(-60 + i * 40, Y + 7, -40 - (i % 2) * 30); isle.add(t); });
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(40, 2, 46), L(0xa0703e)); deck.position.set(0, Y + 1, R0 - 10); isle.add(deck);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.6, .6, 18, 6), L(0x6b4a2a)); pole.position.set(18, Y + 10, R0 + 8); const flag = new THREE.Mesh(new THREE.PlaneGeometry(9, 6), new THREE.MeshBasicMaterial({ color: 0xe2382a, side: THREE.DoubleSide })); flag.position.set(22.5, Y + 16, R0 + 8); isle.add(pole, flag);
+  isle.position.set(0, 0, -(C.ISLE.d + 60)); scene.add(isle); }
 
 function buildTerrain() {
   scene.remove(terrainGroup); terrainGroup = new THREE.Group(); scene.add(terrainGroup);
@@ -195,9 +210,14 @@ function openHangar(t) {
 
 // ---------- 루프 ----------
 const camPos = v3(0, 206, 30), camLook = v3(0, 200, -40);
+let goalT = 0, gS = null;
 let last = performance.now(), T = 0, bannerT = 0;
 function loop(now) { requestAnimationFrame(loop); const dt = Math.min(.05, (now - last) / 1000); last = now; if (!MANUAL) tick(dt); }
 function banner(t, s) { const b = $('banner'); b.innerHTML = `${t}<small>${s || ''}</small>`; b.style.opacity = 1; clearTimeout(bannerT); bannerT = setTimeout(() => b.style.opacity = 0, 2400); }
+function confetti() { const box = document.createElement('div'); box.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:6;overflow:hidden'; document.body.append(box);
+  for (let i = 0; i < 90; i++) { const c = document.createElement('i'), x = Math.random() * 100, dx = (Math.random() - .5) * 40, rot = Math.random() * 720; c.style.cssText = `position:absolute;left:${x}%;top:-20px;width:${6 + Math.random() * 6}px;height:${10 + Math.random() * 8}px;background:${['#ffd34a', '#ff6a5a', '#5ad1ff', '#7be07b', '#ff9ad8', '#fff'][i % 6]};border-radius:2px;transition:transform ${2 + Math.random() * 1.5}s cubic-bezier(.2,.6,.4,1),opacity 1s ${2.2 + Math.random()}s;`;
+    box.append(c); requestAnimationFrame(() => requestAnimationFrame(() => { c.style.transform = `translate(${dx}vw, ${100 + Math.random() * 20}vh) rotate(${rot}deg)`; c.style.opacity = 0; })); }
+  setTimeout(() => box.remove(), 4500); }
 function pop(t) { const p = $('pop'); p.textContent = t; p.classList.remove('go'); void p.offsetWidth; p.classList.add('go'); }
 let lastGot = 0, lastPicked = 0;
 function tick(dt, noRender) {
@@ -212,8 +232,15 @@ function tick(dt, noRender) {
     if (f.picked > lastPicked) { lastPicked = f.picked; }
     if (f.bounces && f.bounces > (f._b || 0)) { f._b = f.bounces; pop('🛡️ 튕겨 올랐다!'); }
     const reg = Math.min(2, C.regionAt(f.d)); if (reg !== curReg) { curReg = reg; setSky(reg); banner(C.REGIONS[reg].name, `${fmt(C.REGIONS[reg].from)} m 돌파!`); }
-    if (f.over) landed();
+    if (f.over && f.goal) { state = 'goal'; goalT = 0; gS = { d: f.d, y: f.y, lat: f.lat || 0, yaw: f.yaw || 0 }; ctl = null; $('joy').style.display = 'none'; rocketHold = false; }
+    else if (f.over) landed();
+  }  else if (f && state === 'goal') {   // 🏁 결승선 통과 → 하늘 섬 착륙장으로 자동 비행
+    goalT += dt; const k = Math.min(1, goalT / 2.6), e = k * k * (3 - 2 * k);
+    f.d = gS.d + (C.ISLE.d - 70 - gS.d) * e; f.y = gS.y + (C.ISLE.top + 3 - gS.y) * e + Math.sin(k * Math.PI) * 25; f.lat = gS.lat * (1 - e); f.yaw = gS.yaw * (1 - e); f.a = (1 - k) * 0.25 - 0.05;
+    if (goalT > 0.2 && !gS.party) { gS.party = true; banner('🏁 GOAL!', '하늘 섬에 도착했어요!'); confetti(); }
+    if (goalT > 3.8 && !gS.done) { gS.done = true; result(); }
   }
+
   const d = f ? f.d : RAMP_D + 10, y = f ? f.y : 206, lat = f ? f.lat : 0, yaw = f ? f.yaw : 0, a = f ? f.a : 0;
   const fw = v3(Math.sin(yaw), 0, -Math.cos(yaw)), right = v3(Math.cos(yaw), 0, Math.sin(yaw));
   const gpos = v3(lat, y, -d); glider.position.copy(gpos);
@@ -250,7 +277,7 @@ function tick(dt, noRender) {
   for (let i = 0; i < NP; i++) { sp[i * 3 + 2] += dt * (f ? f.v : 0) * 1.4; if (sp[i * 3 + 2] > 0) { sp[i * 3 + 2] = -80; sp[i * 3] = (Math.random() - .5) * 40; sp[i * 3 + 1] = (Math.random() - .5) * 26; } } speedPts.geometry.attributes.position.needsUpdate = true;
   waterTex.offset.y = T * 0.02;
   if (f) {
-    $('dist').textContent = `${fmt(Math.max(0, f.d))} m`; $('alt').textContent = Math.max(0, Math.round(f.y - C.ground(Math.max(0, f.d), f.lat))); $('rings').textContent = f.got; $('cn').textContent = f.picked;
+    $('dist').textContent = `${fmt(Math.max(0, Math.min(C.GOAL, f.d)))} m`; $('alt').textContent = Math.max(0, Math.round(f.y - C.ground(Math.max(0, f.d), f.lat))); $('rings').textContent = f.got; $('cn').textContent = f.picked;
     $('spd').textContent = `${Math.round(f.v * 3.6 * C.PACE)} km/h`; $('vbar').style.width = Math.min(100, f.v / C.VMAX * 100) + '%'; $('vb').className = 'b' + (f.boostT > 0 || f.rocketOn ? ' boost' : '');
     $('stall').style.opacity = f.stall > .2 ? 1 : 0; const pr = Math.max(0, Math.min(1, f.d / C.GOAL)); $('progI').style.width = pr * 100 + '%'; $('progMe').style.left = pr * 100 + '%';
   }

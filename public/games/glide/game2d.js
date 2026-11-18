@@ -37,7 +37,7 @@ addEventListener('resize', resize); resize();
 const img = (s) => { const i = new Image(); i.src = s; return i; };
 const SIDE = C.GLIDERS.map((_, i) => img(`assets/s${i}.webp`));
 const SKY = [img('assets/sky0.webp'), img('assets/sky1.webp'), img('assets/sky2.webp')];
-const RING = img('assets/ring.webp'), RAMP = img('assets/ramp.webp');
+const RING = img('assets/ring.webp'), RAMP = img('assets/ramp.webp'), ISLE_IMG = img('assets/isle.webp');
 const ok = (i) => i.complete && i.naturalWidth > 0;
 // 지역별 색 (땅 · 바위 · 먼 산 · 하늘 위/아래)
 const PAL = [
@@ -121,9 +121,14 @@ function openHangar(t) {
 
 
 // ---------- 루프 ----------
+let goalT = 0, gS = null;
 let last = performance.now(), T = 0, bannerT = 0, lastGot = 0;
 function loop(now) { requestAnimationFrame(loop); const dt = Math.min(.05, (now - last) / 1000); last = now; if (!MANUAL) tick(dt); }
 function banner(t, s) { const b = $('banner'); b.innerHTML = `${t}<small>${s || ''}</small>`; b.style.opacity = 1; clearTimeout(bannerT); bannerT = setTimeout(() => b.style.opacity = 0, 2400); }
+function confetti() { const box = document.createElement('div'); box.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:6;overflow:hidden'; document.body.append(box);
+  for (let i = 0; i < 90; i++) { const c = document.createElement('i'), x = Math.random() * 100, dx = (Math.random() - .5) * 40, rot = Math.random() * 720; c.style.cssText = `position:absolute;left:${x}%;top:-20px;width:${6 + Math.random() * 6}px;height:${10 + Math.random() * 8}px;background:${['#ffd34a', '#ff6a5a', '#5ad1ff', '#7be07b', '#ff9ad8', '#fff'][i % 6]};border-radius:2px;transition:transform ${2 + Math.random() * 1.5}s cubic-bezier(.2,.6,.4,1),opacity 1s ${2.2 + Math.random()}s;`;
+    box.append(c); requestAnimationFrame(() => requestAnimationFrame(() => { c.style.transform = `translate(${dx}vw, ${100 + Math.random() * 20}vh) rotate(${rot}deg)`; c.style.opacity = 0; })); }
+  setTimeout(() => box.remove(), 4500); }
 function pop(t) { const p = $('pop'); p.textContent = t; p.classList.remove('go'); void p.offsetWidth; p.classList.add('go'); }
 function tick(dt, noRender) {
   T += dt;
@@ -135,11 +140,18 @@ function tick(dt, noRender) {
     if (f.bounces && f.bounces > (f._b || 0)) { f._b = f.bounces; pop('🛡️ 튕겨 올랐다!'); }
     if (f.bumps && f.bumps > (f._m || 0)) { f._m = f.bumps; pop('💥 바위에 부딪혀 속도 감소!'); }
     const reg = Math.min(2, C.regionAt(f.d)); if (reg !== curReg) { curReg = reg; banner(C.REGIONS[reg].name, `${fmt(C.REGIONS[reg].from)} m 돌파!`); }
-    if (f.over) landed();
+    if (f.over && f.goal) { state = 'goal'; goalT = 0; gS = { d: f.d, y: f.y, lat: f.lat || 0, yaw: f.yaw || 0 }; hold = false; rocketHold = false; }
+    else if (f.over) landed();
     trail.push({ d: f.d, y: f.y, b: f.boostT > 0 || f.liftT > 0 || f.rocketOn }); if (trail.length > 36) trail.shift();
+  }  else if (f && state === 'goal') {   // 🏁 결승선 통과 → 하늘 섬 착륙장으로 자동 비행
+    goalT += dt; const k = Math.min(1, goalT / 2.6), e = k * k * (3 - 2 * k);
+    f.d = gS.d + (C.ISLE.d - 60 - gS.d) * e; f.y = gS.y + (C.ISLE.top + 3 - gS.y) * e + Math.sin(k * Math.PI) * 25; f.lat = gS.lat * (1 - e); f.yaw = gS.yaw * (1 - e); f.a = (1 - k) * 0.25 - 0.05;
+    if (goalT > 0.2 && !gS.party) { gS.party = true; banner('🏁 GOAL!', '하늘 섬에 도착했어요!'); confetti(); }
+    if (goalT > 3.8 && !gS.done) { gS.done = true; result(); }
   }
+
   if (f) {
-    $('dist').textContent = `${fmt(Math.max(0, f.d))} m`; $('alt').textContent = Math.max(0, Math.round(f.y - C.ground(Math.max(0, f.d), 0, true))); $('rings').textContent = f.got; $('cn').textContent = f.picked;
+    $('dist').textContent = `${fmt(Math.max(0, Math.min(C.GOAL, f.d)))} m`; $('alt').textContent = Math.max(0, Math.round(f.y - C.ground(Math.max(0, f.d), 0, true))); $('rings').textContent = f.got; $('cn').textContent = f.picked;
     $('spd').textContent = `${Math.round(f.v * 3.6 * C.PACE)} km/h`; $('vbar').style.width = Math.min(100, f.v / C.VMAX * 100) + '%'; $('vb').className = 'b' + (f.boostT > 0 || f.rocketOn ? ' boost' : '');
     $('stall').style.opacity = f.stall > .2 ? 1 : 0; const pr = Math.max(0, Math.min(1, f.d / C.GOAL)); $('progI').style.width = pr * 100 + '%'; $('progMe').style.left = pr * 100 + '%';
     rb.style.setProperty('--f', (f.fuelMax ? f.fuel / f.fuelMax * 100 : 0) + '%'); rb.classList.toggle('on', !!(f.rocketOn && state === 'fly')); rb.classList.toggle('empty', f.fuel <= 0);
@@ -187,8 +199,15 @@ function draw(dt) {
     for (let d = Math.ceil((fd - px / scale) / 14) * 14; d < fd + (W - px) / scale; d += 14) { if (d < d0 || d >= d1) continue; const h = C.ground(d, 0, true), k = (Math.sin(d * 12.9898) * 43758.5453) % 1; const x = sx(d), y = sy(h) + 6 + Math.abs(k) * 30; if (r === 2) ctx.fillRect(x, y, 10, 2); else ctx.fillRect(x, y, 4, 3); }
     ctx.globalAlpha = 1;
   }
-  // 하늘 섬
-  { const ix = sx(C.GOAL + 140), iy = sy(130); if (ix < W + 400) { ctx.fillStyle = '#8a7a66'; ctx.beginPath(); ctx.moveTo(ix - 160 * scale * .5, iy); ctx.lineTo(ix + 160 * scale * .5, iy); ctx.lineTo(ix, iy + 150 * scale * .5); ctx.fill(); ctx.fillStyle = '#6fbf4a'; ctx.fillRect(ix - 85 * scale * .5 * 2, iy - 10 * scale * .5, 170 * scale * .5 * 2, 12 * scale * .5); ctx.fillStyle = '#3f8a3a'; for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(ix + i * 22 * scale * .5 * 2, iy - 10 * scale * .5); ctx.lineTo(ix + (i * 22 + 7) * scale, iy - 40 * scale * .5); ctx.lineTo(ix + (i * 22 + 14) * scale, iy - 10 * scale * .5); ctx.fill(); } } }
+  // 🏁 결승선 (10km) — 하늘까지 이어진 체크무늬 줄 + 표지판
+  { const gx = sx(C.GOAL); if (gx > -60 && gx < W + 60) {
+    const top = sy(430), bot = sy(-5), w = Math.max(10, 5 * scale);
+    for (let y = top, k = 0; y < bot; y += w, k++) { ctx.fillStyle = k % 2 ? '#222' : '#fff'; ctx.fillRect(gx - w, y, w, w); ctx.fillStyle = k % 2 ? '#fff' : '#222'; ctx.fillRect(gx, y, w, w); }
+    ctx.fillStyle = '#ffd34a'; ctx.fillRect(gx - w - 4, top, 4, bot - top); ctx.fillRect(gx + w, top, 4, bot - top);
+    const by = Math.max(110, Math.min(H - 140, sy(f ? f.y : 100) - 70)); ctx.fillStyle = '#e2382a'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(gx - 62, by - 24, 124, 48, 10); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = '900 26px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('GOAL', gx, by + 1); ctx.textBaseline = 'alphabetic'; } }
+  // 하늘 섬 (도착지): 잔디 윗면이 고도 ISLE.top 에 오게
+  if (ok(ISLE_IMG)) { const iw = C.ISLE.w * scale, ih = iw * ISLE_IMG.naturalHeight / ISLE_IMG.naturalWidth, ix = sx(C.ISLE.d - C.ISLE.w / 2), iy = sy(C.ISLE.top) - ih * 0.30; if (ix < W && ix + iw > 0) ctx.drawImage(ISLE_IMG, ix, iy, iw, ih); }
   if (f) {
     // 링
     for (const r of f.rings) {
