@@ -189,6 +189,12 @@ canvas{display:block;image-rendering:auto}
 .card .key{left:auto;right:10px;top:auto;bottom:6px;color:#a08a6a}
 .newTag{right:12px;top:-10px;border-radius:999px;padding:2px 8px;font-size:10px;background:var(--rc);color:#fff}
 .card .tx{flex:1;min-width:0}
+.swapList{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;width:min(360px,92vw)}
+.swap{display:flex;align-items:center;gap:8px;min-height:52px;padding:6px 10px;border-radius:14px;border:3px solid var(--rc);background:linear-gradient(#fff8e6,#f3dfb4);color:#2a1a0a;font-weight:900;font-size:13px;text-align:left;font-family:inherit;cursor:pointer}
+.swap img{width:36px;height:36px}.swap b{flex:1}.swap u{text-decoration:none;font-size:11px;color:#8a5a20}
+.swap:active{transform:scale(.97)}
+.swapBack{margin-top:12px;min-height:44px;padding:8px 18px;border-radius:12px;border:2px solid #ffe6a6;background:rgba(0,0,0,.35);color:#fff;font-weight:800;font-family:inherit}
+.chip.slots{width:auto;padding:0 8px;font-size:12px;font-weight:900;color:#fff}
 </style>
 </head>
 <body>
@@ -970,13 +976,13 @@ function lateMul(){ const L=lateL(); return (1+0.5*Math.min(L,1))*(1+0.30*L+0.03
 // 보스를 잡을 때마다 일반 몬스터가 한 단계씩 강해진다 (체력은 단계마다 1.45배씩 곱으로 불어남·공격·속도·출현량)
 function furyMul(){ const f = game.fury||0; return {hp:Math.pow(1.45,f), dmg:1+0.30*f, spd:1+Math.min(0.35,0.06*f), rate:1+0.12*f}; }
 // 캐릭터 Lv50부터 몬스터 각성: 체력 ×1.6 시작, 레벨마다 ×1.07 / 공격력 ×1.35, 레벨마다 ×1.035 / 속도 최대 +30%
-const LVT = {start:20, hpG:1.045, dmgG:1.025, jump:1.6, djump:1.35};   // ?test 에서 __ar.LVT 로 조정
+const LVT = {start:25, hpG:1.025, dmgG:1.015, jump:1.3, djump:1.2, hpCap:3, dmgCap:2.5};   // 스킬 10개 제한에 맞춰 완화 (?test 에서 __ar.LVT 로 조정)   // ?test 에서 __ar.LVT 로 조정
 function lvMul(){
   const lvl=P?P.lv:0, L=lvl-LVT.start; if(L<=0) return null;
   const aw=lvl>=50, A=lvl-49;
-  return {hp:Math.pow(LVT.hpG,L)*(aw?LVT.jump:1), dmg:Math.pow(LVT.dmgG,L)*(aw?LVT.djump:1), spd:1+(aw?Math.min(0.3,A*0.012):0), aw};
+  return {hp:Math.min(LVT.hpCap, Math.pow(LVT.hpG,L)*(aw?LVT.jump:1)), dmg:Math.min(LVT.dmgCap, Math.pow(LVT.dmgG,L)*(aw?LVT.djump:1)), spd:1+(aw?Math.min(0.3,A*0.012):0), aw};
 }
-function timeScale(){ const m = game.t/60; return (1 + m*0.30 + Math.pow(m,1.85)*0.030) * lateMul() }
+function timeScale(){ const m = game.t/60; return (1 + m*0.30 + Math.pow(m,1.85)*0.022) * lateMul() }   // 스킬 10개 제한에 맞춰 후반 체력 증가 완화 (0.030 → 0.022)
 function elemForTime(){
   const t = game.t;
   if(t<150) return 'none';
@@ -1176,12 +1182,12 @@ function update(dt){
   let rate = Math.min(11, 0.70 + game.t/95 + Math.pow(Math.max(0,game.t)/60,1.35)*0.28) * (1+Math.min(0.7,lateL()*0.12));
   if(!(game.spawnT>=0)) game.spawnT=0;   // 방어: NaN 이 되면 스폰이 영구 중단되므로 복구
   rate *= furyMul().rate;
-  rate *= 1 + Math.min(1.6, (P.lv-1)*0.055);   // 캐릭터 레벨이 오를수록 더 많이
+  rate *= 1 + Math.min(0.6, (P.lv-1)*0.03);   // 캐릭터 레벨이 오를수록 더 많이
   if(game.boss) rate *= 0.05;          // 보스전 동안 잡몹 압박 대폭 완화 (몬스터 벽에 화살이 막히는 문제 방지)
   game.spawnT += dt*rate;
-  const cap = game.boss? 12 : (game.t>900 ? 200 : 160) + Math.min(120, P.lv*4);
-  const packP = Math.min(0.45, Math.max(0, (P.lv-5)*0.03));   // Lv6부터 몬스터 떼
-  while(game.spawnT>=1){ game.spawnT-=1; if(enemies.length<cap){ if(Math.random()<packP) spawnPack(3+rint(0,Math.min(5,Math.floor(P.lv/6)))); else spawnEnemy(); } }
+  const cap = game.boss? 12 : (game.t>900 ? 190 : 160) + Math.min(40, P.lv*2);   // 화면 몬스터 최대 230 (렉 방지)
+  const packP = Math.min(0.3, Math.max(0, (P.lv-5)*0.025));   // Lv6부터 몬스터 떼
+  while(game.spawnT>=1){ game.spawnT-=1; if(enemies.length<cap){ if(Math.random()<packP) spawnPack(3+rint(0,Math.min(3,Math.floor(P.lv/10)))); else spawnEnemy(); } }
 
   if(!game.boss && game.t>=game.nextBossT){
     game.bossTier++; spawnBoss(game.bossTier); game.nextBossT += BOSS_INTERVAL;
@@ -2390,6 +2396,7 @@ function syncHUD(){
 }
 function syncChips(){
   chipsEl.innerHTML='';
+  if(skillCount()){ const n=document.createElement('div'); n.className='chip slots'; n.textContent=`${skillCount()}/${MAX_SKILLS}`; chipsEl.appendChild(n); }
   for(const id in P.ups){
     const u=UPMAP[id];
     const d=document.createElement('div');d.className='chip';d.title=u.name;d.style.setProperty('--rc',RC[u.rar]);
@@ -2401,15 +2408,55 @@ function syncChips(){
 /* --- 레벨업 카드 --- */
 let lvQueue=0;
 function queueLevelUp(){ lvQueue++; if(!game.picking) showLevelUp() }
+const MAX_SKILLS = 10;   // 동시에 가질 수 있는 스킬 수 — 다 차면 새 스킬은 교체로만
+const STAT_KEYS = ['aspd','multi','aoe','shieldMax','shield','dmg','spd','pick','hpMax','crit','regen','knock','xpMul','bounce','trap','bolt','meteor','blackhole','boom','frost','clone','rain','orbit','roulette','mine','blizzard'];
+// 스킬을 빼면 처음 능력치에서 남은 스킬을 다시 적용 (체력 비율은 유지)
+function rebuildStats(){
+  const ratio = P.hp / P.hpMax, base = newPlayer();
+  for(const k of STAT_KEYS) if(k in base) P[k] = base[k];
+  for(const id in P.ups){ const u = UPMAP[id]; for(let i=0;i<P.ups[id];i++) u.apply(P); }
+  P.hp = Math.max(1, Math.round(P.hpMax * ratio));
+  if(!P.clone) clones.length = 0; else while(clones.length > (P.clone>=2?2:1)) clones.pop();
+}
+const skillCount = () => Object.keys(P.ups).length;
+// 레벨업 카드가 하나도 없을 때(모든 스킬 최대) 대신 주는 카드
+const EXTRA = [
+  {id:'_heal', ic:'regen', rar:'n', name:'회복 물약', desc:()=>'체력 50% 회복', apply:p=>{ p.hp=Math.min(p.hpMax, p.hp+p.hpMax*0.5) }},
+  {id:'_power', ic:'dmg', rar:'r', name:'힘의 정수', desc:()=>'공격력 +4%', apply:p=>{ p.dmg*=1.04 }},
+];
+function showReplace(u){
+  lvupTitle.textContent = '교체할 스킬 선택';
+  lvupEl.querySelector('.lvHead p').textContent = `스킬은 ${MAX_SKILLS}개까지 — 「${u.name}」을(를) 배우려면 하나를 빼야 해요`;
+  cardsEl.innerHTML = '';
+  const list = document.createElement('div'); list.className = 'swapList';
+  for(const id in P.ups){
+    const o = UPMAP[id], col = RC[o.rar], b = document.createElement('button'); b.className = 'swap'; b.style.setProperty('--rc', col);
+    b.innerHTML = `<img src="${iconCanvas(o.ic,col).toDataURL()}" alt=""><b>${o.name}</b><u>Lv${P.ups[id]}</u>`;
+    b.onclick = () => { delete P.ups[id]; rebuildStats(); finishPick(u); };
+    list.appendChild(b);
+  }
+  const back = document.createElement('button'); back.className = 'swapBack'; back.textContent = '← 다른 카드 고르기';
+  back.onclick = () => { lvupEl.querySelector('.lvHead p').textContent = '강화할 능력을 선택하세요'; renderCards(lastChosen); };
+  cardsEl.append(list, back);
+}
+function finishPick(u){
+  if(u.id[0]==='_') u.apply(P); else { const nxt=(P.ups[u.id]||0)+1; u.apply(P); P.ups[u.id]=nxt; }
+  syncChips(); lvQueue--; cardsEl.innerHTML='';
+  lvupEl.querySelector('.lvHead p').textContent = '강화할 능력을 선택하세요';
+  if(lvQueue>0){ showLevelUp() } else { game.picking=false; lvupEl.classList.remove('show'); last=performance.now() }
+}
+let lastChosen = [];
 function showLevelUp(){
   if(lvQueue<=0)return;
   game.picking=true;
+  const full = skillCount() >= MAX_SKILLS;
   const avail = UPGRADES.filter(u=>(P.ups[u.id]||0)<u.max);
   const weights = avail.map(u=>({n:'n',r:'r',e:'e',l:'l'}[u.rar]));
   const wmap={n:1,r:0.7,e:0.45,l:0.25};
   const pool=[];
   avail.forEach(u=>{
     let w = wmap[u.rar]*(P.ups[u.id]?1.35:1);
+    if(full && !P.ups[u.id]) w*=0.35;   // 슬롯이 차면 새 스킬(교체)은 가끔만
     if(P.lv<4 && u.rar==='l') w*=0.25;
     for(let i=0;i<Math.round(w*20);i++) pool.push(u);
   });
@@ -2419,29 +2466,28 @@ function showLevelUp(){
     if(!chosen.includes(u)) chosen.push(u);
     if(chosen.length>=avail.length) break;
   }
+  if(full && !avail.some(u=>P.ups[u.id])) chosen.splice(0, chosen.length, ...EXTRA, ...chosen.slice(0,1));   // 가진 10개가 모두 최대 → 회복·힘 카드 + 교체 카드 하나
+  else for(const x of EXTRA) if(chosen.length<3 && (chosen.length < 2 || avail.length===0)) chosen.push(x);   // 고를 게 부족하면 회복·힘 카드
+  lastChosen = chosen; renderCards(chosen);
+}
+function renderCards(chosen){
   lvupTitle.textContent = `LEVEL ${P.lv}`;
   cardsEl.innerHTML='';
+  const full = skillCount() >= MAX_SKILLS;
   chosen.forEach((u,i)=>{
-    const cur=P.ups[u.id]||0, nxt=cur+1;
+    const extra = u.id[0]==='_', cur=extra?0:(P.ups[u.id]||0), nxt=cur+1, swap = !extra && cur===0 && full;
     const col=RC[u.rar];
     const card=document.createElement('div');
     card.className='card'; card.tabIndex=0; card.dataset.up=u.id; card.style.setProperty('--rc',col);
     const ic=iconCanvas(u.ic,col);
     card.innerHTML=`
       <span class="key">${i+1}</span>
-      ${cur===0?'<span class="newTag">NEW</span>':''}
+      ${extra?'':swap?'<span class="newTag">교체</span>':cur===0?'<span class="newTag">NEW</span>':''}
       <img class="ic" src="${ic.toDataURL()}" alt="">
       <div class="tx"><h3>${u.name}</h3>
       <p>${u.desc(nxt)}</p>
-      <div class="lvl">${RNAME[u.rar]} · Lv ${nxt}/${u.max}</div></div>`;
-    const go=()=>{
-      u.apply(P); P.ups[u.id]=nxt;
-      syncChips();
-      lvQueue--;
-      cardsEl.innerHTML='';
-      if(lvQueue>0){ showLevelUp() }
-      else { game.picking=false; lvupEl.classList.remove('show'); last=performance.now() }
-    };
+      <div class="lvl">${extra?'언제든 고를 수 있어요':swap?`스킬 ${MAX_SKILLS}개 가득 — 하나와 교체`:`${RNAME[u.rar]} · Lv ${nxt}/${u.max}`}</div></div>`;
+    const go=()=>{ if(swap) showReplace(u); else finishPick(u); };
     card.onclick=go;
     card.onkeydown=e=>{if(e.key==='Enter'||e.key===' ')go()};
     cardsEl.appendChild(card);
