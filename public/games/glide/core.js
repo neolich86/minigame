@@ -56,11 +56,11 @@ export function terrainSeed(seed) {
   return { mesas };
 }
 export const mesaList = () => mesas;
-export function ground(d, lat = 0) {
+export function ground(d, lat = 0, flat = false) {   // flat = 2D: 길 위(옆 위치가 가까운) 바위산만
   const reg = regionAt(d);
   let h = reg === 2 ? 0 : 6 * Math.sin(d * .013) + 4 * Math.sin(d * .031 + 1);
   for (const m of mesas) {
-    if (Math.abs(d - m.d) > m.w || Math.abs(lat - m.lat) > m.w * .8) continue;
+    if (Math.abs(d - m.d) > m.w || (flat ? Math.abs(m.lat) > m.w * 1.2 : Math.abs(lat - m.lat) > m.w * .8)) continue;
     const t = Math.abs(d - m.d) / m.w; h = Math.max(h, t < .75 ? m.h : m.h * (1 - (t - .75) / .25));
   }
   return h;
@@ -69,7 +69,7 @@ export function ground(d, lat = 0) {
 // ---------- 비행 ----------
 export function newFlight(s, opt = {}) {
   const st = stats(s);
-  return { st, d: 0, y: st.startY, lat: 0, v: 30, a: 0.12, yaw: 0, t: 0, liftT: 0, boostT: 0, rings: [], nextRing: 0, coinRows: [], nextCoin: 250, got: 0, picked: 0,
+  return { st, flat: !!opt.flat, rr: st.ringR * (opt.flat ? 2.2 : 1), d: 0, y: st.startY, lat: 0, v: 30, a: 0.12, yaw: 0, t: 0, liftT: 0, boostT: 0, rings: [], nextRing: 0, coinRows: [], nextCoin: 250, got: 0, picked: 0,
     fuel: st.fuel + (opt.adFuel ? 3 : 0), fuelMax: st.fuel + (opt.adFuel ? 3 : 0), rocketOn: false, armor: st.armor, bounces: 0, stall: 0, over: false, crashed: false, maxY: st.startY };
 }
 // input: { pitch: 목표 기수각, turn: -1~1, rocket: bool }
@@ -87,7 +87,7 @@ export function step(f, input, dt) {
   f.v += (-G * Math.sin(f.a) - drag + thrust) * dt;
   f.v = Math.max(4, Math.min(VMAX, f.v));
   f.boostT = Math.max(0, f.boostT - dt);
-  f.yaw += (input.turn || 0) * 0.9 * dt * Math.min(1, f.v / 20);
+  if (!f.flat) f.yaw += (input.turn || 0) * 0.9 * dt * Math.min(1, f.v / 20);
   f.yaw = Math.max(-1.2, Math.min(1.2, f.yaw));
   const h = f.v * Math.cos(f.a);
   f.d += h * Math.cos(f.yaw) * dt; f.lat += h * Math.sin(f.yaw) * dt;
@@ -98,8 +98,8 @@ export function step(f, input, dt) {
   // 링 만들기
   if (f.y < RING.startAlt && f.d > f.nextRing && f.d < GOAL - 200) {
     const ahead = 140 + f.v * 4;
-    const rd = f.d + ahead * Math.cos(f.yaw), rl = f.lat + ahead * Math.sin(f.yaw) + (Math.random() - .5) * 50;
-    const ry = Math.max(ground(rd, rl) + 14, f.y - ahead * 0.2 + (Math.random() - .6) * 24);
+    const rd = f.d + ahead * Math.cos(f.yaw), rl = f.flat ? 0 : f.lat + ahead * Math.sin(f.yaw) + (Math.random() - .5) * 50;
+    const ry = Math.max(ground(rd, rl, f.flat) + 14, f.y - ahead * 0.2 + (Math.random() - .6) * 24);
     f.rings.push({ d: rd, lat: rl, y: ry, yaw: f.yaw, hit: false, miss: false });
     f.nextRing = rd + 90 + Math.random() * 120 + rd * RING.gap;
   }
@@ -107,7 +107,7 @@ export function step(f, input, dt) {
     if (r.hit || r.miss) continue;
     const dd = f.d - r.d;
     if (Math.abs(dd) < Math.max(3, f.v * dt * 1.2)) {
-      if (Math.hypot(f.y - r.y, f.lat - r.lat) < st.ringR) {
+      if (Math.hypot(f.y - r.y, f.lat - r.lat) < f.rr) {
         r.hit = true; f.got++; const e = st.ringPow * ringFade(r.d); f.ringE = e; f.v = Math.min(VMAX, f.v + RING.boost * e); f.boostT = 0.9; f.liftT = 1.8; f.a = Math.max(f.a, 0.3);
       }
     } else if (dd > 5) r.miss = true;
@@ -116,18 +116,18 @@ export function step(f, input, dt) {
   // 하늘 코인: 지금 날아가는 방향·활강 경로 앞에 한 줄로 (지나간 줄은 지움)
   if (f.d > f.nextCoin && f.d < GOAL - 300) {
     const ahead = 110 + f.v * 3, slope = Math.min(0.25, Math.max(0.05, -Math.tan(Math.min(0, f.a)) || 0.12));
-    const cd = f.d + ahead * Math.cos(f.yaw), cl = f.lat + ahead * Math.sin(f.yaw), cy = Math.max(ground(cd, cl) + 10, f.y - ahead * slope);
+    const cd = f.d + ahead * Math.cos(f.yaw), cl = f.lat + ahead * Math.sin(f.yaw), cy = Math.max(ground(cd, cl, f.flat) + 10, f.y - ahead * slope);
     f.coinRows.push({ d: cd, lat: cl, y: cy, yaw: f.yaw, slope, n: 6 + Math.floor(Math.random() * 4), got: 0 });
     f.nextCoin = cd + 200 + Math.random() * 250;
   }
   for (const c of f.coinRows) for (let i = 0; i < c.n; i++) {
     if (c.got & (1 << i)) continue; const p = coinPos(c, i);
-    if (Math.abs(p.d - f.d) < Math.max(3, f.v * dt * 1.2) && Math.hypot(f.y - p.y, f.lat - p.lat) < 4.5 + st.ringR * 0.25) { c.got |= 1 << i; f.picked++; }
+    if (Math.abs(p.d - f.d) < Math.max(3, f.v * dt * 1.2) && Math.hypot(f.y - p.y, f.lat - p.lat) < (4.5 + st.ringR * 0.25) * (f.flat ? 1.8 : 1)) { c.got |= 1 << i; f.picked++; }
   }
   f.coinRows = f.coinRows.filter((c) => coinPos(c, c.n - 1).d > f.d - 100);
   // 도착 / 충돌
   if (f.d >= GOAL) { f.over = true; f.goal = true; return; }
-  const gh = ground(f.d, f.lat);
+  const gh = ground(f.d, f.lat, f.flat);
   if (f.y <= gh) {
     if (f.armor > 0) { f.armor--; f.bounces++; f.y = gh + 2; f.a = 0.35; f.liftT = 1.2; f.ringE = 1; f.v = Math.max(f.v, 24); return; }
     f.y = gh; f.over = true; f.crashed = true;
