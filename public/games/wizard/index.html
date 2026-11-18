@@ -23,7 +23,7 @@ img,.px{image-rendering:pixelated}
 #tut{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .8s}
 #tut.on{opacity:1}
 .tut{position:absolute;display:flex;flex-direction:column;align-items:center;gap:6px}
-.tut.l{left:42%;top:60%}
+.tut.l{left:16%;top:60%}
 .tut.r{left:64%;top:44%}
 .tut .fg{font-size:44px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.7))}
 .tut.l .fg{animation:tutL 2.4s ease-in-out infinite}
@@ -113,12 +113,6 @@ img,.px{image-rendering:pixelated}
 /* 화면들 */
 .scr{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px 16px;background:rgba(8,10,24,.72);z-index:5}
 .scr.on{display:flex}
-#sTitle{justify-content:space-between;padding:calc(56px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));background:linear-gradient(rgba(10,14,40,.55),rgba(10,14,40,0) 26%,rgba(10,14,40,0) 52%,rgba(8,10,24,.78) 72%,rgba(8,10,24,.92)),url(assets/title.webp) center 38%/cover #1a2a48}
-#sTitle .tTop,#sTitle .tBot{display:flex;flex-direction:column;align-items:center;width:100%}
-#sTitle h1{font-size:46px;text-shadow:0 3px 0 #7a3a10,3px 0 #2a1408,-3px 0 #2a1408,0 -3px #2a1408,0 6px 14px rgba(0,0,0,.5)}
-#sTitle p.s{color:#fff;margin-bottom:0}
-#sTitle .credit{position:static;margin-top:10px;font-size:11px;color:#a8b0d0}
-
 .scr h1{font-size:40px;font-weight:700;color:#ffe066;letter-spacing:2px;margin-bottom:6px}
 .scr h2{font-size:30px;font-weight:700;color:#ffe066;letter-spacing:2px;margin-bottom:4px}
 .scr p.s{font-size:13px;color:#cfd3ff;margin-bottom:16px;text-align:center;line-height:1.6}
@@ -161,12 +155,12 @@ img,.px{image-rendering:pixelated}
     <div class="stat sh"><span><img class="px" src="assets/ui/star.png" alt="">처치 <b id="killTxt">0</b></span><span id="bossTxt"></span></div>
     <div class="boss" id="bossBox"><div class="nm sh" id="bossNm"></div><div class="bar y" id="bossBar" style="--v:100%"><i></i><b></b><span class="sh" id="bossPct"></span></div></div>
   </div>
-  <div class="edgeNote sh" id="edgeNote">🏰 성벽 끝이에요</div>
+  <div class="edgeNote sh" id="edgeNote">🌲 숲이 너무 깊어요 — 더 이상 앞으로 갈 수 없어요</div>
   <div id="edges"></div>
   <div class="hint sh" id="hint"></div>
   <div class="banner sh" id="banner"></div>
   <div class="cross" id="cross"></div>
-  <div id="tut"><div class="tut l"><div class="fg">👆</div><div class="tl sh">좌우로 끌어서 이동</div></div></div>
+  <div id="tut"><div class="tut l"><div class="fg">👆</div><div class="tl sh">끌어서 이동</div></div><div class="tut r"><div class="fg">👆</div><div class="tl sh">끌어서 시점 회전</div></div></div>
   <div class="joy" id="joy"><b id="joyK"></b></div>
   <div class="dash sh" id="bDash"><span id="dashTxt">대시</span><div class="cd" id="dashCd" style="--c:100%"></div></div>
   <div class="bottom">
@@ -177,17 +171,13 @@ img,.px{image-rendering:pixelated}
 </div>
 
 <div class="scr on" id="sTitle">
-  <div class="tTop">
-    <h1 class="sh">마법사 키우기</h1>
-    <p class="s sh">성벽으로 몰려오는 몬스터를 막아내세요!<br>레벨업마다 마법을 골라 강해져요.<br>3분마다 보스가 나타나요.</p>
-  </div>
-  <div class="tBot">
-    <div class="best sh" id="bestTxt"></div>
-    <button class="btn g" id="bLogin" style="display:none">🔑 로그인하고 랭킹에 기록하기</button>
-    <button class="btn" id="bStart" disabled><span class="load" id="loadTxt">불러오는 중…</span></button>
-    <div class="how sh">📱 화면을 좌우로 끌어 성벽 위를 이동 · 대시 버튼<br>⌨️ A·D(←·→) 이동 · Space 대시 · P 일시정지<br>공격은 자동 — 앞에서 오는 적에게 파이어볼을 쏴요</div>
-    <div class="credit">이펙트 · 3D: Pixel VFX Foundry, ansimuz, Binbun3D, Pipoya, Kay Lousberg(KayKit) · 일러스트·배경: Higgsfield AI · 폰트: Galmuri</div>
-  </div>
+  <h1 class="sh">마법사 키우기</h1>
+  <p class="s sh">사방에서 몰려오는 몬스터를 파이어볼로 쓰러뜨리고<br>레벨업마다 마법을 골라 강해지세요. 3분마다 보스가 나타나요.</p>
+  <div class="best sh" id="bestTxt"></div>
+  <button class="btn g" id="bLogin" style="display:none">🔑 로그인하고 랭킹에 기록하기</button>
+  <button class="btn" id="bStart" disabled><span class="load" id="loadTxt">불러오는 중…</span></button>
+  <div class="how sh">📱 왼쪽을 끌어 이동 · 오른쪽을 끌어 시점 회전 · 대시 버튼<br>⌨️ WASD 이동 · 마우스 끌기 시점 · Space 대시 · P 일시정지<br>공격은 자동 — 시야 안의 적을 향해 파이어볼을 쏴요</div>
+  <div class="credit">이펙트 · 3D: Pixel VFX Foundry, ansimuz, Binbun3D, Pipoya, Kay Lousberg(KayKit) · 폰트: Galmuri</div>
 </div>
 <div class="scr" id="sLevel"></div>
 <div class="scr" id="sPause">

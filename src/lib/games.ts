@@ -439,8 +439,8 @@ const CATALOG: Game[] = [
     id: "wizard",
     title: { ko: "마법사 키우기", en: "Grow Your Wizard" },
     desc: {
-      ko: "성벽 위에서 앞쪽으로 몰려오는 몬스터 무리를 파이어볼로 막아내고, 레벨업마다 번개·메테오·블랙홀 같은 마법을 골라 성장하는 1인칭 3D 디펜스 서바이벌",
-      en: "A first-person 3D defense survivor — hold the castle wall against hordes charging from the front, and pick spells like Lightning, Meteor and Black Hole as you level up",
+      ko: "1인칭으로 사방에서 몰려오는 몬스터를 파이어볼로 쓰러뜨리고, 레벨업마다 번개·메테오·블랙홀 같은 마법을 골라 성장하는 3D 서바이벌",
+      en: "A first-person 3D survivor — blast hordes from every side with fireballs and pick spells like Lightning, Meteor and Black Hole as you level up",
     },
     genre: "action",
     thumb: "/thumbs/wizard.jpg",
