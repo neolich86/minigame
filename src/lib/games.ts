@@ -461,6 +461,19 @@ const CATALOG: Game[] = [
     hidden: true, // 첫 버전 — 관리자 확인 중
   },
   {
+    id: "glide",
+    title: { ko: "활공 대모험", en: "Glide Adventure" },
+    desc: {
+      ko: "점프대에서 뛰어내려 글라이더로 하늘을 날아요. 링을 통과해 다시 솟구치고, 코인으로 날개를 강화하고 더 좋은 글라이더를 사서 10km 너머 하늘 섬까지 날아가는 3D 비행 게임",
+      en: "Leap off the ramp and glide! Fly through rings to soar again, upgrade your wings, buy better gliders and reach the sky island 10 km away",
+    },
+    genre: "casual",
+    thumb: "/thumbs/glide.jpg",
+    src: "/games/glide/index.html",
+    saves: true,
+    hidden: true, // 첫 버전 — 관리자만
+  },
+  {
     id: "digdig",
     title: { ko: "파고파고 대모험", en: "DigDig Adventure" },
     desc: {
