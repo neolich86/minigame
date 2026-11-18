@@ -121,7 +121,7 @@ export function step(f, input, dt) {
   if (f.d > f.nextCoin && f.d < GOAL - 300) {
     const ahead = 110 + f.v * 3, slope = Math.min(0.25, Math.max(0.05, -Math.tan(Math.min(0, f.a)) || 0.12));
     const cd = f.d + ahead * Math.cos(f.yaw), cl = f.lat + ahead * Math.sin(f.yaw), cy = Math.max(ground(cd, cl, f.flat) + 10, f.y - ahead * slope);
-    f.coinRows.push({ d: cd, lat: cl, y: cy, yaw: f.yaw, slope, n: 6 + Math.floor(Math.random() * 4), got: 0 });
+    f.coinRows.push({ d: cd, lat: cl, y: cy, yaw: f.yaw, slope, flat: f.flat, n: 6 + Math.floor(Math.random() * 4), got: 0 });
     f.nextCoin = cd + 200 + Math.random() * 250;
   }
   for (const c of f.coinRows) for (let i = 0; i < c.n; i++) {
@@ -141,7 +141,7 @@ export function step(f, input, dt) {
   }
 }
 // 코인 줄의 i번째 위치 (줄은 지나가는 방향으로 7m 간격, 활강 기울기만큼 내려감)
-export function coinPos(c, i) { const s = i * 7; return { d: c.d + s * Math.cos(c.yaw), lat: c.lat + s * Math.sin(c.yaw), y: c.y - s * c.slope }; }
+export function coinPos(c, i) { const s = i * 7, w = c.flat ? 0 : Math.sin(i * .9) * 2.5; return { d: c.d + s * Math.cos(c.yaw), lat: c.lat + s * Math.sin(c.yaw) + w, y: c.y - s * c.slope + (c.flat ? 0 : Math.cos(i * .9) * 1.5) }; }   // 3D는 살짝 물결치게 (뒤에서 봐도 줄로 보이게)
 // 이어하기 (광고)
 export function revive(f) { f.over = false; f.crashed = false; f.y += 60; f.v = Math.max(f.v, 28); f.a = 0.2; f.liftT = 1.2; }
 // 판 정산

@@ -251,9 +251,10 @@ function tick(dt, noRender) {
   if (f) { rb.style.setProperty('--f', (f.fuelMax ? f.fuel / f.fuelMax * 100 : 0) + '%'); rb.classList.toggle('on', !!on); rb.classList.toggle('empty', f.fuel <= 0); }
   // 카메라
   const back = 17 + (f ? Math.max(0, f.v - 25) * .12 : 0);
-  const want = gpos.clone().addScaledVector(fw, -back).add(v3(0, 6.5 - a * 6, 0));
+  // 비스듬한 뷰: 카메라를 오른쪽 위 뒤에 두고, 글라이더는 화면 왼쪽 아래 → 앞 경로(링·코인)가 가운데에 잘 보임
+  const want = gpos.clone().addScaledVector(fw, -back).addScaledVector(right, cam.aspect < 1 ? 4.5 : 7.5).add(v3(0, 9.5 - a * 6, 0));
   camPos.lerp(want, Math.min(1, dt * 5)); cam.position.copy(camPos);
-  camLook.lerp(gpos.clone().addScaledVector(fw, 60).add(v3(0, a * 25 + 2, 0)), Math.min(1, dt * 6)); cam.lookAt(camLook); cam.rotateZ(-bank * .35);
+  camLook.lerp(gpos.clone().addScaledVector(fw, 70).addScaledVector(right, cam.aspect < 1 ? 1 : 3).add(v3(0, a * 25 - 1, 0)), Math.min(1, dt * 6)); cam.lookAt(camLook); cam.rotateZ(-bank * .35);
   { const base = cam.aspect < 1 ? 74 : 60, want = base + (f && state === 'fly' ? Math.min(16, Math.max(0, f.v - 22) * .45) + (f.boostT > 0 || f.rocketOn ? 6 : 0) : 0); if (Math.abs(cam.fov - want) > .05) { cam.fov += (want - cam.fov) * Math.min(1, dt * 3); cam.updateProjectionMatrix(); } }
   sky.position.set(cam.position.x, 700, cam.position.z);
   // 링 · 코인
