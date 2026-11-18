@@ -169,6 +169,26 @@ canvas{display:block;image-rendering:auto}
 @keyframes slotShake{0%{transform:translateY(-2px)}50%{transform:translateY(2px)}100%{transform:translateY(-2px)}}
 @keyframes slotLand{0%{transform:scale(1.25)}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+/* ===== 스킬 카드·스킬 칩 (힉스필드 아이콘 디자인) ===== */
+#chips{gap:5px;max-width:min(calc(100% - 56px),340px);margin-top:4px}
+.chip{position:relative;width:38px;height:38px;padding:0;border-radius:10px;background:rgba(30,20,10,.72);border:2px solid var(--rc,#9aa6b2);justify-content:center}
+.chip img{width:32px;height:32px}
+.chip u{position:absolute;right:-4px;bottom:-5px;min-width:16px;height:16px;border-radius:8px;background:#1d140c;border:1.5px solid #fff;color:#fff;font-size:10px;text-align:center;line-height:13px}
+#lvup{background:rgba(10,8,4,.66)}
+.lvHead h2{font-size:clamp(28px,8vw,40px);color:#ffcf4a;text-shadow:0 3px 0 #7a3d06,0 0 18px rgba(255,180,40,.6)}
+.lvHead p{color:#ffe9bf;letter-spacing:1px}
+#cards{flex-direction:column;align-items:center;gap:12px;max-width:380px}
+.card{flex:none;width:100%;max-width:360px;min-width:0;flex-direction:row;align-items:center;text-align:left;gap:12px;padding:12px 14px;border-radius:18px;
+  background:linear-gradient(#fff8e6,#f3dfb4);border:3px solid var(--rc);box-shadow:0 5px 0 color-mix(in srgb,var(--rc) 55%,#3a220e),0 0 20px color-mix(in srgb,var(--rc) 45%,transparent);overflow:visible}
+.card::after{display:none}
+.card:hover{border-color:var(--rc);box-shadow:0 5px 0 color-mix(in srgb,var(--rc) 55%,#3a220e),0 0 26px var(--rc)}
+.card .ic{width:68px;height:68px;border-radius:16px;background:radial-gradient(#fff,#f1dcae);padding:4px}
+.card h3{font-size:17px;color:#2a1a0a}
+.card p{font-size:12.5px;color:#5a4630;min-height:0;margin-top:2px}
+.card .lvl{font-size:11px;color:color-mix(in srgb,var(--rc) 70%,#3a220e);margin-top:4px}
+.card .key{left:auto;right:10px;top:auto;bottom:6px;color:#a08a6a}
+.newTag{right:12px;top:-10px;border-radius:999px;padding:2px 8px;font-size:10px;background:var(--rc);color:#fff}
+.card .tx{flex:1;min-width:0}
 </style>
 </head>
 <body>
@@ -257,27 +277,28 @@ const MONSTER_KEYS = Array.from({length:15},(_,i)=>'mon'+(i+1));
 const BOSS_KEYS = Array.from({length:5},(_,i)=>'boss'+(i+1));
 
 /* ---------------------------------------------------------- 새 그림 (힉스필드, assets/) */
-const NEW_ART = false;   // true 로 바꾸면 힉스필드 새 그림(assets/)을 다시 씀
+const NEW_ART = {fx:true, ico:true};   // 힉스필드 새 그림 중 쓸 것만 (hero·mon·boss·ground 는 예전 픽셀 그림 유지)
 const NEW = {};
 const MON_IDX = {mon1:0,mon9:1,mon2:2,mon11:3,mon7:4,mon5:5,mon12:6,mon8:7,mon3:8,mon6:9,mon15:10,mon13:11,mon10:12,mon4:13,mon14:14};
 const ICON_IDS = ['aspd','multi','pierce','aoe','shield','dmg','speed','magnet','hp','crit','regen','knock','xp','bounce','trap','bolt','meteor','blackhole','mine','boom','roulette','clone','rain','orbit','frost'];
 const FXI = {arrow:0,boom:1,meteor:2,hole:3,bolt:4,boomer:5,mine:6,trap:7,shield:8,gem:9,fire:10,slot:11,farrow:12,ice:13,snow:14,smoke:15};
 const HERO_F = {idle_0:0,idle_1:1,idle_2:0,run_0:2,run_1:3,run_2:4,run_3:3,atk_0:5,atk_1:5,atk_2:6,atk_3:6,atk_4:7};
 function loadNew(cb){
-  if(!NEW_ART) return cb();
+  const ks=['hero','mon','boss','fx','ico','ground'].filter(k=>NEW_ART[k]);
+  if(!ks.length) return cb();
   fetch('assets/art.json').then(r=>r.json()).then(a=>{
-    NEW.art=a; const ks=['hero','mon','boss','fx','ico','ground']; let n=0;
+    NEW.art=a; let n=0;
     ks.forEach(k=>{ const im=new Image(); im.onload=im.onerror=()=>{ if(++n===ks.length){ try{applyNew()}catch(e){} cb(); } }; im.src='assets/'+k+'.webp'; NEW[k]=im; });
   }).catch(()=>cb());
 }
 function cropC(im,f){ const c=document.createElement('canvas'); c.width=f[2]; c.height=f[3]; c.getContext('2d').drawImage(im,f[0],f[1],f[2],f[3],0,0,f[2],f[3]); return c; }
 function applyNew(){
   const A=NEW.art; if(!A) return;
-  if(NEW.mon.width) for(const k in MON_IDX) IMG[k]=cropC(NEW.mon,A.mon[MON_IDX[k]]);
-  if(NEW.boss.width) for(let i=0;i<5;i++) IMG['boss'+(i+1)]=cropC(NEW.boss,A.boss[i]);
-  if(NEW.hero.width){ const C=NEW.hero.height; for(const k in HERO_F){ IMG[k]=cropC(NEW.hero,[HERO_F[k]*C,0,C,C]); } NEW.heroOK=true; }
-  if(NEW.fx.width){ NEW.F={}; for(const k in FXI) NEW.F[k]=cropC(NEW.fx,A.fx[FXI[k]]); IMG.arrow=NEW.F.arrow; }
-  NEW.icoOK = !!NEW.ico.width;
+  if(NEW.mon&&NEW.mon.width) for(const k in MON_IDX) IMG[k]=cropC(NEW.mon,A.mon[MON_IDX[k]]);
+  if(NEW.boss&&NEW.boss.width) for(let i=0;i<5;i++) IMG['boss'+(i+1)]=cropC(NEW.boss,A.boss[i]);
+  if(NEW.hero&&NEW.hero.width){ const C=NEW.hero.height; for(const k in HERO_F){ IMG[k]=cropC(NEW.hero,[HERO_F[k]*C,0,C,C]); } NEW.heroOK=true; }
+  if(NEW.fx&&NEW.fx.width){ NEW.F={}; for(const k in FXI) if(k!=='arrow'&&k!=='gem') NEW.F[k]=cropC(NEW.fx,A.fx[FXI[k]]); }   // 기본 화살·경험치 보석은 픽셀 그림 유지
+  NEW.icoOK = !!(NEW.ico&&NEW.ico.width);
 }
 // 그림 그리기 도우미: 가로 w 기준, (ax,ay)=기준점 비율
 function fxDraw(k,x,y,w,ax=.5,ay=.5,rot=0,alpha=1){
@@ -1945,7 +1966,7 @@ function draw(){
       continue;
     }
     const big = g.v>6;
-    if(NEW.F){ ctx.save(); if(big){ ctx.shadowColor='#ffd34d'; ctx.shadowBlur=14; } fxDraw('gem', g.x, g.y+b, big?24:16, .5,.5); ctx.restore(); continue; }
+    if(NEW.F&&NEW.F.gem){ ctx.save(); if(big){ ctx.shadowColor='#ffd34d'; ctx.shadowBlur=14; } fxDraw('gem', g.x, g.y+b, big?24:16, .5,.5); ctx.restore(); continue; }
     ctx.save(); ctx.translate(g.x,g.y+b);
     ctx.shadowColor= big?'#ffd34d':'#4fb0e8'; ctx.shadowBlur=10;
     ctx.fillStyle= big?'#ffd34d':'#5fc0f5';
@@ -2010,7 +2031,7 @@ function draw(){
     ctx.beginPath();ctx.moveTo(-30,0);ctx.lineTo(-4,0);ctx.stroke();
     ctx.globalAlpha=1;
     ctx.shadowColor= b.ricochet? '#6fd3ff' : (b.crit?'#fff2c0':'#ffb03a'); ctx.shadowBlur= b.crit?16:9;
-    if(NEW.F){ const s=b.crit?1.25:1, im=b.frost?NEW.F.farrow:NEW.F.arrow, w=40*s, h=w*im.height/im.width; if(b.clone) ctx.globalAlpha=.8; ctx.drawImage(im,-w*0.62,-h/2,w,h); ctx.globalAlpha=1; }
+    if(NEW.F&&b.frost){ const s=b.crit?1.25:1, im=NEW.F.farrow, w=40*s, h=w*im.height/im.width; if(b.clone) ctx.globalAlpha=.8; ctx.drawImage(im,-w*0.62,-h/2,w,h); ctx.globalAlpha=1; }
     else if(IMG.arrow){ const s=b.crit?1.25:1; ctx.drawImage(IMG.arrow,-17*s,-4*s,34*s,8*s) }
     else{ ctx.fillStyle='#ffd34d'; ctx.fillRect(-14,-2.5,28,5) }
     ctx.restore();
@@ -2055,7 +2076,7 @@ function draw(){
       }
       ctx.restore();
     } else if(f.bolt){
-      if(NEW.F) fxDraw('bolt', f.x, f.y+10, 90, .5, 1, 0, clamp(k*1.6,0,1));
+      if(NEW.F) fxDraw('bolt', f.x, f.y+10, 90*(f.s||1), .5, 1, 0, clamp(k*1.6,0,1));
       ctx.save(); ctx.translate(f.x,f.y);
       ctx.globalAlpha=clamp(k*1.4,0,1);
       const bh=520;
@@ -2347,7 +2368,7 @@ function syncChips(){
   for(const id in P.ups){
     const u=UPMAP[id];
     const d=document.createElement('div');d.className='chip';d.title=u.name;d.style.setProperty('--rc',RC[u.rar]);
-    d.innerHTML=`${u.name}<u>${P.ups[id]}</u>`;
+    d.innerHTML=`<img src="${iconCanvas(u.ic,RC[u.rar]).toDataURL()}" alt="${u.name}"><u>${P.ups[id]}</u>`;
     chipsEl.appendChild(d);
   }
 }
@@ -2601,7 +2622,7 @@ function loop(now){
 if(new URLSearchParams(location.search).has('test')) window.__ar = {
   get P(){return P}, get game(){return game}, get enemies(){return enemies}, start:()=>startGame(),
   up(id,n=1){ const u=UPGRADES.find(x=>x.id===id); for(let i=0;i<n;i++){ u.apply(P); P.ups[id]=(P.ups[id]||0)+1; } },
-  lv(n){ P.lv=n; P.xpNeed=1e15; }, step(t){ for(let i=0;i<t*30;i++) update(1/30); }
+  lv(n){ P.lv=n; P.xpNeed=1e15; }, lvup(){ syncChips(); queueLevelUp(); }, step(t){ for(let i=0;i<t*30;i++) update(1/30); }
 };
 /* ---------- 부팅 ---------- */
 (function boot(){
