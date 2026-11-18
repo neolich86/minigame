@@ -1291,7 +1291,7 @@ function update(dt){
     if(P.meteorT<=0){
       P.meteorT = 3.0;
       const count = P.meteor>=2 ? 2 : 1;
-      const R = (95 + (P.meteor>=4?45:0))*(1+(PW()-1)*0.5);
+      const R = (115 + (P.meteor>=4?45:0))*(1+(PW()-1)*0.5);
       for(let i=0;i<count;i++){
         const ang = rnd(TAU), rad = rnd(Math.min(W,H)*0.42, 60);
         meteors.push({
@@ -1312,8 +1312,13 @@ function update(dt){
           o.kx += Math.cos(a)*420; o.ky += Math.sin(a)*420;
         }
       });
-      ring(m.x,m.y,m.r,'#ff8a3c',.5); ring(m.x,m.y,m.r*1.4,'#ffd88a',.4);
-      burst(m.x,m.y,24,'#ff9c4a',300,.6,4);
+      // 충돌: 섬광 → 충격파 3겹 → 불꽃·파편 → 그을린 구덩이
+      fx.push({crater:1,x:m.x,y:m.y,r:m.r*0.62,t:0,life:1.6});
+      fx.push({blast:1,x:m.x,y:m.y,r:m.r*1.25,t:0,life:.32});
+      fx.push({mflash:1,x:m.x,y:m.y,r:m.r*0.5,t:0,life:.18});
+      ring(m.x,m.y,m.r*0.7,'#fff4c0',.3); ring(m.x,m.y,m.r,'#ff8a3c',.5); ring(m.x,m.y,m.r*1.45,'#ffd88a',.6);
+      burst(m.x,m.y,30,'#ff9c4a',380,.7,5); burst(m.x,m.y,14,'#fff0a0',260,.45,3.5); burst(m.x,m.y,12,'#5a3020',300,.8,4.5);
+      shake(0.28,8);
       if(m.fire) zones.push({x:m.x,y:m.y,r:m.r*0.72,type:'fire',t:0,life:3.2,tickT:0});
       meteors.splice(i,1);
     }
@@ -1863,22 +1868,30 @@ function draw(){
     ctx.globalAlpha=0.18; ctx.fillStyle='#ff5a2c';
     ctx.beginPath();ctx.arc(m.x,m.y,m.r*clamp(k+0.15,0.15,1),0,TAU);ctx.fill();
     ctx.restore();
-    // 낙하하는 운석 본체 (예고 후반부에 하늘에서 접근)
-    if(k>0.35 && NEW.F){
-      const fall = clamp((k-0.35)/0.65,0,1);
-      fxDraw('meteor', m.x, m.y-(1-fall)*420, 96+fall*20, .62, .72, 0.76);   // 그림의 대각선 꼬리를 위로 세워 수직 낙하
-    } else if(k>0.35){
-      const fall = clamp((k-0.35)/0.65,0,1);
-      ctx.save();
-      ctx.translate(m.x*0+m.x, m.y - (1-fall)*420);
-      ctx.globalAlpha=1;
-      ctx.fillStyle='#8a4022';
-      ctx.beginPath();ctx.arc(0,0,20+fall*6,0,TAU);ctx.fill();
-      ctx.fillStyle='#ff7a3c';
-      ctx.beginPath();ctx.arc(-4,-4,10,0,TAU);ctx.fill();
-      ctx.strokeStyle='rgba(255,140,60,.5)'; ctx.lineWidth=8;
-      ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-60-fall*30);ctx.stroke();
+    // 조준점 (십자 + 안쪽 원)
+    { const rr=m.r*clamp(k+0.15,0.15,1); ctx.save(); ctx.globalAlpha=0.5+0.4*Math.sin(m.t*30)*0.5; ctx.strokeStyle='#ffb070'; ctx.lineWidth=2.5;
+      ctx.beginPath(); ctx.moveTo(m.x-rr*0.35,m.y); ctx.lineTo(m.x+rr*0.35,m.y); ctx.moveTo(m.x,m.y-rr*0.35); ctx.lineTo(m.x,m.y+rr*0.35); ctx.stroke(); ctx.restore(); }
+    // 낙하하는 운석 본체: 빛나는 바위 + 긴 불꼬리 (수직 낙하, 점점 빨라짐)
+    if(k>0.2){
+      const fall = Math.pow(clamp((k-0.2)/0.8,0,1),1.6), sz=(m.r/115)*1.35*(1+fall*0.25);
+      const y0 = m.y - (1-fall)*560;
+      ctx.save(); ctx.translate(m.x, y0);
+      // 꼬리
+      const tl=240*sz, g=ctx.createLinearGradient(0,-tl,0,0);
+      g.addColorStop(0,'rgba(255,90,30,0)'); g.addColorStop(.6,'rgba(255,140,50,.55)'); g.addColorStop(1,'rgba(255,240,180,.95)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.moveTo(-30*sz,0); ctx.quadraticCurveTo(-10*sz,-tl*0.5,0,-tl); ctx.quadraticCurveTo(10*sz,-tl*0.5,30*sz,0); ctx.closePath(); ctx.fill();
+      // 바깥 불빛
+      const gl=ctx.createRadialGradient(0,0,4,0,0,62*sz); gl.addColorStop(0,'rgba(255,240,190,.95)'); gl.addColorStop(.35,'rgba(255,150,60,.75)'); gl.addColorStop(1,'rgba(255,80,20,0)');
+      ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(0,0,62*sz,0,TAU); ctx.fill();
+      // 바위
+      ctx.fillStyle='#5a2c1a'; ctx.beginPath();
+      for(let q=0;q<9;q++){ const aa=q/9*TAU, rr=(26+((q*37)%7))*sz; q?ctx.lineTo(Math.cos(aa)*rr,Math.sin(aa)*rr):ctx.moveTo(Math.cos(aa)*rr,Math.sin(aa)*rr); }
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle='#ff8a3c'; ctx.beginPath(); ctx.arc(-3*sz,6*sz,16*sz,0,TAU); ctx.fill();
+      ctx.fillStyle='#ffe9a8'; ctx.beginPath(); ctx.arc(-1*sz,9*sz,8*sz,0,TAU); ctx.fill();
       ctx.restore();
+      // 꼬리 불똥
+      if(Math.random()<0.7) fx.push({x:m.x+rnd(18,-18)*sz,y:y0-rnd(60,10)*sz,vx:rnd(40,-40),vy:-rnd(160,60),t:0,life:.35,col:Math.random()<.5?'#ffd27a':'#ff7a3c',r:rnd(4,2)*sz});
     }
   }
 
@@ -2061,6 +2074,15 @@ function draw(){
       ctx.globalAlpha=k*0.5; ctx.fillStyle='#ffe14d';
       ctx.beginPath();ctx.ellipse(0,4,26*bs*(0.5+0.5*k),9*bs*(0.5+0.5*k),0,0,TAU);ctx.fill();
       ctx.restore();
+    } else if(f.crater){
+      ctx.save(); ctx.globalAlpha=clamp(k*1.3,0,1)*0.75; ctx.fillStyle='#1c120c';
+      ctx.beginPath(); ctx.ellipse(f.x,f.y+4,f.r,f.r*0.55,0,0,TAU); ctx.fill();
+      ctx.globalAlpha=clamp(k*1.6-0.4,0,1); ctx.strokeStyle='#ff7a2a'; ctx.lineWidth=3; ctx.shadowColor='#ff5a1a'; ctx.shadowBlur=12;
+      for(let q=0;q<7;q++){ const aa=q/7*TAU+0.4; ctx.beginPath(); ctx.moveTo(f.x+Math.cos(aa)*f.r*0.2,f.y+4+Math.sin(aa)*f.r*0.11); ctx.lineTo(f.x+Math.cos(aa+0.15)*f.r*0.6,f.y+4+Math.sin(aa+0.15)*f.r*0.33); ctx.lineTo(f.x+Math.cos(aa)*f.r*0.95,f.y+4+Math.sin(aa)*f.r*0.52); ctx.stroke(); }
+      ctx.restore();
+    } else if(f.mflash){
+      ctx.save(); ctx.globalAlpha=k; ctx.fillStyle='#fffbe8'; ctx.shadowColor='#fff3b0'; ctx.shadowBlur=40;
+      ctx.beginPath(); ctx.arc(f.x,f.y,f.r*(1.4-k*0.4),0,TAU); ctx.fill(); ctx.restore();
     } else if(f.blast){
       ctx.save(); const g=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,f.r);
       g.addColorStop(0,'rgba(255,250,220,'+(0.9*k)+')'); g.addColorStop(.45,'rgba(255,160,60,'+(0.55*k)+')'); g.addColorStop(1,'rgba(255,90,30,0)');
