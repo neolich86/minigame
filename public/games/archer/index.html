@@ -1655,7 +1655,7 @@ function killEnemy(e, idx){
   // 연속 처치: 1.2초 안에 이어서 잡으면 콤보
   game.combo = (game.t-(game.comboT||-9) < 1.2) ? (game.combo||0)+1 : 1; game.comboT = game.t;
   const C=game.combo; if(C===10||C===25||C===50||C===100||C===200||C===400){
-    popText(P.x, P.y-70, L2(`${C} 연속 처치!`, `${C} KILL COMBO!`), C>=100?'#ff6a3d':C>=50?'#ffb340':'#ffe58a', true);
+    popText(P.x, P.y-70, (window.MGH&&MGH.L) ? MGH.L(`${C} 연속 처치!`, `${C} KILL COMBO!`) : `${C} 연속 처치!`, C>=100?'#ff6a3d':C>=50?'#ffb340':'#ffe58a', true);
     ring(P.x,P.y, 90+C*0.8, C>=50?'#ff8a3d':'#ffe58a', .5); shake(0.15+Math.min(.3,C/400), 3+Math.min(8,C/25));
   }
   if(e.boss){
