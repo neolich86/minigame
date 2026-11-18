@@ -126,15 +126,11 @@ function strike(px, py, big) {
   v2.set(px / innerWidth * 2 - 1, -py / innerHeight * 2 + 1); ray.setFromCamera(v2, cam);
   const h = ray.intersectObject(mesh)[0]; const tl = $('tool'); tl.classList.add('hit'); setTimeout(() => tl.classList.remove('hit'), 80);
   if (!h) return false;
-  const p = h.point, r = rd(), rad = big ? 1.15 : C.radius(st), pw = C.power(st) * (big ? 25 : 1);
+  const p = h.point, r = rd(), hd = Math.floor(h.instanceId / (C.NX * C.NY));
   if (r.act) beamFx = { x: px, y: py, t: .1 };
-  let gain = 0, broke = 0; const newly = [];
-  for (let i = 0; i < C.N; i++) {
-    if (!W2.alive[i]) continue; const [x, y, z] = pos(i), dd = Math.hypot(x - p.x, y - p.y, Math.max(0, p.z - z - S / 2) * (big ? 1 : 1.6));
-    if (dd > rad) continue;
-    W2.hp[i] -= pw * (dd < rad * .65 ? 1 : .6);
-    if (W2.hp[i] <= 0) { breakCube(i); broke++; const f = W2.fos[i], b = W2.bonus[i]; if (f >= 0) newly.push(f); else if (b >= 0) gain += C.BONUS[b].val * Math.pow(3, st.round) * 4; else gain += C.ROCKS[r.act][W2.kind[i]].val; }
-  }
+  const res = C.hit(W2, st, p.x / S + C.NX / 2 - .5, (p.y + .4) / S + C.NY / 2 - .5, hd, big), newly = [];
+  for (const i of res.broke) { breakFx(i); if (W2.fos[i] >= 0) newly.push(W2.fos[i]); }
+  const broke = res.broke.length, gain = res.gain / C.sellMul(st);
   mesh.instanceMatrix.needsUpdate = true;
   if (gain) { const g = gain * C.sellMul(st); st.money += g; st.total += g; pop(px - 12, py - 34, `+${fmt(g)}`); }
   for (const k of new Set(newly)) checkFossil(k);
@@ -142,13 +138,13 @@ function strike(px, py, big) {
   if (st.tut === 0 && (st.tutN = (st.tutN || 0) + broke) > 14) tutNext();
   hud(); return true;
 }
-function breakCube(i) {
-  W2.alive[i] = 0; mesh.setMatrixAt(i, ZERO); const [x, y, z] = pos(i);
-  if (W2.fos[i] >= 0) W2.got[W2.fos[i]]++;
+function breakCube(i) { W2.alive[i] = 0; if (W2.fos[i] >= 0) W2.got[W2.fos[i]]++; breakFx(i); }
+function breakFx(i) {
+  mesh.setMatrixAt(i, ZERO); const [x, y, z] = pos(i);
   if (deb.length < DMAX) { cubeColor(i); deb.push({ x, y, z, vx: (Math.random() - .5) * 3, vy: Math.random() * 3 + 1, vz: Math.random() * 2.5 + .5, c: col.getHex(), t: 0 }); }
 }
 function checkFossil(k) {
-  if (W2.found[k] || W2.got[k] < W2.cnt[k] * .85) return;
+  if (W2.found[k] || !C.fossilDone(W2, k)) return;
   W2.found[k] = true;
   for (let i = 0; i < C.N; i++) if (W2.alive[i] && W2.fos[i] === k) breakCube(i);
   mesh.instanceMatrix.needsUpdate = true;
@@ -191,7 +187,7 @@ function roundDone() {
   st.dyna += 1;
   const img = r.act ? url('space', 5) : url('skel', st.round);
   const take = (m) => { st.money += reward * m; closeCard(); nextRound(); };
-  card(`<img class="big" src="${img}"><h2>${r.name} ${r.act ? '유물 회수' : '복원 완료!'}</h2><p>${r.desc}</p><p class="good">🏛 박물관 관람 수입 +${r.income}/초 · 🧨 +1</p>`,
+  card(`<img class="big" src="${img}"><h2>${r.name} ${r.act ? '유물 회수' : '복원 완료!'}</h2><p>${r.desc}</p><p class="good">🏛 박물관 관람 수입 +${fmt(r.income)}/초 · 🧨 +1</p>`,
     [[`보상 ${COIN()}${fmt(reward)} 받기`, '', () => take(1)], ...(AD.enabled ? [[`📺 광고 보고 ${COIN()}${fmt(reward * 2)}`, 'g', (e) => showAd(e, () => take(2))]] : [])]);
   save();
 }
@@ -214,7 +210,7 @@ function nextRound() {
 function openMuseum() {
   const done = st.done.filter((r) => C.ROUNDS[r].act === 0);
   const k = C.UPS.findIndex((u) => u.id === 'museum'), kr = C.UPS.findIndex((u) => u.id === 'radar');
-  const rows = C.ROUNDS.filter((r) => r.act === 0).map((r, i) => `<div class="ex ${st.done.includes(i) ? '' : 'no'}"><img src="${url('skel', i)}"><b>${st.done.includes(i) ? r.short : '???'}</b><small>${st.done.includes(i) ? '+' + r.income + '/초' : '발굴 전'}</small></div>`).join('');
+  const rows = C.ROUNDS.filter((r) => r.act === 0).map((r, i) => `<div class="ex ${st.done.includes(i) ? '' : 'no'}"><img src="${url('skel', i)}"><b>${st.done.includes(i) ? r.short : '???'}</b><small>${st.done.includes(i) ? '+' + fmt(r.income) + '/초' : '발굴 전'}</small></div>`).join('');
   const arts = st.done.filter((r) => C.ROUNDS[r].act === 1).length;
   card(`<h2>🏛 파고파고 박물관</h2><p class="dimt">전시한 공룡마다 관람 수입이 생겨요. 자리를 비워도 최대 4시간 쌓여요.</p><div class="mus">${rows}</div>${arts ? `<p>👽 외계 유물관: ${arts}곳 전시 중</p>` : ''}<p class="good">지금 수입: ${COIN()}${fmt(C.museumIncome(st))}/초</p>`,
     [[`박물관 확장 Lv${(st.lv.museum || 0) + 1} <small>관람 수입 +25% · ${COIN()}${fmt(C.upCost(st, k))}</small>`, '', () => { buyUp(k); openMuseum(); }],
@@ -251,11 +247,11 @@ function tutNext() { st.tut++; tutShow(); save(); }
 // ---------- 저장 ----------
 function packAlive() { const b = new Uint8Array(C.N >> 3); for (let i = 0; i < C.N; i++) if (W2.alive[i]) b[i >> 3] |= 1 << (i & 7); let s = ''; for (const v of b) s += String.fromCharCode(v); return btoa(s); }
 function save() { if (TEST && !Q.has('save')) return; try { st.at = Date.now(); st.wall = packAlive(); localStorage.setItem(KEY, JSON.stringify(st)); cloudStore(); } catch (e) { } }
-function loadLocal() { try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); return s && s.v === 1 ? s : null; } catch (e) { return null; } }
+function loadLocal() { try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); return s && s.v === 2 ? s : null; } catch (e) { return null; } }
 const unpack = (s) => { const b = atob(s), a = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; };
 const MG = window.MGH || null; let owner = null, cloudAt = null, cloudLast = 0;
 function cloudStore(now) { if (!owner || (!now && Date.now() - cloudLast < 30000)) return; cloudLast = Date.now(); MG.save.store({ ...st, owner }, cloudAt || undefined).then((r) => { if (r && r.conflict) { cloudAt = r.updatedAt; return MG.save.store({ ...st, owner }, cloudAt); } return r; }).then((r) => { if (r && r.updatedAt) cloudAt = r.updatedAt; }).catch(() => { }); }
-if (MG && MG.save && MG.embedded) MG.save.onAuth(async (u) => { owner = u ? u.id : null; if (!u) return; try { const r = await MG.save.load(); cloudAt = (r && r.updatedAt) || null; const d = r && r.data; if (d && d.v === 1 && d.owner === owner && (d.total || 0) > (st.total || 0)) { st = d; buildRound(st.wall ? unpack(st.wall) : null); toast('☁️ 계정 기록을 불러왔어요'); } else cloudStore(true); } catch (e) { } });
+if (MG && MG.save && MG.embedded) MG.save.onAuth(async (u) => { owner = u ? u.id : null; if (!u) return; try { const r = await MG.save.load(); cloudAt = (r && r.updatedAt) || null; const d = r && r.data; if (d && d.v === 2 && d.owner === owner && (d.total || 0) > (st.total || 0)) { st = d; buildRound(st.wall ? unpack(st.wall) : null); toast('☁️ 계정 기록을 불러왔어요'); } else cloudStore(true); } catch (e) { } });
 
 // ---------- 루프 ----------
 let last = performance.now(), secT = 0, saveT = 0;
