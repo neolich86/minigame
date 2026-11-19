@@ -348,7 +348,10 @@ function castSkill(h){
   if(h.cls==='knight'){
     let best=null; for(const m of S.mons) if(canTarget(m)&&dist(m,h)<=R&&(!best||m.hp>best.hp)) best=m;
     if(!best) return false;
-    hurt(best,a*3,h.buffed,false,h); best.stun=Math.max(best.stun,(best.boss?0.5:1)*M.stun);
+    hurt(best,a*3,h.buffed,false,h);
+    // 보스: 짧게(0.3초×기절 배율의 절반만) 기절한 뒤 4초간 기절 면역 — 강타를 여러 명이 이어 써도 계속 묶이지 않게
+    if(!best.boss) best.stun=Math.max(best.stun,M.stun);
+    else if(!(best.stunImm>0)){ best.stun=Math.max(best.stun,0.3*(1+(M.stun-1)*0.5)); best.stunImm=4; }
     bigFx(0,best.x,best.y,400); addFx('smash',best.x,best.y,2.6,26); addFx('slash',best.x,best.y,2.4,26); h.flip=best.x<h.x;
   }else if(h.cls==='thief'){
     let best=null; for(const m of S.mons) if(canTarget(m)&&dist(m,h)<=R*2.8&&(!best||m.hp>best.hp)) best=m;
@@ -383,6 +386,7 @@ function update(dt){
   const priests=S.heroes.filter(h=>h.cls==='priest');
   for(const m of S.mons){
     m.flash=Math.max(0,m.flash-dt); m.vul=Math.max(0,m.vul-dt);
+    if(m.stunImm>0) m.stunImm-=dt;
     if(m.stun>0) m.stun-=dt; else m.d+=m.spd*dt;
     const p=posAt(m.d); m.x=p.x; m.y=p.y;
     m.seen = m.type!=='stealth' || priests.some(p=>dist(p,m)<=rangeOf(p));
