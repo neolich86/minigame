@@ -111,7 +111,7 @@
   <div id="stage">
     <div id="fit"><canvas id="cv" width="1080" height="1000"></canvas></div>
     <div id="cards"><h2 id="cardTitle"></h2><div id="cardList"></div></div>
-    <div id="over"><h2>방어 실패</h2><p id="overText"></p><button id="retry">다시 하기</button></div>
+    <div id="over"><h2>방어 실패</h2><p id="overText"></p><button id="retry">다시 하기</button><button id="appLogin" style="display:none;background:transparent;color:var(--gold);border:1px solid var(--gold)">로그인하고 랭킹에 기록하기</button></div>
   </div>
   <div id="dock">
     <div id="shop"><div class="st">⚒ 강화</div><div id="shopList"></div></div>
@@ -260,6 +260,12 @@ const swarmExtra=w=>w<=50?0:Math.min(45,Math.round((w-50)*0.8)), SWARM_HP=0.7;  
 function spawn(q){ const p=posAt(0);
   S.mons.push({d:0,x:p.x,y:p.y,hp:q.hp,max:q.hp,spd:q.spd,img:q.img,boss:q.boss,type:q.type,gold:q.gold,xp:q.xp,flash:0,bob:Math.random()*6,stun:0,vul:0,seen:true}); }
 
+// ---------- 앱(구글 플레이, /rpg-defense-app) ----------
+// 앱 화면에는 포털 랭킹 창이 없으므로, 로그인 전이면 게임 끝 화면에 로그인 버튼을 보여 준다 (기록은 로그인 뒤 자동 등록). 웹은 그대로.
+const APP=(function(){ const re=/^\/rpg-defense-app/; try{ if(re.test(window.top.location.pathname)) return true; }catch(e){} try{ if(re.test(window.parent.location.pathname)) return true; }catch(e){} return /[?&]app=1/.test(location.search||''); })();
+let authUser, authCloud=true;
+if(APP && window.MGH && MGH.save && MGH.save.onAuth) MGH.save.onAuth((u,info)=>{ authUser=u; authCloud=!(info&&info.cloud===false); });
+function showAppLogin(){ const b=$('appLogin'); if(!b) return; b.style.display=(APP && authCloud && authUser===null)?'':'none'; }
 // ---------- 랭킹 ----------
 // 점수 = 도달 라운드 × 1,000,000 + (999,999 − 게임 시간(초)) — 라운드가 높을수록, 같으면 시간이 짧을수록 위
 // 시간은 배속과 무관한 게임 내 시간이라 x1·x3 어느 쪽으로 해도 공평하다
@@ -405,7 +411,7 @@ function update(dt){
   for(const f of S.floats) f.t+=dt; S.floats=S.floats.filter(f=>f.t<(f.slow?0.9:0.6));
   if(S.life<=0 && !S.over){ S.over=true; S.life=0; syncHud();
     const sec=Math.floor(S.time);
-    $('overText').textContent=S.wave+'라운드 도달 · '+Math.floor(sec/60)+'분 '+(sec%60)+'초 · 처치 '+S.kills+'마리'; $('over').classList.add('on');
+    $('overText').textContent=S.wave+'라운드 도달 · '+Math.floor(sec/60)+'분 '+(sec%60)+'초 · 처치 '+S.kills+'마리'; $('over').classList.add('on'); showAppLogin();
     submitRanking(S.wave,sec); }
 }
 
@@ -573,6 +579,7 @@ $('closeInfo').onclick=()=>{ S.sel=null; $('info').classList.remove('on'); };
 SHOP.forEach((u,i)=>{ const b=document.createElement('button'); b.className='up'; b.id='up-'+u.k; b.innerHTML='<b>'+u.t+'</b><i></i><em></em>'; b.onclick=()=>buyShop(i); $('shopList').appendChild(b); });
 $('speed').onclick=()=>{ S.speed=S.speed===1?2:S.speed===2?3:1; $('speed').textContent='▶ x'+S.speed; };
 $('retry').onclick=()=>{ const sp=S.speed; reset(); S.speed=sp; };
+$('appLogin').onclick=()=>{ if(window.MGH&&MGH.save) MGH.save.login('google'); };
 
 // ---------- 화면 맞춤: 맵 전체가 항상 보이도록 남는 공간 안에 캔버스를 넣는다 ----------
 // 맵을 뺀 나머지(상단 정보·정보창·강화·직업 선택창)의 높이를 재고, 남는 높이와 너비 중 작은 쪽에 맞춘다

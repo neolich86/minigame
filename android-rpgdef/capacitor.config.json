@@ -1,0 +1,21 @@
+{
+  "appId": "kr.minigame.rpgdefense",
+  "appName": "RPG 디펜스",
+  "webDir": "www",
+  "backgroundColor": "#14201b",
+  "server": {
+    "url": "https://playwithme.kr/rpg-defense-app",
+    "errorPath": "error.html",
+    "cleartext": false,
+    "allowNavigation": [
+      "playwithme.kr",
+      "*.playwithme.kr",
+      "*.kakao.com",
+      "*.kakaocdn.net",
+      "*.supabase.co"
+    ]
+  },
+  "android": {
+    "backgroundColor": "#14201b"
+  }
+}

@@ -584,6 +584,8 @@ const CATALOG: Game[] = [
     thumb: "/thumbs/class-td.jpg",
     src: "/games/class-td/index.html",
     boards: [{ id: "class-td", label: { ko: "도달 라운드", en: "Round reached" }, unit: { ko: "", en: "" }, format: "roundtime" }],
+    saves: true, // 앱(/rpg-defense-app)에서 로그인 상태를 받고 로그인 창을 띄우기 위해 (게임 데이터를 저장하지는 않음)
+    // playStore: "kr.minigame.rpgdefense", // 구글 플레이 출시 승인 뒤 주석 해제 (웹에 "앱으로 받기" 버튼)
   },
   {
     id: "summon-td",
