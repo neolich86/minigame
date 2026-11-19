@@ -226,9 +226,9 @@ function waveTypes(w){
   if(w<=10) return [a];
   const pool=Object.keys(TYPES).filter(k=>k!==a); return [a,pool[(w*7)%pool.length]];
 }
-// 몬스터 체력: 40라운드까지 완만(쉽게) → 51~70 가장 가파르게(몬스터가 길 절반 이상 진출) → 71~100 버티기 → 100 이후 벽
-// (최적 봇 기준: 도둑 위주도 80라운드쯤부터 길 50% 이상 진출, 100~115라운드 안팎에서 끝)
-const HP_STEPS=[[40,1.22],[50,1.17],[70,1.21],[100,1.13],[Infinity,1.16]];
+// 몬스터 체력: 40라운드까지 완만(쉽게) → 41~70 가파르게 + 51라운드부터 떼거리 → 71~100 버티기 → 100 이후 벽
+// (최적 봇 기준: 도둑 위주 79~94, 골고루 68~70, 혼합 79, 대충 63라운드. 도둑 위주도 70라운드부터 길 60% 이상 진출)
+const HP_STEPS=[[40,1.22],[50,1.17],[70,1.18],[100,1.12],[Infinity,1.16]];
 function hpOfWave(w){ let h=70,k=0; for(let i=1;i<w;i++){ while(i>=HP_STEPS[k][0]) k++; h*=HP_STEPS[k][1]; } return h; }
 function startWave(){
   S.wave++;
@@ -244,8 +244,19 @@ function startWave(){
     for(const k of ts){ const n=Math.max(2,Math.round(base*TYPES[k].n/ts.length)); for(let i=0;i<n;i++) push(k,i); }
     S.wtype=ts.join('+');
   }
+  // 51라운드부터 떼거리 추가: 앞 무리와 겹쳐서 몰려온다. 웨이브 골드·경험치 총합은 그대로(마리당 몫을 나눔)
+  const extra=swarmExtra(w);
+  if(extra>0){
+    const sum=k=>S.queue.reduce((a,q)=>a+(q.boss?0:q[k]),0), g0=sum('gold'), x0=sum('xp');
+    const T=TYPES.swarm; for(let i=0;i<extra;i++) S.queue.push({t:1.2+i*0.22, type:'swarm', hp:hp*SWARM_HP, spd:spd*T.spd, img:T.imgs[(w+i)%T.imgs.length], boss:false, gold:g*T.gold, xp:T.gold*(1+w/10)});
+    const g1=sum('gold'), x1=sum('xp');
+    for(const q of S.queue) if(!q.boss){ q.gold=Math.max(1,Math.round(q.gold*g0/g1)); q.xp*=x0/x1; }
+    S.queue.sort((a,b)=>a.t-b.t);
+    if(S.wtype!=='boss'&&S.wtype.indexOf('swarm')<0) S.wtype+='+swarm';
+  }
   S.banner=3.2; syncHud();
 }
+const swarmExtra=w=>w<=50?0:Math.min(45,Math.round((w-50)*0.8)), SWARM_HP=0.7;   // 떼거리 추가분: 마리 수·체력 배율
 function spawn(q){ const p=posAt(0);
   S.mons.push({d:0,x:p.x,y:p.y,hp:q.hp,max:q.hp,spd:q.spd,img:q.img,boss:q.boss,type:q.type,gold:q.gold,xp:q.xp,flash:0,bob:Math.random()*6,stun:0,vul:0,seen:true}); }
 
