@@ -3,18 +3,19 @@
 <title>마법사 키우기 — 레인 디펜스</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;background:#1a0d08;overflow:hidden;font-family:system-ui,"Apple SD Gothic Neo",sans-serif;color:#fff;user-select:none}
-canvas{position:fixed;inset:0;width:100%;height:100%}
-.hud{position:fixed;left:10px;right:10px;top:calc(10px + env(safe-area-inset-top));pointer-events:none}
+html,body{height:100%;background:#0d0604;overflow:hidden;font-family:system-ui,"Apple SD Gothic Neo",sans-serif;color:#fff;user-select:none}
+#app{position:relative;height:100%;width:min(100%,calc(100dvh * 0.5625));margin:0 auto;overflow:hidden;background:#1a0d08}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+.hud{position:absolute;left:10px;right:10px;top:calc(10px + env(safe-area-inset-top));pointer-events:none}
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:900;text-shadow:0 2px 0 #000}
 .pill{background:rgba(0,0,0,.5);border-radius:12px;padding:4px 10px;font-size:15px}
 .bar{height:10px;border-radius:6px;background:rgba(0,0,0,.55);overflow:hidden;margin-top:6px;border:1px solid rgba(255,255,255,.15)}
 .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#5fd2ff,#b48bff);transition:width .15s}
-.hp{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));width:min(260px,62vw);pointer-events:none;text-align:center;font-weight:900;font-size:12px;text-shadow:0 1px 0 #000}
+.hp{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));width:min(260px,62vw);pointer-events:none;text-align:center;font-weight:900;font-size:12px;text-shadow:0 1px 0 #000}
 .hp .bar i{background:linear-gradient(90deg,#ff4a3a,#ffb03a)}
-.skills{position:fixed;left:10px;top:calc(76px + env(safe-area-inset-top));display:flex;flex-direction:column;gap:5px;pointer-events:none}
+.skills{position:absolute;left:10px;top:calc(76px + env(safe-area-inset-top));display:flex;flex-direction:column;gap:5px;pointer-events:none}
 .skills div{background:rgba(0,0,0,.5);border-radius:10px;padding:3px 8px;font-size:12px;font-weight:800}
-.ov{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:rgba(10,4,2,.72);padding:20px;text-align:center}
+.ov{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:rgba(10,4,2,.72);padding:20px;text-align:center}
 .ov.on{display:flex}
 .ov h1{font-size:30px;font-weight:900;text-shadow:0 3px 0 #000;letter-spacing:-.5px}
 .ov h2{font-size:22px;font-weight:900;color:#ffd34a;text-shadow:0 2px 0 #000}
@@ -27,7 +28,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%}
 .card small{font-size:12px;opacity:.85}
 .card .lv{margin-left:auto;font-size:12px;font-weight:900;color:#ffd34a;white-space:nowrap}
 .card.new{border-color:#ffd34a}
-</style></head><body>
+</style></head><body><div id="app">
 <canvas id="c"></canvas>
 <div class="hud">
   <div class="row"><div class="pill" id="wave">WAVE 1</div><div class="pill" id="lvl">Lv 1</div><div class="pill" id="kill">☠ 0</div></div>
@@ -38,11 +39,13 @@ canvas{position:fixed;inset:0;width:100%;height:100%}
 <div class="ov on" id="start"><h1>마법사 키우기</h1><p>몰려오는 몬스터를 막아 마법진을 지키세요.<br>공격은 자동이에요. 레벨이 오르면 마법을 골라요.</p><button class="btn" id="go">시작하기</button></div>
 <div class="ov" id="pick"><h2>레벨 업! 마법을 고르세요</h2><div class="cards" id="cards"></div></div>
 <div class="ov" id="over"><h1>마법진이 무너졌어요</h1><p id="res"></p><button class="btn" id="again">다시 하기</button></div>
+</div>
 <script>
 const cv = document.getElementById('c'), ctx = cv.getContext('2d'), $ = (i) => document.getElementById(i);
-let W, H, DPR; function resize() { DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); } addEventListener('resize', resize); resize();
+let W, H, DPR; function resize() { DPR = Math.min(2, devicePixelRatio || 1); const r = $('app').getBoundingClientRect(); W = r.width; H = r.height; cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); } addEventListener('resize', resize); resize();
+const A = '/games/wizard-lane/a/';
 const img = (s) => { const i = new Image(); i.src = s; return i; }, ok = (i) => i.complete && i.naturalWidth;
-const BG = img('a/bg.webp'), HERO = img('a/hero.webp'), BOSS = img('a/boss.webp'), MON = [0, 1, 2, 3].map((i) => img(`a/m${i}.webp`));
+const BG = img(A + 'bg.webp'), HERO = img(A + 'hero.webp'), BOSS = img(A + 'boss.webp'), MON = [0, 1, 2, 3].map((i) => img(A + `m${i}.webp`));
 // 배경 그림에 맞춘 원근: z=0 마법진 바로 앞, z=1 먼 끝
 const LANE = { yNear: .71, yFar: .13, wNear: .31, wFar: .035 };
 const bgRect = () => { const s = Math.max(W / 1080, H / 1920), w = 1080 * s, h = 1920 * s; return { x: (W - w) / 2, y: (H - h) / 2, w, h }; };
