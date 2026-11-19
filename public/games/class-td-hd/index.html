@@ -252,9 +252,13 @@ function waveTypes(w){
   if(w<=10) return [a];
   const pool=Object.keys(TYPES).filter(k=>k!==a); return [a,pool[(w*7)%pool.length]];
 }
+// 몬스터 체력: 40라운드까지 완만(쉽게) → 41~70 가파르게(빡세게) → 71~100 다시 완만(버티기) → 100 이후 벽
+// (봇 기준: 대충 하면 60라운드 안팎, 최적으로 하면 80~130라운드)
+const HP_STEPS=[[40,1.22],[70,1.16],[100,1.105],[Infinity,1.14]];
+function hpOfWave(w){ let h=70,k=0; for(let i=1;i<w;i++){ while(i>=HP_STEPS[k][0]) k++; h*=HP_STEPS[k][1]; } return h; }
 function startWave(){
   S.wave++;
-  const w=S.wave, ts=waveTypes(w), hp=70*Math.pow(1.27,w-1), spd=78+Math.min(40,w*2), g=5+w*0.6;
+  const w=S.wave, ts=waveTypes(w), hp=hpOfWave(w), spd=78+Math.min(40,w*2), g=(5+w*0.6)*(1+Math.max(0,w-40)*0.04);
   let t=0; const push=(k,i)=>{ const T=TYPES[k];
     S.queue.push({t, type:k, hp:hp*T.hp, spd:spd*T.spd, img:T.imgs[(w+i)%T.imgs.length], boss:false, gold:Math.max(1,Math.round(g*T.gold)), xp:T.gold*(1+w/10)}); t+=T.gap; };
   if(ts[0]==='boss'){
