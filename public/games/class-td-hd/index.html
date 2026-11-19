@@ -345,12 +345,12 @@ function castSkill(h){
     let best=null; for(const m of S.mons) if(canTarget(m)&&dist(m,h)<=R&&(!best||m.hp>best.hp)) best=m;
     if(!best) return false;
     hurt(best,a*3,h.buffed,false,h); best.stun=Math.max(best.stun,(best.boss?0.5:1)*M.stun);
-    bigFx(0,best.x,best.y,250); addFx('smash',best.x,best.y,2.6,26); addFx('slash',best.x,best.y,2.4,26); h.flip=best.x<h.x;
+    bigFx(0,best.x,best.y,400); addFx('smash',best.x,best.y,2.6,26); addFx('slash',best.x,best.y,2.4,26); h.flip=best.x<h.x;
   }else if(h.cls==='thief'){
     let best=null; for(const m of S.mons) if(canTarget(m)&&dist(m,h)<=R*2.8&&(!best||m.hp>best.hp)) best=m;
     if(!best) return false;
     hurt(best,a*6*M.ambush,h.buffed,false,h);
-    bigFx(1,best.x,best.y,240); addFx('ambush',best.x,best.y,2.6,26); addFx('cross',best.x,best.y,2.2,26);
+    bigFx(1,best.x,best.y,380); addFx('ambush',best.x,best.y,2.6,26); addFx('cross',best.x,best.y,2.2,26);
     S.ghosts.push({h,x:best.x+(best.x<h.x?40:-40),y:best.y,flip:best.x<h.x?false:true,t:0}); h.flip=best.x<h.x;
   }else if(h.cls==='mage'){
     const r=150*M.meteorR; let best=null,bn=0;
@@ -363,7 +363,7 @@ function castSkill(h){
     if(!any) return false;
     for(const m of S.mons) if(m.hp>0&&dist(m,h)<=R){ m.vul=M.holyDur; hurt(m,a*1.0,false,true,h); }
     for(const o of S.heroes) if(o!==h&&dist(o,h)<=buffR()) o.haste=M.holyDur;
-    S.pulses.push({x:h.x,y:h.y,r:R,t:0}); addFx('holy',h.x,h.y,3,30); bigFx(3,h.x,h.y,R*2.2*FX_);
+    S.pulses.push({x:h.x,y:h.y,r:R,t:0}); addFx('holy',h.x,h.y,3,30); bigFx(3,h.x,h.y,R*2.6*FX_);
   }
   h.anim=0; h.sk=true; h.adur=0.56; shout(h,CLASSES[h.cls].skill+'!'); return true;
 }
@@ -404,7 +404,7 @@ function update(dt){
   }
   for(const s of S.shots){ s.t+=dt; if(s.t<s.dur) continue; s.done=true;
     if(s.meteor){ for(const m of S.mons) if(Math.hypot(m.x-s.tx,m.y-s.ty)<=s.r) hurt(m,s.dmg,s.buffed,true,s.h);
-      bigFx(2,s.tx,s.ty,s.r*2.6*FX_); addFx('meteor',s.tx,s.ty,s.r*2*FX_/44,20); S.zones.push({x:s.tx,y:s.ty,r:s.r*0.8,t:0,tick:0.5,dmg:s.dmg*0.12,h:s.h}); }
+      bigFx(2,s.tx,s.ty,s.r*3.6*FX_); addFx('meteor',s.tx,s.ty,s.r*2*FX_/44,20); S.zones.push({x:s.tx,y:s.ty,r:s.r*0.8,t:0,tick:0.5,dmg:s.dmg*0.12,h:s.h}); }
     else strike(s.h,s.target?s.target.x:s.tx,s.target?s.target.y:s.ty,s.target); }
   S.shots=S.shots.filter(s=>!s.done);
   S.mons=S.mons.filter(m=>m.hp>0);
@@ -507,11 +507,11 @@ function draw(){
     ctx.fillStyle='rgba(150,110,255,.35)'; ctx.beginPath(); ctx.arc(x,y,15,0,Math.PI*2); ctx.fill();
     ctx.fillStyle='#b9a2ff'; ctx.beginPath(); ctx.arc(x,y,9,0,Math.PI*2); ctx.fill();
     ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill(); }
-  if(S.big&&S.big.length){ ctx.save(); ctx.globalCompositeOperation='lighter'; const W2=HD.sfx.naturalWidth/2, H2=HD.sfx.naturalHeight/2;
+  for(const f of S.fx) drawFx(f);
+  if(S.big&&S.big.length){ ctx.save(); ctx.globalCompositeOperation='screen'; const W2=HD.sfx.naturalWidth/2, H2=HD.sfx.naturalHeight/2;
     for(const b of S.big){ const k=b.t/b.dur, p=w2s(b.x,b.y), sz=b.size*(0.6+0.55*Math.sqrt(k)); ctx.globalAlpha=Math.min(1,(1-k)*1.6);
       ctx.drawImage(HD.sfx,(b.k%2)*W2,Math.floor(b.k/2)*H2,W2,H2,p.x-sz/2,p.y-sz*0.62,sz,sz); }
     ctx.restore(); }
-  for(const f of S.fx) drawFx(f);
   for(const f of S.floats){ const p=w2s(f.x,f.y), k=f.t/(f.slow?0.9:0.6);
     ctx.globalAlpha=1-k*k; label(f.txt,p.x,p.y-46-k*34,f.skill?22:f.big?25:19,f.col,f.skill?'#fff':null); }
   ctx.globalAlpha=1;
