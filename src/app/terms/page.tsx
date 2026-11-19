@@ -4,11 +4,11 @@ import { serverLang } from "@/lib/serverLang";
 
 export const metadata: Metadata = {
   title: "이용약관 · Terms of Use",
-  description: "미니게임천국 웹사이트 이용약관",
+  description: "미니게임천국 웹사이트와 앱 이용약관",
   alternates: { canonical: "/terms" },
 };
 
-const UPDATED = "2026-10-14";
+const UPDATED = "2026-11-20";
 
 export default async function TermsPage() {
   const { lang } = await serverLang();
@@ -20,7 +20,7 @@ export default async function TermsPage() {
       {en ? (
         <>
           <h2>1. The service</h2>
-          <p>Mini Game Heaven (the “Service”) provides free browser games, random pickers and related services, operated by JamesWeb. By using the Service you agree to these terms.</p>
+          <p>Mini Game Heaven (the “Service”) provides free browser games, random pickers and related services, operated by JamesWeb. These terms apply to the website (playwithme.kr) and to every Android app we publish on Google Play, such as RPG Defense, Archer Survivor and Wizard. By using the Service you agree to these terms.</p>
           <h2>2. Accounts</h2>
           <p>Most content works without an account. If you sign in, you are responsible for your account and the nickname you choose. Nicknames that are offensive, impersonate others or contain personal information may be changed or removed.</p>
           <h2>3. Fair play</h2>
@@ -33,7 +33,7 @@ export default async function TermsPage() {
           <h2>5. Content and intellectual property</h2>
           <p>The games, code and original artwork on the Service belong to the operator. Board-game titles and card images referenced in fan-made content belong to their respective owners and are used for non-commercial play and reference.</p>
           <h2>6. Advertising</h2>
-          <p>The Service is supported by ads served by Google AdSense. Ad content is provided by third parties.</p>
+          <p>The website is supported by ads served by Google AdSense, and some apps show optional rewarded ads through Google AdMob (for example, watching an ad to continue a run). Ad content is provided by third parties. Apps without ads, such as RPG Defense, show no ads.</p>
           <h2>7. Changes and availability</h2>
           <p>Games may be added, changed or removed, and the Service may be interrupted for maintenance. We are not liable for loss of game records caused by such changes, except where required by law.</p>
           <h2>8. Contact</h2>
@@ -42,7 +42,7 @@ export default async function TermsPage() {
       ) : (
         <>
           <h2>제1조 (서비스)</h2>
-          <p>미니게임천국(이하 “서비스”)은 제임스웹이 운영하는 무료 브라우저 게임, 추첨 도구 및 관련 서비스입니다. 서비스를 이용하면 이 약관에 동의한 것으로 봅니다.</p>
+          <p>미니게임천국(이하 “서비스”)은 제임스웹이 운영하는 무료 브라우저 게임, 추첨 도구 및 관련 서비스입니다. 이 약관은 웹사이트(playwithme.kr)와, 미니게임천국이 구글 플레이에 출시한 모든 안드로이드 앱(RPG 디펜스, 궁수 키우기, 마법사 키우기 등)에 똑같이 적용됩니다. 서비스를 이용하면 이 약관에 동의한 것으로 봅니다.</p>
           <h2>제2조 (계정)</h2>
           <p>대부분의 콘텐츠는 로그인 없이 이용할 수 있습니다. 로그인한 경우 계정과 닉네임 관리 책임은 이용자에게 있습니다. 욕설·사칭·개인정보가 포함된 닉네임은 변경되거나 삭제될 수 있습니다.</p>
           <h2>제3조 (공정한 이용)</h2>
@@ -55,7 +55,7 @@ export default async function TermsPage() {
           <h2>제5조 (콘텐츠와 저작권)</h2>
           <p>서비스의 게임, 코드, 직접 제작한 그림의 권리는 운영자에게 있습니다. 팬메이드 콘텐츠에 등장하는 보드게임 이름·카드 이미지의 권리는 각 권리자에게 있으며, 비상업적 플레이와 참고 목적으로 사용합니다.</p>
           <h2>제6조 (광고)</h2>
-          <p>서비스는 Google AdSense 광고로 운영되며, 광고 내용은 제3자가 제공합니다.</p>
+          <p>웹사이트는 Google AdSense 광고로 운영되고, 일부 앱에서는 Google AdMob 보상형 광고(예: 광고를 보고 이어하기)를 선택해서 볼 수 있습니다. 광고 내용은 제3자가 제공합니다. RPG 디펜스처럼 광고가 없는 앱에는 광고가 나오지 않습니다.</p>
           <h2>제7조 (변경과 중단)</h2>
           <p>게임은 추가·변경·종료될 수 있고, 점검을 위해 서비스가 일시 중단될 수 있습니다. 법에서 정한 경우를 제외하고, 이로 인한 게임 기록 손실에 대해 책임지지 않습니다.</p>
           <h2>제8조 (문의)</h2>
