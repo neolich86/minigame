@@ -43,6 +43,7 @@ export default function DeleteAccountPage() {
           <li>{en ? "Neighborhood Notes (동네쪽지) — kr.minigame.dongnenote" : "동네쪽지 — kr.minigame.dongnenote"}</li>
           <li>{en ? "Little Witch's Potion Shop (꼬마 마녀의 물약가게)" : "꼬마 마녀의 물약가게"}</li>
           <li>{en ? "Archer Survivor (궁수 키우기)" : "궁수 키우기"}</li>
+          <li>{en ? "RPG Defense (RPG 디펜스) — kr.minigame.rpgdefense" : "RPG 디펜스 — kr.minigame.rpgdefense"}</li>
           <li>Passport Map</li>
           <li>{en ? "Mini Game Heaven website (playwithme.kr)" : "미니게임천국 웹사이트 (playwithme.kr)"}</li>
         </ul>
