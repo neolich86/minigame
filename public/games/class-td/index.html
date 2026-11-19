@@ -226,9 +226,9 @@ function waveTypes(w){
   if(w<=10) return [a];
   const pool=Object.keys(TYPES).filter(k=>k!==a); return [a,pool[(w*7)%pool.length]];
 }
-// 몬스터 체력: 40라운드까지 완만(쉽게) → 41~70 가파르게(빡세게) → 71~100 다시 완만(버티기) → 100 이후 벽
-// (봇 기준: 대충 하면 60라운드 안팎, 최적으로 하면 80~130라운드)
-const HP_STEPS=[[40,1.22],[70,1.16],[100,1.105],[Infinity,1.14]];
+// 몬스터 체력: 40라운드까지 완만(쉽게) → 51~70 가장 가파르게(몬스터가 길 절반 이상 진출) → 71~100 버티기 → 100 이후 벽
+// (최적 봇 기준: 도둑 위주도 80라운드쯤부터 길 50% 이상 진출, 100~115라운드 안팎에서 끝)
+const HP_STEPS=[[40,1.22],[50,1.17],[70,1.21],[100,1.13],[Infinity,1.16]];
 function hpOfWave(w){ let h=70,k=0; for(let i=1;i<w;i++){ while(i>=HP_STEPS[k][0]) k++; h*=HP_STEPS[k][1]; } return h; }
 function startWave(){
   S.wave++;
