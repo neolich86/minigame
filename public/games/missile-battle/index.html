@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<link rel="canonical" href="/play/missile-battle">
+<script src="/mgh/bridge.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>미사일 배틀 - 미니게임천국</title>
+<meta name="description" content="내 기지와 적 기지가 번갈아 한 발씩! 하늘의 배수 구역을 지나면 미사일이 몇 배로 늘어나요. 상대 기지를 먼저 무너뜨리면 승리.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f6c78a'/%3E%3Cpath d='M14 50l26-26' stroke='%23e8e8ee' stroke-width='9' stroke-linecap='round'/%3E%3Cpath d='M38 26l8-8' stroke='%23e23a3a' stroke-width='9' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:'Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;color:#fff;user-select:none;-webkit-user-select:none;touch-action:none;overscroll-behavior:none;background:#f6c78a}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;border:0;cursor:pointer}
+#cv{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+.top{position:fixed;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top));display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;pointer-events:none}
+.hp{background:rgba(40,16,16,.72);border:2px solid rgba(255,255,255,.3);border-radius:12px;padding:5px 8px;font-weight:900;font-size:12px}
+.hp .row{display:flex;justify-content:space-between;gap:6px;margin-bottom:3px}
+.hp .bar{height:9px;border-radius:6px;background:rgba(255,255,255,.18);overflow:hidden}
+.hp .bar i{display:block;height:100%;width:100%;transition:width .3s}
+.me .bar i{background:linear-gradient(90deg,#4fb8ff,#3a78d8)}
+.en .bar i{background:linear-gradient(90deg,#ff8a7a,#d8403a)}
+.en .row{flex-direction:row-reverse}
+#stage{background:rgba(40,16,16,.72);border:2px solid rgba(255,214,106,.6);border-radius:12px;padding:6px 10px;font-weight:900;font-size:13px;color:#ffd36a;white-space:nowrap}
+#count{position:fixed;left:50%;transform:translateX(-50%);top:calc(64px + env(safe-area-inset-top));background:rgba(20,10,10,.7);border:2px solid #ffd36a;border-radius:999px;padding:6px 16px;font-weight:900;font-size:20px;color:#ffd36a;pointer-events:none;text-shadow:0 2px 0 #000}
+#aimInfo,#hint{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom));background:rgba(20,10,10,.7);border-radius:12px;padding:8px 14px;font-weight:800;font-size:14px;pointer-events:none;white-space:nowrap}
+#hint{animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.6}}
+.ov{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;background:radial-gradient(circle,rgba(60,20,10,.7),rgba(10,4,2,.9))}
+.ov h1{font-size:38px;font-weight:900;text-shadow:0 4px 0 #000}
+.ov.win h1{color:#ffd36a}.ov.lose h1{color:#ff8a7a}
+.ov p{font-size:15px;opacity:.9;line-height:1.6}
+.btn{min-height:50px;padding:12px 30px;border-radius:16px;font-size:18px;font-weight:900;color:#2a1400;background:linear-gradient(#ffe48a,#f0a92e);box-shadow:0 4px 0 #8a5200}
+.btn.sub{background:rgba(255,255,255,.15);color:#fff;box-shadow:none;font-size:14px;min-height:44px;padding:8px 18px}
+#title{background:linear-gradient(rgba(40,16,30,.25),rgba(20,6,10,.85))}
+#title h1{font-size:44px;color:#ffd36a;letter-spacing:-1px}
+#title .how{font-size:14px;line-height:1.8;background:rgba(0,0,0,.35);border-radius:14px;padding:10px 16px;text-align:left}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div class="top">
+  <div class="hp me"><div class="row"><span>🏰 내 기지</span><span id="hpMeT">0</span></div><div class="bar"><i id="hpMe"></i></div></div>
+  <div id="stage">스테이지 1</div>
+  <div class="hp en"><div class="row"><span>적 기지 🏯</span><span id="hpEnT">0</span></div><div class="bar"><i id="hpEn"></i></div></div>
+</div>
+<div id="count" hidden></div>
+<div id="aimInfo" hidden></div>
+<div id="hint" hidden>👆 화면을 뒤로 끌었다 놓으면 발사!</div>
+<div id="title" class="ov">
+  <h1>미사일 배틀</h1>
+  <div class="how">🚀 번갈아 한 발씩 쏴요<br>✖️ 하늘의 <b>배수 구역</b>을 지나면 미사일이 늘어나요<br>🏯 적 기지 체력을 0으로 만들면 승리!</div>
+  <p id="startInfo"></p>
+  <button class="btn" id="startBtn">시작하기</button>
+  <button class="btn sub" id="resetBtn" hidden>스테이지 1부터 다시</button>
+</div>
+<div id="ov" class="ov" hidden><h1 id="ovTitle"></h1><p id="ovText"></p><button class="btn" id="ovBtn"></button></div>
+<script type="module" src="game.js"></script>
+</body>
+</html>

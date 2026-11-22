@@ -588,6 +588,18 @@ const CATALOG: Game[] = [
     // playStore: "kr.minigame.rpgdefense", // 구글 플레이 출시 승인 뒤 주석 해제 (웹에 "앱으로 받기" 버튼)
   },
   {
+    id: "missile-battle",
+    title: { ko: "미사일 배틀", en: "Missile Battle" },
+    desc: {
+      ko: "내 기지와 적 기지가 번갈아 한 발씩! 하늘의 배수 구역을 지나면 미사일이 몇 배로 늘어나요. 상대 기지를 먼저 무너뜨리면 승리",
+      en: "Take turns firing one missile at the enemy base — fly through multiplier gates in the sky to turn it into a swarm, and topple their base first",
+    },
+    genre: "action",
+    thumb: "/thumbs/missile-battle.jpg",
+    src: "/games/missile-battle/index.html",
+    hidden: true,
+  },
+  {
     id: "summon-td",
     title: { ko: "소환 디펜스", en: "Summon Defense" },
     desc: {
