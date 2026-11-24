@@ -57,8 +57,11 @@ const app = document.getElementById('app'), cv = document.getElementById('cv'), 
 let W, H, DPR, L = {};
 function resize() {
   const r = app.getBoundingClientRect(); W = r.width; H = r.height; DPR = Math.min(2, devicePixelRatio || 1); cv.width = W * DPR; cv.height = H * DPR;
-  const cell = Math.min((W - 90) / 5, (H * 0.42) / 3), gw = cell * 5, gh = cell * 3, gx = (W - gw) / 2, gy = Math.max(120, Math.min(H * 0.3, H - cell * 3 - 300));
+  // 위 HUD(약 110) + 판(길 포함 3칸+2×길폭+여백) + 아래 UI(약 240) 가 화면 안에 모두 들어가게
+  const TOP = 110, BOT = 240;
+  const cell = Math.max(30, Math.min((W - 28) / 6.4, (H - TOP - BOT - 24) / 4.24, 84)), gw = cell * 5, gh = cell * 3, gx = (W - gw) / 2;
   const pad = cell * 0.62; // 길 폭
+  const free = H - TOP - BOT - (gh + pad * 2 + 24), gy = TOP + Math.max(0, free * 0.4) + pad + 12;
   L = { cell, gx, gy, gw, gh, pad, px0: gx - pad, py0: gy - pad, px1: gx + gw + pad, py1: gy + gh + pad };
   // 사각형 테두리 길 (왼쪽 아래 → 위 → 오른쪽 → 아래 → 왼쪽, 한 바퀴 돌고 계속 돈다)
   const m = pad / 2, x0 = gx - m, y0 = gy - m, x1 = gx + gw + m, y1 = gy + gh + m;
@@ -66,6 +69,9 @@ function resize() {
   L.len = []; let s = 0; for (let i = 1; i < L.path.length; i++) { s += Math.hypot(L.path[i][0] - L.path[i - 1][0], L.path[i][1] - L.path[i - 1][1]); L.len.push(s); } L.total = s;
 }
 addEventListener('resize', resize); resize();
+new ResizeObserver(() => resize()).observe(app);
+// iOS 에서 끌기가 바깥 페이지를 스크롤하지 않게
+document.addEventListener('touchmove', (e) => { if (!document.getElementById('title').hidden && e.target.closest('.ov')) return; e.preventDefault(); }, { passive: false });
 function posAt(d) { d = ((d % L.total) + L.total) % L.total; let prev = 0; for (let i = 0; i < L.len.length; i++) { if (d <= L.len[i]) { const t = (d - prev) / (L.len[i] - prev), a = L.path[i], b = L.path[i + 1]; return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; } prev = L.len[i]; } return L.path[0]; }
 
 // ---------- 상태 ----------
@@ -208,7 +214,7 @@ function fmt(v) { v = Math.max(0, Math.ceil(v)); return v >= 1e6 ? (v / 1e6).toF
 // 위 HUD / 아래 버튼 (캔버스에 그려 단순하게)
 const BTN = {};
 function drawHud() {
-  const top = 14;
+  const top = 22;
   // 웨이브·시간
   ctx.fillStyle = 'rgba(0,0,0,.35)'; rr(12, top, W - 24, 54, 14); ctx.fill();
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = '900 17px system-ui'; ctx.fillStyle = '#ffd36a'; ctx.fillText(`웨이브 ${S.wave}`, 24, top + 18);
@@ -218,20 +224,23 @@ function drawHud() {
   ctx.fillStyle = 'rgba(255,255,255,.15)'; rr(bx, top + 32, bw, 10, 5); ctx.fill(); ctx.fillStyle = n > 70 ? '#ff5a4a' : n > 40 ? '#ffb84a' : '#7ae07a'; rr(bx, top + 32, bw * Math.min(1, n / 100), 10, 5); ctx.fill();
   if (S.boss) { const b = S.boss; ctx.fillStyle = 'rgba(0,0,0,.4)'; rr(24, top + 62, W - 48, 18, 9); ctx.fill(); ctx.fillStyle = '#c08aff'; rr(24, top + 62, (W - 48) * Math.max(0, b.hp / b.max), 18, 9); ctx.fill(); ctx.textAlign = 'center'; ctx.font = '900 11px system-ui'; ctx.fillStyle = '#fff'; ctx.fillText(`보스 ${fmt(b.hp)}`, W / 2, top + 71); }
   // 아래: SP · 소환 · 강화
-  const by = L.py1 + 26;
+  const by = L.py1 + 30;
   ctx.textAlign = 'center'; ctx.font = '900 20px system-ui'; ctx.fillStyle = '#7ae0ff'; ctx.fillText(`⚡ ${S.sp} SP`, W / 2, by);
-  const sw = 150, sh = 56, sx = W / 2 - sw / 2, sy = by + 18; const ok = S.sp >= S.cost && S.grid.some((d) => !d);
-  ctx.fillStyle = ok ? '#ffcf4a' : '#6a6080'; rr(sx, sy, sw, sh, 16); ctx.fill(); ctx.fillStyle = ok ? '#8a5200' : '#3a3050'; rr(sx, sy + sh - 6, sw, 6, 3); ctx.fill();
-  ctx.fillStyle = ok ? '#2a1400' : '#c8c0d8'; ctx.font = '900 19px system-ui'; ctx.fillText('소환', W / 2, sy + 22); ctx.font = '800 13px system-ui'; ctx.fillText(`${S.cost} SP`, W / 2, sy + 42);
-  BTN.summon = [sx, sy, sw, sh];
-  // 덱 강화 버튼
-  const dy = sy + sh + 16, dw = (W - 24 - 4 * 8) / 5, dh = Math.min(92, H - dy - 14);
+  const sw = 160, sh = 58, sx = W / 2 - sw / 2, sy = by + 16; const ok = S.sp >= S.cost && S.grid.some((d) => !d);
+  ctx.fillStyle = ok ? '#8a5200' : '#2e2640'; rr(sx, sy + 5, sw, sh, 16); ctx.fill();
+  const bg = ctx.createLinearGradient(0, sy, 0, sy + sh); bg.addColorStop(0, ok ? '#ffe48a' : '#7a7090'); bg.addColorStop(1, ok ? '#f0a92e' : '#5a5070');
+  ctx.fillStyle = bg; rr(sx, sy, sw, sh, 16); ctx.fill();
+  ctx.fillStyle = ok ? '#2a1400' : '#e0d8f0'; ctx.font = '900 20px system-ui'; ctx.fillText('주사위 소환', W / 2, sy + 22); ctx.font = '800 13px system-ui'; ctx.fillText(ok ? `⚡ ${S.cost} SP` : S.grid.some((d) => !d) ? `⚡ ${S.cost} SP 필요` : '빈 칸 없음', W / 2, sy + 43);
+  BTN.summon = [sx, sy, sw, sh + 5];
+  // 종류별 강화 버튼 (덱 5종)
+  const ly = sy + sh + 24; ctx.font = '800 12px system-ui'; ctx.fillStyle = '#d8c8ff'; ctx.fillText('주사위 종류별 강화 — 공격력·공격 속도 증가', W / 2, ly);
+  const dy = ly + 10, dw = (W - 24 - 4 * 8) / 5, dh = Math.max(62, Math.min(96, H - dy - 10)), ds = Math.min(dw * 0.56, dh * 0.42);
   BTN.up = [];
   deck.forEach((k, j) => { const x = 12 + j * (dw + 8), lv = S.lv[k], cost = upCost(lv), can = S.sp >= cost && lv < 5;
-    ctx.fillStyle = 'rgba(255,255,255,.08)'; rr(x, dy, dw, dh, 12); ctx.fill();
-    drawDie(ctx, x + dw / 2, dy + dw * 0.42, dw * 0.58, k, 1, false);
-    ctx.font = '900 11px system-ui'; ctx.fillStyle = '#fff'; ctx.fillText(`Lv.${lv}`, x + dw / 2, dy + dw * 0.86);
-    ctx.font = '800 11px system-ui'; ctx.fillStyle = lv >= 5 ? '#ffd36a' : can ? '#7ae0ff' : '#8a80a0'; ctx.fillText(lv >= 5 ? 'MAX' : `⚡${cost}`, x + dw / 2, dy + dh - 10);
+    ctx.fillStyle = can ? 'rgba(122,224,255,.16)' : 'rgba(255,255,255,.08)'; rr(x, dy, dw, dh, 12); ctx.fill(); if (can) { ctx.strokeStyle = '#7ae0ff'; ctx.lineWidth = 2; ctx.stroke(); }
+    drawDie(ctx, x + dw / 2, dy + 6 + ds / 2, ds, k, 1, false);
+    ctx.font = '900 11px system-ui'; ctx.fillStyle = '#fff'; ctx.fillText(`Lv.${lv}`, x + dw / 2, dy + dh - 24);
+    ctx.font = '800 11px system-ui'; ctx.fillStyle = lv >= 5 ? '#ffd36a' : can ? '#7ae0ff' : '#8a80a0'; ctx.fillText(lv >= 5 ? 'MAX' : `⚡${cost}`, x + dw / 2, dy + dh - 9);
     BTN.up.push([x, dy, dw, dh, k]); });
 }
 const upCost = (lv) => [0, 100, 200, 400, 700][lv] || 9999;
