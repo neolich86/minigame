@@ -600,6 +600,18 @@ const CATALOG: Game[] = [
     hidden: true,
   },
   {
+    id: "dice-defense",
+    title: { ko: "주사위 디펜스", en: "Dice Defense" },
+    desc: {
+      ko: "주사위를 소환하고 같은 종류·같은 숫자끼리 합쳐 6까지 키우세요! 불꽃·전기·얼음·독·바람·기어·파멸 중 5개로 덱을 짜고, 길 위 몬스터가 100마리가 되기 전에 막으세요",
+      en: "Summon dice and merge matching ones up to six pips! Build a deck of five from fire, volt, ice, poison, wind, gear and doom, and hold the road before 100 monsters pile up",
+    },
+    genre: "strategy",
+    thumb: "/thumbs/dice-defense.jpg",
+    src: "/games/dice-defense/index.html",
+    hidden: true,
+  },
+  {
     id: "summon-td",
     title: { ko: "소환 디펜스", en: "Summon Defense" },
     desc: {
