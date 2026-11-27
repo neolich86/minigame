@@ -5,7 +5,6 @@
 <meta name="robots" content="noindex">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#f6f3ee">
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9826307769121956" crossorigin="anonymous"></script>
 <title>Show Korea — point, show, done</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -60,8 +59,7 @@ h1{font-size:26px;line-height:1.25;font-weight:900;margin:6px 0 6px;letter-spaci
 .rbtns button{border:1px solid var(--line);background:var(--soft);border-radius:12px;padding:10px 2px;font:inherit;font-size:14px;font-weight:800;color:var(--ink);cursor:pointer;word-break:keep-all}
 .ans{background:var(--ink);color:#fff;border-radius:18px;padding:16px;text-align:center;margin-bottom:12px}
 .ans small{display:block;font-size:12px;opacity:.7;margin-bottom:4px}.ans b{font-size:24px}
-.adwrap{margin-top:24px;min-height:60px}.adwrap small{display:block;font-size:11px;color:#a39b8e;text-align:center;margin-bottom:4px}
-.adwrap:has(ins[data-ad-status="unfilled"]){display:none}
+body.banner #app{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
 #show.land .stage{transform:rotate(90deg)}
 </style>
 </head>
@@ -71,10 +69,6 @@ h1{font-size:26px;line-height:1.25;font-weight:900;margin:6px 0 6px;letter-spaci
   <section id="home">
     <h1 id="hTitle"></h1><p class="sub" id="hSub"></p>
     <div class="tiles" id="tiles"></div>
-    <!-- 광고: 첫 화면에만 배너 1개 (보여주기·상황 화면에는 넣지 않음) -->
-    <div class="adwrap" id="adwrap"><small id="adLabel">Advertisement</small>
-      <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-9826307769121956" data-ad-slot="8492334079" data-ad-format="horizontal" data-full-width-responsive="true"></ins>
-    </div>
   </section>
   <section id="sit" hidden>
     <button class="back" id="back"></button>
@@ -169,7 +163,6 @@ const $ = (id) => document.getElementById(id);
 function render() {
   document.documentElement.lang = lang; const u = UI[lang];
   $('langs').innerHTML = ''; for (const [k, l] of [['en', 'EN'], ['ja', '日本語'], ['zh', '中文']]) { const b = document.createElement('button'); b.textContent = l; b.className = k === lang ? 'on' : ''; b.onclick = () => { lang = k; localStorage.setItem('sk_lang', k); render(); }; $('langs').append(b); }
-  $('adLabel').textContent = { en: 'Advertisement', ja: '広告', zh: '广告' }[lang];
   $('hTitle').textContent = u.t; $('hSub').textContent = u.s; $('back').textContent = u.back;
   const tl = $('tiles'); tl.innerHTML = '';
   for (const s of SIT) { const b = document.createElement('button'); b.className = 'tile'; b.innerHTML = `<div class="ico" style="background-position:${icoPos(s.ic)}"></div><div><b>${s.n[lang]}</b><br><small>${s.d[lang]}</small></div>`; b.onclick = () => openSit(s.id); tl.append(b); }
@@ -184,7 +177,7 @@ function phraseRow(p) {
   d.onclick = () => show(p[0], p[LI[lang]]); return d;
 }
 function openSit(id) {
-  cur = id; const u = UI[lang]; $('home').hidden = true; $('sit').hidden = false; const body = $('sBody'); body.innerHTML = '';
+  cur = id; Banner.hide(); const u = UI[lang]; $('home').hidden = true; $('sit').hidden = false; const body = $('sBody'); body.innerHTML = '';
   const s = SIT.find((x) => x.id === id);
   $('sIco').style.backgroundPosition = icoPos(s ? s.ic : IC.star); $('sTitle').textContent = s ? s.n[lang] : u.fav;
   if (id === 'pharm') body.insertAdjacentHTML('beforeend', `<div class="note">${u.pharm}</div>`);
@@ -214,9 +207,40 @@ function show(ko, mine, dest) {
 $('speak').onclick = () => { if (!('speechSynthesis' in window)) return; speechSynthesis.cancel(); const m = new SpeechSynthesisUtterance($('ko').textContent); m.lang = 'ko-KR'; m.rate = 0.9; speechSynthesis.speak(m); };
 $('close').onclick = () => { $('show').hidden = true; speechSynthesis && speechSynthesis.cancel(); };
 $('rot').onclick = () => $('show').classList.toggle('land');
-$('back').onclick = () => { cur = null; $('sit').hidden = true; $('home').hidden = false; };
+$('back').onclick = () => { cur = null; $('sit').hidden = true; $('home').hidden = false; Banner.show(); };
 render();
-try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
+/* ==========================================================================
+   광고 — 앱(구글 플레이) 전용 AdMob 배너, 첫 화면에만
+   · 웹 브라우저에서는 광고가 없다(애드센스 사용 안 함).
+   · 상황 화면·보여주기 화면으로 가면 배너를 숨기고, 첫 화면으로 돌아오면 다시 보인다.
+   · AD_UNIT_BANNER: AdMob 에서 만든 배너 광고 단위 ID 로 바꿀 것 (지금은 구글 공식 테스트 ID)
+   ========================================================================== */
+const AD_UNIT_BANNER = 'ca-app-pub-3940256099942544/6300978111'; // TODO 실제 배너 단위 ID
+const Banner = (function () {
+  const cap = (function () { try { if (window.Capacitor) return window.Capacitor; } catch (e) {} try { if (window.parent !== window) return window.parent.Capacitor; } catch (e) {} })();
+  const native = !!(cap && cap.isNativePlatform && cap.isNativePlatform());
+  const AM = native && ((cap.Plugins && cap.Plugins.AdMob) || (cap.registerPlugin && cap.registerPlugin('AdMob')));
+  let state = 'none'; // none → shown ↔ hidden
+  async function init() {
+    if (!AM) return;
+    try {
+      await AM.initialize({});
+      try { const info = await AM.requestConsentInfo(); if (info && info.isConsentFormAvailable && info.status === 'REQUIRED') await AM.showConsentForm(); } catch (e) {}
+      if (!$('home').hidden) show();
+    } catch (e) {}
+  }
+  async function show() {
+    if (!AM) return;
+    try {
+      if (state === 'none') await AM.showBanner({ adId: AD_UNIT_BANNER, adSize: 'ADAPTIVE_BANNER', position: 'BOTTOM_CENTER', margin: 0 });
+      else if (state === 'hidden') await AM.resumeBanner();
+      state = 'shown'; document.body.classList.add('banner');
+    } catch (e) {}
+  }
+  async function hide() { if (!AM || state !== 'shown') return; try { await AM.hideBanner(); state = 'hidden'; document.body.classList.remove('banner'); } catch (e) {} }
+  return { init, show, hide };
+})();
+Banner.init();
 </script>
 </body>
 </html>
