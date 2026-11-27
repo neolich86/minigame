@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f6f3ee">
+<title>Show Korea — point, show, done</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--ink:#1d2433;--dim:#6b7383;--line:#e7e1d8;--bg:#f6f3ee;--card:#fff;--red:#d8432f;--blue:#2753c9;--soft:#fbf8f3}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Apple SD Gothic Neo','Noto Sans KR','Hiragino Sans','PingFang SC',sans-serif}
+#app{max-width:480px;margin:0 auto;min-height:100%;padding:16px 16px 40px;padding-top:max(16px,env(safe-area-inset-top))}
+[hidden]{display:none!important}
+.ico{width:48px;height:48px;background:url(/games/korea-kit/icons.webp) 0 0/900% 100% no-repeat;flex-shrink:0}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}
+.brand{font-weight:900;font-size:22px;letter-spacing:-.3px}.brand b{color:var(--red)}
+.langs{display:flex;background:#ebe5db;border-radius:999px;padding:3px}
+.langs button{border:0;background:none;font:inherit;font-size:13px;font-weight:700;padding:7px 11px;border-radius:999px;color:var(--dim);cursor:pointer}
+.langs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+h1{font-size:26px;line-height:1.25;font-weight:900;margin:6px 0 6px;letter-spacing:-.4px}
+.sub{color:var(--dim);font-size:14.5px;line-height:1.5;margin-bottom:20px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:10px;cursor:pointer;text-align:left;font:inherit;color:inherit;transition:transform .1s}
+.tile:active{transform:scale(.97)}
+.tile .ico{width:56px;height:56px}
+.tile b{font-size:18px}.tile small{color:var(--dim);font-size:12.5px;font-weight:600}
+.tile.wide{grid-column:1/-1;flex-direction:row;align-items:center}
+.back{border:0;background:none;font:inherit;font-size:15px;font-weight:700;color:var(--blue);cursor:pointer;padding:6px 0}
+.shead{display:flex;align-items:center;gap:12px;margin:4px 0 16px}.shead h2{font-size:24px;font-weight:900}
+.sec{font-size:12px;font-weight:800;color:var(--dim);letter-spacing:.6px;text-transform:uppercase;margin:18px 2px 8px}
+.list{display:flex;flex-direction:column;gap:8px}
+.ph{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 14px 13px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.ph:active{background:var(--soft)}
+.ph .t{flex:1;min-width:0}.ph .t b{display:block;font-size:16.5px;line-height:1.35}.ph .t span{display:block;color:var(--dim);font-size:14px;margin-top:3px}
+.star{border:0;background:none;font-size:20px;color:#d6cfc3;cursor:pointer;padding:4px}.star.on{color:#f2b01e}
+.dests{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dest{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 12px;cursor:pointer}
+.dest b{display:block;font-size:14.5px}.dest span{display:block;font-size:12.5px;color:var(--dim);margin-top:2px}
+.own{display:flex;gap:8px;margin-top:8px}
+.own textarea{flex:1;border:1px solid var(--line);border-radius:14px;padding:11px;font:inherit;font-size:14px;resize:none;height:48px;background:#fff}
+.own button,.go{border:0;border-radius:14px;background:var(--ink);color:#fff;font:inherit;font-weight:800;padding:0 16px;cursor:pointer}
+.note{background:#fff4e8;border:1px solid #f2d6b3;color:#8a4b12;border-radius:14px;padding:11px 13px;font-size:13px;line-height:1.5;margin-bottom:6px}
+.aff{margin-top:22px;border:1px dashed #cfc6b8;border-radius:16px;padding:13px;font-size:13px;color:var(--dim);display:flex;gap:10px;align-items:center}
+.aff .ico{width:36px;height:36px}
+/* 보여주기 화면 */
+#show{position:fixed;inset:0;background:#fff;z-index:10;display:flex;flex-direction:column;padding:max(14px,env(safe-area-inset-top)) 18px max(16px,env(safe-area-inset-bottom))}
+#show .bar{display:flex;justify-content:space-between;align-items:center}
+#show .bar button{border:0;background:#f1ede6;border-radius:999px;font:inherit;font-weight:800;font-size:14px;padding:9px 14px;cursor:pointer;color:var(--ink)}
+.stage{flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px;text-align:center;padding:10px 0}
+.to{font-size:15px;font-weight:800;color:var(--red);letter-spacing:.3px}
+.ko{font-size:clamp(34px,10vw,60px);font-weight:900;line-height:1.25;word-break:keep-all;letter-spacing:-.5px}
+.mine{font-size:16px;color:var(--dim);line-height:1.4}
+.speak{align-self:center;display:flex;align-items:center;gap:6px;border:0;background:#eef2fd;color:var(--blue);border-radius:999px;padding:8px 16px 8px 8px;font:inherit;font-weight:800;cursor:pointer}
+.speak .ico{width:28px;height:28px}
+.reply{border-top:1px solid var(--line);padding-top:12px}
+.reply p{font-size:13px;color:var(--dim);font-weight:700;text-align:center;margin-bottom:9px}
+.rbtns{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.rbtns button{border:1px solid var(--line);background:var(--soft);border-radius:12px;padding:10px 2px;font:inherit;font-size:14px;font-weight:800;color:var(--ink);cursor:pointer;word-break:keep-all}
+.ans{background:var(--ink);color:#fff;border-radius:18px;padding:16px;text-align:center;margin-bottom:12px}
+.ans small{display:block;font-size:12px;opacity:.7;margin-bottom:4px}.ans b{font-size:24px}
+#show.land .stage{transform:rotate(90deg)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top"><div class="brand">Show <b>Korea</b></div><div class="langs" id="langs"></div></div>
+  <section id="home">
+    <h1 id="hTitle"></h1><p class="sub" id="hSub"></p>
+    <div class="tiles" id="tiles"></div>
+  </section>
+  <section id="sit" hidden>
+    <button class="back" id="back"></button>
+    <div class="shead"><div class="ico" id="sIco"></div><h2 id="sTitle"></h2></div>
+    <div id="sBody"></div>
+  </section>
+</div>
+<div id="show" hidden>
+  <div class="bar"><button id="close">✕</button><button id="rot">⟳</button></div>
+  <div class="stage"><div class="to" id="to"></div><div class="ko" id="ko"></div><div class="mine" id="mine"></div><button class="speak" id="speak"><span class="ico" style="background-position:62.5% 0"></span><span id="speakT"></span></button></div>
+  <div id="ans" class="ans" hidden><small id="ansS"></small><b id="ansB"></b></div>
+  <div class="reply"><p id="replyP"></p><div class="rbtns" id="rbtns"></div></div>
+</div>
+<script>
+'use strict';
+// 아이콘 위치: icons.webp 9칸
+const IC = { taxi: 0, food: 1, store: 2, pharm: 3, shop: 4, sound: 5, star: 6, hotel: 7, plane: 8 };
+const icoPos = (i) => `${(i / 8) * 100}% 0`;
+const UI = {
+  en: { t: 'Show this to Korean staff.', s: 'Pick a situation, tap a sentence, and turn your phone around. No sign-up, no typing.', back: '← Back', fav: 'Saved', dest: 'Where to?', own: 'Your hotel address (paste in Korean)', show: 'Show', say: 'Say', phrases: 'Sentences', reply: '직원분: 답을 눌러 주세요 · Staff, tap a reply', to: 'Please read', pharm: 'This app does not replace a doctor. Emergency: call 119 (English available).', aff: 'Coming soon: airport pickup, eSIM & tax refund deals', go: '→ To' },
+  ja: { t: '韓国のスタッフに見せるだけ。', s: '場面を選んで文をタップ、画面を相手に向けるだけ。登録も入力も不要です。', back: '← 戻る', fav: 'お気に入り', dest: '行き先', own: 'ホテルの住所（韓国語で貼り付け）', show: '表示', say: '読み上げ', phrases: 'フレーズ', reply: '직원분: 답을 눌러 주세요 · スタッフが返事を選びます', to: 'お読みください', pharm: '医師の診察の代わりにはなりません。緊急時は119（多言語対応）。', aff: '近日公開：空港送迎・eSIM・免税のおトク情報', go: '→ 行き先' },
+  zh: { t: '给韩国店员看就行。', s: '选场景、点句子、把手机转给对方。无需注册，无需打字。', back: '← 返回', fav: '收藏', dest: '去哪里？', own: '酒店地址（粘贴韩文地址）', show: '显示', say: '朗读', phrases: '常用句', reply: '직원분: 답을 눌러 주세요 · 请店员点选回答', to: '请阅读', pharm: '本应用不能代替医生诊断。紧急情况请拨打119（有多语言服务）。', aff: '即将推出：机场接送、eSIM、退税优惠', go: '→ 前往' },
+};
+const SIT = [
+  { id: 'taxi', ic: IC.taxi, n: { en: 'Taxi', ja: 'タクシー', zh: '出租车' }, d: { en: 'Destination & payment', ja: '行き先・支払い', zh: '目的地・付款' }, p: [
+    ['이 주소로 가 주세요.', 'Please take me to this address.', 'この住所までお願いします。', '请去这个地址。'],
+    ['카드로 결제할게요.', "I'll pay by card.", 'カードで払います。', '我用卡付款。'],
+    ['트렁크 좀 열어 주세요.', 'Please open the trunk.', 'トランクを開けてください。', '请打开后备箱。'],
+    ['여기서 세워 주세요.', 'Please stop here.', 'ここで止めてください。', '请在这里停车。'],
+    ['얼마나 걸려요?', 'How long will it take?', 'どのくらいかかりますか？', '要多长时间？'],
+    ['영수증 주세요.', 'Receipt, please.', '領収書をください。', '请给我收据。'],
+  ] },
+  { id: 'food', ic: IC.food, n: { en: 'Restaurant', ja: 'レストラン', zh: '餐厅' }, d: { en: 'Order, allergies, pay', ja: '注文・アレルギー・会計', zh: '点餐・过敏・结账' }, p: [
+    ['두 명이에요.', 'Table for two.', '2人です。', '两位。'],
+    ['맵지 않게 해 주세요.', 'Not spicy, please.', '辛くしないでください。', '请不要放辣。'],
+    ['땅콩 알레르기가 있어요.', 'I have a peanut allergy.', 'ピーナッツアレルギーがあります。', '我对花生过敏。'],
+    ['갑각류(새우·게) 알레르기가 있어요.', "I'm allergic to shellfish (shrimp, crab).", '甲殻類（エビ・カニ）アレルギーがあります。', '我对甲壳类（虾、蟹）过敏。'],
+    ['돼지고기는 못 먹어요.', "I can't eat pork.", '豚肉は食べられません。', '我不能吃猪肉。'],
+    ['고기·생선 없이 만들 수 있어요?', 'Can you make it without meat or fish?', '肉と魚なしで作れますか？', '可以不放肉和鱼吗？'],
+    ['추천 메뉴가 뭐예요?', 'What do you recommend?', 'おすすめは何ですか？', '有什么推荐的？'],
+    ['포장해 주세요.', 'To go, please.', '持ち帰りでお願いします。', '请帮我打包。'],
+    ['계산할게요.', 'Check, please.', 'お会計お願いします。', '买单。'],
+  ] },
+  { id: 'store', ic: IC.store, n: { en: 'Convenience store', ja: 'コンビニ', zh: '便利店' }, d: { en: 'Heat up, bag, T-money', ja: '温め・袋・T-money', zh: '加热・袋子・T-money' }, p: [
+    ['데워 주세요.', 'Please heat this up.', '温めてください。', '请帮我加热。'],
+    ['봉투 하나 주세요.', 'One bag, please.', '袋を一つください。', '请给我一个袋子。'],
+    ['젓가락 주세요.', 'Chopsticks, please.', 'お箸をください。', '请给我筷子。'],
+    ['교통카드 충전해 주세요.', 'Please top up my transit card.', '交通カードをチャージしてください。', '请帮我给交通卡充值。'],
+    ['교통카드 살 수 있어요?', 'Can I buy a transit card here?', '交通カードは買えますか？', '这里能买交通卡吗？'],
+    ['ATM 어디 있어요?', 'Where is the ATM?', 'ATMはどこですか？', 'ATM在哪里？'],
+  ] },
+  { id: 'pharm', ic: IC.pharm, n: { en: 'Pharmacy', ja: '薬局', zh: '药店' }, d: { en: 'Symptoms & medicine', ja: '症状・薬', zh: '症状・药品' }, p: [
+    ['두통약 주세요.', 'Something for a headache, please.', '頭痛薬をください。', '请给我头痛药。'],
+    ['열이 나요.', 'I have a fever.', '熱があります。', '我发烧了。'],
+    ['감기 기운이 있어요.', 'I think I have a cold.', '風邪気味です。', '我好像感冒了。'],
+    ['배가 아파요.', 'I have a stomachache.', 'お腹が痛いです。', '我肚子疼。'],
+    ['설사를 해요.', 'I have diarrhea.', '下痢をしています。', '我拉肚子。'],
+    ['멀미약 있어요?', 'Do you have motion sickness medicine?', '酔い止めはありますか？', '有晕车药吗？'],
+    ['밴드(반창고) 주세요.', 'Band-aids, please.', '絆創膏をください。', '请给我创可贴。'],
+    ['알레르기 약 있어요?', 'Do you have allergy medicine?', 'アレルギーの薬はありますか？', '有过敏药吗？'],
+  ] },
+  { id: 'shop', ic: IC.shop, n: { en: 'Shopping', ja: 'ショッピング', zh: '购物' }, d: { en: 'Size, tax refund, gift', ja: 'サイズ・免税・ギフト', zh: '尺码・退税・礼品' }, p: [
+    ['택스 리펀(세금 환급) 돼요?', 'Can I get a tax refund?', '免税（タックスリファンド）できますか？', '可以退税吗？'],
+    ['다른 사이즈 있어요?', 'Do you have another size?', '別のサイズはありますか？', '有别的尺码吗？'],
+    ['입어 봐도 돼요?', 'Can I try this on?', '試着してもいいですか？', '可以试穿吗？'],
+    ['다른 색 있어요?', 'Do you have another color?', '他の色はありますか？', '有别的颜色吗？'],
+    ['선물 포장해 주세요.', 'Please gift-wrap it.', 'ギフト包装をお願いします。', '请帮我包装成礼物。'],
+    ['할인돼요?', 'Is there a discount?', '割引はありますか？', '有折扣吗？'],
+    ['교환이나 환불 돼요?', 'Can I exchange or return it?', '交換や返品はできますか？', '可以换货或退货吗？'],
+  ] },
+];
+const DEST = [
+  ['인천국제공항 제1여객터미널', 'Incheon Airport T1', '仁川空港 第1ターミナル', '仁川机场 第1航站楼', IC.plane],
+  ['인천국제공항 제2여객터미널', 'Incheon Airport T2', '仁川空港 第2ターミナル', '仁川机场 第2航站楼', IC.plane],
+  ['명동역', 'Myeongdong Station', '明洞駅', '明洞站'],
+  ['경복궁', 'Gyeongbokgung Palace', '景福宮', '景福宫'],
+  ['홍대입구역', 'Hongik Univ. Station (Hongdae)', '弘大入口駅', '弘大入口站'],
+  ['N서울타워', 'N Seoul Tower', 'Nソウルタワー', 'N首尔塔'],
+  ['동대문디자인플라자 (DDP)', 'Dongdaemun Design Plaza', '東大門デザインプラザ', '东大门设计广场'],
+  ['강남역', 'Gangnam Station', '江南駅', '江南站'],
+  ['서울역', 'Seoul Station', 'ソウル駅', '首尔站'],
+  ['롯데월드타워', 'Lotte World Tower', 'ロッテワールドタワー', '乐天世界塔'],
+];
+const REPLY = [
+  ['네', 'Yes', 'はい', '是的'], ['아니요', 'No', 'いいえ', '不是'], ['잠시만요', 'One moment, please', '少々お待ちください', '请稍等'], ['없어요', "Sorry, we don't have it", 'ありません', '没有'],
+  ['품절이에요', "It's sold out", '売り切れです', '卖完了'], ['저쪽이에요', "It's over there", 'あちらです', '在那边'], ['카드 돼요', 'Card is OK', 'カード使えます', '可以刷卡'], ['현금만 돼요', 'Cash only', '現金のみです', '只收现金'],
+];
+const LI = { en: 1, ja: 2, zh: 3 };
+let lang = localStorage.getItem('sk_lang') || ({ ja: 'ja', zh: 'zh' }[(navigator.language || 'en').slice(0, 2)] || 'en');
+let fav = JSON.parse(localStorage.getItem('sk_fav') || '[]'), cur = null;
+const $ = (id) => document.getElementById(id);
+function render() {
+  document.documentElement.lang = lang; const u = UI[lang];
+  $('langs').innerHTML = ''; for (const [k, l] of [['en', 'EN'], ['ja', '日本語'], ['zh', '中文']]) { const b = document.createElement('button'); b.textContent = l; b.className = k === lang ? 'on' : ''; b.onclick = () => { lang = k; localStorage.setItem('sk_lang', k); render(); }; $('langs').append(b); }
+  $('hTitle').textContent = u.t; $('hSub').textContent = u.s; $('back').textContent = u.back;
+  const tl = $('tiles'); tl.innerHTML = '';
+  for (const s of SIT) { const b = document.createElement('button'); b.className = 'tile'; b.innerHTML = `<div class="ico" style="background-position:${icoPos(s.ic)}"></div><div><b>${s.n[lang]}</b><br><small>${s.d[lang]}</small></div>`; b.onclick = () => openSit(s.id); tl.append(b); }
+  const fb = document.createElement('button'); fb.className = 'tile'; fb.innerHTML = `<div class="ico" style="background-position:${icoPos(IC.star)}"></div><div><b>${u.fav}</b><br><small>${fav.length}</small></div>`; fb.onclick = () => openSit('fav'); tl.append(fb);
+  if (cur) openSit(cur);
+}
+function phraseRow(p) {
+  const key = p[0], on = fav.includes(key), d = document.createElement('div'); d.className = 'ph';
+  d.innerHTML = `<div class="t"><b></b><span></span></div><button class="star${on ? ' on' : ''}">★</button>`;
+  d.querySelector('b').textContent = p[LI[lang]]; d.querySelector('span').textContent = p[0];
+  d.querySelector('.star').onclick = (e) => { e.stopPropagation(); fav = on ? fav.filter((x) => x !== key) : [...fav, key]; localStorage.setItem('sk_fav', JSON.stringify(fav)); openSit(cur); };
+  d.onclick = () => show(p[0], p[LI[lang]]); return d;
+}
+function openSit(id) {
+  cur = id; const u = UI[lang]; $('home').hidden = true; $('sit').hidden = false; const body = $('sBody'); body.innerHTML = '';
+  const s = SIT.find((x) => x.id === id);
+  $('sIco').style.backgroundPosition = icoPos(s ? s.ic : IC.star); $('sTitle').textContent = s ? s.n[lang] : u.fav;
+  if (id === 'pharm') body.insertAdjacentHTML('beforeend', `<div class="note">${u.pharm}</div>`);
+  if (id === 'taxi') {
+    body.insertAdjacentHTML('beforeend', `<div class="sec">${u.dest}</div>`); const g = document.createElement('div'); g.className = 'dests';
+    for (const d of DEST) { const b = document.createElement('div'); b.className = 'dest'; b.innerHTML = '<b></b><span></span>'; b.querySelector('b').textContent = d[LI[lang]]; b.querySelector('span').textContent = d[0]; b.onclick = () => show(d[0], d[LI[lang]], true); g.append(b); }
+    body.append(g);
+    const o = document.createElement('div'); o.className = 'own'; o.innerHTML = `<textarea placeholder="${u.own}"></textarea><button>${u.show}</button>`;
+    o.querySelector('button').onclick = () => { const v = o.querySelector('textarea').value.trim(); if (v) show(v, u.own, true); }; body.append(o);
+  }
+  body.insertAdjacentHTML('beforeend', `<div class="sec">${u.phrases}</div>`);
+  const list = document.createElement('div'); list.className = 'list';
+  const ps = s ? s.p : SIT.flatMap((x) => x.p).filter((p) => fav.includes(p[0]));
+  ps.forEach((p) => list.append(phraseRow(p))); body.append(list);
+  if (id !== 'fav') body.insertAdjacentHTML('beforeend', `<div class="aff"><div class="ico" style="background-position:${icoPos(id === 'taxi' ? IC.plane : IC.hotel)}"></div>${u.aff}</div>`);
+  scrollTo(0, 0);
+}
+// 받침에 따라 로/으로 (ㄹ 받침은 '로')
+function ro(t) { const c = t.replace(/[^가-힣0-9]+$/g, '').slice(-1); if (/[가-힣]/.test(c)) { const j = (c.charCodeAt(0) - 0xac00) % 28; return j === 0 || j === 8 ? '로' : '으로'; } return /[013678]$/.test(c) ? '로' : '(으)로'; }
+function show(ko, mine, dest) {
+  const u = UI[lang]; $('show').hidden = false; $('show').classList.remove('land'); $('ans').hidden = true;
+  $('to').textContent = dest ? '목적지 · ' + u.go.replace('→ ', '') : '안녕하세요 · ' + u.to;
+  $('ko').textContent = dest ? ko + ro(ko) + ' 가 주세요' : ko; $('mine').textContent = mine; $('speakT').textContent = u.say; $('replyP').textContent = u.reply;
+  const rb = $('rbtns'); rb.innerHTML = '';
+  for (const r of REPLY) { const b = document.createElement('button'); b.textContent = r[0]; b.onclick = () => { $('ans').hidden = false; $('ansS').textContent = r[0]; $('ansB').textContent = r[LI[lang]]; }; rb.append(b); }
+}
+$('speak').onclick = () => { if (!('speechSynthesis' in window)) return; speechSynthesis.cancel(); const m = new SpeechSynthesisUtterance($('ko').textContent); m.lang = 'ko-KR'; m.rate = 0.9; speechSynthesis.speak(m); };
+$('close').onclick = () => { $('show').hidden = true; speechSynthesis && speechSynthesis.cancel(); };
+$('rot').onclick = () => $('show').classList.toggle('land');
+$('back').onclick = () => { cur = null; $('sit').hidden = true; $('home').hidden = false; };
+render();
+</script>
+</body>
+</html>
