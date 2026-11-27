@@ -12,7 +12,7 @@
 html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Apple SD Gothic Neo','Noto Sans KR','Hiragino Sans','PingFang SC',sans-serif}
 #app{max-width:480px;margin:0 auto;min-height:100%;padding:16px 16px 40px;padding-top:max(16px,env(safe-area-inset-top))}
 [hidden]{display:none!important}
-.ico{width:48px;height:48px;background:url(/games/korea-kit/icons.webp) 0 0/1300% 100% no-repeat;flex-shrink:0}
+.ico{width:48px;height:48px;background:var(--icons) 0 0/1300% 100% no-repeat;flex-shrink:0}
 .top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}
 .brand{font-weight:900;font-size:22px;letter-spacing:-.3px}.brand b{color:var(--red)}
 .langs{display:flex;background:#ebe5db;border-radius:999px;padding:3px}
@@ -84,6 +84,8 @@ body.banner #app{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
 </div>
 <script>
 'use strict';
+// 웹(/games/korea-kit/)과 앱(파일을 앱 안에 넣음) 모두에서 아이콘 경로가 맞도록
+document.documentElement.style.setProperty('--icons', `url(${location.pathname.includes('/games/korea-kit') ? '/games/korea-kit/' : './'}icons.webp)`);
 // 아이콘 위치: icons.webp 9칸
 const IC = { taxi: 0, food: 1, store: 2, pharm: 3, shop: 4, sound: 5, star: 6, hotel: 7, plane: 8, metro: 9, cafe: 10, pin: 11, sos: 12 };
 const icoPos = (i) => `${(i / 12) * 100}% 0`;

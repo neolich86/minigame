@@ -1,0 +1,9 @@
+{
+  "appId": "kr.minigame.showkorea",
+  "appName": "Show Korea",
+  "webDir": "www",
+  "backgroundColor": "#f6f3ee",
+  "android": {
+    "backgroundColor": "#f6f3ee"
+  }
+}
