@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>어비스 컨트롤 — 심해 관제소 (샘플)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--bg:#04101c;--panel:#0a1d2e;--line:#16364f;--cy:#3ee6d2;--cy2:#1b9e94;--dim:#6f8ea6;--txt:#d8f3f7;--warn:#ffb547;--red:#ff5d5d;--gold:#ffd36a}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+#app{position:relative;height:100%;max-width:460px;margin:0 auto;display:flex;flex-direction:column;background:radial-gradient(120% 60% at 50% 0%,#0d2a40 0%,#04101c 60%)}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace}
+header{padding:max(12px,env(safe-area-inset-top)) 14px 8px;display:flex;align-items:center;gap:8px}
+header .t{flex:1;font-weight:900;letter-spacing:1px;font-size:15px}header .t small{display:block;font-size:10px;color:var(--dim);letter-spacing:2px;font-weight:700}
+.res{display:flex;gap:6px}.res div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:5px 8px;font-size:12px;font-weight:800;text-align:right;min-width:62px}
+.res div i{display:block;font-style:normal;font-size:9.5px;color:var(--dim);font-weight:700;letter-spacing:.5px}
+main{flex:1;overflow-y:auto;padding:0 14px 14px}
+[hidden]{display:none!important}
+.panel{background:linear-gradient(#0b2133,#081826);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:12px}
+.ph{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:800;color:var(--dim);letter-spacing:1.5px;margin-bottom:8px}
+.ph b{color:var(--cy)}
+#sonarWrap{display:flex;gap:12px;align-items:stretch}
+#sonar{width:178px;height:178px;flex-shrink:0}
+.gauge{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+.stat{background:#06141f;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.stat i{display:block;font-style:normal;font-size:10px;color:var(--dim);font-weight:800;letter-spacing:1px}
+.stat b{font-size:20px;font-weight:900}.stat b small{font-size:12px;color:var(--dim)}
+.bar{height:7px;background:#0f2a3d;border-radius:4px;overflow:hidden;margin-top:5px}.bar span{display:block;height:100%;background:var(--cy);border-radius:4px;transition:width .3s}
+.zones{display:flex;flex-direction:column;gap:8px}
+.zone{display:flex;align-items:center;gap:10px;background:#06141f;border:1px solid var(--line);border-radius:12px;padding:11px 12px;cursor:pointer}
+.zone.on{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy) inset}
+.zone.lock{opacity:.45;cursor:default}
+.zone .d{width:46px;text-align:center;font-weight:900;font-size:12px;color:var(--cy)}.zone .d small{display:block;font-size:9px;color:var(--dim)}
+.zone .n{flex:1}.zone .n b{display:block;font-size:15px}.zone .n span{font-size:11.5px;color:var(--dim)}
+.zone .r{text-align:right;font-size:12px;font-weight:800;color:var(--gold)}.zone .r span{display:block;font-size:10.5px;font-weight:700}
+.risk1{color:#6be38c}.risk2{color:var(--warn)}.risk3{color:#ff8a5c}.risk4{color:var(--red)}
+.btn{width:100%;border:0;border-radius:14px;padding:15px;font:inherit;font-size:16px;font-weight:900;letter-spacing:1px;color:#02201d;background:linear-gradient(#5ff3e0,#22b8a8);box-shadow:0 4px 0 #0e6f66;cursor:pointer;margin-top:10px}
+.btn:disabled{background:#1a3346;color:#5d7c92;box-shadow:none}
+.btn.sm{width:auto;padding:9px 14px;font-size:13px;margin:0}
+.log{font-size:12.5px;line-height:1.55;max-height:220px;overflow-y:auto;display:flex;flex-direction:column-reverse}
+.log p{padding:3px 0;border-bottom:1px dashed #12304580}.log p em{font-style:normal;color:var(--dim);margin-right:6px}
+.log .w{color:var(--warn)}.log .g{color:#6be38c}.log .s{color:var(--cy)}.log .r{color:var(--red)}
+.ups{display:flex;flex-direction:column;gap:8px}
+.up{display:flex;align-items:center;gap:10px;background:#06141f;border:1px solid var(--line);border-radius:12px;padding:11px 12px}
+.up .n{flex:1}.up .n b{font-size:14.5px}.up .n b small{color:var(--cy);margin-left:4px}.up .n span{display:block;font-size:11.5px;color:var(--dim);margin-top:2px}
+.dex{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.dx{background:#06141f;border:1px solid var(--line);border-radius:12px;padding:8px 4px;text-align:center;font-size:10.5px;font-weight:700;color:var(--dim)}
+.dx .im{width:48px;height:48px;margin:0 auto 4px;background:url(/games/abyss/dex.webp) 0 0/1400% 100% no-repeat}
+.dx.no .im{filter:brightness(0) invert(.25)}.dx.got{color:var(--txt);border-color:#1f4d68}
+.dx small{display:block;color:var(--gold);font-size:9.5px}
+nav{display:flex;border-top:1px solid var(--line);background:#051422;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:none;color:var(--dim);font:inherit;font-size:12.5px;font-weight:800;padding:12px 0 11px;cursor:pointer;letter-spacing:.5px}
+nav button.on{color:var(--cy)}nav button b{display:block;font-size:18px;line-height:1.1;margin-bottom:2px}
+.modal{position:absolute;inset:0;background:rgba(1,8,15,.82);display:flex;align-items:center;justify-content:center;padding:22px;z-index:5}
+.card{width:100%;background:linear-gradient(#0d2538,#081826);border:1px solid var(--cy2);border-radius:18px;padding:18px;box-shadow:0 0 40px #3ee6d230}
+.card h3{font-size:18px;margin-bottom:6px}.card .k{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--warn);margin-bottom:6px}
+.card p{font-size:14px;line-height:1.6;color:#b6d4e2;margin-bottom:12px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{border:1px solid var(--line);background:#06141f;border-radius:12px;padding:11px 12px;text-align:left;font:inherit;color:var(--txt);cursor:pointer}
+.opt b{display:block;font-size:14.5px}.opt span{font-size:12px;color:var(--dim)}
+.opt:active{border-color:var(--cy)}
+.sum p{margin:0;padding:6px 0;border-bottom:1px dashed #15334a;font-size:13.5px;display:flex;justify-content:space-between}
+.newf{display:flex;align-items:center;gap:12px;background:#0a2a2a;border:1px solid var(--cy2);border-radius:12px;padding:10px;margin:10px 0 4px}
+.newf .im{width:56px;height:56px;background:url(/games/abyss/dex.webp) 0 0/1400% 100% no-repeat;flex-shrink:0}
+.newf b{display:block;color:var(--cy)}.newf span{font-size:12px;color:#9fc0cf}
+.blink{animation:bl 1s steps(2) infinite}@keyframes bl{50%{opacity:.3}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header><div class="t mono">ABYSS CONTROL<small>심해 무인 관제소</small></div>
+    <div class="res mono"><div><i>CREDIT</i><span id="cr">0</span></div><div><i>DATA</i><span id="rd">0</span></div><div><i>HULL</i><span id="hl">100%</span></div></div></header>
+  <main>
+    <section id="tab0">
+      <div class="panel">
+        <div class="ph mono"><span>SONAR · 심해-01</span><b id="stat">대기 중</b></div>
+        <div id="sonarWrap"><canvas id="sonar"></canvas>
+          <div class="gauge">
+            <div class="stat mono"><i>DEPTH</i><b id="depth">0<small> m</small></b></div>
+            <div class="stat mono"><i id="tLabel">탐사 진행</i><b id="eta">--</b><div class="bar"><span id="prog" style="width:0"></span></div></div>
+          </div></div>
+      </div>
+      <div class="panel" id="zonePanel"><div class="ph mono"><span>탐사 구역 선택</span><b id="zSel"></b></div><div class="zones" id="zones"></div>
+        <button class="btn" id="go">탐사선 파견</button></div>
+      <div class="panel"><div class="ph mono"><span>관제 로그</span><b class="blink" id="live">● LIVE</b></div><div class="log mono" id="log"></div></div>
+    </section>
+    <section id="tab1" hidden>
+      <div class="panel"><div class="ph mono"><span>선체 정비</span><b id="hl2"></b></div>
+        <div class="up"><div class="n"><b>긴급 수리</b><span>선체 내구도를 100%로 복구 (시간이 지나면 조금씩 자동 회복)</span></div><button class="btn sm" id="repair"></button></div></div>
+      <div class="panel"><div class="ph mono"><span>탐사선 강화</span><b>심해-01</b></div><div class="ups" id="ups"></div></div>
+    </section>
+    <section id="tab2" hidden>
+      <div class="panel"><div class="ph mono"><span>발견 도감</span><b id="dexN"></b></div><div class="dex" id="dex"></div></div>
+    </section>
+  </main>
+  <nav><button class="on" data-t="0"><b>📡</b>관제실</button><button data-t="1"><b>🔧</b>강화</button><button data-t="2"><b>📖</b>도감</button></nav>
+  <div class="modal" id="modal" hidden><div class="card" id="card"></div></div>
+</div>
+<script>
+'use strict';
+const TS = Number((location.search.match(/fast=(\d+)/) || [])[1] || 1); // 테스트용 시간 배속
+const now = () => Date.now() * TS;
+const R = Math.random, pick = (a) => a[Math.floor(R() * a.length)], $ = (id) => document.getElementById(id);
+const fmt = (n) => Math.floor(n).toLocaleString();
+
+// ---------- 데이터 ----------
+const ZONES = [
+  { n: '대륙붕 외곽', depth: 800, sec: 20, risk: 1, cr: 120, rd: 2, need: 1, pool: [2, 3, 6, 13, 7] },
+  { n: '심해 협곡', depth: 2400, sec: 35, risk: 2, cr: 350, rd: 5, need: 2, pool: [0, 1, 7, 8, 13] },
+  { n: '망각의 해저', depth: 5800, sec: 55, risk: 3, cr: 900, rd: 12, need: 4, pool: [4, 5, 9, 10] },
+  { n: '고대 유적 지대', depth: 9200, sec: 80, risk: 4, cr: 2200, rd: 30, need: 6, pool: [11, 12, 10, 9, 5] },
+];
+const RISK = ['', '낮음', '보통', '높음', '매우 높음'];
+const DEX = [
+  ['유령 해파리', '빛을 내며 떠다니는 반투명 생명체'], ['대왕오징어', '탐사선만 한 눈을 가졌다'], ['심해 복어', '수압이 바뀌면 부풀어 오른다'], ['눈먼 바닷가재', '열수구 주변에 무리 지어 산다'],
+  ['그림자 문어', '소나에 잡히지 않는 위장술'], ['고블린 상어', '튀어나오는 턱을 가진 심해 상어'], ['나선 화석', '수억 년 전 생물의 흔적'], ['침몰선 금화', '난파선 화물칸에서 흘러나왔다'],
+  ['고대 항아리', '알 수 없는 문양이 새겨져 있다'], ['녹슨 열쇠', '어떤 문을 여는 열쇠일까'], ['심연의 보석', '스스로 푸른 빛을 낸다'], ['예언의 수정구', '안쪽에 해저 지도가 비친다'],
+  ['해저 석상', '거대한 얼굴이 위를 올려다본다'], ['발광 산호', '어둠 속에서 붉게 빛나는 산호'],
+];
+const UPS = [
+  { k: 'hull', n: '선체 장갑', d: (l) => `받는 피해 -${l * 8}% · 깊은 구역 해금`, base: 300 },
+  { k: 'oxy', n: '산소 공급기', d: (l) => `심층 진입 성공률 +${l * 5}%`, base: 200 },
+  { k: 'sonar', n: '소나', d: (l) => `발견 확률 +${l * 5}% · 미확인 신호 +${l * 6}%`, base: 250 },
+  { k: 'engine', n: '추진 엔진', d: (l) => `탐사 시간 -${Math.round((1 - spd(l)) * 100)}%`, base: 200 },
+];
+const spd = (l) => Math.max(0.4, 1 - (l - 1) * 0.08);
+const upCost = (u, l) => Math.round(u.base * Math.pow(1.7, l - 1));
+const FLAVOR = [
+  ['s', '수심 {d}m 통과. 외부 수온 {t}°C'], ['s', '탐사선 조명에 발광 생물 무리가 반응했다'], ['s', '해저 퇴적물 샘플 채취 완료'],
+  ['s', '소나에 거대한 그림자가 잡혔다가 사라졌다'], ['s', '열수 분출구 근처를 지나며 항로를 수정했다'], ['s', '해류가 강해져 우회 항로로 진입했다'],
+  ['s', '멀리서 고래의 노래 같은 저주파가 감지됐다'], ['s', '바닥에 끌린 듯한 거대한 자국을 발견했다'],
+];
+const HAZARD = ['선체에서 삐걱거리는 소리가 들린다', '암초에 측면을 긁혔다', '수압 경보! 보조 격벽이 버텨냈다', '정체불명의 생명체가 탐사선을 들이받았다', '산소 공급 장치 고장 — 긴급 수리 완료'];
+const SIGNAL = [
+  '해저 지형 아래에서 일정한 간격의 신호가 반복된다. 기존 생명체의 패턴과 일치하지 않는다.',
+  '폐쇄된 연구시설로 보이는 구조물에서 희미한 구조 신호가 들린다.',
+  '소나 화면 가장자리에서 무언가가 탐사선을 따라오고 있다.',
+  '해저 균열 깊은 곳에서 푸른 빛이 깜박인다.',
+];
+
+// ---------- 저장 ----------
+const KEY = 'abyss_v1';
+let S = JSON.parse(localStorage.getItem(KEY) || 'null') || { cr: 300, rd: 0, hull: 100, lv: { hull: 1, oxy: 1, sonar: 1, engine: 1 }, dex: {}, trip: null, log: [], zone: 0, last: now() };
+const save = () => localStorage.setItem(KEY, JSON.stringify(S));
+function addLog(cls, txt) { const d = new Date(); S.log.unshift([cls, txt, `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`]); S.log.length = Math.min(S.log.length, 60); }
+if (!S.log.length) { addLog('s', '관제소 시스템 온라인'); addLog('s', '탐사선 심해-01 대기 상태'); }
+
+// ---------- 탐사 ----------
+function dispatch() {
+  const z = ZONES[S.zone]; if (S.trip || S.lv.hull < z.need || S.hull < 20) return;
+  const dur = z.sec * spd(S.lv.engine) * 1000;
+  const ev = []; const n = 3 + Math.floor(R() * 2);
+  for (let i = 0; i < n; i++) {
+    const at = 0.12 + (i / n) * 0.8 + R() * 0.06;
+    if (R() < 0.18 + z.risk * 0.07) ev.push({ at, k: 'h', txt: pick(HAZARD), dmg: Math.round((4 + R() * 6 * z.risk) * (1 - (S.lv.hull - 1) * 0.08)) });
+    else { const f = pick(FLAVOR); ev.push({ at, k: f[0], txt: f[1].replace('{d}', fmt(z.depth * (0.3 + at * 0.6))).replace('{t}', (4 - at * 3).toFixed(1)) }); }
+  }
+  const sig = R() < Math.min(0.8, 0.4 + S.lv.sonar * 0.06) ? { at: 0.55, txt: pick(SIGNAL), done: false } : null;
+  S.trip = { z: S.zone, start: now(), dur, ev, sig, pause: 0, pStart: 0, mult: 1, finds: [], dmg: 0, extraRd: 0, early: false };
+  addLog('s', `탐사선 출항 → ${z.n} (수심 ${fmt(z.depth)}m)`); save(); render();
+}
+function progress(t) { const T = S.trip; if (!T) return 0; const el = (T.pStart ? T.pStart : now()) - T.start - T.pause; return Math.min(1, Math.max(0, el / T.dur)); }
+function tick() {
+  const T = S.trip; if (!T) { // 대기 중에는 선체 자동 회복 (1분에 2%)
+    const el = now() - (S.last || now()); if (el > 30000) { S.hull = Math.min(100, S.hull + Math.floor(el / 30000)); S.last = now() - (el % 30000); save(); } return; }
+  S.last = now();
+  const p = progress();
+  for (const e of T.ev) if (!e.done && p >= e.at) { e.done = true;
+    if (e.k === 'h') { S.hull = Math.max(0, S.hull - e.dmg); T.dmg += e.dmg; addLog('w', `${e.txt} (선체 -${e.dmg}%)`); if (S.hull <= 0) { addLog('r', '선체 손상 한계! 비상 부상 개시'); return finish(true); } }
+    else addLog('s', e.txt); }
+  if (T.sig && !T.sig.done && p >= T.sig.at) {
+    if (!T.pStart) { T.pStart = now(); addLog('w', '⚠ 미확인 신호 감지 — 관제사 판단 대기'); showSignal(); }
+    else if (now() - T.pStart > 30000) choose(0, true); // 자리를 비우면 30초 뒤 안전 귀환
+  }
+  if (p >= 1) finish(false);
+  save();
+}
+function choose(c, auto) {
+  const T = S.trip; if (!T || !T.sig || T.sig.done) return; const z = ZONES[T.z];
+  T.sig.done = true; T.pause += now() - T.pStart; T.pStart = 0; $('modal').hidden = true;
+  if (c === 0) { addLog('s', auto ? '응답 없음 — 자동으로 안전 귀환' : '판단: 즉시 귀환. 안전을 확보했다'); T.mult = 0.8; T.early = true; return finish(false); }
+  if (c === 1) { const g = z.rd * 2; T.extraRd += g; S.hull = Math.max(1, S.hull - 5); addLog('g', `신호 추적 성공 — 연구 데이터 +${g} (선체 -5%)`);
+    if (R() < 0.5 + S.lv.sonar * 0.04) { const cre = z.pool.filter((i) => i <= 6 || i === 13); T.finds.push(pick(cre.length ? cre : z.pool)); } return; }
+  const ok = R() < 0.5 + S.lv.oxy * 0.05;
+  if (ok) { T.mult = 1.6; T.finds.push(pick(z.pool)); addLog('g', '심층 진입 성공! 미지의 구조물에서 무언가를 회수했다'); }
+  else { const d = Math.round((22 + R() * 15) * (1 - (S.lv.hull - 1) * 0.08)); S.hull = Math.max(0, S.hull - d); T.dmg += d; addLog('r', `심층 진입 중 수압 붕괴 위기! (선체 -${d}%)`); if (S.hull <= 0) return finish(true); }
+}
+function finish(wreck) {
+  const T = S.trip, z = ZONES[T.z];
+  let cr = Math.round(z.cr * T.mult * (wreck ? 0.3 : 1)), rd = (wreck ? 0 : z.rd) + T.extraRd;
+  if (!wreck && !T.early && R() < 0.3 + S.lv.sonar * 0.05) T.finds.push(pick(z.pool));
+  const news = [];
+  for (const f of T.finds) { if (!S.dex[f]) news.push(f); S.dex[f] = (S.dex[f] || 0) + 1; cr += 80 * (T.z + 1); }
+  if (wreck) S.hull = 10;
+  S.cr += cr; S.rd += rd; S.trip = null; S.last = now();
+  addLog(wreck ? 'r' : 'g', `${wreck ? '비상 부상' : '귀환 완료'} — ${fmt(cr)} CR · 데이터 ${rd}${T.finds.length ? ` · 발견 ${T.finds.length}건` : ''}`);
+  save(); render(); showResult({ z, cr, rd, dmg: T.dmg, finds: T.finds, news, wreck, early: T.early });
+}
+
+// ---------- 화면 ----------
+function render() {
+  $('cr').textContent = fmt(S.cr); $('rd').textContent = fmt(S.rd); $('hl').textContent = S.hull + '%'; $('hl').style.color = S.hull < 30 ? 'var(--red)' : '';
+  const zs = $('zones'); zs.innerHTML = '';
+  ZONES.forEach((z, i) => { const lock = S.lv.hull < z.need, d = document.createElement('div'); d.className = 'zone' + (i === S.zone ? ' on' : '') + (lock ? ' lock' : '');
+    d.innerHTML = `<div class="d mono">${(z.depth / 1000).toFixed(1)}<small>km</small></div><div class="n"><b>${z.n}</b><span>${lock ? `🔒 선체 장갑 Lv.${z.need} 필요` : `약 ${Math.round(z.sec * spd(S.lv.engine))}초 · 위험 <span class="risk${z.risk}">${RISK[z.risk]}</span>`}</span></div><div class="r mono">+${fmt(z.cr)}<span>CR</span></div>`;
+    d.onclick = () => { if (!lock && !S.trip) { S.zone = i; save(); render(); } }; zs.append(d); });
+  const go = $('go'); go.disabled = !!S.trip || S.hull < 20;
+  go.textContent = S.trip ? '탐사 진행 중…' : S.hull < 20 ? '선체 손상 — 수리 필요' : '탐사선 파견';
+  $('zSel').textContent = ZONES[S.zone].n;
+  $('zonePanel').hidden = !!S.trip; // 탐사 중에는 구역 목록을 접고 로그를 위로
+  $('log').innerHTML = S.log.slice(0, 30).map((l) => `<p class="${l[0]}"><em>${l[2]}</em>${l[1]}</p>`).join('');
+  // 강화
+  $('hl2').textContent = `내구도 ${S.hull}%`; const rc = (100 - S.hull) * 3; $('repair').textContent = S.hull >= 100 ? '정상' : `수리 ${rc} CR`; $('repair').disabled = S.hull >= 100 || S.cr < rc || !!S.trip;
+  const ups = $('ups'); ups.innerHTML = '';
+  for (const u of UPS) { const l = S.lv[u.k], c = upCost(u, l), max = l >= 10, d = document.createElement('div'); d.className = 'up';
+    d.innerHTML = `<div class="n"><b>${u.n}<small class="mono">Lv.${l}</small></b><span>${u.d(l)}</span></div>`; const b = document.createElement('button'); b.className = 'btn sm'; b.textContent = max ? 'MAX' : `${fmt(c)} CR`; b.disabled = max || S.cr < c;
+    b.onclick = () => { S.cr -= c; S.lv[u.k]++; addLog('g', `${u.n} Lv.${S.lv[u.k]} 강화 완료`); save(); render(); }; d.append(b); ups.append(d); }
+  // 도감
+  const dx = $('dex'); dx.innerHTML = ''; let got = 0;
+  DEX.forEach((e, i) => { const c = S.dex[i] || 0; if (c) got++; const d = document.createElement('div'); d.className = 'dx ' + (c ? 'got' : 'no');
+    d.innerHTML = `<div class="im" style="background-position:${(i / 13) * 100}% 0"></div>${c ? e[0] : '???'}${c ? `<small>×${c}</small>` : ''}`; d.onclick = () => c && showInfo(i); dx.append(d); });
+  $('dexN').textContent = `${got} / ${DEX.length}`;
+}
+function hud() {
+  const T = S.trip;
+  if (!T) { $('stat').textContent = S.hull < 20 ? '수리 필요' : '대기 중'; $('depth').innerHTML = `0<small> m</small>`; $('eta').textContent = '--'; $('prog').style.width = '0'; return; }
+  const z = ZONES[T.z], p = progress(), dp = Math.sin(Math.min(1, p) * Math.PI) * z.depth;
+  $('depth').innerHTML = `${fmt(dp)}<small> m</small>`; $('prog').style.width = (p * 100).toFixed(1) + '%';
+  const left = Math.max(0, (T.dur * (1 - p)) / 1000 / TS);
+  $('eta').textContent = T.pStart ? '신호 판단' : `${Math.ceil(left)}초`;
+  $('stat').textContent = T.pStart ? '⚠ 신호 감지' : p < 0.5 ? '하강 중' : '귀환 중';
+}
+function modal(html) { $('card').innerHTML = html; $('modal').hidden = false; }
+function showSignal() {
+  modal(`<div class="k mono">⚠ EMERGENCY SIGNAL</div><h3>미확인 신호 감지</h3><p>${S.trip.sig.txt}</p><div class="opts">
+  <button class="opt" data-c="0"><b>즉시 귀환한다</b><span>안전 확보 · 보상 80%</span></button>
+  <button class="opt" data-c="1"><b>신호를 추적한다</b><span>연구 데이터 획득 · 생명체 발견 가능 · 선체 -5%</span></button>
+  <button class="opt" data-c="2"><b>더 깊이 진입한다</b><span>희귀 유물·보상 1.6배 · 성공률 ${50 + S.lv.oxy * 5}% · 실패 시 큰 손상</span></button></div>`);
+  $('card').querySelectorAll('.opt').forEach((b) => (b.onclick = () => { choose(+b.dataset.c); render(); }));
+}
+function showResult(r) {
+  const nf = r.news.map((i) => `<div class="newf"><div class="im" style="background-position:${(i / 13) * 100}% 0"></div><div><b>NEW · ${DEX[i][0]}</b><span>${DEX[i][1]}</span></div></div>`).join('');
+  modal(`<div class="k mono" style="color:${r.wreck ? 'var(--red)' : 'var(--cy)'}">${r.wreck ? 'EMERGENCY SURFACE' : 'MISSION COMPLETE'}</div><h3>${r.wreck ? '탐사선 비상 부상' : '탐사선 귀환'} — ${r.z.n}</h3>
+  <div class="sum mono"><p><span>크레딧</span><b style="color:var(--gold)">+${fmt(r.cr)}</b></p><p><span>연구 데이터</span><b>+${r.rd}</b></p><p><span>선체 손상</span><b style="color:${r.dmg ? 'var(--warn)' : ''}">-${r.dmg}%</b></p><p><span>발견물</span><b>${r.finds.length}건</b></p></div>${nf}
+  <button class="btn" id="ok">확인</button>`);
+  $('ok').onclick = () => { $('modal').hidden = true; };
+}
+function showInfo(i) { modal(`<div class="newf"><div class="im" style="background-position:${(i / 13) * 100}% 0"></div><div><b>${DEX[i][0]}</b><span>${DEX[i][1]}</span></div></div><p class="mono" style="font-size:12px;margin-top:8px">발견 ${S.dex[i]}회</p><button class="btn" id="ok">닫기</button>`); $('ok').onclick = () => ($('modal').hidden = true); }
+
+// ---------- 소나 ----------
+const cv = $('sonar'), g = cv.getContext('2d'); let blips = [];
+function sizeSonar() { const d = Math.min(2, devicePixelRatio || 1); cv.width = 178 * d; cv.height = 178 * d; g.setTransform(d, 0, 0, d, 0, 0); }
+sizeSonar();
+function drawSonar(t) {
+  const W = 178, c = W / 2, r = c - 4, a = (t / 1000) * (S.trip && !S.trip.pStart ? 2.2 : 0.8);
+  g.clearRect(0, 0, W, W);
+  g.fillStyle = '#03131c'; g.beginPath(); g.arc(c, c, r, 0, 6.28); g.fill();
+  g.strokeStyle = '#13424a'; g.lineWidth = 1; for (let k = 1; k <= 3; k++) { g.beginPath(); g.arc(c, c, (r * k) / 3, 0, 6.28); g.stroke(); }
+  g.beginPath(); g.moveTo(c - r, c); g.lineTo(c + r, c); g.moveTo(c, c - r); g.lineTo(c, c + r); g.stroke();
+  const gr = g.createConicGradient ? g.createConicGradient(a - 0.9, c, c) : null;
+  if (gr) { gr.addColorStop(0, 'rgba(62,230,210,0)'); gr.addColorStop(0.14, 'rgba(62,230,210,.35)'); gr.addColorStop(0.145, 'rgba(62,230,210,0)'); g.fillStyle = gr; g.beginPath(); g.arc(c, c, r, 0, 6.28); g.fill(); }
+  g.strokeStyle = '#3ee6d2'; g.lineWidth = 2; g.beginPath(); g.moveTo(c, c); g.lineTo(c + Math.cos(a) * r, c + Math.sin(a) * r); g.stroke();
+  if (R() < (S.trip ? 0.05 : 0.015)) blips.push({ x: c + (R() - 0.5) * r * 1.6, y: c + (R() - 0.5) * r * 1.6, t: 0, red: S.trip && S.trip.pStart && R() < 0.6 });
+  for (const b of blips) { b.t += 0.016; if (Math.hypot(b.x - c, b.y - c) > r - 4) continue; g.fillStyle = b.red ? `rgba(255,181,71,${1 - b.t / 2.5})` : `rgba(62,230,210,${1 - b.t / 2.5})`; g.beginPath(); g.arc(b.x, b.y, b.red ? 4 : 3, 0, 6.28); g.fill(); }
+  blips = blips.filter((b) => b.t < 2.5);
+  g.fillStyle = '#ffffff'; g.beginPath(); g.arc(c, c, 3.5, 0, 6.28); g.fill();
+}
+// ---------- 탭 ----------
+document.querySelectorAll('nav button').forEach((b) => (b.onclick = () => { document.querySelectorAll('nav button').forEach((x) => x.classList.toggle('on', x === b)); for (let i = 0; i < 3; i++) $('tab' + i).hidden = String(i) !== b.dataset.t; render(); }));
+$('go').onclick = dispatch;
+$('repair').onclick = () => { const c = (100 - S.hull) * 3; if (S.cr >= c && !S.trip) { S.cr -= c; S.hull = 100; addLog('g', '선체 수리 완료 (100%)'); save(); render(); } };
+// 다시 열었을 때 신호 대기 중이면 선택 창을 다시 띄움
+if (S.trip && S.trip.pStart && S.trip.sig && !S.trip.sig.done) showSignal();
+let lastR = 0;
+function loop(t) { requestAnimationFrame(loop); drawSonar(t); if (t - lastR > 250) { lastR = t; const had = S.log.length && S.log[0][1]; tick(); hud(); if (S.log.length && S.log[0][1] !== had) render(); } }
+render(); requestAnimationFrame(loop);
+if (/test/.test(location.search)) window.__ab = { get S() { return S; }, reset() { localStorage.removeItem(KEY); location.reload(); }, choose, dispatch };
+</script>
+</body>
+</html>
