@@ -12,7 +12,7 @@
 html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Apple SD Gothic Neo','Noto Sans KR','Hiragino Sans','PingFang SC',sans-serif}
 #app{max-width:480px;margin:0 auto;min-height:100%;padding:16px 16px 40px;padding-top:max(16px,env(safe-area-inset-top))}
 [hidden]{display:none!important}
-.ico{width:48px;height:48px;background:url(/games/korea-kit/icons.webp) 0 0/900% 100% no-repeat;flex-shrink:0}
+.ico{width:48px;height:48px;background:url(/games/korea-kit/icons.webp) 0 0/1300% 100% no-repeat;flex-shrink:0}
 .top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}
 .brand{font-weight:900;font-size:22px;letter-spacing:-.3px}.brand b{color:var(--red)}
 .langs{display:flex;background:#ebe5db;border-radius:999px;padding:3px}
@@ -78,19 +78,19 @@ body.banner #app{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
 </div>
 <div id="show" hidden>
   <div class="bar"><button id="close">✕</button><button id="rot">⟳</button></div>
-  <div class="stage"><div class="to" id="to"></div><div class="ko" id="ko"></div><div class="mine" id="mine"></div><button class="speak" id="speak"><span class="ico" style="background-position:62.5% 0"></span><span id="speakT"></span></button></div>
+  <div class="stage"><div class="to" id="to"></div><div class="ko" id="ko"></div><div class="mine" id="mine"></div><button class="speak" id="speak"><span class="ico" style="background-position:41.667% 0"></span><span id="speakT"></span></button></div>
   <div id="ans" class="ans" hidden><small id="ansS"></small><b id="ansB"></b></div>
   <div class="reply"><p id="replyP"></p><div class="rbtns" id="rbtns"></div></div>
 </div>
 <script>
 'use strict';
 // 아이콘 위치: icons.webp 9칸
-const IC = { taxi: 0, food: 1, store: 2, pharm: 3, shop: 4, sound: 5, star: 6, hotel: 7, plane: 8 };
-const icoPos = (i) => `${(i / 8) * 100}% 0`;
+const IC = { taxi: 0, food: 1, store: 2, pharm: 3, shop: 4, sound: 5, star: 6, hotel: 7, plane: 8, metro: 9, cafe: 10, pin: 11, sos: 12 };
+const icoPos = (i) => `${(i / 12) * 100}% 0`;
 const UI = {
-  en: { t: 'Show this to Korean staff.', s: 'Pick a situation, tap a sentence, and turn your phone around. No sign-up, no typing.', back: '← Back', fav: 'Saved', dest: 'Where to?', own: 'Your hotel address (paste in Korean)', show: 'Show', say: 'Say', phrases: 'Sentences', reply: '직원분: 답을 눌러 주세요 · Staff, tap a reply', to: 'Please read', pharm: 'This app does not replace a doctor. Emergency: call 119 (English available).', aff: 'Coming soon: airport pickup, eSIM & tax refund deals', go: '→ To' },
-  ja: { t: '韓国のスタッフに見せるだけ。', s: '場面を選んで文をタップ、画面を相手に向けるだけ。登録も入力も不要です。', back: '← 戻る', fav: 'お気に入り', dest: '行き先', own: 'ホテルの住所（韓国語で貼り付け）', show: '表示', say: '読み上げ', phrases: 'フレーズ', reply: '직원분: 답을 눌러 주세요 · スタッフが返事を選びます', to: 'お読みください', pharm: '医師の診察の代わりにはなりません。緊急時は119（多言語対応）。', aff: '近日公開：空港送迎・eSIM・免税のおトク情報', go: '→ 行き先' },
-  zh: { t: '给韩国店员看就行。', s: '选场景、点句子、把手机转给对方。无需注册，无需打字。', back: '← 返回', fav: '收藏', dest: '去哪里？', own: '酒店地址（粘贴韩文地址）', show: '显示', say: '朗读', phrases: '常用句', reply: '직원분: 답을 눌러 주세요 · 请店员点选回答', to: '请阅读', pharm: '本应用不能代替医生诊断。紧急情况请拨打119（有多语言服务）。', aff: '即将推出：机场接送、eSIM、退税优惠', go: '→ 前往' },
+  en: { t: 'Show this to Korean staff.', s: 'Pick a situation, tap a sentence, and turn your phone around. No sign-up, no typing.', back: '← Back', fav: 'Saved', dest: 'Where to?', own: 'Your hotel address (paste in Korean)', show: 'Show', say: 'Say', phrases: 'Sentences', reply: '직원분: 답을 눌러 주세요 · Staff, tap a reply', to: 'Please read', sos: 'Police 112 · Fire & ambulance 119 · Korea Travel Hotline 1330 (24h, English/日本語/中文)', pharm: 'This app does not replace a doctor. Emergency: call 119 (English available).', aff: 'Coming soon: airport pickup, eSIM & tax refund deals', go: '→ To' },
+  ja: { t: '韓国のスタッフに見せるだけ。', s: '場面を選んで文をタップ、画面を相手に向けるだけ。登録も入力も不要です。', back: '← 戻る', fav: 'お気に入り', dest: '行き先', own: 'ホテルの住所（韓国語で貼り付け）', show: '表示', say: '読み上げ', phrases: 'フレーズ', reply: '직원분: 답을 눌러 주세요 · スタッフが返事を選びます', to: 'お読みください', sos: '警察 112 · 消防・救急 119 · 観光案内 1330（24時間・日本語対応）', pharm: '医師の診察の代わりにはなりません。緊急時は119（多言語対応）。', aff: '近日公開：空港送迎・eSIM・免税のおトク情報', go: '→ 行き先' },
+  zh: { t: '给韩国店员看就行。', s: '选场景、点句子、把手机转给对方。无需注册，无需打字。', back: '← 返回', fav: '收藏', dest: '去哪里？', own: '酒店地址（粘贴韩文地址）', show: '显示', say: '朗读', phrases: '常用句', reply: '직원분: 답을 눌러 주세요 · 请店员点选回答', to: '请阅读', sos: '报警 112 · 火警・急救 119 · 旅游咨询热线 1330（24小时・中文服务）', pharm: '本应用不能代替医生诊断。紧急情况请拨打119（有多语言服务）。', aff: '即将推出：机场接送、eSIM、退税优惠', go: '→ 前往' },
 };
 const SIT = [
   { id: 'taxi', ic: IC.taxi, n: { en: 'Taxi', ja: 'タクシー', zh: '出租车' }, d: { en: 'Destination & payment', ja: '行き先・支払い', zh: '目的地・付款' }, p: [
@@ -100,6 +100,8 @@ const SIT = [
     ['여기서 세워 주세요.', 'Please stop here.', 'ここで止めてください。', '请在这里停车。'],
     ['얼마나 걸려요?', 'How long will it take?', 'どのくらいかかりますか？', '要多长时间？'],
     ['영수증 주세요.', 'Receipt, please.', '領収書をください。', '请给我收据。'],
+    ['천천히 가 주세요.', 'Please drive slowly.', 'ゆっくり走ってください。', '请开慢一点。'],
+    ['공항까지 요금이 대략 얼마예요?', 'About how much is the fare to the airport?', '空港までだいたいいくらですか？', '到机场大概多少钱？'],
   ] },
   { id: 'food', ic: IC.food, n: { en: 'Restaurant', ja: 'レストラン', zh: '餐厅' }, d: { en: 'Order, allergies, pay', ja: '注文・アレルギー・会計', zh: '点餐・过敏・结账' }, p: [
     ['두 명이에요.', 'Table for two.', '2人です。', '两位。'],
@@ -111,6 +113,11 @@ const SIT = [
     ['추천 메뉴가 뭐예요?', 'What do you recommend?', 'おすすめは何ですか？', '有什么推荐的？'],
     ['포장해 주세요.', 'To go, please.', '持ち帰りでお願いします。', '请帮我打包。'],
     ['계산할게요.', 'Check, please.', 'お会計お願いします。', '买单。'],
+    ['영어 메뉴 있어요?', 'Do you have an English menu?', '英語のメニューはありますか？', '有英文菜单吗？'],
+    ['1인분도 주문돼요?', 'Can I order a single portion?', '1人前でも注文できますか？', '可以点一人份吗？'],
+    ['물 좀 주세요.', 'Water, please.', 'お水をください。', '请给我水。'],
+    ['이거 하나 더 주세요.', 'One more of this, please.', 'これをもう一つください。', '这个再来一份。'],
+    ['따로 계산할게요.', "We'll pay separately.", '別々に払います。', '我们分开付。'],
   ] },
   { id: 'store', ic: IC.store, n: { en: 'Convenience store', ja: 'コンビニ', zh: '便利店' }, d: { en: 'Heat up, bag, T-money', ja: '温め・袋・T-money', zh: '加热・袋子・T-money' }, p: [
     ['데워 주세요.', 'Please heat this up.', '温めてください。', '请帮我加热。'],
@@ -119,6 +126,8 @@ const SIT = [
     ['교통카드 충전해 주세요.', 'Please top up my transit card.', '交通カードをチャージしてください。', '请帮我给交通卡充值。'],
     ['교통카드 살 수 있어요?', 'Can I buy a transit card here?', '交通カードは買えますか？', '这里能买交通卡吗？'],
     ['ATM 어디 있어요?', 'Where is the ATM?', 'ATMはどこですか？', 'ATM在哪里？'],
+    ['이거 얼마예요?', 'How much is this?', 'これはいくらですか？', '这个多少钱？'],
+    ['영수증은 괜찮아요.', "I don't need the receipt.", 'レシートは大丈夫です。', '不用小票了。'],
   ] },
   { id: 'pharm', ic: IC.pharm, n: { en: 'Pharmacy', ja: '薬局', zh: '药店' }, d: { en: 'Symptoms & medicine', ja: '症状・薬', zh: '症状・药品' }, p: [
     ['두통약 주세요.', 'Something for a headache, please.', '頭痛薬をください。', '请给我头痛药。'],
@@ -129,6 +138,8 @@ const SIT = [
     ['멀미약 있어요?', 'Do you have motion sickness medicine?', '酔い止めはありますか？', '有晕车药吗？'],
     ['밴드(반창고) 주세요.', 'Band-aids, please.', '絆創膏をください。', '请给我创可贴。'],
     ['알레르기 약 있어요?', 'Do you have allergy medicine?', 'アレルギーの薬はありますか？', '有过敏药吗？'],
+    ['목이 아파요.', 'I have a sore throat.', '喉が痛いです。', '我嗓子疼。'],
+    ['하루에 몇 번 먹어요?', 'How many times a day do I take it?', '1日に何回飲みますか？', '一天吃几次？'],
   ] },
   { id: 'shop', ic: IC.shop, n: { en: 'Shopping', ja: 'ショッピング', zh: '购物' }, d: { en: 'Size, tax refund, gift', ja: 'サイズ・免税・ギフト', zh: '尺码・退税・礼品' }, p: [
     ['택스 리펀(세금 환급) 돼요?', 'Can I get a tax refund?', '免税（タックスリファンド）できますか？', '可以退税吗？'],
@@ -138,8 +149,62 @@ const SIT = [
     ['선물 포장해 주세요.', 'Please gift-wrap it.', 'ギフト包装をお願いします。', '请帮我包装成礼物。'],
     ['할인돼요?', 'Is there a discount?', '割引はありますか？', '有折扣吗？'],
     ['교환이나 환불 돼요?', 'Can I exchange or return it?', '交換や返品はできますか？', '可以换货或退货吗？'],
+    ['이거 얼마예요?', 'How much is this?', 'これはいくらですか？', '这个多少钱？'],
+    ['카드 돼요?', 'Do you take cards?', 'カードは使えますか？', '可以刷卡吗？'],
+    ['조금만 깎아 주세요.', 'Could you give me a better price?', '少し安くしてもらえますか？', '能便宜一点吗？'],
+    ['그냥 구경하는 중이에요.', "I'm just looking.", '見ているだけです。', '我只是看看。'],
+  ] },
+  { id: 'metro', ic: IC.metro, n: { en: 'Subway & bus', ja: '地下鉄・バス', zh: '地铁・公交' }, d: { en: 'Lines, transfers, exits', ja: '路線・乗り換え・出口', zh: '线路・换乘・出口' }, p: [
+    ['이 지하철 여기 가요? (지도를 보여 드릴게요)', 'Does this train go here? (showing a map)', 'この電車はここに行きますか？（地図を見せます）', '这趟地铁去这里吗？（给您看地图）'],
+    ['이 버스 여기 가요?', 'Does this bus go here?', 'このバスはここに行きますか？', '这辆公交车去这里吗？'],
+    ['어디서 갈아타요?', 'Where do I transfer?', 'どこで乗り換えますか？', '在哪里换乘？'],
+    ['몇 번 출구로 나가요?', 'Which exit should I take?', '何番出口から出ればいいですか？', '从几号出口出去？'],
+    ['여기서 내려야 돼요?', 'Should I get off here?', 'ここで降りればいいですか？', '我应该在这里下车吗？'],
+    ['교통카드가 안 찍혀요.', "My transit card isn't working.", '交通カードが反応しません。', '交通卡刷不了。'],
+    ['공항철도는 어디서 타요?', 'Where do I take the Airport Railroad (AREX)?', '空港鉄道（AREX）はどこで乗りますか？', '机场快线（AREX）在哪里坐？'],
+    ['막차가 몇 시예요?', 'What time is the last train?', '終電は何時ですか？', '末班车几点？'],
+  ] },
+  { id: 'cafe', ic: IC.cafe, n: { en: 'Café', ja: 'カフェ', zh: '咖啡店' }, d: { en: 'Order, milk, sugar', ja: '注文・ミルク・甘さ', zh: '点单・牛奶・甜度' }, p: [
+    ['아이스 아메리카노 한 잔 주세요.', 'One iced Americano, please.', 'アイスアメリカーノを1つください。', '请给我一杯冰美式。'],
+    ['따뜻한 걸로 주세요.', 'Hot, please.', 'ホットでお願いします。', '要热的。'],
+    ['덜 달게 해 주세요.', 'Less sweet, please.', '甘さ控えめでお願いします。', '请少放糖。'],
+    ['우유 대신 두유로 바꿔 주세요.', 'Soy milk instead of milk, please.', '牛乳を豆乳に変えてください。', '请把牛奶换成豆奶。'],
+    ['디카페인 있어요?', 'Do you have decaf?', 'デカフェはありますか？', '有低咖啡因的吗？'],
+    ['여기서 먹고 갈게요.', 'For here, please.', '店内で食べます。', '在这里吃。'],
+    ['화장실 비밀번호가 뭐예요?', "What's the restroom code?", 'トイレの暗証番号は何ですか？', '洗手间密码是多少？'],
+    ['휴대폰 충전할 수 있어요?', 'Can I charge my phone here?', 'スマホを充電できますか？', '可以在这里充电吗？'],
+  ] },
+  { id: 'hotel', ic: IC.hotel, n: { en: 'Hotel', ja: 'ホテル', zh: '酒店' }, d: { en: 'Check-in, luggage, Wi-Fi', ja: 'チェックイン・荷物・Wi-Fi', zh: '入住・行李・Wi-Fi' }, p: [
+    ['체크인할게요. 예약했어요.', "I'd like to check in. I have a reservation.", 'チェックインお願いします。予約しています。', '我要办理入住，我有预订。'],
+    ['짐 좀 맡아 주세요.', 'Could you keep my luggage?', '荷物を預かってもらえますか？', '可以帮我寄存行李吗？'],
+    ['체크아웃은 몇 시예요?', 'What time is check-out?', 'チェックアウトは何時ですか？', '几点退房？'],
+    ['와이파이 비밀번호가 뭐예요?', "What's the Wi-Fi password?", 'Wi-Fiのパスワードは何ですか？', 'Wi-Fi密码是多少？'],
+    ['수건 좀 더 주세요.', 'More towels, please.', 'タオルをもう少しください。', '请再给我几条毛巾。'],
+    ['에어컨(난방)이 안 돼요.', "The air conditioner (heater) isn't working.", 'エアコン（暖房）が動きません。', '空调（暖气）坏了。'],
+    ['방 카드키를 잃어버렸어요.', 'I lost my room key card.', 'ルームキーをなくしました。', '我的房卡丢了。'],
+    ['택시 좀 불러 주세요.', 'Could you call a taxi for me?', 'タクシーを呼んでもらえますか？', '可以帮我叫辆出租车吗？'],
+  ] },
+  { id: 'way', ic: IC.pin, n: { en: 'Directions', ja: '道をたずねる', zh: '问路' }, d: { en: 'Where is…, restroom, photo', ja: '場所・トイレ・写真', zh: '位置・洗手间・拍照' }, p: [
+    ['여기 어떻게 가요? (지도를 보여 드릴게요)', 'How do I get here? (showing a map)', 'ここへはどう行けばいいですか？（地図を見せます）', '这里怎么走？（给您看地图）'],
+    ['가장 가까운 지하철역이 어디예요?', 'Where is the nearest subway station?', '一番近い地下鉄の駅はどこですか？', '最近的地铁站在哪里？'],
+    ['화장실 어디예요?', 'Where is the restroom?', 'トイレはどこですか？', '洗手间在哪里？'],
+    ['걸어서 갈 수 있어요?', 'Can I walk there?', '歩いて行けますか？', '可以走过去吗？'],
+    ['길을 잃었어요.', "I'm lost.", '道に迷いました。', '我迷路了。'],
+    ['사진 좀 찍어 주시겠어요?', 'Could you take a photo of us?', '写真を撮っていただけますか？', '可以帮我们拍张照吗？'],
+  ] },
+  { id: 'sos', ic: IC.sos, note: 'sos', n: { en: 'Emergency', ja: '緊急・トラブル', zh: '紧急求助' }, d: { en: 'Police, lost items, hospital', ja: '警察・紛失・病院', zh: '警察・丢失・医院' }, p: [
+    ['도와주세요!', 'Please help me!', '助けてください！', '请帮帮我！'],
+    ['경찰을 불러 주세요.', 'Please call the police.', '警察を呼んでください。', '请帮我报警。'],
+    ['구급차를 불러 주세요.', 'Please call an ambulance.', '救急車を呼んでください。', '请叫救护车。'],
+    ['지갑(휴대폰)을 잃어버렸어요.', 'I lost my wallet (phone).', '財布（携帯）をなくしました。', '我的钱包（手机）丢了。'],
+    ['여권을 잃어버렸어요.', 'I lost my passport.', 'パスポートをなくしました。', '我的护照丢了。'],
+    ['가까운 병원이 어디예요?', 'Where is the nearest hospital?', '一番近い病院はどこですか？', '最近的医院在哪里？'],
+    ['대사관에 연락하고 싶어요.', 'I want to contact my embassy.', '大使館に連絡したいです。', '我想联系大使馆。'],
   ] },
 ];
+// 첫 화면 순서
+const ORDER = ['taxi', 'metro', 'food', 'cafe', 'store', 'shop', 'pharm', 'hotel', 'way', 'sos'];
+SIT.sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
 const DEST = [
   ['인천국제공항 제1여객터미널', 'Incheon Airport T1', '仁川空港 第1ターミナル', '仁川机场 第1航站楼', IC.plane],
   ['인천국제공항 제2여객터미널', 'Incheon Airport T2', '仁川空港 第2ターミナル', '仁川机场 第2航站楼', IC.plane],
@@ -166,7 +231,7 @@ function render() {
   $('hTitle').textContent = u.t; $('hSub').textContent = u.s; $('back').textContent = u.back;
   const tl = $('tiles'); tl.innerHTML = '';
   for (const s of SIT) { const b = document.createElement('button'); b.className = 'tile'; b.innerHTML = `<div class="ico" style="background-position:${icoPos(s.ic)}"></div><div><b>${s.n[lang]}</b><br><small>${s.d[lang]}</small></div>`; b.onclick = () => openSit(s.id); tl.append(b); }
-  const fb = document.createElement('button'); fb.className = 'tile'; fb.innerHTML = `<div class="ico" style="background-position:${icoPos(IC.star)}"></div><div><b>${u.fav}</b><br><small>${fav.length}</small></div>`; fb.onclick = () => openSit('fav'); tl.append(fb);
+  const fb = document.createElement('button'); fb.className = 'tile wide'; fb.innerHTML = `<div class="ico" style="background-position:${icoPos(IC.star)}"></div><div><b>${u.fav}</b><br><small>${fav.length}</small></div>`; fb.onclick = () => openSit('fav'); tl.append(fb);
   if (cur) openSit(cur);
 }
 function phraseRow(p) {
@@ -180,7 +245,7 @@ function openSit(id) {
   cur = id; Banner.hide(); const u = UI[lang]; $('home').hidden = true; $('sit').hidden = false; const body = $('sBody'); body.innerHTML = '';
   const s = SIT.find((x) => x.id === id);
   $('sIco').style.backgroundPosition = icoPos(s ? s.ic : IC.star); $('sTitle').textContent = s ? s.n[lang] : u.fav;
-  if (id === 'pharm') body.insertAdjacentHTML('beforeend', `<div class="note">${u.pharm}</div>`);
+  if (id === 'pharm' || id === 'sos') body.insertAdjacentHTML('beforeend', `<div class="note">${u[id]}</div>`);
   if (id === 'taxi') {
     body.insertAdjacentHTML('beforeend', `<div class="sec">${u.dest}</div>`); const g = document.createElement('div'); g.className = 'dests';
     for (const d of DEST) { const b = document.createElement('div'); b.className = 'dest'; b.innerHTML = '<b></b><span></span>'; b.querySelector('b').textContent = d[LI[lang]]; b.querySelector('span').textContent = d[0]; b.onclick = () => show(d[0], d[LI[lang]], true); g.append(b); }
@@ -190,7 +255,7 @@ function openSit(id) {
   }
   body.insertAdjacentHTML('beforeend', `<div class="sec">${u.phrases}</div>`);
   const list = document.createElement('div'); list.className = 'list';
-  const ps = s ? s.p : SIT.flatMap((x) => x.p).filter((p) => fav.includes(p[0]));
+  const ps = s ? s.p : SIT.flatMap((x) => x.p).filter((p, i, all) => fav.includes(p[0]) && all.findIndex((q) => q[0] === p[0]) === i);
   ps.forEach((p) => list.append(phraseRow(p))); body.append(list);
   if (id !== 'fav') body.insertAdjacentHTML('beforeend', `<div class="aff"><div class="ico" style="background-position:${icoPos(id === 'taxi' ? IC.plane : IC.hotel)}"></div>${u.aff}</div>`);
   scrollTo(0, 0);
