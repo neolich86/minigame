@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>털실 풀기 (샘플)</title>
+<style>
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#f3dfe8;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+#app{position:relative;height:100%;width:min(100%,calc(100dvh*.5625));margin:0 auto}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(20,20,40,.6);color:#fff;text-align:center;padding:24px}
+.ov h1{font-size:38px;font-weight:900;text-shadow:0 3px 0 rgba(0,0,0,.35)}.ov p{font-size:15px;line-height:1.6;max-width:310px}
+.ov button{border:0;border-radius:16px;padding:14px 30px;font:inherit;font-size:17px;font-weight:900;color:#3a2a10;background:linear-gradient(#ffe48a,#f2b12e);box-shadow:0 4px 0 #9a6a10;cursor:pointer}
+.ov button.s{background:#fff;color:#334;box-shadow:0 4px 0 #99a;font-size:15px;padding:11px 22px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body><div id="app"><canvas id="cv"></canvas>
+<div class="ov" id="ov"><h1 id="ovT">털실 풀기</h1><p id="ovP">실패를 눌러 자리에 올리면, 같은 색 뜨개 코를 바깥쪽부터 풀어서 감아요. 숫자만큼 감으면 떠나요. 자리가 꽉 차서 아무도 못 감으면 실패!</p><button id="ovB">시작</button><button class="s" id="ovB2" hidden>자리 +1 받고 계속하기</button></div>
+</div>
+<script>
+'use strict';
+const MODE = 'yarn';           // hunt: 아래 줄부터 쏴서 지우고 위 칸이 내려옴 / yarn: 바깥쪽부터 실을 풀어 감음
+const LEVELS = [{"name": "곰돌이 담요", "pal": ["#8cd73c", "#965f3c", "#ff78b4"], "g": "000000000000000000000000000000000000000000000000000000001111001100111100001111111111111200001111111111111100001111111111112100001111111111112100001111111111111200011111111111111210011111111111111110011111111122111110011111121222111110001111111111111100001111112221111100000111111111111000000001111111100000000000000000000000", "w": 18, "h": 18}, {"name": "딸기 목도리", "pal": ["#f5f5f0", "#eb4040", "#965f3c", "#8cd73c"], "g": "000000000000000000000000000000000000000000003300000000000000223333000000000022233333330000000032332233330000000022221111110000000012112111210000000112112211211000000111111111111000000011121121110000000011121121110000000011111111110000000001112211100000000000111111000000000000011110000000000000001100000000000000000000000000", "w": 18, "h": 18}, {"name": "고양이 스웨터", "pal": ["#5abefa", "#ff9628", "#ffd628", "#eb4040", "#ff78b4"], "g": "000000000000000000000000000000000000000000000000000000001200000000002200001120000000012200001112222221122200001112222222222100001111112222222200001111112222222200001111111211222200001111311213222200011111113311222110003111111111211100001111333333211200011111133331111110001111113311111100000444444444444000000000000000000000", "w": 18, "h": 18}];
+const HERO = new Image(); HERO.src = '/games/pixel-hunt/heroes.webp';
+const R = Math.random, pick = (a) => a[Math.floor(R() * a.length)];
+const app = document.getElementById('app'), cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+let W, H, DPR, L = {}, LV = 0, G, gw, gh, pal, oy, resv, queues, bench, shots, fx, nums, combo, comboT, stuckT, state = 'title', extraSlot = false, hits = 0;
+
+function rgb(hex, k = 1) { const n = parseInt(hex.slice(1), 16); return `rgb(${Math.min(255, ((n >> 16) & 255) * k) | 0},${Math.min(255, ((n >> 8) & 255) * k) | 0},${Math.min(255, (n & 255) * k) | 0})`; }
+function load(i) {
+  LV = i; const lv = LEVELS[i]; gw = lv.w; gh = lv.h; pal = lv.pal;
+  G = new Int8Array(gw * gh); for (let k = 0; k < gw * gh; k++) G[k] = +lv.g[k];
+  oy = new Float32Array(gw * gh); resv = new Uint8Array(gw * gh);
+  // 색마다 개수를 9~21개 묶음으로 나눠 수집가를 만든다
+  const chunks = [];
+  for (let c = 0; c < pal.length; c++) { let n = 0; for (const v of G) if (v === c) n++;
+    // 아래(바깥)에 가까운 색일수록 먼저 나오게 (조금 섞음)
+    let depth = gh; for (let y = gh - 1; y >= 0; y--) for (let x = 0; x < gw; x++) if (G[y * gw + x] === c) depth = Math.min(depth, gh - 1 - y);
+    while (n > 0) { let s = Math.min(n, pick([9, 12, 15, 18, 21])); if (n - s > 0 && n - s < 6) s = n; chunks.push({ c, n: s, max: s, hero: Math.floor(R() * 4), key: 0 }); n -= s; }
+    chunks.filter((k) => k.key === 0).forEach((k) => (k.key = depth + R() * 7 + chunks.indexOf(k) * 0.01));
+  }
+  chunks.sort((a, b) => a.key - b.key);
+  queues = [[], [], []]; chunks.forEach((k, j) => queues[j % 3].push(k));
+  bench = Array(5).fill(null); extraSlot = false; shots = []; fx = []; nums = []; combo = 0; comboT = 0; stuckT = 0; hits = 0;
+  resize();
+}
+function resize() {
+  const r = app.getBoundingClientRect(); W = r.width; H = r.height; DPR = Math.min(2, devicePixelRatio || 1); cv.width = W * DPR; cv.height = H * DPR;
+  const cs = Math.min((W - 30) / gw, (H * 0.45) / gh), bw = cs * gw, bx = (W - bw) / 2, by = 64;
+  const slots = bench.length, sw = Math.min(72, (W - 24) / slots), benchY = by + cs * gh + 24 + sw * 0.55;
+  const qy = benchY + sw * 0.6 + 26, qw = Math.min(96, (W - 40) / 3);
+  L = { cs, bw, bx, by, sw, benchY, qy, qw };
+}
+addEventListener('resize', resize);
+const cellXY = (k) => [L.bx + (k % gw + 0.5) * L.cs, L.by + (Math.floor(k / gw) + 0.5) * L.cs - oy[k]];
+const slotXY = (i) => [W / 2 + (i - (bench.length - 1) / 2) * L.sw, L.benchY];
+// ---------- 규칙 ----------
+function exposed(k) {
+  if (G[k] < 0) return false; const x = k % gw, y = Math.floor(k / gw);
+  if (MODE === 'hunt') return y === gh - 1 || G[k + gw] < 0; // 아래 칸이 비었을 때만 (내려오는 중 포함)
+  if (y === gh - 1) return true; // 실은 바닥줄 + 빈 칸과 맞닿은 코부터 풀린다
+  return (x > 0 && G[k - 1] < 0) || (x < gw - 1 && G[k + 1] < 0) || (y > 0 && G[k - gw] < 0) || G[k + gw] < 0;
+}
+function findTarget(b, sx) {
+  let best = -1, bd = 1e9;
+  for (let k = 0; k < gw * gh; k++) if (G[k] === b.c && !resv[k] && exposed(k) && (MODE !== 'hunt' || oy[k] < 2)) { const d = Math.abs(((k % gw) + 0.5) * L.cs + L.bx - sx) + (gh - Math.floor(k / gw)) * 0.1; if (d < bd) { bd = d; best = k; } }
+  return best;
+}
+function hit(s) {
+  const k = s.k; resv[k] = 0; if (G[k] < 0) return; const [x, y] = cellXY(k);
+  for (let i = 0; i < 6; i++) fx.push({ x, y, vx: (R() - 0.5) * 220, vy: (R() - 0.8) * 220, t: 0, life: 0.45, c: pal[G[k]] });
+  G[k] = -1; hits++;
+  if (MODE === 'hunt') { // 위 칸들이 한 칸씩 내려온다
+    const cx = k % gw; for (let yy = Math.floor(k / gw); yy > 0; yy--) { const a = yy * gw + cx, b = a - gw; G[a] = G[b]; oy[a] = oy[b] + L.cs; resv[a] = resv[b]; } G[cx] = -1; oy[cx] = 0; resv[cx] = 0; }
+  combo = comboT > 0 ? combo + 1 : 1; comboT = 0.7; s.b.pending--; s.b.bump = 0.15;
+}
+function update(dt) {
+  if (state !== 'play') return;
+  for (let k = 0; k < gw * gh; k++) if (oy[k] > 0) oy[k] = Math.max(0, oy[k] - dt * L.cs * 14);
+  comboT -= dt;
+  let any = false;
+  bench.forEach((b, i) => { if (!b) return; b.bump = Math.max(0, (b.bump || 0) - dt); if (b.leave) { b.leave += dt; if (b.leave > 0.5) bench[i] = null; return; }
+    b.cd = (b.cd || 0) - dt;
+    if (b.n > 0 && b.cd <= 0) { const [sx, sy] = slotXY(i), k = findTarget(b, sx);
+      if (k >= 0) { resv[k] = 1; b.n--; b.pending = (b.pending || 0) + 1; b.cd = MODE === 'hunt' ? 0.11 : 0.09; const [tx, ty] = cellXY(k); shots.push({ b, k, sx, sy: sy - L.sw * 0.4, tx, ty, t: 0, dur: 0.28 + Math.hypot(tx - sx, ty - sy) / 1600 }); any = true; } }
+    if (b.n > 0 && findTarget(b, slotXY(i)[0]) >= 0) any = true;
+    if (b.n === 0 && !b.pending && !b.leave) b.leave = 0.01; });
+  for (const s of shots) { s.t += dt; if (s.t >= s.dur) { s.done = true; hit(s); } } shots = shots.filter((s) => !s.done);
+  for (const f of fx) { f.t += dt; f.x += f.vx * dt; f.y += f.vy * dt; f.vy += 600 * dt; } fx = fx.filter((f) => f.t < f.life);
+  if (!G.some((v) => v >= 0)) { state = 'win'; setTimeout(() => showOv('클리어!', `${LEVELS[LV].name} 완성! 콤보 최고 기록을 노려 보세요`, LV + 1 < LEVELS.length ? '다음 그림' : '처음부터'), 700); return; }
+  // 자리가 꽉 찼는데 아무도 쏠 게 없으면 패배
+  const full = bench.every((b) => b && !b.leave);
+  if (full && !any && !shots.length) { stuckT += dt; if (stuckT > 1.2) { state = 'lose'; showOv('자리가 꽉 찼어요', '맞는 색이 없는 친구들로 자리가 다 찼어요.', '다시 하기', !extraSlot); } } else stuckT = 0;
+}
+// ---------- 입력 ----------
+cv.addEventListener('pointerdown', (e) => { if (state !== 'play') return; const r = app.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  for (let q = 0; q < 3; q++) { const qx = W / 2 + (q - 1) * (L.qw + 10); if (Math.abs(x - qx) < L.qw / 2 && y > L.qy - 10 && y < L.qy + L.qw * 1.05) {
+    const it = queues[q][0]; if (!it) return; const slot = bench.findIndex((b) => !b); if (slot < 0) { shake = 0.3; return; }
+    queues[q].shift(); bench[slot] = Object.assign(it, { cd: 0.25, pending: 0, pop: 0.3 }); return; } } });
+let shake = 0;
+// ---------- 그리기 ----------
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function drawCell(k, x, y, cs) {
+  const c = pal[G[k]];
+  if (MODE === 'hunt') {
+    ctx.fillStyle = rgb(c, 0.72); rr(x - cs / 2 + 1, y - cs / 2 + 2, cs - 2, cs - 2, cs * 0.22); ctx.fill();
+    ctx.fillStyle = rgb(c); rr(x - cs / 2 + 1, y - cs / 2 + 1, cs - 2, cs - 4, cs * 0.22); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; rr(x - cs / 2 + 3, y - cs / 2 + 3, cs - 8, cs * 0.22, cs * 0.1); ctx.fill();
+  } else { // 뜨개 코: 두 갈래 V 모양
+    ctx.fillStyle = rgb(c, 0.55); ctx.fillRect(x - cs / 2, y - cs / 2, cs, cs);
+    for (const sgn of [-1, 1]) { ctx.save(); ctx.translate(x + sgn * cs * 0.2, y); ctx.rotate(sgn * -0.5); ctx.fillStyle = rgb(c); ctx.beginPath(); ctx.ellipse(0, 0, cs * 0.2, cs * 0.46, 0, 0, 6.28); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.beginPath(); ctx.ellipse(-cs * 0.05, -cs * 0.12, cs * 0.06, cs * 0.2, 0, 0, 6.28); ctx.fill(); ctx.restore(); }
+  }
+}
+function drawCollector(b, x, y, s, alpha) {
+  ctx.globalAlpha = alpha; const c = pal[b.c], bump = (b.bump || 0) * 30, pop = b.pop ? (b.pop = Math.max(0, b.pop - 0.016)) : 0;
+  const sc = 1 + pop * 0.8 - (b.leave ? b.leave * 1.6 : 0); if (sc <= 0) { ctx.globalAlpha = 1; return; }
+  ctx.save(); ctx.translate(x, y - bump); ctx.scale(sc, sc);
+  if (MODE === 'hunt') {
+    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(0, s * 0.42, s * 0.42, s * 0.12, 0, 0, 6.28); ctx.fill();
+    ctx.fillStyle = rgb(c); ctx.beginPath(); ctx.ellipse(0, s * 0.38, s * 0.44, s * 0.15, 0, 0, 6.28); ctx.fill(); ctx.strokeStyle = rgb(c, 0.6); ctx.lineWidth = 3; ctx.stroke();
+    if (HERO.complete && HERO.naturalWidth) ctx.drawImage(HERO, b.hero * 128, 0, 128, 128, -s * 0.5, -s * 0.62, s, s);
+  } else { // 실패: 나무 실패 + 감긴 실 (감을수록 두꺼워짐)
+    const wound = 1 - b.n / b.max, rr2 = s * (0.18 + wound * 0.17);
+    ctx.fillStyle = '#c99a64'; rr(-s * 0.32, -s * 0.46, s * 0.64, s * 0.1, 4); ctx.fill(); rr(-s * 0.32, s * 0.3, s * 0.64, s * 0.1, 4); ctx.fill();
+    ctx.fillStyle = '#e3bd85'; ctx.fillRect(-s * 0.12, -s * 0.38, s * 0.24, s * 0.7);
+    ctx.fillStyle = rgb(c); rr(-rr2, -s * 0.36, rr2 * 2, s * 0.66, rr2 * 0.6); ctx.fill();
+    ctx.strokeStyle = rgb(c, 0.7); ctx.lineWidth = 1.5; for (let k = -0.3; k < 0.3; k += 0.07) { ctx.beginPath(); ctx.moveTo(-rr2, s * k); ctx.lineTo(rr2, s * (k + 0.05)); ctx.stroke(); }
+  }
+  // 남은 개수
+  ctx.fillStyle = 'rgba(20,20,40,.82)'; rr(-s * 0.3, s * 0.42, s * 0.6, s * 0.26, s * 0.13); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = `900 ${Math.round(s * 0.2)}px system-ui`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(b.n, 0, s * 0.555);
+  ctx.restore(); ctx.globalAlpha = 1;
+}
+function draw() {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.fillStyle = '#f3dfe8'; ctx.fillRect(0, 0, W, H); if (!G) return;
+  const { cs, bw, bx, by, sw, benchY, qy, qw } = L, lv = LEVELS[LV];
+  // 상단
+  let left = 0; for (const v of G) if (v >= 0) left++;
+  ctx.fillStyle = '#6a3b52'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = '900 19px system-ui'; ctx.fillText(`${LV + 1}. ${lv.name}`, 16, 30);
+  const pw = 120; ctx.fillStyle = 'rgba(0,0,0,.15)'; rr(W - 16 - pw, 22, pw, 14, 7); ctx.fill(); ctx.fillStyle = '#ffcf3a'; rr(W - 16 - pw, 22, pw * (1 - left / (gw * gh)), 14, 7); ctx.fill();
+  // 판
+  ctx.fillStyle = '#b98a6a'; rr(bx - 10, by - 10, bw + 20, cs * gh + 20, 16); ctx.fill();
+  if (MODE === 'yarn') { ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(bx, by, bw, cs * gh); }
+  ctx.save(); rr(bx - 2, by - 2, bw + 4, cs * gh + 4, 10); ctx.clip();
+  for (let k = 0; k < gw * gh; k++) if (G[k] >= 0) { const [x, y] = cellXY(k); drawCell(k, x, y, cs); }
+  ctx.restore();
+  // 쏘기·실
+  for (const s of shots) { const p = Math.min(1, s.t / s.dur), c = pal[G[s.k]] || '#fff', [tx, ty] = cellXY(s.k);
+    if (MODE === 'hunt') { const e = p * p * (3 - 2 * p), x = s.sx + (tx - s.sx) * e, y = s.sy + (ty - s.sy) * e - Math.sin(p * Math.PI) * 30;
+      ctx.fillStyle = rgb(c); ctx.shadowColor = rgb(c); ctx.shadowBlur = 10; ctx.beginPath(); ctx.arc(x, y, 5, 0, 6.28); ctx.fill(); ctx.shadowBlur = 0; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, 2, 0, 6.28); ctx.fill(); }
+    else { ctx.strokeStyle = rgb(c); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.quadraticCurveTo((tx + s.sx) / 2 + Math.sin(s.t * 20) * 14, (ty + s.sy) / 2, s.sx, s.sy); ctx.stroke(); } }
+  for (const f of fx) { ctx.globalAlpha = 1 - f.t / f.life; ctx.fillStyle = rgb(f.c); ctx.fillRect(f.x - 3, f.y - 3, 6, 6); } ctx.globalAlpha = 1;
+  // 자리(벤치)
+  const sx0 = shake > 0 ? Math.sin(shake * 60) * 6 : 0; shake = Math.max(0, shake - 0.016);
+  ctx.fillStyle = '#e6c09a'; rr(W / 2 - (bench.length * sw) / 2 - 8 + sx0, benchY - sw * 0.1, bench.length * sw + 16, sw * 0.62, 14); ctx.fill();
+  bench.forEach((b, i) => { const [x, y] = slotXY(i); if (!b) { ctx.fillStyle = 'rgba(255,255,255,.35)'; rr(x - sw * 0.3 + sx0, y + sw * 0.05, sw * 0.6, sw * 0.3, 8); ctx.fill(); } else drawCollector(b, x + sx0, y - sw * 0.15, sw * 0.92, 1); });
+  // 대기열 3줄: 맨 앞만 누를 수 있음
+  for (let q = 0; q < 3; q++) { const qx = W / 2 + (q - 1) * (qw + 10);
+    for (let j = 2; j >= 0; j--) { const it = queues[q][j]; if (!it) continue; drawCollector(it, qx, qy + qw * 0.42 + j * qw * 0.42, qw * (j ? 0.78 : 0.95), j ? 0.55 : 1); }
+    if (queues[q].length > 3) { ctx.fillStyle = '#6a3b52'; ctx.font = '800 12px system-ui'; ctx.textAlign = 'center'; ctx.fillText(`+${queues[q].length - 3}`, qx, qy + qw * 1.55); } }
+  if (combo > 2 && comboT > 0) { ctx.save(); ctx.translate(W - 70, by + 40); ctx.rotate(-0.12); ctx.font = '900 16px system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 4; ctx.strokeText('Combo', 0, 0); ctx.fillText('Combo', 0, 0); ctx.font = '900 34px system-ui'; ctx.strokeText(combo, 0, 30); ctx.fillStyle = '#ff6b3d'; ctx.fillText(combo, 0, 30); ctx.restore(); }
+}
+// ---------- 화면 전환 ----------
+function showOv(t, p, b, b2) { document.getElementById('ovT').textContent = t; document.getElementById('ovP').textContent = p; document.getElementById('ovB').textContent = b; document.getElementById('ovB2').hidden = !b2; document.getElementById('ov').hidden = false; }
+document.getElementById('ovB').onclick = () => { document.getElementById('ov').hidden = true; if (state === 'win') load((LV + 1) % LEVELS.length); else if (state === 'lose') load(LV); state = 'play'; };
+document.getElementById('ovB2').onclick = () => { document.getElementById('ov').hidden = true; extraSlot = true; bench.push(null); resize(); state = 'play'; stuckT = 0; };
+let last = performance.now();
+function loop(t) { requestAnimationFrame(loop); const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt); draw(); }
+load(Number((location.search.match(/lv=(\d)/) || [])[1] || 0)); requestAnimationFrame(loop);
+if (/test/.test(location.search)) window.__cg = { get S() { return { G, queues, bench, state, shots }; }, start() { state = 'play'; document.getElementById('ov').hidden = true; }, tap(q) { const it = queues[q][0]; const slot = bench.findIndex((b) => !b); if (!it || slot < 0) return false; queues[q].shift(); bench[slot] = Object.assign(it, { cd: 0.25, pending: 0, pop: 0.3 }); return true; } };
+</script>
+</body>
+</html>
