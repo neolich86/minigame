@@ -1,0 +1,16 @@
+{
+  "name": "show-korean-android",
+  "version": "1.0.0",
+  "description": "Show Korean - Android(Capacitor) 앱. public/games/korea-kit 를 앱 안에 넣어 오프라인으로도 동작",
+  "scripts": {
+    "www": "rm -rf www && mkdir -p www && cp ../public/games/korea-kit/index.html ../public/games/korea-kit/icons.webp www/",
+    "sync": "npm run www && npx cap sync android"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@capacitor/android": "^6.2.1",
+    "@capacitor/cli": "^6.2.1",
+    "@capacitor/core": "^6.2.1",
+    "@capacitor-community/admob": "^6.2.0"
+  }
+}

@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Show Korea</string>
-    <string name="title_activity_main">Show Korea</string>
-    <string name="package_name">kr.minigame.showkorea</string>
-    <string name="custom_url_scheme">kr.minigame.showkorea</string>
-</resources>

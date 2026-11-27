@@ -21,8 +21,8 @@ export default async function PrivacyPage() {
       <h1 className="page-title">{en ? "Privacy Policy" : "개인정보처리방침"}</h1>
       <p className="page-sub">
         {en
-          ? `Applies to the Mini Game Heaven website and its Android apps on Google Play (including Passport Map, Grow Your Archer (궁수 키우기) and Show Korea). Last updated ${UPDATED}.`
-          : `미니게임천국 웹사이트와 구글 플레이의 안드로이드 앱(Passport Map·궁수 키우기·Show Korea 등)에 적용됩니다. 최종 수정일 ${UPDATED}.`}
+          ? `Applies to the Mini Game Heaven website and its Android apps on Google Play (including Passport Map, Grow Your Archer (궁수 키우기) and Show Korean). Last updated ${UPDATED}.`
+          : `미니게임천국 웹사이트와 구글 플레이의 안드로이드 앱(Passport Map·궁수 키우기·Show Korean 등)에 적용됩니다. 최종 수정일 ${UPDATED}.`}
       </p>
       {en ? (
         <>
@@ -31,7 +31,7 @@ export default async function PrivacyPage() {
             <li><b>Account</b>: email address (email sign-up) or Kakao account identifier (Kakao login), and the nickname you set.</li>
             <li><b>Passport Map data</b>: countries and cities you mark, pin colors, visit dates, notes, map theme and the photos you add.</li>
             <li><b>Game records</b>: scores and rankings, online room participation.</li>
-            <li><b>Usage data</b>: pages visited and device/browser information collected by Google Analytics, and cookies used by Google AdSense on the website. In apps that show ads (such as Grow Your Archer and Show Korea), Google AdMob may collect the advertising ID and device information to show rewarded or banner ads. Show Korea has no account and does not send the phrases you view or save anywhere; favorites stay on your device.</li>
+            <li><b>Usage data</b>: pages visited and device/browser information collected by Google Analytics, and cookies used by Google AdSense on the website. In apps that show ads (such as Grow Your Archer and Show Korean), Google AdMob may collect the advertising ID and device information to show rewarded or banner ads. Show Korean has no account and does not send the phrases you view or save anywhere; favorites stay on your device.</li>
           </ul>
           <p>Passport Map requires signing in with Kakao or email so your map can be kept in your account.</p>
           <h2>2. Why we use it</h2>
@@ -61,7 +61,7 @@ export default async function PrivacyPage() {
             <li><b>계정</b>: 이메일 가입 시 이메일 주소, 카카오 로그인 시 카카오 계정 식별자, 직접 정한 닉네임</li>
             <li><b>Passport Map 데이터</b>: 표시한 나라·도시, 핀 색, 방문 기간, 메모, 지도 테마, 올린 사진</li>
             <li><b>게임 기록</b>: 점수·랭킹, 온라인 방 참여 기록</li>
-            <li><b>이용 기록</b>: 구글 애널리틱스가 수집하는 방문 페이지·기기·브라우저 정보, 웹사이트의 구글 애드센스 쿠키, 광고가 있는 앱(궁수 키우기·Show Korea 등)의 구글 애드몹(보상형·배너 광고)이 수집하는 광고 ID·기기 정보. Show Korea 는 계정이 없고, 보거나 저장한 문장을 서버로 보내지 않으며 즐겨찾기는 기기에만 저장됩니다</li>
+            <li><b>이용 기록</b>: 구글 애널리틱스가 수집하는 방문 페이지·기기·브라우저 정보, 웹사이트의 구글 애드센스 쿠키, 광고가 있는 앱(궁수 키우기·Show Korean 등)의 구글 애드몹(보상형·배너 광고)이 수집하는 광고 ID·기기 정보. Show Korean 는 계정이 없고, 보거나 저장한 문장을 서버로 보내지 않으며 즐겨찾기는 기기에만 저장됩니다</li>
           </ul>
           <p>Passport Map은 지도를 계정에 보관하기 위해 카카오 또는 이메일 로그인 후 이용할 수 있습니다.</p>
           <h2>2. 이용 목적</h2>
