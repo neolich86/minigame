@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>모래 블록 퍼즐 (샘플)</title>
+<style>
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#e989bf;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+#app{position:relative;height:100%;width:min(100%,calc(100dvh*.5625));margin:0 auto}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(80,20,60,.55);color:#fff;text-align:center}
+.ov h1{font-size:40px;font-weight:900;text-shadow:0 3px 0 #8a2a5e}.ov p{font-size:15px;line-height:1.6;max-width:300px}
+.ov button{border:0;border-radius:16px;padding:14px 34px;font:inherit;font-size:18px;font-weight:900;color:#5a1240;background:#fff;box-shadow:0 4px 0 #c0588f;cursor:pointer}
+[hidden]{display:none!important}
+</style>
+</head>
+<body><div id="app"><canvas id="cv"></canvas>
+<div class="ov" id="ov"><h1 id="ovT">모래 블록</h1><p id="ovP">아래 블록을 밀어서 맨 윗줄로 올리면<br>같은 색 모래를 빨아들여요.<br>가득 차면 블록이 사라져요!</p><button id="ovB">시작</button></div>
+</div>
+<script>
+'use strict';
+// ---------- 색 ----------
+const COL = { P: '#f05aa8', O: '#ff9a3c', Y: '#ffd23f', G: '#39c06a', B: '#3f6ff0', W: '#f3f1ee' };
+const KEYS = Object.keys(COL);
+const RGB = Object.fromEntries(KEYS.map((k) => [k, [1, 3, 5].map((i) => parseInt(COL[k].slice(i, i + 2), 16))]));
+// ---------- 레벨 ----------
+const GW = 96, GH = 80, CW = GW / 6; // 모래 격자 (가로 96 = 퍼즐 6칸 × 16)
+const LEVELS = [
+  { name: '꽃밭 언덕', bg: '#8ab34a', frame: '#d9a866', rows: 6,
+    pic: (x, y) => { const o = Math.sin(x * 0.22) * 3 + Math.sin(x * 0.07) * 2; return ['P', 'Y', 'G', 'B'][Math.max(0, Math.min(3, Math.floor((y + o) / 10)))]; },
+    blocks: [['B', 0, 1, 2, 1], ['Y', 2, 1, 1, 2], ['G', 4, 1, 2, 1], ['P', 0, 2, 1, 2], ['B', 5, 2, 1, 2], ['G', 1, 3, 2, 1], ['P', 3, 3, 1, 2], ['Y', 0, 4, 2, 1], ['B', 4, 4, 1, 1], ['G', 0, 5, 1, 1], ['Y', 4, 5, 2, 1]] },
+  { name: '무지개 아이스크림', bg: '#e989bf', frame: '#d86aa6', rows: 7,
+    pic: (x, y) => { const hw = 21 - y * 0.36, d = Math.abs(x - 23.5) + Math.sin(y * 0.9 + x) * 0.8; if (d > hw) return 'W'; return y < 10 ? 'P' : y < 16 ? 'O' : y < 22 ? 'Y' : y < 28 ? 'G' : 'B'; },
+    blocks: [['W', 0, 1, 3, 1], ['P', 3, 1, 1, 2], ['O', 5, 1, 1, 2], ['B', 0, 2, 1, 2], ['Y', 2, 2, 1, 2], ['G', 4, 2, 1, 2], ['G', 1, 3, 1, 2], ['W', 5, 3, 1, 2], ['O', 0, 4, 1, 1], ['B', 3, 4, 2, 1], ['P', 0, 5, 2, 1], ['W', 2, 5, 1, 2], ['Y', 4, 5, 1, 1], ['Y', 0, 6, 1, 1], ['G', 3, 6, 2, 1], ['B', 5, 6, 1, 1]] },
+];
+let LV = 0, sand, shade, blocks, moves, won, parts = [], drag = null, started = false;
+function load(i) {
+  LV = i; const L = LEVELS[i]; sand = new Array(GW * GH); shade = new Float32Array(GW * GH);
+  const cnt = {}; for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) { const c = L.pic(x * 48 / GW, y * 40 / GH); sand[y * GW + x] = c; shade[y * GW + x] = 0.86 + Math.random() * 0.2; cnt[c] = (cnt[c] || 0) + 1; }
+  blocks = L.blocks.map(([c, x, y, w, h]) => ({ c, x, y, w, h, px: x, py: y, fill: 0, cap: 0, pop: 0, gone: false }));
+  // 색마다 모래 알갱이 수를 블록 크기 비율로 나눠 용량을 정한다
+  for (const k of KEYS) { const bs = blocks.filter((b) => b.c === k); if (!bs.length) continue; const tot = bs.reduce((s, b) => s + b.w * b.h, 0); let left = cnt[k] || 0;
+    bs.forEach((b, j) => { b.cap = j === bs.length - 1 ? left : Math.round(((cnt[k] || 0) * b.w * b.h) / tot); left -= b.cap; }); }
+  moves = 0; won = false; parts = []; resize();
+}
+// ---------- 화면 ----------
+const app = document.getElementById('app'), cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+let W, H, DPR, Lx = {};
+const sc = document.createElement('canvas'); sc.width = GW; sc.height = GH; const sctx = sc.getContext('2d'); const img = sctx.createImageData(GW, GH);
+function resize() {
+  const r = app.getBoundingClientRect(); W = r.width; H = r.height; DPR = Math.min(2, devicePixelRatio || 1); cv.width = W * DPR; cv.height = H * DPR;
+  const rows = LEVELS[LV].rows, top = 64;
+  const s = Math.min((W - 40) / GW, (H - top - 30) / (GH + rows * CW + 6)); // 모래 한 알 크기
+  const bw = GW * s, x0 = (W - bw) / 2, cell = bw / 6;
+  Lx = { s, x0, y0: top, sy1: top + GH * s, py0: top + GH * s + s * 6, cell, rows, bw };
+}
+addEventListener('resize', resize);
+// ---------- 모래 ----------
+function stepSand() {
+  for (let y = GH - 2; y >= 0; y--) { const dir = Math.random() < 0.5 ? 1 : -1;
+    for (let i = 0; i < GW; i++) { const x = dir > 0 ? i : GW - 1 - i, k = y * GW + x; if (!sand[k]) continue;
+      const below = k + GW; if (!sand[below]) { sand[below] = sand[k]; shade[below] = shade[k]; sand[k] = null; continue; }
+      const d = Math.random() < 0.5 ? 1 : -1;
+      for (const dx of [d, -d]) { const nx = x + dx; if (nx < 0 || nx >= GW) continue; const t = below + dx; if (!sand[t] && Math.random() < 0.6) { sand[t] = sand[k]; shade[t] = shade[k]; sand[k] = null; break; } } } }
+}
+const cellOf = (x, y) => blocks.find((b) => !b.gone && x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h);
+function absorb() {
+  // 맨 윗줄(0행)에 닿은 블록이 바로 위 맨 아래 모래 중 같은 색을 빨아들인다
+  for (const b of blocks) { if (b.gone || b.y !== 0 || drag && drag.b === b) continue;
+    let n = 0; for (let x = b.x * CW; x < (b.x + b.w) * CW; x++) { if (b.fill >= b.cap) break; const k = (GH - 1) * GW + x;
+      if (sand[k] === b.c) { sand[k] = null; b.fill++; n++; if (Math.random() < 0.2) parts.push({ x: Lx.x0 + (x + 0.5) * Lx.s, y: Lx.sy1, vy: 60 + Math.random() * 80, c: b.c, t: 0 }); } }
+    if (b.fill >= b.cap && !b.pop) b.pop = 0.01; }
+}
+// ---------- 블록 이동 ----------
+function free(b, nx, ny) {
+  if (nx < 0 || ny < 0 || nx + b.w > 6 || ny + b.h > Lx.rows) return false;
+  for (const o of blocks) if (o !== b && !o.gone && nx < o.x + o.w && nx + b.w > o.x && ny < o.y + o.h && ny + b.h > o.y) return false; return true;
+}
+const pos = (e) => { const r = app.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+cv.addEventListener('pointerdown', (e) => { if (!started || won) return; const [x, y] = pos(e); const cx = Math.floor((x - Lx.x0) / Lx.cell), cy = Math.floor((y - Lx.py0) / Lx.cell);
+  const b = cellOf(cx, cy); if (b && !b.pop) { drag = { b, sx: x, sy: y, ox: b.x, oy: b.y, axis: null }; cv.setPointerCapture(e.pointerId); } });
+cv.addEventListener('pointermove', (e) => { if (!drag) return; const [x, y] = pos(e), b = drag.b; let dx = (x - drag.sx) / Lx.cell, dy = (y - drag.sy) / Lx.cell;
+  if (!drag.axis && Math.hypot(dx, dy) > 0.2) drag.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+  if (!drag.axis) return;
+  // 손가락 쪽으로 한 칸씩, 막히면 멈춤
+  const target = drag.axis === 'x' ? Math.round(drag.ox + dx) : Math.round(drag.oy + dy);
+  let guard = 12; while (guard--) { const cur = drag.axis === 'x' ? b.x : b.y; if (cur === target) break; const st = Math.sign(target - cur);
+    const nx = drag.axis === 'x' ? b.x + st : b.x, ny = drag.axis === 'y' ? b.y + st : b.y; if (!free(b, nx, ny)) break; b.x = nx; b.y = ny; } });
+cv.addEventListener('pointerup', () => { if (drag) { if (drag.b.x !== drag.ox || drag.b.y !== drag.oy) moves++; drag = null; } });
+// ---------- 그리기 ----------
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function shadeHex(hex, k) { const [r, g, b] = RGB[hex] || [0, 0, 0]; return `rgb(${Math.round(r * k)},${Math.round(g * k)},${Math.round(b * k)})`; }
+function draw(dt) {
+  const L = LEVELS[LV]; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.fillStyle = L.bg; ctx.fillRect(0, 0, W, H);
+  const { s, x0, y0, sy1, py0, cell, rows, bw } = Lx;
+  // 상단 문구
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = '900 20px system-ui'; ctx.fillText(`${LV + 1}. ${L.name}`, x0, 30);
+  let left = 0; for (const c of sand) if (c) left++; const total = GW * GH;
+  ctx.textAlign = 'right'; ctx.font = '800 14px system-ui'; ctx.fillText(`남은 모래 ${Math.ceil((left / total) * 100)}% · 이동 ${moves}`, x0 + bw, 30);
+  // 틀
+  ctx.fillStyle = L.frame; rr(x0 - 12, y0 - 12, bw + 24, py0 + rows * cell - y0 + 24, 18); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.18)'; rr(x0 - 4, y0 - 4, bw + 8, GH * s + 8, 8); ctx.fill();
+  // 모래 (한 알 = 한 픽셀 → 확대)
+  const d = img.data; for (let i = 0; i < GW * GH; i++) { const c = sand[i], o = i * 4; if (!c) { d[o + 3] = 0; continue; } const [r, g, b] = RGB[c], k = shade[i]; d[o] = Math.min(255, r * k); d[o + 1] = Math.min(255, g * k); d[o + 2] = Math.min(255, b * k); d[o + 3] = 255; }
+  sctx.putImageData(img, 0, 0); ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(x0, y0, bw, GH * s); ctx.imageSmoothingEnabled = false; ctx.drawImage(sc, x0, y0, bw, GH * s);
+  // 퍼즐 바닥
+  for (let y = 0; y < rows; y++) for (let x = 0; x < 6; x++) { ctx.fillStyle = y === 0 ? 'rgba(255,255,255,.42)' : 'rgba(255,255,255,.22)'; rr(x0 + x * cell + 2, py0 + y * cell + 2, cell - 4, cell - 4, 8); ctx.fill(); }
+  ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.font = '800 11px system-ui'; ctx.textAlign = 'center'; if (moves < 2) ctx.fillText('▲ 이 줄에 닿으면 모래를 빨아들여요', x0 + bw / 2, py0 + cell * 0.5);
+  // 블록
+  for (const b of blocks) { if (b.gone) continue; b.px += (b.x - b.px) * Math.min(1, dt * 18); b.py += (b.y - b.py) * Math.min(1, dt * 18);
+    let sz = 1; if (b.pop) { b.pop += dt * 3; sz = 1 + Math.sin(Math.min(1, b.pop) * Math.PI) * 0.12 - Math.max(0, b.pop - 0.7) * 2; if (b.pop > 1.1) { b.gone = true; burst(b); continue; } }
+    const bx = x0 + b.px * cell + 3, by = py0 + b.py * cell + 3, w = b.w * cell - 6, h = b.h * cell - 6;
+    ctx.save(); ctx.translate(bx + w / 2, by + h / 2); ctx.scale(sz, sz); ctx.translate(-w / 2, -h / 2);
+    ctx.fillStyle = shadeHex(b.c, 0.62); rr(0, 4, w, h, 10); ctx.fill();
+    ctx.fillStyle = shadeHex(b.c, b.c === 'W' ? 0.82 : 0.78); rr(0, 0, w, h - 2, 10); ctx.fill();
+    // 안쪽 칸: 채워진 만큼 아래에서부터 색이 찬다
+    const ix = 6, iy = 6, iw = w - 12, ih = h - 14, f = b.cap ? b.fill / b.cap : 1;
+    ctx.fillStyle = 'rgba(0,0,0,.28)'; rr(ix, iy, iw, ih, 7); ctx.fill();
+    ctx.save(); rr(ix, iy, iw, ih, 7); ctx.clip(); ctx.fillStyle = COL[b.c]; ctx.fillRect(ix, iy + ih * (1 - f), iw, ih * f); ctx.restore();
+    if (drag && drag.b === b) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; rr(-1, -1, w + 2, h, 11); ctx.stroke(); }
+    ctx.fillStyle = '#fff'; ctx.font = `900 ${Math.max(11, Math.min(15, cell * 0.24))}px system-ui`; ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.35)';
+    const t = Math.floor(f * 100) + '%'; ctx.strokeText(t, w - 8, h - 10); ctx.fillText(t, w - 8, h - 10); ctx.restore(); }
+  // 흡수 알갱이
+  for (const p of parts) { p.t += dt; p.y += p.vy * dt; ctx.fillStyle = COL[p.c]; ctx.globalAlpha = Math.max(0, 1 - p.t * 2); ctx.fillRect(p.x - s / 2, p.y, s, s); } ctx.globalAlpha = 1; parts = parts.filter((p) => p.t < 0.5);
+}
+function burst(b) { const { x0, py0, cell } = Lx; for (let i = 0; i < 26; i++) parts.push({ x: x0 + (b.x + Math.random() * b.w) * cell, y: py0 + (b.y + Math.random() * b.h) * cell, vy: -80 - Math.random() * 120, c: b.c, t: 0 }); }
+// ---------- 진행 ----------
+let last = performance.now();
+function loop(t) { requestAnimationFrame(loop); const dt = Math.min(0.05, (t - last) / 1000); last = t; if (!sand) return;
+  if (started && !won) { for (let k = 0; k < 3; k++) { stepSand(); absorb(); }
+    if (!sand.some(Boolean) && blocks.every((b) => b.gone || b.pop)) { won = true; setTimeout(() => showOv(LV + 1 < LEVELS.length ? '클리어!' : '모두 클리어!', `${moves}번 이동으로 깨끗하게 비웠어요`, LV + 1 < LEVELS.length ? '다음 단계' : '처음부터'), 900); } }
+  draw(dt); }
+function showOv(t, p, b) { document.getElementById('ovT').textContent = t; document.getElementById('ovP').textContent = p; document.getElementById('ovB').textContent = b; document.getElementById('ov').hidden = false; }
+document.getElementById('ovB').onclick = () => { document.getElementById('ov').hidden = true; if (won) load((LV + 1) % LEVELS.length); started = true; };
+load(Number((location.search.match(/lv=(\d)/) || [])[1] || 0));
+requestAnimationFrame(loop);
+if (/test/.test(location.search)) window.__sd = { get blocks() { return blocks; }, get sand() { return sand; }, free, load, start() { started = true; document.getElementById('ov').hidden = true; } };
+</script>
+</body>
+</html>
