@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>물감 블록 퍼즐 (샘플)</title>
+<style>
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#e989bf;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+#app{position:relative;height:100%;width:min(100%,calc(100dvh*.5625));margin:0 auto}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(80,20,60,.55);color:#fff;text-align:center}
+.ov h1{font-size:40px;font-weight:900;text-shadow:0 3px 0 #8a2a5e}.ov p{font-size:15px;line-height:1.6;max-width:300px}
+.ov button{border:0;border-radius:16px;padding:14px 34px;font:inherit;font-size:18px;font-weight:900;color:#5a1240;background:#fff;box-shadow:0 4px 0 #c0588f;cursor:pointer}
+[hidden]{display:none!important}
+</style>
+</head>
+<body><div id="app"><canvas id="cv"></canvas>
+<div class="ov" id="ov"><h1 id="ovT">물감 블록</h1><p id="ovP">아래 블록을 밀어서 맨 윗줄로 올리면<br>같은 색 물감을 빨아들여요.<br>가득 차면 블록이 사라져요!</p><button id="ovB">시작</button></div>
+</div>
+<script>
+'use strict';
+// ---------- 색 ----------
+const COL = { P: '#f05aa8', O: '#ff9a3c', Y: '#ffd23f', G: '#39c06a', B: '#3f6ff0', W: '#f3f1ee' };
+const KEYS = Object.keys(COL);
+const RGB = Object.fromEntries(KEYS.map((k) => [k, [1, 3, 5].map((i) => parseInt(COL[k].slice(i, i + 2), 16))]));
+// ---------- 레벨 ----------
+const GW = 96, GH = 80, CW = GW / 6; // 모래 격자 (가로 96 = 퍼즐 6칸 × 16)
+const LEVELS = [
+  { name: '네 겹 젤리 음료', bg: '#7fc3d8', frame: '#e7d3b0', rows: 6,
+    pic: (x, y) => { if (y < 6) return null; const o = Math.sin(x * 0.25) * 2; return ['P', 'Y', 'G', 'B'][Math.max(0, Math.min(3, Math.floor((y - 6 + o) / 8.5)))]; },
+    blocks: [['B', 0, 1, 2, 1], ['Y', 2, 1, 1, 2], ['G', 4, 1, 2, 1], ['P', 0, 2, 1, 2], ['B', 5, 2, 1, 2], ['G', 1, 3, 2, 1], ['P', 3, 3, 1, 2], ['Y', 0, 4, 2, 1], ['B', 4, 4, 1, 1], ['G', 0, 5, 1, 1], ['Y', 4, 5, 2, 1]] },
+  { name: '무지개 칵테일', bg: '#e989bf', frame: '#d86aa6', rows: 7,
+    pic: (x, y) => { if (y < 4) return null; if (Math.hypot(x - 14, y - 30) < 4.5) return 'P'; if (Math.hypot(x - 34, y - 20) < 4) return 'B'; return y < 11 ? 'W' : y < 17 ? 'O' : y < 24 ? 'Y' : y < 31 ? 'G' : y < 36 ? 'B' : 'P'; },
+    blocks: [['P', 1, 1, 3, 1], ['P', 1, 2, 1, 2], ['B', 5, 3, 1, 1], ['B', 3, 3, 1, 3], ['G', 2, 2, 1, 2], ['G', 2, 4, 1, 2], ['G', 5, 5, 1, 2], ['Y', 4, 2, 2, 1], ['Y', 4, 3, 1, 1], ['O', 3, 6, 2, 1], ['O', 4, 5, 1, 1], ['W', 0, 6, 3, 1], ['W', 0, 5, 2, 1], ['W', 0, 2, 1, 1]] },
+];
+let bubbles = [];
+let DEN = {}, TOTAL = 0, LV = 0, sand, shade, blocks, moves, won, parts = [], drag = null, started = false;
+function load(i) {
+  LV = i; const L = LEVELS[i]; sand = new Array(GW * GH); shade = new Float32Array(GW * GH);
+  const cnt = {}; for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) { const c = L.pic(x * 48 / GW, y * 40 / GH) || null; sand[y * GW + x] = c; shade[y * GW + x] = 0.86 + Math.random() * 0.2; if (c) cnt[c] = (cnt[c] || 0) + 1; }
+  blocks = L.blocks.map(([c, x, y, w, h]) => ({ c, x, y, w, h, px: x, py: y, fill: 0, cap: 0, pop: 0, gone: false }));
+  // 색마다 모래 알갱이 수를 블록 크기 비율로 나눠 용량을 정한다
+  for (const k of KEYS) { const bs = blocks.filter((b) => b.c === k); if (!bs.length) continue; const tot = bs.reduce((s, b) => s + b.w * b.h, 0); let left = cnt[k] || 0;
+    bs.forEach((b, j) => { b.cap = j === bs.length - 1 ? left : Math.round(((cnt[k] || 0) * b.w * b.h) / tot); left -= b.cap; }); }
+  TOTAL = sand.filter(Boolean).length;
+  // 처음 그림에서 아래쪽에 있던 색일수록 무겁다
+  DEN = {}; const sy = {}, n = {}; sand.forEach((c, i) => { if (c) { sy[c] = (sy[c] || 0) + Math.floor(i / GW); n[c] = (n[c] || 0) + 1; } }); for (const c in sy) DEN[c] = sy[c] / n[c]; moves = 0; won = false; parts = []; resize();
+}
+// ---------- 화면 ----------
+const app = document.getElementById('app'), cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+let W, H, DPR, Lx = {};
+const sc = document.createElement('canvas'); sc.width = GW; sc.height = GH; const sctx = sc.getContext('2d'); const img = sctx.createImageData(GW, GH);
+function resize() {
+  const r = app.getBoundingClientRect(); W = r.width; H = r.height; DPR = Math.min(2, devicePixelRatio || 1); cv.width = W * DPR; cv.height = H * DPR;
+  const rows = LEVELS[LV].rows, top = 64;
+  const s = Math.min((W - 40) / GW, (H - top - 30) / (GH + rows * CW + 6)); // 모래 한 알 크기
+  const bw = GW * s, x0 = (W - bw) / 2, cell = bw / 6;
+  Lx = { s, x0, y0: top, sy1: top + GH * s, py0: top + GH * s + s * 6, cell, rows, bw };
+}
+addEventListener('resize', resize);
+// ---------- 모래 ----------
+const moved = new Uint8Array(96 * 80);
+function stepSand() {
+  moved.fill(0); const DISP = 8;
+  for (let y = GH - 1; y >= 0; y--) { const dir = (y + frameN) % 2 ? 1 : -1;
+    for (let i = 0; i < GW; i++) { const x = dir > 0 ? i : GW - 1 - i, k = y * GW + x; const c = sand[k]; if (!c || moved[k]) continue;
+      const mv = (t) => { sand[t] = c; shade[t] = shade[k]; sand[k] = null; moved[t] = 1; };
+      if (y < GH - 1 && !sand[k + GW]) { mv(k + GW); continue; }
+      // 무거운 물감은 가벼운 물감 아래로 가라앉는다 (층이 다시 정렬됨)
+      const sw = (t) => { const c2 = sand[t], sh = shade[t]; sand[t] = c; shade[t] = shade[k]; sand[k] = c2; shade[k] = sh; moved[t] = moved[k] = 1; };
+      if (y < GH - 1 && sand[k + GW] !== c && DEN[sand[k + GW]] < DEN[c] && Math.random() < 0.5) { sw(k + GW); continue; }
+      if (y === GH - 1 || sand[k + GW]) { const dx = Math.random() < 0.5 ? 1 : -1, nx = x + dx, t = k + dx; if (nx >= 0 && nx < GW && sand[t] && sand[t] !== c && DEN[sand[t]] < DEN[c] && !moved[t] && Math.random() < 0.3) { sw(t); continue; } }
+      const d = Math.random() < 0.5 ? 1 : -1; let done = false;
+      if (y < GH - 1) for (const dx of [d, -d]) { const nx = x + dx; if (nx >= 0 && nx < GW && !sand[k + GW + dx]) { mv(k + GW + dx); done = true; break; } }
+      if (done) continue;
+      // 옆으로 흐르기: 빈 칸이 있으면 최대 DISP 칸까지 (수면이 평평해짐)
+      for (const dx of [d, -d]) { let t = -1; for (let s2 = 1; s2 <= DISP; s2++) { const nx = x + dx * s2; if (nx < 0 || nx >= GW || sand[y * GW + nx]) break; t = y * GW + nx; if (y < GH - 1 && !sand[t + GW]) break; }
+        if (t >= 0) { mv(t); break; } } } }
+}
+const cellOf = (x, y) => blocks.find((b) => !b.gone && x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h);
+function absorb() {
+  // 맨 윗줄(0행)에 닿은 블록이 바로 위 맨 아래 모래 중 같은 색을 빨아들인다
+  for (const b of blocks) { if (b.gone || b.y !== 0 || drag && drag.b === b) continue;
+    let n = 0; for (let x = b.x * CW; x < (b.x + b.w) * CW; x++) { if (b.fill >= b.cap) break; const k = (GH - 1) * GW + x;
+      if (sand[k] === b.c) { sand[k] = null; b.fill++; n++; if (Math.random() < 0.2) parts.push({ x: Lx.x0 + (x + 0.5) * Lx.s, y: Lx.sy1, vy: 60 + Math.random() * 80, c: b.c, t: 0 }); } }
+    if (b.fill >= b.cap && !b.pop) b.pop = 0.01; }
+}
+// ---------- 블록 이동 ----------
+function free(b, nx, ny) {
+  if (nx < 0 || ny < 0 || nx + b.w > 6 || ny + b.h > Lx.rows) return false;
+  for (const o of blocks) if (o !== b && !o.gone && nx < o.x + o.w && nx + b.w > o.x && ny < o.y + o.h && ny + b.h > o.y) return false; return true;
+}
+const pos = (e) => { const r = app.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+cv.addEventListener('pointerdown', (e) => { if (!started || won) return; const [x, y] = pos(e); const cx = Math.floor((x - Lx.x0) / Lx.cell), cy = Math.floor((y - Lx.py0) / Lx.cell);
+  const b = cellOf(cx, cy); if (b && !b.pop) { drag = { b, sx: x, sy: y, ox: b.x, oy: b.y, axis: null }; cv.setPointerCapture(e.pointerId); } });
+cv.addEventListener('pointermove', (e) => { if (!drag) return; const [x, y] = pos(e), b = drag.b; let dx = (x - drag.sx) / Lx.cell, dy = (y - drag.sy) / Lx.cell;
+  if (!drag.axis && Math.hypot(dx, dy) > 0.2) drag.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+  if (!drag.axis) return;
+  // 손가락 쪽으로 한 칸씩, 막히면 멈춤
+  const target = drag.axis === 'x' ? Math.round(drag.ox + dx) : Math.round(drag.oy + dy);
+  let guard = 12; while (guard--) { const cur = drag.axis === 'x' ? b.x : b.y; if (cur === target) break; const st = Math.sign(target - cur);
+    const nx = drag.axis === 'x' ? b.x + st : b.x, ny = drag.axis === 'y' ? b.y + st : b.y; if (!free(b, nx, ny)) break; b.x = nx; b.y = ny; } });
+cv.addEventListener('pointerup', () => { if (drag) { if (drag.b.x !== drag.ox || drag.b.y !== drag.oy) moves++; drag = null; } });
+// ---------- 그리기 ----------
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function shadeHex(hex, k) { const [r, g, b] = RGB[hex] || [0, 0, 0]; return `rgb(${Math.round(r * k)},${Math.round(g * k)},${Math.round(b * k)})`; }
+function draw(dt) {
+  const L = LEVELS[LV]; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.fillStyle = L.bg; ctx.fillRect(0, 0, W, H);
+  const { s, x0, y0, sy1, py0, cell, rows, bw } = Lx;
+  // 상단 문구
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = '900 20px system-ui'; ctx.fillText(`${LV + 1}. ${L.name}`, x0, 30);
+  let left = 0; for (const c of sand) if (c) left++; const total = TOTAL || 1;
+  ctx.textAlign = 'right'; ctx.font = '800 14px system-ui'; ctx.fillText(`남은 물감 ${Math.ceil((left / total) * 100)}% · 이동 ${moves}`, x0 + bw, 30);
+  // 틀
+  ctx.fillStyle = L.frame; rr(x0 - 12, y0 - 12, bw + 24, py0 + rows * cell - y0 + 24, 18); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.18)'; rr(x0 - 4, y0 - 4, bw + 8, GH * s + 8, 8); ctx.fill();
+  // 모래 (한 알 = 한 픽셀 → 확대)
+  const d = img.data, tt = performance.now() / 600; for (let i = 0; i < GW * GH; i++) { const c = sand[i], o = i * 4; if (!c) { d[o + 3] = 0; continue; } const x = i % GW, y = (i / GW) | 0;
+    const top = y === 0 || !sand[i - GW] || sand[i - GW] !== c, k = top ? 1.28 : 0.93 + Math.sin(x * 0.35 + y * 0.22 + tt) * 0.05 + Math.sin(x * 0.11 - tt * 0.7) * 0.04;
+    const [r, g, b] = RGB[c]; d[o] = Math.min(255, r * k + (top ? 30 : 0)); d[o + 1] = Math.min(255, g * k + (top ? 30 : 0)); d[o + 2] = Math.min(255, b * k + (top ? 30 : 0)); d[o + 3] = 255; }
+  sctx.putImageData(img, 0, 0); ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(x0, y0, bw, GH * s); ctx.imageSmoothingEnabled = true; ctx.drawImage(sc, x0, y0, bw, GH * s);
+  // 기포
+  for (const b of bubbles) { b.y -= b.v * dt; b.x += Math.sin(b.y * 0.08) * 0.3; const gx = Math.floor((b.x - x0) / s), gy = Math.floor((b.y - y0) / s);
+    if (gx < 0 || gx >= GW || gy < 0 || !sand[gy * GW + gx]) { b.dead = true; continue; } ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 6.28); ctx.stroke(); }
+  bubbles = bubbles.filter((b) => !b.dead); if (bubbles.length < 18 && Math.random() < 0.3) { const bx = x0 + Math.random() * bw; bubbles.push({ x: bx, y: y0 + GH * s - 2, v: 18 + Math.random() * 30, r: 1.5 + Math.random() * 2.5 }); }
+  // 유리 반사
+  ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.fillRect(x0 + bw * 0.06, y0 + 4, bw * 0.05, GH * s - 8);
+  // 퍼즐 바닥
+  for (let y = 0; y < rows; y++) for (let x = 0; x < 6; x++) { ctx.fillStyle = y === 0 ? 'rgba(255,255,255,.42)' : 'rgba(255,255,255,.22)'; rr(x0 + x * cell + 2, py0 + y * cell + 2, cell - 4, cell - 4, 8); ctx.fill(); }
+  ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.font = '800 11px system-ui'; ctx.textAlign = 'center'; if (moves < 2) ctx.fillText('▲ 이 줄에 닿으면 물감을 빨아들여요', x0 + bw / 2, py0 + cell * 0.5);
+  // 블록
+  for (const b of blocks) { if (b.gone) continue; b.px += (b.x - b.px) * Math.min(1, dt * 18); b.py += (b.y - b.py) * Math.min(1, dt * 18);
+    let sz = 1; if (b.pop) { b.pop += dt * 3; sz = 1 + Math.sin(Math.min(1, b.pop) * Math.PI) * 0.12 - Math.max(0, b.pop - 0.7) * 2; if (b.pop > 1.1) { b.gone = true; burst(b); continue; } }
+    const bx = x0 + b.px * cell + 3, by = py0 + b.py * cell + 3, w = b.w * cell - 6, h = b.h * cell - 6;
+    ctx.save(); ctx.translate(bx + w / 2, by + h / 2); ctx.scale(sz, sz); ctx.translate(-w / 2, -h / 2);
+    ctx.fillStyle = shadeHex(b.c, 0.62); rr(0, 4, w, h, 10); ctx.fill();
+    ctx.fillStyle = shadeHex(b.c, b.c === 'W' ? 0.82 : 0.78); rr(0, 0, w, h - 2, 10); ctx.fill();
+    // 안쪽 칸: 채워진 만큼 아래에서부터 색이 찬다
+    const ix = 6, iy = 6, iw = w - 12, ih = h - 14, f = b.cap ? b.fill / b.cap : 1;
+    ctx.fillStyle = 'rgba(0,0,0,.28)'; rr(ix, iy, iw, ih, 7); ctx.fill();
+    ctx.save(); rr(ix, iy, iw, ih, 7); ctx.clip(); ctx.fillStyle = COL[b.c]; ctx.fillRect(ix, iy + ih * (1 - f), iw, ih * f); ctx.restore();
+    if (drag && drag.b === b) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; rr(-1, -1, w + 2, h, 11); ctx.stroke(); }
+    ctx.fillStyle = '#fff'; ctx.font = `900 ${Math.max(11, Math.min(15, cell * 0.24))}px system-ui`; ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.35)';
+    const t = Math.floor(f * 100) + '%'; ctx.strokeText(t, w - 8, h - 10); ctx.fillText(t, w - 8, h - 10); ctx.restore(); }
+  // 흡수 알갱이
+  for (const p of parts) { p.t += dt; p.y += p.vy * dt; ctx.fillStyle = COL[p.c]; ctx.globalAlpha = Math.max(0, 1 - p.t * 2); ctx.fillRect(p.x - s / 2, p.y, s, s); } ctx.globalAlpha = 1; parts = parts.filter((p) => p.t < 0.5);
+}
+function burst(b) { const { x0, py0, cell } = Lx; for (let i = 0; i < 26; i++) parts.push({ x: x0 + (b.x + Math.random() * b.w) * cell, y: py0 + (b.y + Math.random() * b.h) * cell, vy: -80 - Math.random() * 120, c: b.c, t: 0 }); }
+// ---------- 진행 ----------
+let last = performance.now();
+let frameN = 0;
+function loop(t) { requestAnimationFrame(loop); frameN++; const dt = Math.min(0.05, (t - last) / 1000); last = t; if (!sand) return;
+  if (started && !won) { for (let k = 0; k < 4; k++) { stepSand(); absorb(); }
+    if (!sand.some(Boolean) && blocks.every((b) => b.gone || b.pop)) { won = true; setTimeout(() => showOv(LV + 1 < LEVELS.length ? '클리어!' : '모두 클리어!', `${moves}번 이동으로 깨끗하게 비웠어요`, LV + 1 < LEVELS.length ? '다음 단계' : '처음부터'), 900); } }
+  draw(dt); }
+function showOv(t, p, b) { document.getElementById('ovT').textContent = t; document.getElementById('ovP').textContent = p; document.getElementById('ovB').textContent = b; document.getElementById('ov').hidden = false; }
+document.getElementById('ovB').onclick = () => { document.getElementById('ov').hidden = true; if (won) load((LV + 1) % LEVELS.length); started = true; };
+load(Number((location.search.match(/lv=(\d)/) || [])[1] || 0));
+requestAnimationFrame(loop);
+if (/test/.test(location.search)) window.__sd = { get blocks() { return blocks; }, get sand() { return sand; }, free, load, start() { started = true; document.getElementById('ov').hidden = true; } };
+</script>
+</body>
+</html>
