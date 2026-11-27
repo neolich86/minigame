@@ -5,6 +5,7 @@
 <meta name="robots" content="noindex">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#f6f3ee">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9826307769121956" crossorigin="anonymous"></script>
 <title>Show Korea — point, show, done</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -59,6 +60,8 @@ h1{font-size:26px;line-height:1.25;font-weight:900;margin:6px 0 6px;letter-spaci
 .rbtns button{border:1px solid var(--line);background:var(--soft);border-radius:12px;padding:10px 2px;font:inherit;font-size:14px;font-weight:800;color:var(--ink);cursor:pointer;word-break:keep-all}
 .ans{background:var(--ink);color:#fff;border-radius:18px;padding:16px;text-align:center;margin-bottom:12px}
 .ans small{display:block;font-size:12px;opacity:.7;margin-bottom:4px}.ans b{font-size:24px}
+.adwrap{margin-top:24px;min-height:60px}.adwrap small{display:block;font-size:11px;color:#a39b8e;text-align:center;margin-bottom:4px}
+.adwrap:has(ins[data-ad-status="unfilled"]){display:none}
 #show.land .stage{transform:rotate(90deg)}
 </style>
 </head>
@@ -68,6 +71,10 @@ h1{font-size:26px;line-height:1.25;font-weight:900;margin:6px 0 6px;letter-spaci
   <section id="home">
     <h1 id="hTitle"></h1><p class="sub" id="hSub"></p>
     <div class="tiles" id="tiles"></div>
+    <!-- 광고: 첫 화면에만 배너 1개 (보여주기·상황 화면에는 넣지 않음) -->
+    <div class="adwrap" id="adwrap"><small id="adLabel">Advertisement</small>
+      <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-9826307769121956" data-ad-slot="8492334079" data-ad-format="horizontal" data-full-width-responsive="true"></ins>
+    </div>
   </section>
   <section id="sit" hidden>
     <button class="back" id="back"></button>
@@ -162,6 +169,7 @@ const $ = (id) => document.getElementById(id);
 function render() {
   document.documentElement.lang = lang; const u = UI[lang];
   $('langs').innerHTML = ''; for (const [k, l] of [['en', 'EN'], ['ja', '日本語'], ['zh', '中文']]) { const b = document.createElement('button'); b.textContent = l; b.className = k === lang ? 'on' : ''; b.onclick = () => { lang = k; localStorage.setItem('sk_lang', k); render(); }; $('langs').append(b); }
+  $('adLabel').textContent = { en: 'Advertisement', ja: '広告', zh: '广告' }[lang];
   $('hTitle').textContent = u.t; $('hSub').textContent = u.s; $('back').textContent = u.back;
   const tl = $('tiles'); tl.innerHTML = '';
   for (const s of SIT) { const b = document.createElement('button'); b.className = 'tile'; b.innerHTML = `<div class="ico" style="background-position:${icoPos(s.ic)}"></div><div><b>${s.n[lang]}</b><br><small>${s.d[lang]}</small></div>`; b.onclick = () => openSit(s.id); tl.append(b); }
@@ -208,6 +216,7 @@ $('close').onclick = () => { $('show').hidden = true; speechSynthesis && speechS
 $('rot').onclick = () => $('show').classList.toggle('land');
 $('back').onclick = () => { cur = null; $('sit').hidden = true; $('home').hidden = false; };
 render();
+try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
 </script>
 </body>
 </html>
