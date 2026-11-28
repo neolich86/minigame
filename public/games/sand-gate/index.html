@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>모래 수문 (샘플)</title>
+<style>
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#f3c98f;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+#app{position:relative;height:100%;width:min(100%,calc(100dvh*.5625));margin:0 auto}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(70,40,20,.6);color:#fff;text-align:center;padding:24px}
+.ov h1{font-size:38px;font-weight:900;text-shadow:0 3px 0 #7a4a20}.ov p{font-size:15px;line-height:1.65;max-width:310px}
+.ov button{border:0;border-radius:16px;padding:14px 34px;font:inherit;font-size:18px;font-weight:900;color:#6a3a10;background:#fff;box-shadow:0 4px 0 #c08a50;cursor:pointer}
+[hidden]{display:none!important}
+</style>
+</head>
+<body><div id="app"><canvas id="cv"></canvas>
+<div class="ov" id="ov"><h1 id="ovT">모래 수문</h1><p id="ovP">병을 끌어다 <b>수문 아래</b>에 놓으면 수문이 열려요.<br>수문 바로 위 <b>맨 아래 모래와 같은 색</b>만 병에 담겨요.<br>색이 하나도 안 맞는 곳에 놓으면 <b>병이 튕겨 나와요</b> (기회 3번).<br>당장 못 쓰는 병은 보관대에 잠시 둘 수 있어요.</p><button id="ovB">시작</button></div>
+</div>
+<script>
+'use strict';
+const COL = { P: '#f05aa8', O: '#ff9a3c', Y: '#ffd23f', G: '#39c06a', B: '#3f6ff0', W: '#f3f1ee', V: '#9a5ae0' };
+const RGB = Object.fromEntries(Object.keys(COL).map((k) => [k, [1, 3, 5].map((i) => parseInt(COL[k].slice(i, i + 2), 16))]));
+const R = Math.random, pick = (a) => a[Math.floor(R() * a.length)];
+const GW = 48, GH = 44, CW = 8; // 모래 48×44 알갱이, 수문 6개 × 8알갱이
+const LEVELS = [
+  { name: '노을 언덕', bg: '#f3c98f', frame: '#b77a45',
+    pic: (x, y) => { const o = Math.sin(x * 0.2) * 3 + Math.sin(x * 0.07 + 1) * 3; return ['P', 'O', 'Y', 'G'][Math.max(0, Math.min(3, Math.floor((y + o) / 11)))]; } },
+  { name: '무지개 계단', bg: '#bfe3f0', frame: '#6a8fb5',
+    pic: (x, y) => { const g = Math.floor(x / 8), o = Math.sin(x * 0.5) * 1.2; return ['B', 'V', 'P', 'O', 'Y'][(((g + Math.floor((y + o + g * 2) / 9)) % 5) + 5) % 5]; } },
+];
+let LV = 0, sand, shade, jars, queues, park, gates, hearts, state = 'title', drag = null, fx = [], msg = null;
+function load(i) {
+  LV = i; const L = LEVELS[i]; sand = new Array(GW * GH); shade = new Float32Array(GW * GH); const cnt = {}, depth = {};
+  for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) { const c = L.pic(x, y); sand[y * GW + x] = c; shade[y * GW + x] = 0.86 + R() * 0.2; cnt[c] = (cnt[c] || 0) + 1; depth[c] = Math.min(depth[c] ?? 99, GH - 1 - y); }
+  // 병 순서 만들기: 실제로 비워 보면서 '지금 바닥에 드러난 색' 병을 차례로 만든다 → 항상 풀 수 있는 순서
+  const cols = []; for (let x = 0; x < GW; x++) { const c = []; for (let y = GH - 1; y >= 0; y--) c.push(sand[y * GW + x]); cols.push(c); }
+  const supply = (g, c) => { let n = 0; for (let x = g * CW; x < (g + 1) * CW; x++) { let k = 0; while (cols[x][k] === c) k++; n += k; } return n; };
+  const all = []; let guard = 0;
+  while (cols.some((c) => c.length) && guard++ < 999) {
+    let best = null; for (let g = 0; g < 6; g++) { const seen = new Set(); for (let x = g * CW; x < (g + 1) * CW; x++) if (cols[x].length) seen.add(cols[x][0]);
+      for (const c of seen) { const n = supply(g, c) + R() * 20; if (!best || n > best.n) best = { g, c, n }; } }
+    const want = 50 + Math.floor(R() * 60); let got = 0; // 병 하나는 수문 하나에서만 채울 수 있는 양
+    for (let x = best.g * CW; x < (best.g + 1) * CW; x++) while (got < want && cols[x][0] === best.c) { cols[x].shift(); got++; }
+    all.push({ c: best.c, cap: got, fill: 0 });
+  }
+  queues = [all]; // 한 줄 대기열: 맨 앞 병만 꺼낼 수 있음
+  park = [null, null, null, null]; gates = Array(6).fill(null); hearts = 3; fx = []; drag = null; msg = null; resize();
+}
+// ---------- 화면 ----------
+const app = document.getElementById('app'), cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+let W, H, DPR, Lx = {};
+const sc = document.createElement('canvas'); sc.width = GW; sc.height = GH; const sctx = sc.getContext('2d'), img = sctx.createImageData(GW, GH);
+function resize() { const r = app.getBoundingClientRect(); W = r.width; H = r.height; DPR = Math.min(2, devicePixelRatio || 1); cv.width = W * DPR; cv.height = H * DPR;
+  const s = Math.min((W - 36) / GW, (H * 0.45) / GH), bw = GW * s, x0 = (W - bw) / 2, y0 = 62, sy1 = y0 + GH * s, gw = bw / 6;
+  const gateY = sy1 + 4, slotY = gateY + 26, jw = Math.min(gw - 8, 54), jh = jw * 1.25, parkY = slotY + jh + 42, qY = parkY + jh + 50;
+  Lx = { s, bw, x0, y0, sy1, gw, gateY, slotY, jw, jh, parkY, qY }; }
+addEventListener('resize', resize);
+const slotPos = (i) => [Lx.x0 + (i + 0.5) * Lx.gw, Lx.slotY];
+const parkPos = (i) => [W / 2 + (i - 1.5) * (Lx.jw + 22), Lx.parkY];
+const queuePos = (q, j) => [W / 2 + (j - 1.5) * (Lx.jw + 18), Lx.qY + (j ? Lx.jh * 0.08 : 0)];
+// ---------- 모래: 똑바로 아래로만 떨어짐 (칸마다 층이 그대로 보이게) ----------
+function stepSand() { for (let y = GH - 2; y >= 0; y--) for (let x = 0; x < GW; x++) { const k = y * GW + x; if (sand[k] && !sand[k + GW]) { sand[k + GW] = sand[k]; shade[k + GW] = shade[k]; sand[k] = null; } } }
+function bottomColors(g) { const c = {}; for (let x = g * CW; x < (g + 1) * CW; x++) { // 각 줄에서 가장 아래 알갱이 색
+    for (let y = GH - 1; y >= 0; y--) { const v = sand[y * GW + x]; if (v) { c[v] = (c[v] || 0) + 1; break; } } } return c; }
+function drain(dt) {
+  gates.forEach((j, g) => { if (!j || j.broken || j.leave) return; j.acc = (j.acc || 0) + dt * 40;
+    while (j.acc >= 1 && j.fill < j.cap) { j.acc--; let took = false;
+      for (let t = 0; t < CW && !took; t++) { const x = g * CW + ((j.rr = ((j.rr || 0) + 1) % CW)); const k = (GH - 1) * GW + x; if (sand[k] === j.c) { sand[k] = null; j.fill++; took = true; fx.push({ x: Lx.x0 + (x + 0.5) * Lx.s, y: Lx.sy1, c: j.c, t: 0, tx: slotPos(g)[0] }); } }
+      if (!took) { j.acc = 0; break; } }
+    if (j.fill >= j.cap) { j.leave = 0.01; } });
+}
+// ---------- 입력: 병 끌어 놓기 ----------
+const P = (e) => { const r = app.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+const near = ([x, y], [px, py]) => Math.abs(x - px) < Lx.jw * 0.7 && Math.abs(y - py) < Lx.jh * 0.75;
+cv.addEventListener('pointerdown', (e) => { if (state !== 'play') return; const p = P(e);
+  for (let q = 0; q < queues.length; q++) if (queues[q][0] && near(p, queuePos(q, 0))) return start(e, p, { from: 'q', q }, queues[q][0]);
+  for (let i = 0; i < 4; i++) if (park[i] && near(p, parkPos(i))) return start(e, p, { from: 'p', i }, park[i]);
+  for (let g = 0; g < 6; g++) if (gates[g] && !gates[g].leave && !gates[g].broken && near(p, slotPos(g))) return start(e, p, { from: 'g', g }, gates[g]); });
+function start(e, p, src, j) { drag = { src, j, x: p[0], y: p[1] }; try { cv.setPointerCapture(e.pointerId); } catch (er) {} }
+cv.addEventListener('pointermove', (e) => { if (drag) [drag.x, drag.y] = P(e); });
+cv.addEventListener('pointerup', (e) => { if (!drag) return; const p = P(e), { src, j } = drag; drag = null;
+  let dst = null; for (let g = 0; g < 6; g++) if (!gates[g] && near(p, slotPos(g))) dst = { to: 'g', g }; for (let i = 0; i < 4; i++) if (!park[i] && near(p, parkPos(i))) dst = { to: 'p', i };
+  if (!dst) return; // 놓을 수 없는 곳: 제자리
+  if (src.from === 'q') queues[src.q].shift(); else if (src.from === 'p') park[src.i] = null; else gates[src.g] = null;
+  if (dst.to === 'p') { park[dst.i] = j; return; }
+  gates[dst.g] = j; j.acc = 0;
+  const bc = bottomColors(dst.g); if (!bc[j.c] && Object.keys(bc).length) { // 틀린 수문: 병이 튕겨 돌아오고 기회 -1
+    gates[dst.g] = null; if (src.from === 'q') queues[src.q].unshift(j); else if (src.from === 'p') park[src.i] = j; else gates[src.g] = j;
+    hearts--; bounce = { g: dst.g, t: 0.5 }; say(`${dst.g + 1}번 수문 아래는 ${Object.keys(bc).map(nameOf).join('·')}색이에요! (❤️-1)`); if (hearts <= 0) setTimeout(() => lose('기회를 모두 썼어요'), 500); } });
+let bounce = null;
+const NAMES = { P: '분홍', O: '주황', Y: '노랑', G: '초록', B: '파랑', W: '흰', V: '보라' }; const nameOf = (c) => NAMES[c];
+function say(t) { msg = { t, life: 2.4 }; }
+// ---------- 진행 ----------
+function update(dt) {
+  if (state !== 'play') return; stepSand(); stepSand(); drain(dt);
+  gates.forEach((j, g) => { if (!j) return; if (j.leave) { j.leave += dt; if (j.leave > 0.6) gates[g] = null; } if (j.broken) { j.broken += dt; if (j.broken > 0.8) gates[g] = null; } });
+  if (bounce && (bounce.t -= dt) <= 0) bounce = null;
+  if ((guardT += dt) > 0.5) { guardT = 0; // 모래와 병 수가 어긋나지 않게: 색이 다 떨어지면 병은 닫히고, 모래가 남으면 병을 더 줌
+    const left = {}; for (const v of sand) if (v) left[v] = (left[v] || 0) + 1;
+    const need = {}; const every = [...queues[0], ...park.filter(Boolean), ...gates.filter((j) => j && !j.leave && !j.broken)];
+    for (const j of every) need[j.c] = (need[j.c] || 0) + j.cap - j.fill;
+    for (const c in left) if ((need[c] || 0) < left[c]) queues[0].push({ c, cap: left[c] - (need[c] || 0), fill: 0 });
+    for (const j of every) if (!left[j.c]) { j.cap = Math.max(1, j.fill); if (gates.includes(j)) j.leave = j.leave || 0.01; else { const qi = queues[0].indexOf(j); if (qi >= 0) queues[0].splice(qi, 1); const pi = park.indexOf(j); if (pi >= 0) park[pi] = null; } } }
+  for (const f of fx) f.t += dt; fx = fx.filter((f) => f.t < 0.35); if (msg && (msg.life -= dt) <= 0) msg = null;
+  if (!sand.some(Boolean)) { state = 'win'; setTimeout(() => show('완성!', `${LEVELS[LV].name}의 모래를 모두 담았어요`, LV + 1 < LEVELS.length ? '다음 그림' : '처음부터'), 600); return; }
+  // 막힘: 놓을 곳도, 보관할 곳도, 담고 있는 병도 없으면 실패
+  const idleG = gates.map((j, g) => (j && !j.broken && !j.leave && !bottomColors(g)[j.c] ? j : null)).filter(Boolean);
+  const fronts = [...queues.map((q) => q[0]), ...park, ...idleG].filter(Boolean), freeG = [0, 1, 2, 3, 4, 5].filter((g) => !gates[g]);
+  const placeable = fronts.some((j) => freeG.some((g) => bottomColors(g)[j.c]));
+  const parkFree = park.some((p) => !p) && (queues.some((q) => q.length) || idleG.length);
+  const working = gates.some((j, g) => j && (j.leave || j.broken || bottomColors(g)[j.c]));
+  if (!placeable && !parkFree && !working) { stuckT += dt; if (stuckT > 1.5) { stuckT = 0; if (hearts <= 1) { hearts = 0; lose('더 놓을 곳이 없어요. 보관대를 아껴 써 보세요!'); return; }
+      hearts--; for (const g of [0, 1, 2, 3, 4, 5]) { const j = gates[g]; if (j && idleG.includes(j)) { gates[g] = null; park.push(j); } }
+      const back = park.filter(Boolean); if (queues[0].length) back.unshift(queues[0].shift()); queues[0].push(...back); park = [null, null, null, null];
+      say('막혔어요! 병들을 줄 맨 뒤로 보냈어요 (❤️-1)'); } } else stuckT = 0;
+}
+let stuckT = 0, guardT = 0;
+function lose(t) { if (state !== 'play') return; state = 'lose'; show('아쉬워요', t, '다시 하기'); }
+// ---------- 그리기 ----------
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function drawJar(j, cx, cy, s, alpha) {
+  const w = Lx.jw * s, h = Lx.jh * s, x = cx - w / 2, y = cy - h / 2; ctx.save(); ctx.globalAlpha = alpha ?? 1;
+  if (j.leave) { ctx.translate(0, -j.leave * 60); ctx.globalAlpha *= Math.max(0, 1 - j.leave * 1.6); }
+  if (j.broken) { ctx.translate(Math.sin(j.broken * 50) * 4, j.broken * 20); ctx.globalAlpha *= Math.max(0, 1 - j.broken); }
+  // 뚜껑·목
+  ctx.fillStyle = '#b07a45'; rr(x + w * 0.22, y - h * 0.02, w * 0.56, h * 0.13, 4); ctx.fill();
+  // 유리 몸통
+  ctx.fillStyle = 'rgba(255,255,255,.55)'; rr(x, y + h * 0.1, w, h * 0.9, w * 0.22); ctx.fill();
+  const f = j.fill / j.cap, ih = h * 0.82; ctx.save(); rr(x + 3, y + h * 0.14, w - 6, ih, w * 0.18); ctx.clip();
+  ctx.fillStyle = COL[j.c]; ctx.globalAlpha *= 0.35; ctx.fillRect(x, y + h * 0.14, w, ih); ctx.globalAlpha /= 0.35; ctx.fillRect(x, y + h * 0.14 + ih * (1 - f), w, ih * f);
+  ctx.fillStyle = 'rgba(0,0,0,.08)'; for (let k = 0; k < 14; k++) ctx.fillRect(x + ((k * 37) % (w - 6)) + 3, y + h * 0.14 + ih * (1 - f) + ((k * 23) % Math.max(1, ih * f)), 2, 2); ctx.restore();
+  ctx.strokeStyle = j.broken ? '#c0392b' : 'rgba(80,50,30,.55)'; ctx.lineWidth = 2; rr(x, y + h * 0.1, w, h * 0.9, w * 0.22); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.6)'; rr(x + w * 0.14, y + h * 0.22, w * 0.1, h * 0.5, 3); ctx.fill();
+  if (j.broken) { ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x + w * 0.3, y + h * 0.2); ctx.lineTo(x + w * 0.5, y + h * 0.5); ctx.lineTo(x + w * 0.35, y + h * 0.7); ctx.lineTo(x + w * 0.6, y + h * 0.95); ctx.stroke(); }
+  ctx.fillStyle = '#3a2a1a'; ctx.font = `900 ${Math.max(10, w * 0.24)}px system-ui`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(j.broken ? '✕' : j.cap - j.fill, cx, y + h * 0.62);
+  ctx.restore();
+}
+function draw(t) {
+  const L = LEVELS[LV], { s, bw, x0, y0, sy1, gw, gateY, slotY, jw, jh, parkY, qY } = Lx; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.fillStyle = L.bg; ctx.fillRect(0, 0, W, H); if (!sand) return;
+  ctx.fillStyle = '#4a2e18'; ctx.font = '900 19px system-ui'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(`${LV + 1}. ${L.name}`, 16, 30);
+  ctx.textAlign = 'right'; ctx.font = '18px system-ui'; ctx.fillText('❤️'.repeat(Math.max(0, hearts)) + '🤍'.repeat(3 - Math.max(0, hearts)), W - 14, 30);
+  // 모래 상자
+  ctx.fillStyle = L.frame; rr(x0 - 10, y0 - 10, bw + 20, GH * s + 20, 14); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(x0, y0, bw, GH * s);
+  const d = img.data; for (let i = 0; i < GW * GH; i++) { const c = sand[i], o = i * 4; if (!c) { d[o + 3] = 0; continue; } const [r, g, b] = RGB[c], k = shade[i]; d[o] = Math.min(255, r * k); d[o + 1] = Math.min(255, g * k); d[o + 2] = Math.min(255, b * k); d[o + 3] = 255; }
+  sctx.putImageData(img, 0, 0); ctx.imageSmoothingEnabled = false; ctx.drawImage(sc, x0, y0, bw, GH * s);
+  for (let g = 1; g < 6; g++) { ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.fillRect(x0 + g * gw - 0.5, y0, 1, GH * s); }
+  // 수문 6개: 바로 위 맨 아래 모래 색을 띠로 보여줌
+  for (let g = 0; g < 6; g++) { const gx = x0 + g * gw, bc = bottomColors(g), tot = Object.values(bc).reduce((a, b) => a + b, 0) || 1; let ox = 0;
+    ctx.fillStyle = '#5a3a22'; rr(gx + 2, gateY - 2, gw - 4, 14, 4); ctx.fill();
+    for (const c in bc) { const w = (gw - 10) * bc[c] / tot; ctx.fillStyle = COL[c]; ctx.fillRect(gx + 5 + ox, gateY + 1, w, 8); ox += w; }
+    // 받침 자리
+    const [sx, sy] = slotPos(g); ctx.fillStyle = bounce && bounce.g === g ? 'rgba(220,40,30,.45)' : 'rgba(90,58,34,.18)'; rr(sx - jw / 2, sy - jh / 2, jw, jh, 10); ctx.fill(); if (!gates[g]) { ctx.fillStyle = 'rgba(90,58,34,.5)'; ctx.font = '800 12px system-ui'; ctx.textAlign = 'center'; ctx.fillText(`${g + 1}번`, sx, sy); } }
+  // 쏟아지는 모래
+  for (const f of fx) { const k = f.t / 0.35; ctx.fillStyle = COL[f.c]; ctx.fillRect(f.x + (f.tx - f.x) * k * 0.6 - s / 2, f.y + (slotY - Lx.jh * 0.3 - f.y) * k, s, s); }
+  gates.forEach((j, g) => { if (j && !(drag && drag.j === j)) drawJar(j, ...slotPos(g), 1); });
+  // 보관대
+  ctx.fillStyle = 'rgba(90,58,34,.85)'; ctx.font = '800 12px system-ui'; ctx.textAlign = 'center'; ctx.fillText('보관대', W / 2, parkY - jh / 2 - 12);
+  for (let i = 0; i < 4; i++) { const [px, py] = parkPos(i); ctx.fillStyle = 'rgba(90,58,34,.15)'; rr(px - jw / 2 - 4, py - jh / 2 - 4, jw + 8, jh + 8, 12); ctx.fill(); if (park[i] && !(drag && drag.j === park[i])) drawJar(park[i], px, py, 1); }
+  // 대기열 3줄
+  ctx.fillStyle = 'rgba(90,58,34,.85)'; ctx.font = '800 12px system-ui'; ctx.textAlign = 'center'; ctx.fillText('다음 병 (맨 왼쪽부터)', W / 2, qY - jh / 2 - 12);
+  for (let q = 0; q < queues.length; q++) { for (let j = 3; j >= 0; j--) { const it = queues[q][j]; if (!it || (drag && drag.j === it)) continue; const [qx, qy] = queuePos(q, j); drawJar(it, qx, qy, j ? 0.82 : 1, j ? 0.6 : 1); }
+    ctx.fillStyle = 'rgba(90,58,34,.8)'; ctx.fillText(`남은 병 ${queues[q].length}`, W / 2, Lx.qY + Lx.jh * 0.75); }
+  if (drag) drawJar(drag.j, drag.x, drag.y, 1.08);
+  if (msg) { ctx.globalAlpha = Math.min(1, msg.life * 2); ctx.font = '800 13px system-ui'; const tw = ctx.measureText(msg.t).width + 24; ctx.fillStyle = 'rgba(160,40,30,.92)'; rr(W / 2 - tw / 2, sy1 - 40, tw, 28, 14); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillText(msg.t, W / 2, sy1 - 26); ctx.globalAlpha = 1; }
+}
+function show(t, p, b) { document.getElementById('ovT').textContent = t; document.getElementById('ovP').textContent = p; document.getElementById('ovB').textContent = b; document.getElementById('ov').hidden = false; }
+document.getElementById('ovB').onclick = () => { document.getElementById('ov').hidden = true; if (state === 'win') load((LV + 1) % LEVELS.length); else if (state === 'lose') load(LV); state = 'play'; };
+let last = performance.now();
+function loop(t) { requestAnimationFrame(loop); const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt); draw(t); }
+load(Number((location.search.match(/lv=(\d)/) || [])[1] || 0)); requestAnimationFrame(loop);
+window.__sg = { get S() { return { sand, queues, park, gates, hearts, state }; }, bottomColors, start() { state = 'play'; document.getElementById('ov').hidden = true; },
+  move(src, dst) { // 테스트용: src {from:'q',q}|{from:'p',i}|{from:'g',g} → dst {to:'g',g}|{to:'p',i}
+    const j = src.from === 'q' ? queues[src.q][0] : src.from === 'p' ? park[src.i] : gates[src.g]; if (!j) return false;
+    const a = src.from === 'q' ? queuePos(src.q, 0) : src.from === 'p' ? parkPos(src.i) : slotPos(src.g), b = dst.to === 'g' ? slotPos(dst.g) : parkPos(dst.i);
+    const r = app.getBoundingClientRect(); const ev = (type, [x, y]) => cv.dispatchEvent(new PointerEvent(type, { clientX: x + r.left, clientY: y + r.top, pointerId: 1, bubbles: true }));
+    try { ev('pointerdown', a); ev('pointermove', b); ev('pointerup', b); } catch (e) {} return true; } };
+</script>
+</body>
+</html>
