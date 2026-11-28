@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>블록 분해 퍼즐 (샘플)</title>
+<style>
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#9ad0e8;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+#app{position:relative;height:100%;width:min(100%,calc(100dvh*.5625));margin:0 auto;overflow:hidden}
+canvas{position:absolute;left:0;top:0;touch-action:none}
+#ui{width:100%;height:100%}
+.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(20,40,70,.55);color:#fff;text-align:center;z-index:3}
+.ov h1{font-size:38px;font-weight:900;text-shadow:0 3px 0 #1d4a7a}.ov p{font-size:15px;line-height:1.6;max-width:300px}
+.ov button{border:0;border-radius:16px;padding:14px 34px;font:inherit;font-size:18px;font-weight:900;color:#1d4a7a;background:#fff;box-shadow:0 4px 0 #6aa0c8;cursor:pointer}
+[hidden]{display:none!important}
+</style>
+<script type="importmap">{"imports":{"three":"/games/wizard/vendor/three.module.min.js"}}</script>
+</head>
+<body><div id="app"><canvas id="gl"></canvas><canvas id="ui"></canvas>
+<div class="ov" id="ov"><h1 id="ovT">블록 분해</h1><p id="ovP">아래 블록을 밀어서 맨 윗줄로 올리면<br>3D 모형에서 같은 색 조각을 떼어 가져와요.<br>바깥에 드러난 조각부터 빠지고,<br>가득 찬 블록은 사라져요!</p><button id="ovB">시작</button></div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+const R = Math.random, $ = (id) => document.getElementById(id);
+const COL = { R: '#e8463c', W: '#f4f1ea', B: '#8a5a3a', G: '#5cc04a', K: '#2c2f3a', O: '#ff9a2a', C: '#8fd8f4', Y: '#ffd23f' };
+// ---------- 복셀 모형 ----------
+function mushroomHouse() { const v = []; const add = (x, y, z, c) => v.push([x, y, z, c]);
+  for (let y = 0; y < 13; y++) for (let x = -6; x <= 6; x++) for (let z = -6; z <= 6; z++) { const r = Math.hypot(x, z);
+    if (y === 0 && r <= 5.6) add(x, y, z, r > 4.7 ? 'B' : 'G'); // 바닥 둘레는 나무 울타리
+    else if (y >= 1 && y <= 5 && r <= 3.1) add(x, y, z, (z >= 2.6 && x >= -1 && x <= 0 && y <= 3) || (x >= 2.5 && y === 4 && Math.abs(z) <= 0.5) ? 'B' : 'W');
+    else if (y >= 6) { const d = Math.hypot(x, (y - 5.5) * 1.15, z); if (d <= 6.2 && (y <= 7 || d <= 6.2)) { const surf = d > 5.2, dot = surf && ((x * 7 + z * 13 + y * 5) % 9 === 0 || (Math.abs(x) <= 1 && y >= 11 && Math.abs(z) <= 1)); add(x, y, z, dot ? 'W' : 'R'); } } }
+  return v; }
+function penguin() { const v = []; const add = (x, y, z, c) => v.push([x, y, z, c]);
+  for (let y = 0; y < 15; y++) for (let x = -6; x <= 6; x++) for (let z = -5; z <= 5; z++) {
+    if (y === 0) { if (Math.hypot(x, z) <= 5.3) add(x, y, z, 'C'); continue; }
+    const e = (x / 4.3) ** 2 + ((y - 6.5) / 6) ** 2 + (z / 3.6) ** 2;
+    if (e <= 1) { let c = 'K'; if (z >= 1.5 && Math.abs(x) <= 2.6 && y <= 8) c = 'W'; if (z >= 1.4 && y >= 9 && y <= 11 && Math.abs(x) <= 2.6) c = 'W'; if (z >= 2 && y === 10 && Math.abs(x) === 1) c = 'K'; add(x, y, z, c); continue; }
+    if ((y === 9 || y === 10) && Math.abs(x) <= 1 && z === 4) add(x, y, z, 'O'); // 부리
+    if (y === 1 && Math.abs(x) >= 1 && Math.abs(x) <= 3 && z >= 1 && z <= 4) add(x, y, z, 'O'); // 발
+    if (y >= 4 && y <= 8 && (x === -5 || x === 5) && Math.abs(z) <= 1 && y >= 5 - 0) add(x, y, z, 'K'); }
+  return v; }
+const LEVELS = [
+  { name: '버섯 집', bg: ['#a6dcf0', '#eaf6ff'], frame: '#c99a6a', rows: 6, model: mushroomHouse,
+    blocks: [['G', 2, 2, 1, 3], ['G', 5, 2, 1, 3], ['G', 1, 2, 1, 1], ['R', 3, 3, 2, 1], ['R', 3, 1, 1, 2], ['R', 4, 5, 2, 1], ['W', 0, 1, 1, 3], ['W', 1, 1, 2, 1], ['W', 3, 4, 1, 2], ['B', 4, 1, 2, 1], ['B', 1, 4, 1, 2], ['B', 1, 3, 1, 1]] },
+  { name: '얼음 펭귄', bg: ['#7fc0e8', '#e2f3ff'], frame: '#7a9ac0', rows: 7, model: penguin,
+    blocks: [['C', 3, 4, 1, 3], ['C', 3, 2, 3, 1], ['C', 2, 4, 1, 2], ['K', 0, 1, 1, 3], ['K', 5, 4, 1, 2], ['K', 1, 1, 1, 2], ['K', 2, 1, 1, 1], ['W', 4, 4, 1, 3], ['W', 1, 5, 1, 2], ['W', 0, 4, 2, 1], ['W', 1, 3, 2, 1], ['O', 4, 3, 2, 1], ['O', 0, 5, 1, 2], ['O', 2, 2, 1, 1]] },
+];
+// ---------- 3D ----------
+const app = $('app'), gl = $('gl'), ui = $('ui'), ctx = ui.getContext('2d');
+const renderer = new THREE.WebGLRenderer({ canvas: gl, antialias: true, alpha: true }); renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.shadowMap.enabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(32, 1, 0.1, 200);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8aa0b8, 1.7)); const sun = new THREE.DirectionalLight(0xffffff, 2.4); sun.position.set(12, 22, 14); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12 }); scene.add(sun);
+const turn = new THREE.Group(); scene.add(turn);
+const plate = new THREE.Mesh(new THREE.CylinderGeometry(7.6, 8, 0.8, 48), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 })); plate.position.y = -0.9; plate.receiveShadow = true; turn.add(plate);
+const geo = new THREE.BoxGeometry(0.94, 0.94, 0.94); const mat = new THREE.MeshStandardMaterial({ roughness: 0.55 });
+let inst = null, vox = [], grid = new Map(), flyers = [];
+const key = (x, y, z) => x + ',' + y + ',' + z;
+function buildModel(L) {
+  if (inst) { turn.remove(inst); inst.dispose(); } vox = L.model().map(([x, y, z, c], i) => ({ x, y, z, c, alive: true, i })); grid = new Map(vox.map((v) => [key(v.x, v.y, v.z), v]));
+  inst = new THREE.InstancedMesh(geo, mat, vox.length); inst.castShadow = inst.receiveShadow = true; const m = new THREE.Matrix4(), col = new THREE.Color();
+  vox.forEach((v, i) => { m.makeTranslation(v.x, v.y, v.z); inst.setMatrixAt(i, m); col.set(COL[v.c]).offsetHSL(0, 0, (R() - 0.5) * 0.05); inst.setColorAt(i, col); }); turn.add(inst);
+  const ys = vox.map((v) => v.y); turn.userData.cy = (Math.max(...ys) + Math.min(...ys)) / 2;
+}
+const exposed = (v) => [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]].some(([a, b, c]) => { if (v.y + b < 0) return false; const n = grid.get(key(v.x + a, v.y + b, v.z + c)); return !n || !n.alive; });
+const hide = new THREE.Matrix4().makeScale(0, 0, 0);
+function takeVoxel(c) { // 같은 색 중 드러난 조각 하나 (앞쪽·위쪽 우선 + 약간 무작위)
+  let best = null, bs = -1e9; for (const v of vox) if (v.alive && v.c === c && exposed(v)) { const s = v.y * 0.6 + R() * 6; if (s > bs) { bs = s; best = v; } }
+  if (!best) return null; best.alive = false; inst.setMatrixAt(best.i, hide); inst.instanceMatrix.needsUpdate = true;
+  const wp = new THREE.Vector3(best.x, best.y, best.z).applyMatrix4(turn.matrixWorld); return { v: best, wp }; }
+const fly = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ roughness: 0.5 }), 400); fly.count = 0; scene.add(fly);
+// ---------- 퍼즐 상태 ----------
+let LV = 0, blocks, moves, won, started = false, parts = [], drag = null, rotDrag = null, spin = 0.25, total = 0;
+function load(i) { LV = i; const L = LEVELS[i]; buildModel(L); const cnt = {}; vox.forEach((v) => (cnt[v.c] = (cnt[v.c] || 0) + 1)); total = vox.length;
+  blocks = L.blocks.map(([c, x, y, w, h]) => ({ c, x, y, w, h, px: x, py: y, fill: 0, cap: 0, pop: 0, gone: false, take: 0 }));
+  for (const k in cnt) { const bs = blocks.filter((b) => b.c === k); const tot = bs.reduce((s, b) => s + b.w * b.h, 0); let left = cnt[k]; bs.forEach((b, j) => { b.cap = j === bs.length - 1 ? left : Math.round((cnt[k] * b.w * b.h) / tot); left -= b.cap; }); }
+  blocks.forEach((b) => { if (b.cap <= 0) b.gone = true; });
+  moves = 0; won = false; flyers = []; parts = []; app.style.background = `linear-gradient(${L.bg[0]},${L.bg[1]})`; resize(); }
+let W, H, DPR, Lx = {};
+function resize() { const r = app.getBoundingClientRect(); W = r.width; H = r.height; DPR = Math.min(2, devicePixelRatio || 1); ui.width = W * DPR; ui.height = H * DPR; ui.style.width = W + 'px'; ui.style.height = H + 'px';
+  const rows = LEVELS[LV].rows, cell = Math.min((W - 40) / 6, (H * 0.5) / rows), bw = cell * 6, x0 = (W - bw) / 2, py0 = H - rows * cell - 26 - 12, top3d = 56, h3d = py0 - top3d - 16;
+  Lx = { cell, bw, x0, py0, rows, top3d, h3d }; renderer.setSize(W, h3d, false); gl.style.top = top3d + 'px'; gl.style.width = W + 'px'; gl.style.height = h3d + 'px'; cam.aspect = W / h3d; cam.updateProjectionMatrix(); }
+addEventListener('resize', resize);
+const cellOf = (x, y) => blocks.find((b) => !b.gone && x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h);
+function free(b, nx, ny) { if (nx < 0 || ny < 0 || nx + b.w > 6 || ny + b.h > Lx.rows) return false; for (const o of blocks) if (o !== b && !o.gone && nx < o.x + o.w && nx + b.w > o.x && ny < o.y + o.h && ny + b.h > o.y) return false; return true; }
+const pos = (e) => { const r = app.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+ui.addEventListener('pointerdown', (e) => { if (!started || won) return; const [x, y] = pos(e);
+  if (y < Lx.py0 - 8) { rotDrag = x; ui.setPointerCapture(e.pointerId); return; }
+  const b = cellOf(Math.floor((x - Lx.x0) / Lx.cell), Math.floor((y - Lx.py0) / Lx.cell)); if (b && !b.pop) { drag = { b, sx: x, sy: y, ox: b.x, oy: b.y, axis: null }; ui.setPointerCapture(e.pointerId); } });
+ui.addEventListener('pointermove', (e) => { const [x, y] = pos(e);
+  if (rotDrag != null) { turn.rotation.y += (x - rotDrag) * 0.012; rotDrag = x; return; }
+  if (!drag) return; const b = drag.b, dx = (x - drag.sx) / Lx.cell, dy = (y - drag.sy) / Lx.cell;
+  if (!drag.axis && Math.hypot(dx, dy) > 0.2) drag.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'; if (!drag.axis) return;
+  const target = drag.axis === 'x' ? Math.round(drag.ox + dx) : Math.round(drag.oy + dy);
+  for (let g = 0; g < 12; g++) { const cur = drag.axis === 'x' ? b.x : b.y; if (cur === target) break; const st = Math.sign(target - cur), nx = drag.axis === 'x' ? b.x + st : b.x, ny = drag.axis === 'y' ? b.y + st : b.y; if (!free(b, nx, ny)) break; b.x = nx; b.y = ny; } });
+ui.addEventListener('pointerup', () => { rotDrag = null; if (drag) { if (drag.b.x !== drag.ox || drag.b.y !== drag.oy) moves++; drag = null; } });
+// ---------- 흡수 ----------
+const sv = new THREE.Vector3();
+function absorb(dt) {
+  for (const b of blocks) { if (b.gone || b.y !== 0 || b.pop || (drag && drag.b === b)) continue; if (b.fill + b.take >= b.cap) continue;
+    b.acc = (b.acc || 0) + dt * (16 + (b.w + b.h) * 6); while (b.acc >= 1 && b.fill + b.take < b.cap) { b.acc -= 1; const t = takeVoxel(b.c); if (!t) { b.acc = 0; break; } b.take++; flyers.push({ wp: t.wp, c: t.v.c, b, t: 0, life: 0.55 + R() * 0.25, sx: (R() - 0.5) * 3 }); } }
+  // 날아가는 조각: 모형에서 튀어나와 아래 블록으로
+  const m = new THREE.Matrix4(), col = new THREE.Color(), q = new THREE.Quaternion(), e = new THREE.Euler(); let n = 0;
+  for (const f of flyers) { f.t += dt; const k = Math.min(1, f.t / f.life);
+    if (k < 0.45) { const s = k / 0.45; sv.copy(f.wp); sv.x += f.sx * s; sv.y += Math.sin(s * Math.PI) * 2.5; sv.z += 2 * s; e.set(s * 4, s * 3, 0); q.setFromEuler(e); m.compose(sv, q, new THREE.Vector3(1, 1, 1)); if (n < 400) { fly.setMatrixAt(n, m); fly.setColorAt(n, col.set(COL[f.c])); n++; } }
+    else if (!f.p2) { f.p2 = true; sv.copy(f.wp); sv.x += f.sx; sv.z += 2; sv.project(cam); f.x = (sv.x + 1) / 2 * W; f.y = Lx.top3d + (1 - sv.y) / 2 * Lx.h3d; }
+    if (k >= 1 && !f.done) { f.done = true; f.b.take--; f.b.fill++; if (f.b.fill >= f.b.cap && !f.b.pop) f.b.pop = 0.01; } }
+  fly.count = n; fly.instanceMatrix.needsUpdate = true; if (fly.instanceColor) fly.instanceColor.needsUpdate = true; flyers = flyers.filter((f) => !f.done);
+}
+// ---------- 그리기 ----------
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+const shade = (hex, k) => { const n = parseInt(hex.slice(1), 16); return `rgb(${((n >> 16) & 255) * k | 0},${((n >> 8) & 255) * k | 0},${(n & 255) * k | 0})`; };
+function draw2d(dt) {
+  const L = LEVELS[LV], { cell, bw, x0, py0, rows } = Lx; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+  const left = vox.filter((v) => v.alive).length;
+  ctx.fillStyle = '#1d3a5a'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = '900 20px system-ui'; ctx.fillText(`${LV + 1}. ${L.name}`, 16, 30);
+  ctx.textAlign = 'right'; ctx.font = '800 13px system-ui'; ctx.fillText(`남은 조각 ${left} · 이동 ${moves}`, W - 16, 30);
+  ctx.fillStyle = L.frame; rr(x0 - 10, py0 - 10, bw + 20, rows * cell + 20, 16); ctx.fill();
+  for (let y = 0; y < rows; y++) for (let x = 0; x < 6; x++) { ctx.fillStyle = y === 0 ? 'rgba(255,255,255,.5)' : 'rgba(255,255,255,.22)'; rr(x0 + x * cell + 2, py0 + y * cell + 2, cell - 4, cell - 4, 8); ctx.fill(); }
+  if (moves < 2) { ctx.fillStyle = '#fff'; ctx.font = '800 11px system-ui'; ctx.textAlign = 'center'; ctx.fillText('▲ 이 줄에 올리면 같은 색 조각을 가져와요', x0 + bw / 2, py0 + cell * 0.5); }
+  for (const b of blocks) { if (b.gone) continue; b.px += (b.x - b.px) * Math.min(1, dt * 18); b.py += (b.y - b.py) * Math.min(1, dt * 18);
+    let sz = 1; if (b.pop) { b.pop += dt * 3; sz = 1 + Math.sin(Math.min(1, b.pop) * Math.PI) * 0.12 - Math.max(0, b.pop - 0.7) * 2; if (b.pop > 1.1) { b.gone = true; continue; } }
+    const bx = x0 + b.px * cell + 3, by = py0 + b.py * cell + 3, w = b.w * cell - 6, h = b.h * cell - 6, c = COL[b.c];
+    ctx.save(); ctx.translate(bx + w / 2, by + h / 2); ctx.scale(sz, sz); ctx.translate(-w / 2, -h / 2);
+    ctx.fillStyle = shade(c, 0.6); rr(0, 4, w, h, 10); ctx.fill(); ctx.fillStyle = shade(c, b.c === 'W' || b.c === 'C' ? 0.85 : 0.78); rr(0, 0, w, h - 2, 10); ctx.fill();
+    // 안쪽: 작은 큐브가 아래부터 쌓이는 느낌
+    const ix = 6, iy = 6, iw = w - 12, ih = h - 14, f = b.cap ? b.fill / b.cap : 1; ctx.fillStyle = 'rgba(0,0,0,.28)'; rr(ix, iy, iw, ih, 7); ctx.fill();
+    ctx.save(); rr(ix, iy, iw, ih, 7); ctx.clip(); ctx.fillStyle = c; ctx.fillRect(ix, iy + ih * (1 - f), iw, ih * f); ctx.strokeStyle = 'rgba(0,0,0,.12)'; ctx.lineWidth = 1; const g = 9;
+    for (let yy = iy + ih; yy > iy + ih * (1 - f); yy -= g) { ctx.beginPath(); ctx.moveTo(ix, yy); ctx.lineTo(ix + iw, yy); ctx.stroke(); } ctx.restore();
+    if (drag && drag.b === b) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; rr(-1, -1, w + 2, h, 11); ctx.stroke(); }
+    ctx.fillStyle = '#fff'; ctx.font = `900 ${Math.max(11, Math.min(15, cell * 0.24))}px system-ui`; ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.35)'; const t = Math.floor(f * 100) + '%'; ctx.strokeText(t, w - 8, h - 10); ctx.fillText(t, w - 8, h - 10); ctx.restore(); }
+  // 화면으로 넘어온 조각: 블록 쪽으로 떨어짐
+  for (const f of flyers) if (f.p2) { const k = (f.t / f.life - 0.45) / 0.55, tx = x0 + (f.b.px + f.b.w / 2) * cell, ty = py0 + (f.b.py + 0.6) * cell, x = f.x + (tx - f.x) * k * k, y = f.y + (ty - f.y) * k * k, s = 12 * (1 - k * 0.5);
+    ctx.fillStyle = COL[f.c]; ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1; ctx.fillRect(x - s / 2, y - s / 2, s, s); ctx.strokeRect(x - s / 2, y - s / 2, s, s); }
+}
+// ---------- 진행 ----------
+let last = performance.now();
+function loop(t) { requestAnimationFrame(loop); const dt = Math.min(0.05, (t - last) / 1000); last = t; if (!vox.length) return;
+  if (rotDrag == null) turn.rotation.y += spin * dt;
+  const cy = turn.userData.cy || 6, d = 30; cam.position.set(0, cy + 13, d); cam.lookAt(0, cy - 1, 0); turn.updateMatrixWorld();
+  if (started && !won) { absorb(dt); if (!vox.some((v) => v.alive) && !flyers.length) { won = true; setTimeout(() => show(LV + 1 < LEVELS.length ? '완성 분해!' : '모두 클리어!', `${moves}번 이동으로 모형을 다 분해했어요`, LV + 1 < LEVELS.length ? '다음 모형' : '처음부터'), 900); } }
+  renderer.render(scene, cam); draw2d(dt); }
+function show(t, p, b) { $('ovT').textContent = t; $('ovP').textContent = p; $('ovB').textContent = b; $('ov').hidden = false; }
+$('ovB').onclick = () => { $('ov').hidden = true; if (won) load((LV + 1) % LEVELS.length); started = true; };
+load(Number((location.search.match(/lv=(\d)/) || [])[1] || 0)); requestAnimationFrame(loop);
+window.__vx = { get blocks() { return blocks; }, get vox() { return vox; }, free, start() { started = true; $('ov').hidden = true; }, get won() { return won; } };
+</script>
+</body>
+</html>
